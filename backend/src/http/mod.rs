@@ -38,6 +38,7 @@ use self::{
 
 mod assets;
 mod handlers;
+mod log;
 pub(crate) mod response;
 
 

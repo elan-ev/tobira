@@ -43,11 +43,11 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                 ... on AuthorizedEvent {
                     id
                     title
-                    series { title }
+                    series { id title }
                     created
                     isLive
                     creators
-                    syncedData { thumbnail duration startTime endTime }
+                    syncedData { duration startTime endTime audioOnly }
                 }
             }
             showTitle
@@ -81,7 +81,12 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
     const { formState: { errors } } = form;
 
     const currentEvent = event?.__typename === "AuthorizedEvent"
-        ? { ...event, ...event.syncedData, seriesTitle: event.series?.title }
+        ? {
+            ...event,
+            ...event.syncedData,
+            seriesId: event.series?.id,
+            seriesTitle: event.series?.title,
+        }
         : undefined;
 
     return <EditModeForm create={create} save={save} map={(data: VideoFormData) => data}>
@@ -137,6 +142,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                     items {
                         id
                         title
+                        seriesId
                         seriesTitle
                         creators
                         thumbnail
@@ -145,6 +151,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                         duration
                         startTime
                         endTime
+                        audioOnly
                     }
                 }
             }
@@ -166,7 +173,11 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                     // starting with `ev`.
                     id: item.id.replace(/^es/, "ev"),
                     syncedData: item,
-                    series: item.seriesTitle == null ? null : { title: item.seriesTitle },
+                    authorizedData: item,
+                    series: (item.seriesTitle == null || item.seriesId == null) ? null : {
+                        id: item.seriesId,
+                        title: item.seriesTitle,
+                    },
                 })));
             },
             start: () => {},
@@ -188,18 +199,12 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
 };
 
 const formatOption = (event: Option, t: TFunction) => (
-    <div css={{ display: "flex", gap: 16, padding: "4px 0" }}>
+    <div key={event.id} css={{ display: "flex", gap: 16, padding: "4px 0" }}>
         {event.syncedData === null
             ? <MovingTruck />
             : <Thumbnail
                 css={{ width: 120, minWidth: 120 }}
-                event={{
-                    ...event,
-                    syncedData: event.syncedData && {
-                        ...event.syncedData,
-                        audioOnly: false, // TODO
-                    },
-                }}
+                event={event}
             />}
         <div>
             <div>{event.title}</div>

@@ -1,7 +1,8 @@
-use juniper::GraphQLObject;
+use juniper::{GraphQLInputObject, GraphQLObject};
 use postgres_types::BorrowToSql;
+use serde::Serialize;
 
-use crate::{api::{util::TranslatedString, Context, err::ApiResult}, db::util::select};
+use crate::{api::{err::ApiResult, Context}, model::TranslatedString, db::util::select};
 
 
 
@@ -30,9 +31,9 @@ pub(crate) struct AclItem {
 #[graphql(context = Context)]
 pub(crate) struct RoleInfo {
     /// A user-facing label for this role (group or person). If the label does
-    /// not depend on the language (e.g. a name), `{ "_": "Peter" }` is
+    /// not depend on the language (e.g. a name), `{ "default": "Peter" }` is
     /// returned.
-    pub label: TranslatedString<String>,
+    pub label: TranslatedString,
 
     /// For user roles this is `null`. For groups, it defines a list of other
     /// group roles that this role implies. I.e. a user with this role always
@@ -65,7 +66,7 @@ where
             known_groups.label,
             case when users.display_name is null
                 then null
-                else hstore('_', users.display_name)
+                else hstore('default', users.display_name)
             end
         )",
     );
@@ -93,4 +94,10 @@ where
             }),
         }
     }).await.map_err(Into::into)
+}
+
+#[derive(Debug, GraphQLInputObject, Serialize)]
+pub(crate) struct AclInputEntry {
+    pub role: String,
+    pub actions: Vec<String>,
 }

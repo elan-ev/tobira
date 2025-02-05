@@ -1,10 +1,11 @@
 import { i18n } from "i18next";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { bug, match } from "@opencast/appkit";
+import { bug, match, useColorScheme } from "@opencast/appkit";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
+import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 
 
 /**
@@ -84,8 +85,8 @@ export const translatedConfig = (s: TranslatedString, i18n: i18n): string =>
     getTranslatedString(s, i18n.resolvedLanguage);
 
 export const getTranslatedString = (s: TranslatedString, lang: string | undefined): string => {
-    const l = lang ?? "en";
-    return (l in s ? s[l as keyof TranslatedString] : undefined) ?? s.en;
+    const l = lang ?? "default";
+    return (l in s ? s[l as keyof TranslatedString] : undefined) ?? s.default;
 };
 
 export const useOnOutsideClick = (
@@ -171,25 +172,6 @@ export const useNoindexTag = (noindex = true) => {
     });
 };
 
-/** Can be used to debounce API calls or any other function */
-export const useDebounce = () => {
-    const timeout = useRef<NodeJS.Timeout>();
-
-    const debounce = (fn: (...args: string[]) => void, delay: number) =>
-        (...args: string[]) => {
-            clearTimeout(timeout.current);
-            timeout.current = setTimeout(() => fn(...args), delay);
-        };
-
-    useEffect(() => {
-        if (timeout.current) {
-            clearTimeout(timeout.current);
-        }
-    }, []);
-
-    return { debounce };
-};
-
 /** Formats the given number of milliseconds as ISO 8601 duration string, e.g. "PT3M47S" */
 export const toIsoDuration = (milliseconds: number): string => {
     let acc = Math.floor(milliseconds / 1000);
@@ -234,3 +216,72 @@ export const secondsToTimeString = (seconds: number): string => {
 };
 
 export type ExtraMetadata = Record<string, Record<string, string[]>>;
+
+export type Credentials = {
+    user: string;
+    password: string;
+} | null;
+
+
+/**
+ * Returns stored credentials of events.
+ *
+ * Three kinds of IDs are stored when a user authenticates for an event:
+ * We need to store both Tobira ID and Opencast ID, since the video route can be accessed
+ * via both kinds. For this, both IDs are queried from the DB.
+ * The check for already stored credentials however happens in the same query,
+ * so we only have access to the single event ID from the url.
+ * In order to have a successful check when visiting a video page with either Tobira ID
+ * or Opencast ID in the url, this check accepts both ID kinds.
+ * Lastly, we also store the series ID of an event. If other events of that series use
+ * the same credentials, authenticating for the current event will also unlock
+ * these other events.
+ */
+type IdKind = "event" | "oc-event" | "series";
+export const getCredentials = (kind: IdKind, id: string): Credentials => {
+    const credentials = window.localStorage.getItem(credentialsStorageKey(kind, id))
+        ?? window.sessionStorage.getItem(credentialsStorageKey(kind, id));
+
+    if (!credentials) {
+        return null;
+    }
+
+    const parsed = JSON.parse(credentials);
+    if ("user" in parsed && typeof parsed.user === "string"
+        && "password" in parsed && typeof parsed.password === "string") {
+        return {
+            user: parsed.user,
+            password: parsed.password,
+        };
+    } else {
+        return null;
+    }
+};
+
+export const credentialsStorageKey = (kind: IdKind, id: string) =>
+    CREDENTIALS_STORAGE_KEY + kind + "-" + id;
+
+export const useLogoConfig = () => {
+    const { i18n } = useTranslation();
+    const mode = useColorScheme().scheme;
+    const lang = i18n.resolvedLanguage;
+    const logos = CONFIG.logos;
+
+    const findLogo = (size: "wide" | "narrow") => {
+        const list = logos
+            .filter(l => l.size === size || !l.size)
+            .filter(l => l.mode === mode || !l.mode);
+
+        return list.find(l => l.lang === lang) || list.find(l => !l.lang || l.lang === "default");
+    };
+
+    const wide = findLogo("wide");
+    const narrow = findLogo("narrow");
+
+    if (!wide || !narrow) {
+        // Shouldn't happen™, but helps with type safety.
+        bug("missing logos in configuration");
+    }
+
+    return { wide, narrow };
+};

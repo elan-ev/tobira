@@ -61,6 +61,12 @@ export const test = base.extend<CustomTestFixtures, CustomWorkerFixtures>({
             ["serve", "--config", configPath],
             // { stdio: "inherit" }
         );
+        tobiraProcess.addListener("exit", code => {
+            if (code != null) {
+                throw new Error(`Failed to start Tobira process (exit code ${code}). `
+                    + 'Invalid config? (Hint: try setting stdio: "inherit" in isolation.ts)');
+            }
+        });
         await waitPort({ port, interval: 10, output: "silent" });
 
 
@@ -112,6 +118,7 @@ const runTobiraCommand = async (tobira: TobiraProcess, args: string[]) =>
 
 
 // TODO: DB
+/* eslint-disable max-len */
 const tobiraConfig = ({ index, port, dbName, rootPath }: {
     index: number;
     port: number;
@@ -119,7 +126,7 @@ const tobiraConfig = ({ index, port, dbName, rootPath }: {
     rootPath: string;
 }) => `
     [general]
-    site_title.en = "Tobira Videoportal"
+    site_title.default = "Tobira Videoportal"
     tobira_url = "http://localhost:${port}"
     users_searchable = true
 
@@ -147,19 +154,14 @@ const tobiraConfig = ({ index, port, dbName, rootPath }: {
 
     [opencast]
     host = "https://dummy.invalid" # Not used in UI tests
-
-    [sync]
     user = "admin"
     password = "opencast"
 
     [theme]
-    logo.large.path = "${rootPath}/util/dev-config/logo-large.svg"
-    logo.large.resolution = [425, 182]
-    logo.large_dark.path = "${rootPath}/util/dev-config/logo-large-dark.svg"
-    logo.large_dark.resolution = [425, 182]
-    logo.small.path = "${rootPath}/util/dev-config/logo-small.svg"
-    logo.small.resolution = [212, 182]
-    logo.small_dark.path = "${rootPath}/util/dev-config/logo-small.svg"
-    logo.small_dark.resolution = [212, 182]
     favicon = "${rootPath}/util/dev-config/favicon.svg"
+    logos = [
+        { path = "${rootPath}/util/dev-config/logo-large.svg", mode = "light", size = "wide", resolution = [425, 182] },
+        { path = "${rootPath}/util/dev-config/logo-large-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
+        { path = "${rootPath}/util/dev-config/logo-small.svg", size = "narrow", resolution = [212, 182] }
+    ]
 `;

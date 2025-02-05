@@ -21,7 +21,6 @@ type Props = {
 
 export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false }) => {
     const menu = useMenu();
-
     const content = match(menu.state, {
         "closed": () => <DefaultMode hideNavIcon={hideNavIcon} />,
         "search": () => <SearchMode />,

@@ -5,11 +5,14 @@ use cookie::Cookie;
 use deadpool_postgres::Client;
 use hyper::{http::HeaderValue, HeaderMap, Request, StatusCode};
 use once_cell::sync::Lazy;
+use regex::Regex;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
 use tokio_postgres::Error as PgError;
 
 use crate::{
+    api::err::{not_authorized, ApiError},
+    config::Config,
     db::util::select,
     http::{response, Context, Response},
     prelude::*,
@@ -37,7 +40,28 @@ pub(crate) use self::{
 /// administrator.
 pub(crate) const ROLE_ADMIN: &str = "ROLE_ADMIN";
 
-const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
+/// (**ETH SPECIAL FEATURE**)
+/// Role used to define username and password for series (used in events).
+/// In Tobira, these are stored separately during sync and the role isn't used
+/// afterwards. Therefore it should be filtered out.
+pub(crate) static ETH_ROLE_CREDENTIALS_RE: Lazy<Regex> = Lazy::new(|| Regex::new(
+    r"^ROLE_GROUP_([a-fA-F0-9]{40})_([a-fA-F0-9]{40})$"
+).unwrap());
+
+/// (**ETH SPECIAL FEATURE**)
+/// Role used in Admin UI to show the above credentials for some series.
+/// This is not used in Tobira and should be filtered out.
+pub(crate) static ETH_ROLE_PASSWORD_RE: Lazy<Regex> = Lazy::new(|| Regex::new(
+    r"^ROLE_PWD_[a-zA-Z0-9+/]*={0,2}$"
+).unwrap());
+
+pub(crate) fn is_special_eth_role(role: &String, config: &Config) -> bool {
+    config.sync.interpret_eth_passwords && (
+        ETH_ROLE_CREDENTIALS_RE.is_match(role) || ETH_ROLE_PASSWORD_RE.is_match(role)
+    )
+}
+
+pub(crate) const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
 const ROLE_USER: &str = "ROLE_USER";
 
 const SESSION_COOKIE: &str = "tobira-session";
@@ -103,6 +127,13 @@ impl AuthContext {
             Self::User(user) => format!("'{}'", user.username).into(),
         }
     }
+
+    pub fn required_trusted_external(&self) -> Result<(), ApiError> {
+        if *self != Self::TrustedExternal {
+            return Err(not_authorized!("only trusted external applications can use this mutation"));
+        }
+        Ok(())
+    }
 }
 
 impl User {
@@ -124,6 +155,8 @@ impl User {
 
         if let Some(user) = &mut out {
             user.add_default_roles();
+            // TODO: consider not awaiting here. The result is not important and
+            // we can finish the rest of the API in the meantime.
             ctx.auth_caches.user.upsert_user_info(user, db).await;
         }
 

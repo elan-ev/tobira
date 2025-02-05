@@ -1,4 +1,3 @@
-use secrecy::Secret;
 use core::fmt;
 use std::time::Duration;
 
@@ -8,6 +7,7 @@ use crate::{config::Config, db::DbConnection, prelude::*};
 pub(crate) mod cmd;
 pub(crate) mod harvest;
 pub(crate) mod stats;
+pub(crate) mod text;
 mod client;
 mod status;
 
@@ -39,14 +39,6 @@ pub(crate) async fn check_compatibility(client: &OcClient) -> Result<()> {
 
 #[derive(Debug, confique::Config)]
 pub(crate) struct SyncConfig {
-    /// Username of the user used to communicate with Opencast for data syncing.
-    /// This user has to have access to all events and series. Currently, that
-    /// user has to be admin.
-    user: String,
-
-    /// Password of the user used to communicate with Opencast.
-    password: Secret<String>,
-
     /// A rough estimate of how many items (events & series) are transferred in
     /// each HTTP request while harvesting (syncing) with the Opencast
     /// instance.
@@ -69,8 +61,18 @@ pub(crate) struct SyncConfig {
     /// relevant in `--daemon` mode.
     #[config(default = "30s", deserialize_with = crate::config::deserialize_duration)]
     pub(crate) poll_period: Duration,
-}
 
+    /// Whether SHA1-hashed series passwords (as assignable by ETH's admin UI
+    /// build) are interpreted in Tobira.
+    #[config(default = false)]
+    pub(crate) interpret_eth_passwords: bool,
+
+    /// Number of concurrent tasks with which Tobira downloads assets from
+    /// Opencast. The default should be a good sweet spot. Decrease to reduce
+    /// load on Opencast, increase to speed up download a bit.
+    #[config(default = 8)]
+    concurrent_download_tasks: u8,
+}
 
 /// Version of the Tobira-module API in Opencast.
 struct ApiVersion {

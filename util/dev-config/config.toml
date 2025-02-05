@@ -2,7 +2,7 @@
 # developer, you are not interested in this file.
 
 [general]
-site_title.en = "Tobira Videoportal"
+site_title.default = "Tobira Videoportal"
 tobira_url = "http://localhost:8030"
 users_searchable = true
 
@@ -37,21 +37,14 @@ secret_key = "jwt-key.pem"
 
 [opencast]
 host = "http://localhost:8081"
-
-[sync]
 user = "admin"
 password = "opencast"
+
+[sync]
 preferred_harvest_size = 3
+interpret_eth_passwords = true
 
 [theme]
-logo.large.path = "logo-large.svg"
-logo.large.resolution = [425, 182]
-logo.large_dark.path = "logo-large-dark.svg"
-logo.large_dark.resolution = [425, 182]
-logo.small.path = "logo-small.svg"
-logo.small.resolution = [212, 182]
-logo.small_dark.path = "logo-small.svg"
-logo.small_dark.resolution = [212, 182]
 favicon = "favicon.svg"
 # color.primary = "#215CAF" # ETH Blau
 # color.primary = "#627313" # ETH Grün
@@ -59,3 +52,9 @@ favicon = "favicon.svg"
 # color.primary = "#B7352D" # ETH Rot
 # color.primary = "#A7117A" # ETH Purpur
 # color.primary = "#4B67AB" # Bern Blue
+
+logos = [
+    { path = "logo-large.svg", mode = "light", size = "wide", resolution = [425, 182] },
+    { path = "logo-large-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
+    { path = "logo-small.svg", size = "narrow", resolution = [212, 182] },
+]

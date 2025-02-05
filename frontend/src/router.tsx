@@ -13,7 +13,12 @@ import {
     OpencastVideoRoute,
     VideoRoute,
 } from "./routes/Video";
-import { DirectSeriesOCRoute, DirectSeriesRoute } from "./routes/Series";
+import {
+    DirectSeriesOCRoute,
+    DirectSeriesRoute,
+    OpencastSeriesRoute,
+    SeriesRoute,
+} from "./routes/Series";
 import { ManageVideosRoute } from "./routes/manage/Video";
 import { UploadRoute } from "./routes/Upload";
 import { SearchRoute } from "./routes/Search";
@@ -34,6 +39,7 @@ const {
     matchRoute,
     Router,
     useRouter,
+    useRouterState,
 } = makeRouter({
     fallback: NotFoundRoute,
     routes: [
@@ -45,6 +51,8 @@ const {
         SearchRoute,
         OpencastVideoRoute,
         VideoRoute,
+        OpencastSeriesRoute,
+        SeriesRoute,
         DirectVideoRoute,
         DirectOpencastVideoRoute,
         DirectSeriesRoute,
@@ -65,7 +73,7 @@ const {
     ],
 });
 
-export { ActiveRoute, Link, matchInitialRoute, matchRoute, Router, useRouter };
+export { ActiveRoute, Link, matchInitialRoute, matchRoute, Router, useRouter, useRouterState };
 
 type LinkProps = {
     to: string;

@@ -1,7 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::db::types::{CustomActions, EventCaption, EventTrack, EventSegment, ExtraMetadata};
+use crate::{
+    db::types::{CustomActions, EventCaption, EventTrack, EventSegment},
+    model::ExtraMetadata,
+};
 
 
 /// What the harvesting API returns.
@@ -184,6 +187,8 @@ pub(crate) struct Acl {
     pub(crate) read: Vec<String>,
     #[serde(default)]
     pub(crate) write: Vec<String>,
+    #[serde(default)]
+    pub(crate) preview: Vec<String>,
     #[serde(flatten)]
     pub(crate) custom_actions: CustomActions,
 }
@@ -227,6 +232,7 @@ mod tests {
                     title: "Cats".into(),
                     description: Some("Several videos of cats".into()),
                     acl: Acl {
+                        preview: vec![],
                         read: vec!["ROLE_ANONYMOUS".into()],
                         write: vec!["ROLE_ANONYMOUS".into()],
                         custom_actions: CustomActions::default(),
@@ -240,6 +246,7 @@ mod tests {
                     title: "Video Of A Tabby Cat".into(),
                     description: None,
                     acl: Acl {
+                        preview: vec![],
                         read: vec!["ROLE_ADMIN".into(), "ROLE_ANONYMOUS".into()],
                         write: vec!["ROLE_ADMIN".into()],
                         custom_actions: CustomActions::default(),
@@ -360,6 +367,7 @@ mod tests {
                     acl: Acl {
                         read: vec!["ROLE_USER_BOB".into()],
                         write: vec![],
+                        preview: vec![],
                         custom_actions: CustomActions::default(),
                     },
                     entries: vec![

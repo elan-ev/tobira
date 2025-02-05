@@ -21,7 +21,7 @@ const PRELUDE: &str = "\
 ";
 
 pub(crate) fn run(args: &Args) -> Result<()> {
-    let schema = format!("{}\n{}", PRELUDE, crate::api::root_node().as_schema_language());
+    let schema = format!("{}\n{}", PRELUDE, crate::api::root_node().as_sdl());
 
     if let Some(target) = &args.output {
         if let Some(parent) = Path::new(&target).parent() {

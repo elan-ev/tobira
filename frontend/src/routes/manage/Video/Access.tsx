@@ -1,8 +1,8 @@
-import { useTranslation } from "react-i18next";
-import { WithTooltip } from "@opencast/appkit";
+import { Trans, useTranslation } from "react-i18next";
+import { boxError, Card, currentRef, WithTooltip } from "@opencast/appkit";
 import { useRef, useState } from "react";
 import { LuInfo } from "react-icons/lu";
-import { useFragment } from "react-relay";
+import { graphql, useFragment, useMutation } from "react-relay";
 
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
@@ -20,12 +20,17 @@ import { ManageVideosRoute } from ".";
 import { ManageVideoDetailsRoute } from "./Details";
 import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
 import { ConfirmationModalHandle } from "../../../ui/Modal";
+import { displayCommitError } from "../Realm/util";
+import { AccessUpdateAclMutation } from "./__generated__/AccessUpdateAclMutation.graphql";
+import CONFIG from "../../../config";
+import { mapAcl } from "../../util";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
     "acl",
     "/access",
     (event, data) => <AclPage event={event} data={data} />,
+    { fetchWorkflowState: true },
 );
 
 type AclPageProps = {
@@ -53,7 +58,11 @@ const AclPage: React.FC<AclPageProps> = ({ event, data }) => {
         <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.acl.title")} />
         <PageTitle title={t("manage.my-videos.acl.title")} />
         {event.hostRealms.length < 1 && <UnlistedNote />}
-        <AccessUI {...{ event, knownRoles }} />
+        <br />
+        {CONFIG.allowAclEdit
+            ? <AccessUI {...{ event, knownRoles }} />
+            : <Card kind="info">{t("manage.access.editing-disabled")}</Card>
+        }
     </>;
 };
 
@@ -83,47 +92,94 @@ const UnlistedNote: React.FC = () => {
     );
 };
 
+const updateVideoAcl = graphql`
+    mutation AccessUpdateAclMutation($id: ID!, $acl: [AclInputEntry!]!) {
+        updateEventAcl(id: $id, acl: $acl) {
+            ...on AuthorizedEvent {
+                acl { role actions info { label implies large } }
+            }
+        }
+    }
+`;
+
 type AccessUIProps = {
     event: AuthorizedEvent;
     knownRoles: AccessKnownRolesData$data;
 }
 
 const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
+    const { t } = useTranslation();
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
-
-    const initialAcl: Acl = new Map(
-        event.acl.map(item => [item.role, {
-            actions: new Set(item.actions),
-            info: item.info,
-        }])
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commit, inFlight] = useMutation<AccessUpdateAclMutation>(updateVideoAcl);
+    const aclLockedToSeries = CONFIG.lockAclToSeries && event.series;
+    const [editingBlocked, setEditingBlocked] = useState(
+        event.hasActiveWorkflows || aclLockedToSeries
     );
+
+    const initialAcl: Acl = mapAcl(event.acl);
 
     const [selections, setSelections] = useState<Acl>(initialAcl);
 
-    return (
+    const onSubmit = async () => {
+        commit({
+            variables: {
+                id: event.id,
+                acl: [...selections].map(
+                    ([role, { actions }]) => ({
+                        role,
+                        actions: [...actions],
+                    })
+                ),
+            },
+            onCompleted: () => currentRef(saveModalRef).done(),
+            onError: error => {
+                setEditingBlocked(true);
+                setCommitError(displayCommitError(error));
+            },
+        });
+    };
+
+
+    return <>
+        {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
+            <Trans i18nKey="manage.access.workflow-active" />
+        </Card>}
+        {aclLockedToSeries && (
+            <Card kind="info" iconPos="left" css={{ fontSize: 14, marginBottom: 10 }}>
+                {t("manage.access.locked-to-series")}
+            </Card>
+        )}
         <div css={{ maxWidth: 1040 }}>
             <div css={{
                 display: "flex",
                 flexDirection: "column",
                 width: "100%",
             }}>
-                <AclSelector
-                    acl={selections}
-                    onChange={setSelections}
-                    knownRoles={knownRoles}
-                    permissionLevels={READ_WRITE_ACTIONS}
-                />
-                <AclEditButtons
-                    {...{ selections, setSelections, initialAcl, saveModalRef }}
-                    kind="write"
-                    onSubmit={async (acl: Acl) => {
-                        // TODO: Actually save new ACL.
-                        // eslint-disable-next-line no-console
-                        console.log(acl);
-                    }}
-                />
+                <div {...editingBlocked && { inert: "true" }} css={{
+                    ...editingBlocked && { opacity: .7 },
+                }}>
+                    <AclSelector
+                        acl={selections}
+                        onChange={setSelections}
+                        knownRoles={knownRoles}
+                        permissionLevels={READ_WRITE_ACTIONS}
+                    />
+                    <AclEditButtons
+                        {...{
+                            selections,
+                            setSelections,
+                            initialAcl,
+                            inFlight,
+                            saveModalRef,
+                            onSubmit,
+                        }}
+                        kind="write"
+                    />
+                </div>
+                {boxError(commitError)}
             </div>
         </div>
-    );
+    </>;
 };
 

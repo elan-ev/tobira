@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use deadpool_postgres::Transaction;
 use futures::pin_mut;
-use tokio_postgres::binary_copy::BinaryCopyInWriter;
 
 use crate::{
     prelude::*,
@@ -97,15 +96,10 @@ async fn upsert(file: &str, config: &Config, tx: Transaction<'_>) -> Result<()> 
         on commit drop");
     tx.execute(&sql, &[]).await?;
 
-    let col_list = "username, display_name, email, user_role";
-    let sql = format!("insert into users ({col_list}) values ($1, $2, $3, $4)");
-    let col_types = tx.prepare_cached(&sql).await?;
-    debug!("Prepared DB insertion");
-
-    let sink = tx.copy_in(&format!("copy {tmp_table} ({col_list}) from stdin binary")).await?;
-    let writer = BinaryCopyInWriter::new(sink, col_types.params());
+    let columns = ["username", "display_name", "email", "user_role"];
+    let col_list = columns.join(", ");
+    let writer = db::util::bulk_insert(&tmp_table, &columns, &tx).await?;
     pin_mut!(writer);
-
 
     for (role, info) in users {
         writer.as_mut().write_raw(dbargs![

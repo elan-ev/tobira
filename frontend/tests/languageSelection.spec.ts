@@ -7,7 +7,6 @@ test("Language selection", async ({ page }) => {
     const german = page.getByRole("checkbox", { name: "Deutsch" });
 
     await page.goto("/");
-    await page.waitForSelector("h1");
 
     await test.step("Language button is present and opens menu", async () => {
         await page.getByRole("button", { name: "Language selection" }).click();

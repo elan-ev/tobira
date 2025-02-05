@@ -12,14 +12,12 @@ use crate::prelude::*;
 mod color;
 mod general;
 mod theme;
-mod translated_string;
 mod matomo;
 mod opencast;
 mod player;
 mod upload;
 
 pub(crate) use self::{
-    translated_string::TranslatedString,
     theme::{ThemeConfig, LogoDef},
     matomo::MatomoConfig,
     opencast::OpencastConfig,
@@ -50,11 +48,12 @@ const TOBIRA_CONFIG_PATH_ENV: &str = "TOBIRA_CONFIG_PATH";
 /// units: 'ms', 's', 'min', 'h' and 'd'.
 ///
 /// All user-facing texts you can configure here have to be specified per
-/// language, with two letter language key. Only English ('en') is required.
-/// Take `general.site_title` for example:
+/// language, with two letter language key. The special key 'default' is
+/// required and used as fallback for languages that are not specified
+/// explicitly. Take `general.site_title` for example:
 ///
 ///     [general]
-///     site_title.en = "My university"
+///     site_title.default = "My university"
 ///     site_title.de = "Meine Universität"
 ///
 #[derive(Debug, confique::Config)]
@@ -161,14 +160,7 @@ impl Config {
             fix_path(&base, p);
         }
 
-        fix_path(&base, &mut self.theme.logo.large.path);
-        if let Some(logo) = &mut self.theme.logo.small {
-            fix_path(&base, &mut logo.path);
-        }
-        if let Some(logo) = &mut self.theme.logo.large_dark {
-            fix_path(&base, &mut logo.path);
-        }
-        if let Some(logo) = &mut self.theme.logo.small_dark {
+        for logo in &mut self.theme.logos {
             fix_path(&base, &mut logo.path);
         }
         fix_path(&base, &mut self.theme.favicon);

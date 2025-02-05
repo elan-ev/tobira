@@ -123,6 +123,8 @@ jobs:
           .cache-key
           .cargo-flags
           .deployment/templates/config.toml
+          .deployment/files/known-groups.json
+          .deployment/files/known-users.json
           util/dummy-login/dist/index.js
 
     # This is uploaded for the test job, specifically `cargo test`

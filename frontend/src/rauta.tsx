@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useTransition } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { bug } from "@opencast/appkit";
 
 
@@ -30,6 +30,12 @@ export type MatchedRoute = {
     dispose?: () => void;
 };
 
+export type RouteMatchInfo = {
+    url: URL;
+    route: Route | FallbackRoute;
+    matchedRoute: MatchedRoute;
+}
+
 // /** Creates the internal representation of the given route. */
 // export const makeRoute = (match: (url: URL) => MatchedRoute | null): Route => ({ match });
 
@@ -55,7 +61,7 @@ type LinkProps = {
 
 /** Props of the `<Router>` component. */
 type RouterProps = {
-    initialRoute: MatchedRoute;
+    initialRoute: RouteMatchInfo;
     children: JSX.Element;
 };
 
@@ -64,16 +70,19 @@ export type RouterLib = {
      * Matches the given full href against all routes, returning the first
      * matched route or throwing an error if no route matches.
      */
-    matchRoute: (href: string) => MatchedRoute;
+    matchRoute: (href: string) => RouteMatchInfo;
 
     /**
      * Like `matchRoute(window.location.href)`. Intended to be called before
      * `React.render` to obtain the initial route for the application.
      */
-    matchInitialRoute: () => MatchedRoute;
+    matchInitialRoute: () => RouteMatchInfo;
 
     /** Hook to obtain a reference to the router. */
     useRouter: () => RouterControl;
+
+    /** Hook to obtain the router state. */
+    useRouterState: () => RouterState;
 
     /**
      * An internal link, using the defined routes. Should be used instead of
@@ -96,7 +105,8 @@ export type RouterLib = {
 };
 
 /** Helper class: a list of listeners */
-class Listeners<F extends (...args: unknown[]) => unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+class Listeners<F extends (...args: any[]) => unknown> {
     private list: { listener: F }[] = [];
 
     /** Pass through the iterable protocol to the inner list */
@@ -118,12 +128,15 @@ class Listeners<F extends (...args: unknown[]) => unknown> {
     /** Call all listeners with the same arguments. */
     public callAll(args: Parameters<F>) {
         for (const { listener } of this.list) {
-            listener(args);
+            listener(...args);
         }
     }
 }
 
-export type AtNavListener = () => void;
+export type AtNavListener = (info: {
+    newRoute: Route | FallbackRoute;
+    newUrl: URL;
+}) => void;
 export type BeforeNavListener = () => "prevent-nav" | undefined;
 
 /** Obtained via `useRouter`, allowing you to perform some routing-related actions. */
@@ -168,16 +181,18 @@ export interface RouterControl {
     listenBeforeNav(listener: BeforeNavListener): () => void;
 
     /**
-     * Indicates whether we are currently transitioning to a new route. Intended
-     * to show a loading indicator.
-     */
-    isTransitioning: boolean;
-
-    /**
      * Indicates whether a user navigated to the current route from outside Tobira.
      */
     internalOrigin: boolean;
 }
+
+export type RouterState = {
+    /**
+     * Indicates whether we are currently transitioning to a new route. Intended
+     * to show a loading indicator.
+     */
+    isTransitioning: boolean;
+};
 
 export const makeRouter = <C extends Config, >(config: C): RouterLib => {
     // Helper to log debug messages if `config.debug` is true.
@@ -244,7 +259,6 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         }
 
         return {
-            isTransitioning: context.isTransitioning,
             push,
             replace,
             listenAtNav: (listener: AtNavListener) =>
@@ -280,6 +294,9 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
                 // If the caller specified a handler, we will call it first.
                 onClick?.(e);
+                if (e.isDefaultPrevented()) {
+                    return;
+                }
 
                 // We only want to react to simple mouse clicks.
                 if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.button !== 0) {
@@ -294,23 +311,27 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         },
     );
 
-    const matchRoute = (href: string): MatchedRoute => {
+    const matchRoute = (href: string): RouteMatchInfo => {
         const url = new URL(href);
         for (const route of config.routes) {
-            const matched: MatchedRoute | null = route.match(url);
+            const matched = route.match(url);
 
             if (matched !== null) {
-                return matched;
+                return { url, route, matchedRoute: matched };
             }
         }
 
-        return config.fallback.prepare(url);
+        return {
+            url,
+            route: config.fallback,
+            matchedRoute: config.fallback.prepare(url),
+        };
     };
 
-    const matchInitialRoute = (): MatchedRoute => matchRoute(window.location.href);
+    const matchInitialRoute = (): RouteMatchInfo => matchRoute(window.location.href);
 
     type ActiveRoute = {
-        route: MatchedRoute;
+        route: RouteMatchInfo;
 
         /** A scroll position that should be restored when the route is first rendered */
         initialScroll: number | null;
@@ -323,12 +344,24 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             atNav: Listeners<AtNavListener>;
             beforeNav: Listeners<BeforeNavListener>;
         };
-        isTransitioning: boolean;
     };
 
     const Context = React.createContext<ContextData | null>(null);
 
+    type StateContextData = {
+        isTransitioning: boolean;
+    };
+    const StateContext = React.createContext<StateContextData | null>(null);
+
     const useRouter = (): RouterControl => useRouterImpl("`useRouter`");
+    const useRouterState = (): RouterState => {
+        const context = React.useContext(StateContext);
+        if (context === null) {
+            return bug("useRouterState used without a parent <Router>! That's not allowed.");
+        }
+
+        return context;
+    };
 
     /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
     const Router = ({ initialRoute, children }: RouterProps) => {
@@ -347,13 +380,16 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         // `StrictMode` work, as with that, this component might be unmounted
         // for reasons other than a route change.
         const navigatedAway = useRef(false);
-        const setActiveRoute = (newRoute: ActiveRoute) => {
+        const setActiveRoute = useCallback((newRoute: ActiveRoute) => {
             navigatedAway.current = true;
             startTransition(() => {
                 setActiveRouteRaw(() => newRoute);
-                listeners.current.atNav.callAll([]);
+                listeners.current.atNav.callAll([{
+                    newUrl: newRoute.route.url,
+                    newRoute: newRoute.route.route,
+                }]);
             });
-        };
+        }, [navigatedAway, setActiveRouteRaw, listeners]);
 
         // Register some event listeners and set global values.
         useEffect(() => {
@@ -440,20 +476,23 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
 
         // Dispose of routes when they are no longer needed.
         useEffect(() => () => {
-            if (navigatedAway.current && activeRoute.route.dispose) {
+            if (navigatedAway.current && activeRoute.route.matchedRoute.dispose) {
                 debugLog("Disposing of route: ", activeRoute);
-                activeRoute.route.dispose();
+                activeRoute.route.matchedRoute.dispose();
             }
         }, [activeRoute, navigatedAway]);
 
-        const contextData = {
+        const contextData = useMemo(() => ({
             setActiveRoute,
             activeRoute,
             listeners: listeners.current,
-            isTransitioning: isPending,
-        };
+        }), [activeRoute, setActiveRoute, listeners]);
 
-        return <Context.Provider value={contextData}>{children}</Context.Provider>;
+        return <Context.Provider value={contextData}>
+            <StateContext.Provider value={{ isTransitioning: isPending }}>
+                {children}
+            </StateContext.Provider>
+        </Context.Provider>;
     };
 
     const ActiveRoute = () => {
@@ -470,9 +509,8 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             }
         }, [context.activeRoute]);
 
-        return <React.Fragment key={currentIndex}>
-            {context.activeRoute.route.render()}
-        </React.Fragment>;
+        // Rendered via JSX, as just calling `render()` causes unnecessary rerenders
+        return <context.activeRoute.route.matchedRoute.render />;
     };
 
     return {
@@ -480,6 +518,7 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
         matchRoute,
         matchInitialRoute,
         useRouter,
+        useRouterState,
         ActiveRoute,
         Router,
     };

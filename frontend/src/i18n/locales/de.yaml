@@ -48,6 +48,7 @@ errors:
   might-need-to-login-link: Sie müssen sich möglicherweise <1>einloggen</1>.
   invalid-input: Ungültige Eingabe.
   opencast-unavailable: Opencast ist momentan nicht erreichbar.
+  opencast-error: Unerwartete Opencast Antwort.
   internal-server-error: Interner Server-Fehler (es ist ein Problem mit dem Server aufgetreten).
   are-you-connected-to-internet: Sind Sie mit dem Internet verbunden?
   unknown: Unbekannter Fehler.
@@ -114,7 +115,7 @@ user:
   manage-content: Verwalten
 
 login-page:
-  heading: Anmeldung 
+  heading: Anmeldung
   user-id: Nutzerkennung
   password: Passwort
   bad-credentials: 'Anmeldung fehlgeschlagen: Falsche Anmeldedaten.'
@@ -130,9 +131,11 @@ video:
   link: Zur Videoseite
   part-of-series: Teil der Serie
   more-from-series: Mehr von „{{series}}“
-  more-from-playlist: Mehr von “{{playlist}}”
+  more-from-playlist: Mehr von „{{playlist}}”
   deleted-video-block: Das hier referenzierte Video wurde gelöscht.
   not-allowed-video-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
+  preview: Vorschau
+  preview-only: Sie brauchen zusätzliche Berichtigungen, um dieses Video anzuschauen.
   not-ready:
     title: Video noch nicht verarbeitet
     text: >
@@ -178,6 +181,17 @@ video:
     embed: Einbetten
     rss: RSS
     show-qr-code: QR Code anzeigen
+  password:
+    heading: Geschütztes Video
+    sub-heading: Zugriff zu diesem Video ist beschränkt.
+    body: >
+      Bitte geben Sie die Zugangsdaten ein, die Sie für dieses Videos erhalten haben.
+      Beachten Sie, dass diese nicht Ihren Logindaten für dieses Portal entsprechen.
+    label:
+      id: Kennung
+      password: Passwort
+      submit: Freischalten
+    invalid-credentials: Ungültige Zugangsdaten.
 
 playlist:
   deleted-playlist-block: Die hier referenzierte Playlist wurde gelöscht.
@@ -307,6 +321,7 @@ upload:
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
+    failed-fetching-series-acl: Abruf der Serienzugangsberechtigungen fehlgeschlagen.
 
 acl:
   unknown-user-note: unbekannt
@@ -322,6 +337,13 @@ manage:
   access:
     authorized-groups: Autorisierte Gruppen
     authorized-users: Autorisierte Personen
+    editing-disabled: Bearbeitung der Zugangsberechtigungen ist deaktiviert.
+    workflow-active: >
+      Änderung der Berechtigungen ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
+      <br />
+      Bitte versuchen Sie es später nochmal.
+    locked-to-series: >
+      Die Berechtigungen dieses Videos werden durch seine Serie bestimmt und können daher nicht bearbeitet werden.
     users-no-options:
       initial-searchable: Nach Name suchen oder exakten Nutzernamen/exakte E-Mail angeben
       none-found-searchable: Keine Personen gefunden
@@ -337,8 +359,9 @@ manage:
       yourself: Sie
       subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
       inherited: 'Geerbte Berechtigungen:'
-      inherited-tooltip: > 
-        Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden auf alle Unterseiten vererbt.
+      inherited-tooltip: >
+        Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden auf alle Unterseiten
+        vererbt.
       actions:
         title: Berechtigung
         read: Lesen
@@ -483,11 +506,9 @@ manage:
       name-from-block-description: >
         Video/Serie-Element von dieser Seite verknüpfen, sodass der Seitenname
         immer dem Titel des verknüpften Elements entspricht.
+      no-name: Keinen Namen anzeigen
       no-blocks: Auf dieser Seite befinden sich keine verknüpfbaren Videos/Serien.
       rename-failed: Änderung des Namen fehlgeschlagen.
-      no-rename-root: >
-        Der Name der Startseite kann nicht geändert werden. Die Überschrift wird
-        von der globalen Seitentitel-Einstellung kontrolliert.
 
     children:
       heading: Reihenfolge Unterseiten
@@ -648,6 +669,12 @@ api-remote-errors:
     delete:
       not-found: Das zu löschende Video existiert nicht. Möglicherweise wurde es bereits entfernt.
       not-allowed: Sie haben nicht die Berechtigung, dieses Video zu löschen.
+    acl:
+      not-found: "Zugriffsrechte konnten nicht geändert werden: Video nicht gefunden."
+      not-allowed: Sie haben nicht die Berechtigung, die Zugriffsreche dieses Videos zu ändern.
+    workflow:
+      not-allowed: Sie haben nicht die Berechtigung, die Workflowaktivität für dieses Video abzufragen.
+      active: $t(manage.access.workflow-active)
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.

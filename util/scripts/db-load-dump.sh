@@ -13,11 +13,24 @@ if ! (command -v docker &> /dev/null && docker compose &> /dev/null); then
 fi
 
 
+cache_folder="util/.db-dumps-cache"
+if [ ! -d $cache_folder ]; then
+    mkdir $cache_folder
+fi
+
+
 # Download dump
-TMP_DIR=$(mktemp -d)
-echo "Downloading DB dump"
-curl --output "$TMP_DIR/db-dump.xz" -L https://github.com/elan-ev/tobira/raw/db-dumps/db-dump-latest.xz
-xz -d "$TMP_DIR/db-dump.xz"
+version_raw=$(sed -n -E 's/^version = "([^"]+)"$/\1/p' backend/Cargo.toml)
+version=${version_raw%.0}
+filename="db-dump-v${version}"
+if [ -f "$cache_folder/$filename" ]; then
+    echo "DB dump for $version is already downloaded -> using that."
+    echo "To redownload, delete it from '$cache_folder'"
+else
+    echo "Downloading DB dump for $version"
+    curl --output "$cache_folder/$filename.xz" -L "https://github.com/elan-ev/tobira/raw/db-dumps/$filename.xz"
+    xz -d "$cache_folder/$filename.xz"
+fi
 
 # Prompt to notify that the current DB is deleted.
 echo
@@ -34,4 +47,4 @@ docker compose -f "$basedir/../containers/docker-compose.yml" \
     --clean \
     --create \
     --if-exists \
-    < "$TMP_DIR/db-dump"
+    < "$cache_folder/$filename"

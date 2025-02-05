@@ -1,8 +1,9 @@
 use chrono::{DateTime, Utc};
-use juniper::GraphQLObject;
+use juniper::{GraphQLObject, GraphQLScalar, InputValue, ScalarValue};
+use meilisearch_sdk::search::{FederationOptions, MatchRange, QueryFederationOptions};
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::{borrow::Cow, fmt};
+use std::{borrow::Cow, collections::HashMap, fmt, time::Instant};
 
 use crate::{
     api::{
@@ -21,6 +22,12 @@ mod event;
 mod realm;
 mod series;
 mod playlist;
+
+pub(crate) use self::{
+    event::{SearchEvent, TextMatch},
+    realm::SearchRealm,
+    series::SearchSeries,
+};
 
 
 /// Marker type to signal that the search functionality is unavailable for some
@@ -48,36 +55,47 @@ pub(crate) enum SearchOutcome {
 pub(crate) struct SearchResults<T> {
     pub(crate) items: Vec<T>,
     pub(crate) total_hits: usize,
+    pub(crate) duration: i32,
 }
 
-#[juniper::graphql_object(Context = Context)]
-impl SearchResults<NodeValue> {
-    fn items(&self) -> &[NodeValue] {
-        &self.items
-    }
-    fn total_hits(&self) -> i32 {
-        self.total_hits as i32
-    }
+macro_rules! make_search_results_object {
+    ($name:literal, $ty:ty) => {
+        #[juniper::graphql_object(Context = Context, name = $name)]
+        impl SearchResults<$ty> {
+            fn items(&self) -> &[$ty] {
+                &self.items
+            }
+            fn total_hits(&self) -> i32 {
+                self.total_hits as i32
+            }
+            /// How long searching took in ms.
+            fn duration(&self) -> i32 {
+                self.duration
+            }
+        }
+    };
 }
 
-#[juniper::graphql_object(Context = Context, name = "EventSearchResults")]
-impl SearchResults<search::Event> {
-    fn items(&self) -> &[search::Event] {
-        &self.items
-    }
+make_search_results_object!("SearchResults", NodeValue);
+make_search_results_object!("EventSearchResults", SearchEvent);
+make_search_results_object!("SeriesSearchResults", SearchSeries);
+make_search_results_object!("PlaylistSearchResults", search::Playlist);
+
+/// A byte range, encoded as two hex numbers separated by `-`.
+#[derive(Debug, Clone, Copy, GraphQLScalar)]
+#[graphql(parse_token(String))]
+pub struct ByteSpan {
+    pub start: u32,
+    pub len: u32,
 }
 
-#[juniper::graphql_object(Context = Context, name = "SeriesSearchResults")]
-impl SearchResults<search::Series> {
-    fn items(&self) -> &[search::Series] {
-        &self.items
+impl ByteSpan {
+    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
+        juniper::Value::scalar(format!("{:x}-{:x}", self.start, self.len))
     }
-}
 
-#[juniper::graphql_object(Context = Context, name = "PlaylistSearchResults")]
-impl SearchResults<search::Playlist> {
-    fn items(&self) -> &[search::Playlist] {
-        &self.items
+    fn from_input<S: ScalarValue>(_input: &InputValue<S>) -> Result<Self, String> {
+        unimplemented!("not used right now")
     }
 }
 
@@ -118,7 +136,7 @@ macro_rules! handle_search_result {
             // to happen. In those cases, we just say that the search is currently
             // unavailable, instead of the general error.
             Err(e @ MsError::Meilisearch(MsRespError { error_code: MsErrorCode::IndexNotFound, .. }))
-            | Err(e @ MsError::UnreachableServer)
+            | Err(e @ MsError::HttpError(_))
             | Err(e @ MsError::Timeout) => {
                 error!("Meili search failed: {e} (=> replying 'search unavailable')");
                 return Ok(<$return_type>::SearchUnavailable(SearchUnavailable));
@@ -148,6 +166,7 @@ pub(crate) async fn perform(
     filters: Filters,
     context: &Context,
 ) -> ApiResult<SearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if user_query.is_empty() {
         return Ok(SearchOutcome::EmptyQuery(EmptyQuery));
     }
@@ -158,116 +177,112 @@ pub(crate) async fn perform(
         let selection = search::Event::select();
         let query = format!("select {selection} from search_events \
             where id = (select id from events where opencast_id = $1) \
-            and (read_roles || 'ROLE_ADMIN'::text) && $2");
+            and (preview_roles || read_roles || 'ROLE_ADMIN'::text) && $2");
         let items: Vec<NodeValue> = context.db
             .query_opt(&query, &[&uuid_query, &context.auth.roles_vec()])
             .await?
-            .map(|row| search::Event::from_row_start(&row).into())
+            .map(|row| {
+                let e = search::Event::from_row_start(&row);
+                SearchEvent::without_matches(e, &context).into()
+            })
             .into_iter()
             .collect();
         let total_hits = items.len();
-        return Ok(SearchOutcome::Results(SearchResults { items, total_hits }));
+        return Ok(SearchOutcome::Results(SearchResults {
+            items,
+            total_hits,
+            duration: elapsed_time(),
+        }));
     }
 
 
     // Prepare the event search
-    let filter = Filter::And(
-        std::iter::once(Filter::Leaf("listed = true".into()))
-            .chain(acl_filter("read_roles", context))
-            // Filter out live events that are already over.
-            .chain([Filter::Or([
-                Filter::Leaf("is_live = false ".into()),
-                Filter::Leaf(format!("end_time_timestamp >= {}", Utc::now().timestamp()).into()),
-            ].into())])
-            .chain(filters.start.map(|start| Filter::Leaf(format!("created_timestamp >= {}", start.timestamp()).into())))
-            .chain(filters.end.map(|end| Filter::Leaf(format!("created_timestamp <= {}", end.timestamp()).into())))
-            .collect()
-    ).to_string();
+    let filter = Filter::and([
+        Filter::listed(),
+        Filter::preview_or_read_access(context),
+        // Filter out live events that already ended
+        Filter::or([
+            Filter::Leaf("is_live = false ".into()),
+            Filter::Leaf(format!("end_time_timestamp >= {}", Utc::now().timestamp()).into()),
+        ]),
+        // Apply user selected date filters
+        filters.start
+            .map(|start| Filter::Leaf(format!("created_timestamp >= {}", start.timestamp()).into()))
+            .unwrap_or(Filter::True),
+        filters.end
+            .map(|end| Filter::Leaf(format!("created_timestamp <= {}", end.timestamp()).into()))
+            .unwrap_or(Filter::True),
+    ]).to_string();
     let event_query = context.search.event_index.search()
         .with_query(user_query)
-        .with_limit(15)
         .with_show_matches_position(true)
         .with_filter(&filter)
-        .with_show_ranking_score(true)
         .build();
-
 
     // Prepare the series search
     let series_query = context.search.series_index.search()
         .with_query(user_query)
         .with_show_matches_position(true)
         .with_filter("listed = true")
-        .with_limit(15)
-        .with_show_ranking_score(true)
+        .with_federation_options(QueryFederationOptions {
+            weight: Some(1.1),
+        })
         .build();
-
 
     // Prepare the realm search
     let realm_query = context.search.realm_index.search()
         .with_query(user_query)
-        .with_limit(10)
         .with_filter("is_user_realm = false")
         .with_show_matches_position(true)
-        .with_show_ranking_score(true)
         .build();
 
+    let mut multi_search = context.search.client.multi_search();
+    if matches!(filters.item_type, None | Some(ItemType::Event)) {
+        multi_search.with_search_query(event_query);
+    }
+    if matches!(filters.item_type, None | Some(ItemType::Series)) {
+        multi_search.with_search_query(series_query);
+    }
+    if matches!(filters.item_type, None | Some(ItemType::Realm)) {
+        multi_search.with_search_query(realm_query);
+    }
+    let multi_search = multi_search.with_federation(FederationOptions {
+        limit: Some(30),
+        offset: Some(0), // TODO: pagination
+        ..Default::default()
+    });
 
-    // Perform the searches
-    let res = tokio::try_join!(
-        event_query.execute::<search::Event>(),
-        series_query.execute::<search::Series>(),
-        realm_query.execute::<search::Realm>(),
-    );
-    let (event_results, series_results, realm_results) = handle_search_result!(res, SearchOutcome);
 
-    // Merge results according to Meilis score.
-    //
-    // TODO: Comparing scores of different indices is not well defined right now.
-    // We can either use score details or adding dummy searchable fields to the
-    // realm index. See this discussion for more info:
-    // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
-    let events = event_results.hits.into_iter()
-        .map(|result| (NodeValue::from(result.result), result.ranking_score));
-    let series = series_results.hits.into_iter()
-        .map(|result| (NodeValue::from(result.result), result.ranking_score));
-    let realms = realm_results.hits.into_iter()
-        .map(|result| (NodeValue::from(result.result), result.ranking_score));
-
-    let mut merged: Vec<(NodeValue, Option<f64>)> = Vec::new();
-    let total_hits: usize;
-
-    match filters.item_type {
-        Some(ItemType::Event) => {
-            merged.extend(events);
-            total_hits = event_results.estimated_total_hits.unwrap_or(0);
-        },
-        Some(ItemType::Series) => {
-            merged.extend(series);
-            total_hits = series_results.estimated_total_hits.unwrap_or(0);
-        },
-        Some(ItemType::Realm) => {
-            merged.extend(realms);
-            total_hits = realm_results.estimated_total_hits.unwrap_or(0);
-        },
-        None => {
-            merged.extend(events);
-            merged.extend(series);
-            merged.extend(realms);
-            total_hits = [
-                event_results.estimated_total_hits,
-                series_results.estimated_total_hits,
-                realm_results.estimated_total_hits,
-            ]
-                .iter()
-                .filter_map(|&x| x)
-                .sum();
-        },
+    #[derive(serde::Deserialize)]
+    #[serde(untagged)]
+    enum MultiSearchItem {
+        Event(search::Event),
+        Series(search::Series),
+        Realm(search::Realm),
     }
 
-    merged.sort_unstable_by(|(_, score0), (_, score1)| score1.unwrap().total_cmp(&score0.unwrap()));
+    // TODO: Check if sort order makes sense. That's because comparing scores of
+    // different indices is not well defined right now. We can either use score
+    // details or adding dummy searchable fields to the realm index. See this
+    // discussion for more info:
+    // https://github.com/orgs/meilisearch/discussions/489#discussioncomment-6160361
+    let res = handle_search_result!(multi_search.execute::<MultiSearchItem>().await, SearchOutcome);
 
-    let items = merged.into_iter().map(|(node, _)| node).collect();
-    Ok(SearchOutcome::Results(SearchResults { items, total_hits }))
+    let items = res.hits.into_iter()
+        .map(|res| {
+            let mp = res.matches_position.as_ref();
+            match res.result {
+                MultiSearchItem::Event(event) => NodeValue::from(SearchEvent::new(event, mp, &context)),
+                MultiSearchItem::Series(series) => NodeValue::from(SearchSeries::new(series, mp, context)),
+                MultiSearchItem::Realm(realm) => NodeValue::from(SearchRealm::new(realm, mp)),
+            }
+        })
+        .collect();
+    Ok(SearchOutcome::Results(SearchResults {
+        items,
+        total_hits: res.estimated_total_hits,
+        duration: elapsed_time(),
+    }))
 }
 
 fn looks_like_opencast_uuid(query: &str) -> bool {
@@ -286,7 +301,7 @@ fn looks_like_opencast_uuid(query: &str) -> bool {
 #[graphql(Context = Context)]
 pub(crate) enum EventSearchOutcome {
     SearchUnavailable(SearchUnavailable),
-    Results(SearchResults<search::Event>),
+    Results(SearchResults<SearchEvent>),
 }
 
 pub(crate) async fn all_events(
@@ -294,19 +309,23 @@ pub(crate) async fn all_events(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<EventSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
 
-    let filter = Filter::make_or_none_for_admins(context, || {
+    let filter = Filter::make_or_true_for_admins(context, || {
         // All users can always find all events they have write access to. If
         // `writable_only` is false, this API also returns events that are
         // listed and that the user can read.
-        let writable = Filter::acl_access("write_roles", context);
+        let writable = Filter::write_access(context);
         if writable_only {
             writable
         } else {
-            Filter::or([Filter::listed_and_readable(context), writable])
+            Filter::or([
+                Filter::preview_or_read_access(context).and_listed(context),
+                writable,
+            ])
         }
     }).to_string();
 
@@ -314,16 +333,20 @@ pub(crate) async fn all_events(
     query.with_query(user_query);
     query.with_limit(50);
     query.with_show_matches_position(true);
+    // We don't want to search through, nor retrieve the event texts.
+    query.with_attributes_to_search_on(&["title", "creators", "series_title"]);
     query.with_filter(&filter);
     if user_query.is_empty() {
         query.with_sort(&["updated_timestamp:desc"]);
     }
     let res = query.execute::<search::Event>().await;
     let results = handle_search_result!(res, EventSearchOutcome);
-    let items = results.hits.into_iter().map(|h| h.result).collect();
+    let items = results.hits.into_iter()
+        .map(|h| SearchEvent::new(h.result, h.matches_position.as_ref(), &context))
+        .collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(EventSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(EventSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
 // See `EventSearchOutcome` for additional information.
@@ -331,7 +354,7 @@ pub(crate) async fn all_events(
 #[graphql(Context = Context)]
 pub(crate) enum SeriesSearchOutcome {
     SearchUnavailable(SearchUnavailable),
-    Results(SearchResults<search::Series>),
+    Results(SearchResults<SearchSeries>),
 }
 
 pub(crate) async fn all_series(
@@ -339,12 +362,13 @@ pub(crate) async fn all_series(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<SeriesSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
 
-    let filter = Filter::make_or_none_for_admins(context, || {
-        let writable = Filter::acl_access("write_roles", context);
+    let filter = Filter::make_or_true_for_admins(context, || {
+        let writable = Filter::write_access(context);
 
         // All users can always find all items they have write access to,
         // regardless whether they are listed or not.
@@ -355,7 +379,7 @@ pub(crate) async fn all_series(
         // Since series read_roles are not used for access control, we only need
         // to check whether we can return unlisted videos.
         if context.auth.can_find_unlisted_items(&context.config.auth) {
-            Filter::None
+            Filter::True
         } else {
             Filter::or([writable, Filter::listed()])
         }
@@ -371,10 +395,12 @@ pub(crate) async fn all_series(
     }
     let res = query.execute::<search::Series>().await;
     let results = handle_search_result!(res, SeriesSearchOutcome);
-    let items = results.hits.into_iter().map(|h| h.result).collect();
+    let items = results.hits.into_iter()
+        .map(|h| SearchSeries::new(h.result, h.matches_position.as_ref(), context))
+        .collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(SeriesSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
 #[derive(juniper::GraphQLUnion)]
@@ -389,19 +415,23 @@ pub(crate) async fn all_playlists(
     writable_only: bool,
     context: &Context,
 ) -> ApiResult<PlaylistSearchOutcome> {
+    let elapsed_time = measure_search_duration();
     if !context.auth.is_user() {
         return Err(context.not_logged_in_error());
     }
 
-    let filter = Filter::make_or_none_for_admins(context, || {
+    let filter = Filter::make_or_true_for_admins(context, || {
         // All users can always find all playlists they have write access to. If
         // `writable_only` is false, this API also returns playlists that are
         // listed and that the user can read.
-        let writable = Filter::acl_access("write_roles", context);
+        let writable = Filter::write_access(context);
         if writable_only {
             writable
         } else {
-            Filter::or([Filter::listed_and_readable(context), writable])
+            Filter::or([
+                Filter::read_access(context).and_listed(context),
+                writable,
+            ])
         }
     }).to_string();
 
@@ -418,42 +448,49 @@ pub(crate) async fn all_playlists(
     let items = results.hits.into_iter().map(|h| h.result).collect();
     let total_hits = results.estimated_total_hits.unwrap_or(0);
 
-    Ok(PlaylistSearchOutcome::Results(SearchResults { items, total_hits }))
+    Ok(PlaylistSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
 }
 
-// TODO: replace usages of this and remove this.
-fn acl_filter(action: &str, context: &Context) -> Option<Filter> {
-    // If the user is admin, we just skip the filter alltogether as the admin
-    // can see anything anyway.
-    if context.auth.is_admin() {
-        return None;
-    }
-
-    Some(Filter::acl_access(action, context))
-}
 
 enum Filter {
     // TODO: try to avoid Vec if not necessary. Oftentimes there are only two operands.
+
+    /// Must not contain `Filter::None`, which is handled by `Filter::and`.
     And(Vec<Filter>),
+
+    /// Must not contain `Filter::None`, which is handled by `Filter::or`.
     Or(Vec<Filter>),
     Leaf(Cow<'static, str>),
 
-    /// No filter. Formats to empty string and is filtered out if inside the
-    /// `And` or `Or` operands.
-    None,
+    /// A constant `true`. Inside `Or`, results in the whole `Or` expression
+    /// being replaced by `True`. Inside `And`, this is just filtered out and
+    /// the remaining operands are evaluated. If formated on its own, empty
+    /// string is emitted.
+    True,
 }
 
 impl Filter {
-    fn make_or_none_for_admins(context: &Context, f: impl FnOnce() -> Self) -> Self {
-        if context.auth.is_admin() { Self::None } else { f() }
+    fn make_or_true_for_admins(context: &Context, f: impl FnOnce() -> Self) -> Self {
+        if context.auth.is_admin() { Self::True } else { f() }
     }
 
     fn or(operands: impl IntoIterator<Item = Self>) -> Self {
-        Self::Or(operands.into_iter().collect())
+        let mut v = Vec::new();
+        for op in operands {
+            if matches!(op, Self::True) {
+                return Self::True;
+            }
+            v.push(op);
+        }
+        Self::Or(v)
     }
 
     fn and(operands: impl IntoIterator<Item = Self>) -> Self {
-        Self::And(operands.into_iter().collect())
+        Self::And(
+            operands.into_iter()
+                .filter(|op| !matches!(op, Self::True))
+                .collect(),
+        )
     }
 
     /// Returns the filter "listed = true".
@@ -461,22 +498,35 @@ impl Filter {
         Self::Leaf("listed = true".into())
     }
 
-    /// Returns a filter checking that the current user has read access and that
-    /// the item is listed. If the user has the privilege to find unlisted
-    /// item, the second check is not performed.
-    fn listed_and_readable(context: &Context) -> Self {
-        let readable = Self::acl_access("read_roles", context);
+    /// If the user can find unlisted items, just returns `self`. Otherweise,
+    /// `self` is ANDed with `Self::listed()`.
+    fn and_listed(self, context: &Context) -> Self {
         if context.auth.can_find_unlisted_items(&context.config.auth) {
-            readable
+            self
         } else {
-            Self::and([readable, Self::listed()])
+            Self::and([self, Self::listed()])
         }
+    }
+
+    fn read_access(context: &Context) -> Self {
+        Self::make_or_true_for_admins(context, || Self::acl_access_raw("read_roles", context))
+    }
+
+    fn write_access(context: &Context) -> Self {
+        Self::make_or_true_for_admins(context, || Self::acl_access_raw("write_roles", context))
+    }
+
+    fn preview_or_read_access(context: &Context) -> Self {
+        Self::make_or_true_for_admins(context, || Self::or([
+            Self::acl_access_raw("read_roles", context),
+            Self::acl_access_raw("preview_roles", context),
+        ]))
     }
 
     /// Returns a filter checking if `roles_field` has any overlap with the
     /// current user roles. Encodes all roles as hex to work around Meili's
-    /// lack of case-sensitive comparison.
-    fn acl_access(roles_field: &str, context: &Context) -> Self {
+    /// lack of case-sensitive comparison. Does not handle the ROLE_ADMIN case.
+    fn acl_access_raw(roles_field: &str, context: &Context) -> Self {
         use std::io::Write;
         const HEX_DIGITS: &[u8; 16] = b"0123456789abcdef";
 
@@ -503,10 +553,8 @@ impl Filter {
 impl fmt::Display for Filter {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fn join(f: &mut fmt::Formatter, operands: &[Filter], sep: &str) -> fmt::Result {
-            if operands.iter().all(|op| matches!(op, Filter::None)) {
-                return Ok(());
-            }
-
+            // We are guaranteed by `and` and `or` methods that there are no
+            // `Self::True`s in here.
             write!(f, "(")?;
             for (i, operand) in operands.iter().enumerate() {
                 if i > 0 {
@@ -521,7 +569,33 @@ impl fmt::Display for Filter {
             Self::And(operands) => join(f, operands, "AND"),
             Self::Or(operands) =>  join(f, operands, "OR"),
             Self::Leaf(s) => write!(f, "{s}"),
-            Self::None => Ok(()),
+            Self::True => Ok(()),
         }
     }
+}
+
+
+fn match_ranges_for<'a>(
+    match_positions: Option<&'a HashMap<String, Vec<MatchRange>>>,
+    field: &str,
+) -> &'a [MatchRange] {
+    match_positions
+        .and_then(|m| m.get(field))
+        .map(|v| v.as_slice())
+        .unwrap_or_default()
+}
+
+fn field_matches_for(
+    match_positions: Option<&HashMap<String, Vec<MatchRange>>>,
+    field: &str,
+) -> Vec<ByteSpan> {
+    match_ranges_for(match_positions, field).iter()
+        .map(|m| ByteSpan { start: m.start as u32, len: m.length as u32 })
+        .take(8) // The frontend can only show a limited number anyway
+        .collect()
+}
+
+pub(crate) fn measure_search_duration() -> impl FnOnce() -> i32 {
+    let start = Instant::now();
+    move || start.elapsed().as_millis() as i32
 }

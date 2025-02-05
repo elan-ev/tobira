@@ -3,9 +3,10 @@ use postgres_types::ToSql;
 
 use crate::{
     api::{
-        common::NotAllowed, err::ApiResult, Context, Id, Node
+        common::NotAllowed, err::ApiResult, Context, Id, Node, NodeValue
     },
-    db::{types::Key, util::{impl_from_db, select}},
+    db::util::{impl_from_db, select},
+    model::Key,
     prelude::*,
 };
 
@@ -101,7 +102,7 @@ impl Playlist {
 }
 
 /// Represents an Opencast playlist.
-#[graphql_object(Context = Context)]
+#[graphql_object(Context = Context, impl = NodeValue)]
 impl AuthorizedPlaylist {
     fn id(&self) -> Id {
         Node::id(self)
@@ -136,7 +137,8 @@ impl AuthorizedPlaylist {
                 where (entry).type = 'event'\
             )
             select {selection} from event_ids \
-            left join events on events.opencast_id = event_ids.id\
+            left join events on events.opencast_id = event_ids.id \
+            left join series on series.id = events.series\
         ");
         context.db
             .query_mapped(&query, dbargs![&self.key], |row| {

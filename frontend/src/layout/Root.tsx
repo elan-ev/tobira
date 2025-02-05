@@ -1,4 +1,4 @@
-import React, { ReactNode, Suspense } from "react";
+import React, { ReactNode, useEffect, useMemo, useRef } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 import { screenWidthAtMost } from "@opencast/appkit";
@@ -15,6 +15,7 @@ import { GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery } fro
 import { OperationType } from "relay-runtime";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { useNoindexTag } from "../util";
+import { useRouter } from "../router";
 
 
 export const MAIN_PADDING = 16;
@@ -129,13 +130,7 @@ type RootLoaderProps<Q extends QueryWithUserData> = {
 };
 
 /** Entry point for almost all routes: loads the GraphQL query and renders the main page layout */
-export const RootLoader = <Q extends QueryWithUserData>(props: RootLoaderProps<Q>) => (
-    <Suspense fallback={<InitialLoading />}>
-        <RootLoaderImpl {...props} />
-    </Suspense>
-);
-
-export const RootLoaderImpl = <Q extends QueryWithUserData>({
+export const RootLoader = <Q extends QueryWithUserData>({
     query,
     queryRef,
     nav,
@@ -146,9 +141,31 @@ export const RootLoaderImpl = <Q extends QueryWithUserData>({
     const data = usePreloadedQuery(query, queryRef);
     const userData = useFragment(userDataFragment, data);
 
+    // We use a counter to force rerendering of the main part, whenever the user
+    // navigates. This is an unfortunate hack for some cases where routes are
+    // not rerendered. For example, the upload route, after uploading a video,
+    // clicking on "upload video" in the user menu again does nothing without
+    // this hack.
+    const counter = useRef(0);
+    const router = useRouter();
+    useEffect(() => router.listenBeforeNav(() => {
+        counter.current += 1;
+        return undefined;
+    }));
+
+    // Unfortunately, `<ActiveRoute />` and `<RootLoader />` are still rendered
+    // more than they need to on router navigation. I could not figure out how
+    // to fix that. So here, we at least memoize the rendering of the whole
+    // page, so that we don't rerun expensive rendering.
+    const content = useMemo(() => (
+        <Root nav={nav(data)}>
+            <React.Fragment key={counter.current}>{render(data)}</React.Fragment>
+        </Root>
+    ), [render, nav, data]);
+
     return (
         <UserProvider data={userData?.currentUser}>
-            <Root nav={nav(data)}>{render(data)}</Root>
+            {content}
         </UserProvider>
     );
 };

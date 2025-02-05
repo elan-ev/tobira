@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use super::{HttpHost, TranslatedString};
+use crate::model::TranslatedString;
+use super::HttpHost;
 
 
 #[derive(Debug, confique::Config)]
@@ -12,7 +13,7 @@ pub(crate) struct GeneralConfig {
 
     /// Public URL to Tobira (without path).
     /// Used for RSS feeds, as those require specifying absolute URLs to resources.
-    /// 
+    ///
     /// Example: "https://tobira.my-uni.edu".
     pub(crate) tobira_url: HttpHost,
 
@@ -22,16 +23,16 @@ pub(crate) struct GeneralConfig {
     /// These can be specified in multiple languages.
     /// Consent is prompted upon first use and only if this is configured. It is
     /// re-prompted when any of these values change.
-    /// 
+    ///
     /// We recommend not to configure this unless absolutely necessary,
     /// in order to not degrade the user experience needlessly.
-    /// 
+    ///
     /// Example:
-    /// 
+    ///
     /// ```
-    /// initial_consent.title.en = "Terms & Conditions"
-    /// initial_consent.button.en = "Agree"
-    /// initial_consent.text.en = """
+    /// initial_consent.title.default = "Terms & Conditions"
+    /// initial_consent.button.default = "Agree"
+    /// initial_consent.text.default = """
     /// To use Tobira, you need to agree to our terms and conditions:
     /// - [Terms](https://www.our-terms.de)
     /// - [Conditions](https://www.our-conditions.de)
@@ -49,13 +50,13 @@ pub(crate) struct GeneralConfig {
     /// add custom ones. Note that these two default links are special and can
     /// be specified with only the shown string. To add custom ones, you need
     /// to define a label and a link. The link is either the same for every language
-    /// or can be specified for each language in the same manner as the label. 
+    /// or can be specified for each language in the same manner as the label.
     /// Example:
     ///
     /// ```
     /// footer_links = [
-    ///     { label = { en = "Example 1" }, link = "https://example.com" },
-    ///     { label = { en = "Example 2" }, link = { en = "https://example.com/en" } },
+    ///     { label = { default = "Example 1" }, link = "https://example.com" },
+    ///     { label = { default = "Example 2" }, link = { default = "https://example.com/en" } },
     ///     "about",
     /// ]
     /// ```
@@ -65,8 +66,8 @@ pub(crate) struct GeneralConfig {
     /// Additional metadata that is shown below a video. Example:
     ///
     ///     [general.metadata]
-    ///     dcterms.spatial = { en = "Location", de = "Ort" }
-    ///     "http://my.domain/xml/namespace".courseLink = { en = "Course", de = "Kurs"}
+    ///     dcterms.spatial = { default = "Location", de = "Ort" }
+    ///     "http://my.domain/xml/namespace".courseLink = { default = "Course", de = "Kurs"}
     ///
     /// As you can see, this is a mapping of a metadata location (the XML
     /// namespace and the name) to a translated label. For the XML namespace
@@ -110,6 +111,23 @@ pub(crate) struct GeneralConfig {
     /// (partial) name.
     #[config(default = false)]
     pub users_searchable: bool,
+
+    /// This allows users to edit the ACL of events they have write access for.
+    /// Doing so will update these in Opencast and start the `republish-metadata`
+    /// workflow to propagate the changes to other publications as well.
+    /// Instead of waiting for the workflow however, Tobira will also immediately
+    /// store the updated ACL in its database.
+    ///
+    /// Note that this might lead to situations where the event ACL in Tobira is different
+    /// from that in other publications, mainly if the afore mentioned workflow fails
+    /// or takes an unusually long time to complete.
+    #[config(default = true)]
+    pub allow_acl_edit: bool,
+
+    /// Activating this will disable ACL editing for events that are part of a series.
+    /// For the uploader, this means that the ACL of the series will be used.
+    #[config(default = false)]
+    pub lock_acl_to_series: bool,
 }
 
 const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];

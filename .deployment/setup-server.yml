@@ -33,10 +33,10 @@
     - name: install MeiliSearch
       become: true
       get_url:
-        url: https://github.com/meilisearch/meilisearch/releases/download/v1.4.2/meilisearch-linux-amd64
+        url: https://github.com/meilisearch/meilisearch/releases/download/v1.12.6/meilisearch-linux-amd64
         dest: /opt/meili/meilisearch
         mode: '0755'
-        checksum: 'sha256:b54b9ace213b0d45558c5d0e79710f718b63d2e29c190fb95be01dc27eb1ca5c'
+        checksum: 'sha256:a9ca34a578fd1b3f5e68dab69f396bcc02cf0bfc1409c377efde25df43cb6809'
       register: meili_updated
       notify: restart MeiliSearch
 

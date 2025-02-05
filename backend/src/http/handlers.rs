@@ -4,7 +4,7 @@ use hyper::{
     http::{uri::PathAndQuery, HeaderValue},
     Method, Request, StatusCode, Uri,
 };
-use juniper::{http::GraphQLResponse, graphql_value};
+use juniper::{graphql_value, http::{GraphQLRequest, GraphQLResponse}};
 use std::{
     collections::HashSet,
     fmt,
@@ -30,19 +30,8 @@ use super::{Context, Response, response};
 /// This is the main HTTP entry point, called for each incoming request.
 pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Response {
     let time_incoming = Instant::now();
-    trace!(
-        method = ?req.method(),
-        path = req.uri().path_and_query().map_or("", |pq| pq.as_str()),
-        "Incoming HTTP request",
-    );
-    if ctx.config.log.log_http_headers {
-        let mut out = String::new();
-        for (name, value) in req.headers() {
-            use std::fmt::Write;
-            write!(out, "\n  {}: {}", name, String::from_utf8_lossy(value.as_bytes())).unwrap();
-        }
-        trace!("HTTP Headers: {}", out);
-    }
+    super::log::req::log(&req);
+    super::log::headers::log(&req);
 
     let method = req.method().clone();
     let path = req.uri().path().trim_end_matches('/');
@@ -185,39 +174,12 @@ async fn handle_rss_request(path: &str, ctx: &Arc<Context>) -> Result<Response, 
 
 /// Handles a request to `/graphql`. Method has to be POST.
 async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, Response> {
-    // TODO: With Juniper 0.16, this function can likely be simplified!
-
-    /// This is basically `juniper::http::GraphQLRequest`. We unfortunately have
-    /// to duplicate it here to get access to the fields (which are private in
-    /// Juniper 0.15).
-    #[derive(serde::Deserialize)]
-    struct GraphQLReq {
-        query: String,
-        variables: Option<juniper::InputValue>,
-        #[serde(rename = "operationName")]
-        operation_name: Option<String>,
-    }
-
-    impl GraphQLReq {
-        fn variables(&self) -> juniper::Variables {
-            self.variables
-                .as_ref()
-                .and_then(|iv| {
-                    iv.to_object_value().map(|o| {
-                        o.into_iter()
-                            .map(|(k, v)| (k.to_owned(), v.clone()))
-                            .collect()
-                    })
-                })
-                .unwrap_or_default()
-        }
-    }
-
-    impl fmt::Display for GraphQLReq {
+    struct GqlReqPrinter<'a>(&'a GraphQLRequest);
+    impl fmt::Display for GqlReqPrinter<'_> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            writeln!(f, "Query:\n{}", self.query)?;
-            writeln!(f, "Operation name: {:?}", self.operation_name)?;
-            writeln!(f, "Variables: {}", serde_json::to_string_pretty(&self.variables).unwrap())?;
+            writeln!(f, "Query:\n{}", self.0.query)?;
+            writeln!(f, "Operation name: {:?}", self.0.operation_name)?;
+            writeln!(f, "Variables: {}", serde_json::to_string_pretty(&self.0.variables).unwrap())?;
             Ok(())
         }
     }
@@ -245,7 +207,7 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
     })?;
 
     // Parse body as GraphQL request.
-    let gql_request = serde_json::from_slice::<GraphQLReq>(&raw_body).map_err(|e| {
+    let gql_request = serde_json::from_slice::<GraphQLRequest>(&raw_body).map_err(|e| {
         warn!("Failed to deserialize GraphQL request: {e}");
         response::bad_request("invalid GraphQL request body")
     })?;
@@ -327,7 +289,7 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
         // since panicking only brings down the current thread, we have to
         // reach for more drastic measures.
         error!("FATAL BUG: API handler kept reference to transaction. Ending process.");
-        debug!("Request:\n{gql_request}");
+        debug!("Request:\n{}", GqlReqPrinter(&gql_request));
         std::process::abort();
     });
 
@@ -335,7 +297,7 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
     // Check if any errors occured.
     macro_rules! log_and_rollback {
         () => {
-            debug!("Failed request:\n{gql_request}");
+            debug!("Failed request:\n{}", GqlReqPrinter(&gql_request));
             debug!("Rolling back DB transaction...");
             if let Err(e) = tx.rollback().await {
                 error!("Failed to rollback transaction: {e}\nWill give up now. Transaction \
@@ -356,16 +318,6 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
 
         Ok((value, errors)) if !errors.is_empty() => {
             let error_to_msg = |e: &juniper::ExecutionError<juniper::DefaultScalarValue>| {
-                // Uh oh: `message` is a `#[doc(hidden)]` method, which usually
-                // means that the library authors only need it public for macro
-                // purposes and that its not actually part of the public API
-                // that is evolved through semver. But: lots of things in
-                // Juniper are weird, so this doesn't necessarily have any
-                // intent behind it. Also, we can always get at the same data
-                // by serializing this error as JSON and poking it out like
-                // that. Using the method is just easier. If the method is ever
-                // removed, we have to use the JSON solution. But I'm very sure
-                // it won't be removed in 0.15.x anymore.
                 format!("{} (at `{}`)", e.error().message(), e.path().join("."))
             };
 
@@ -415,7 +367,7 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
                 //
                 // TODO: put all of this code in a loop and retry a couple times.
                 error!("Failed to commit transaction for API request: {}", e);
-                debug!("Request:\n{gql_request}");
+                debug!("Request:\n{}", GqlReqPrinter(&gql_request));
                 return Err(response::service_unavailable());
             };
 

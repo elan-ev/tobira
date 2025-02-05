@@ -1,5 +1,6 @@
-use std::time::Duration;
+use std::{sync::LazyLock, time::Duration};
 
+use ahash::AHashSet;
 use meilisearch_sdk::{errors::{Error, ErrorCode}, indexes::Index, tasks::Task, task_info::TaskInfo};
 
 use crate::{
@@ -42,6 +43,35 @@ pub(super) async fn lazy_set_special_attributes(
     Ok(())
 }
 
+// This might seem like a good use case for a perfect hash table, but that's not
+// even faster than this solution with a really fast hash. See
+// https://github.com/LukasKalbertodt/case-insensitive-small-set-bench
+pub static STOP_WORDS: LazyLock<AHashSet<&str>> = LazyLock::new(|| {
+    const RAW: &str = include_str!("stop-words.txt");
+    RAW.lines()
+        .map(|l| l.split('#').next().unwrap().trim())
+        .filter(|s| !s.is_empty())
+        .collect()
+});
+
+/// Returns `true` iff the given string is contained in our list of stop words.
+/// The comparison ignores ASCII case.
+///
+/// We do have a few stop words with non-ASCII chars, but those are only in the
+/// middle of the word. And ASCII-lowercasing is much easier and therefore
+/// faster than proper Unicode-lowercasing.
+pub fn is_stop_word(s: &str) -> bool {
+    if s.bytes().all(|b| b.is_ascii_lowercase()) {
+        STOP_WORDS.contains(s)
+    } else {
+        // This string allocation seems like it would really hurt
+        // performance, but it's really not that bad. All in all, doing
+        // it like this is actually quite fast. See
+        // https://github.com/LukasKalbertodt/case-insensitive-small-set-bench
+        STOP_WORDS.contains(s.to_ascii_lowercase().as_str())
+    }
+}
+
 /// Encodes roles inside an ACL (e.g. for an event) to be stored in the index.
 /// The roles are hex encoded to be filterable properly with Meili's
 /// case-insensitive filtering. Also, `ROLE_ADMIN` is removed as an space
@@ -51,6 +81,17 @@ pub(super) fn encode_acl(roles: &[String]) -> Vec<String> {
     roles.iter()
         .filter(|&role| role != ROLE_ADMIN)
         .map(hex::encode)
+        .collect()
+}
+
+/// Decodes hex encoded ACL roles.
+pub(crate) fn decode_acl(roles: &[String]) -> Vec<String> {
+    roles.iter()
+        .map(|role| {
+            let bytes = hex::decode(role).expect("Failed to decode role");
+
+            String::from_utf8(bytes).expect("Failed to convert bytes to string")
+        })
         .collect()
 }
 

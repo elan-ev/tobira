@@ -1,6 +1,8 @@
-use std::{path::PathBuf, fmt};
+use std::{collections::HashMap, fmt, path::PathBuf};
+use serde::{Deserialize, Serialize};
 
-use super::color::ColorConfig;
+use crate::model::LangKey;
+use super::{color::ColorConfig};
 
 
 #[derive(Debug, confique::Config)]
@@ -10,13 +12,24 @@ pub(crate) struct ThemeConfig {
     #[config(default = 85)]
     pub(crate) header_height: u32,
 
-    /// Logo used in the top left corner of the page. Using SVG logos is recommended.
-    /// See the documentation on theming/logos for more info!
-    #[config(nested)]
-    pub(crate) logo: LogoConfig,
-
     /// Path to an SVG file that is used as favicon.
     pub(crate) favicon: PathBuf,
+
+    /// Logo used in the top left corner of the page. Using SVG logos is recommended.
+    /// You can configure specific logos for small and large screens, dark and light mode,
+    /// and any number of languages. Example:
+    ///
+    /// ```
+    /// logos = [
+    ///     { path = "logo-wide-light.svg", mode = "light", size = "wide", resolution = [425, 182] },
+    ///     { path = "logo-wide-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
+    ///     { path = "logo-small.svg", size = "narrow", resolution = [212, 182] },
+    /// ]
+    /// ```
+    ///
+    /// See the documentation on theming/logos for more info and additional examples!
+    #[config(validate = validate_logos)]
+    pub(crate) logos: Vec<LogoDef>,
 
     /// Colors used in the UI. Specified in sRGB.
     #[config(nested)]
@@ -26,36 +39,42 @@ pub(crate) struct ThemeConfig {
     pub(crate) font: FontConfig,
 }
 
-
-#[derive(Debug, confique::Config)]
-pub(crate) struct LogoConfig {
-    /// The normal, usually wide logo that is shown on desktop screens. The
-    /// value is a map with a `path` and `resolution` key:
-    ///
-    ///     large = { path = "logo.svg", resolution = [20, 8] }
-    ///
-    /// The resolution is only an aspect ratio. It is used to avoid layout
-    /// shifts in the frontend by allocating the correct size for the logo
-    /// before the browser loaded the file.
-    pub(crate) large: LogoDef,
-
-    /// A less wide logo used for narrow screens.
-    pub(crate) small: Option<LogoDef>,
-    
-    /// Large logo for dark mode usage.
-    pub(crate) large_dark: Option<LogoDef>,
-
-    /// Small logo for dark mode usage.
-    pub(crate) small_dark: Option<LogoDef>,
-}
-
 #[derive(Debug, Clone, serde::Deserialize)]
 pub(crate) struct LogoDef {
+    pub(crate) size: Option<LogoSize>,
+    pub(crate) mode: Option<LogoMode>,
+    pub(crate) lang: Option<LangKey>,
     pub(crate) path: PathBuf,
     pub(crate) resolution: LogoResolution,
 }
 
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum LogoSize {
+    Wide,
+    Narrow,
+}
+
+impl fmt::Display for LogoSize {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.serialize(f)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum LogoMode {
+    Light,
+    Dark,
+}
+
+impl fmt::Display for LogoMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.serialize(f)
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub(crate) struct LogoResolution(pub(crate) [u32; 2]);
 
 impl fmt::Debug for LogoResolution {
@@ -127,4 +146,75 @@ impl ThemeConfig {
 
         out
     }
+}
+
+fn validate_logos(logos: &Vec<LogoDef>) -> Result<(), String> {
+    #[derive()]
+    enum LangLogo {
+        Universal(usize),
+        LangSpecific(HashMap<LangKey, usize>),
+    }
+
+    let all_modes = [LogoMode::Light, LogoMode::Dark];
+    let all_sizes = [LogoSize::Wide, LogoSize::Narrow];
+
+    let mut cases = HashMap::new();
+    for (i, logo) in logos.iter().enumerate() {
+        let modes = logo.mode.map(|m| vec![m]).unwrap_or(all_modes.to_vec());
+        let sizes = logo.size.map(|s| vec![s]).unwrap_or(all_sizes.to_vec());
+
+        for &mode in &modes {
+            for &size in &sizes {
+                let key = (mode, size);
+
+                if let Some(entry) = cases.get_mut(&key) {
+                    let conflicting = match (entry, &logo.lang) {
+                        (LangLogo::LangSpecific(m), Some(lang)) => m.insert(lang.clone(), i),
+                        (LangLogo::LangSpecific(m), None) => m.values().next().copied(),
+                        (LangLogo::Universal(c), _) => Some(*c),
+                    };
+
+                    if let Some(conflicting) = conflicting {
+                        return Err(format!(
+                            "ambiguous logo definition: \
+                                entry {i} (path: '{curr_path}') conflicts with \
+                                entry {prev_index} (path: '{prev_path}'). \
+                                Both define a {mode} {size} logo, which is only allowed \
+                                if both have different 'lang' keys! Consider adding 'mode' \
+                                or 'size' fields to make entries more specific.",
+                            i = i + 1,
+                            prev_index = conflicting + 1,
+                            curr_path = logo.path.display(),
+                            prev_path = logos[conflicting].path.display(),
+                        ));
+                    }
+                } else {
+                    cases.insert(key, match &logo.lang {
+                        Some(lang) => LangLogo::LangSpecific(HashMap::from([(lang.clone(), i)])),
+                        None => LangLogo::Universal(i),
+                    });
+                }
+            }
+        }
+    }
+
+    // Check that all cases are defined
+    for mode in all_modes {
+        for size in all_sizes {
+            match cases.get(&(mode, size)) {
+                None => return Err(format!(
+                    "incomplete logo configuration: no {mode} {size} logo defined",
+                )),
+                Some(LangLogo::LangSpecific(m)) if !m.contains_key(&LangKey::Default) => {
+                    return Err(format!(
+                        "incomplete logo configuration: {mode} {size} logo is \
+                            missing `lang = '*'` entry",
+                    ));
+                }
+                _ => {}
+            }
+        }
+    }
+
+    Ok(())
 }

@@ -1,9 +1,10 @@
+use juniper::{GraphQLScalar, InputValue, ScalarValue};
 use paste::paste;
 use serde::{Deserialize, Serialize};
 use static_assertions::const_assert;
 use std::fmt;
 
-use crate::db::types::Key;
+use crate::model::Key;
 
 
 /// An opaque, globally-unique identifier for all "nodes" that the GraphQL API
@@ -14,7 +15,12 @@ use crate::db::types::Key;
 /// sure we can easily convert the ID to a database primary key.
 ///
 /// Each key is encoded as 12 byte ASCII string.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, GraphQLScalar)]
+#[graphql(
+    name = "ID",
+    description = "An opaque, globally-unique identifier",
+    parse_token(String),
+)]
 pub(crate) struct Id {
     /// The kind of node. Each different "thing" in our API has a different
     /// static prefix. For example, realms have the prefix `b"re"`. All IDs
@@ -121,49 +127,28 @@ impl Id {
     pub(crate) fn kind(&self) -> [u8; 2] {
         self.kind
     }
-}
 
-/// The URL-safe base64 alphabet.
-const BASE64_DIGITS: &[u8; 64] =
-    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-
-impl Key {
-    pub(crate) fn from_base64(s: &str) -> Option<Self> {
-        if s.len() != 11 {
-            return None;
-        }
-
-        decode_base64(s.as_bytes())
+    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
+        juniper::Value::scalar(self.to_string())
     }
 
-    pub(crate) fn to_base64<'a>(&self, out: &'a mut [u8; 11]) -> &'a str {
-        // Base64 encoding. After this loop, `n` is always 0, because `u64::MAX`
-        // divided by 64 eleven times is 0.
-        let mut n = self.0;
-        for i in (0..out.len()).rev() {
-            out[i] = BASE64_DIGITS[(n % 64) as usize];
-            n /= 64;
-        }
-        debug_assert!(n == 0);
-
-        std::str::from_utf8(out)
-            .expect("bug: base64 did produce non-ASCII character")
+    fn from_input<S: ScalarValue>(input: &InputValue<S>) -> Result<Self, String> {
+        let s = input.as_string_value().ok_or("expected string")?;
+        Ok(s.parse().unwrap_or(Self::invalid()))
     }
 }
 
 impl std::str::FromStr for Id {
-    // TODO: we might want to have more information about the error later, but
-    // the GraphQL API doesn't currently use it anyway.
-    type Err = ();
+    type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() != 13 {
-            return Err(());
+            return Err("invalid length");
         }
 
         let bytes = s.as_bytes();
         let kind = [bytes[0], bytes[1]];
-        let key = Key::from_base64(&s[2..]).ok_or(())?;
+        let key = Key::from_base64(&s[2..]).ok_or("invalid base64")?;
 
         Ok(Self { kind, key })
     }
@@ -182,80 +167,10 @@ impl fmt::Display for Id {
     }
 }
 
-#[juniper::graphql_scalar(
-    name = "ID",
-    description = "An opaque, globally-unique identifier",
-)]
-impl<S> GraphQLScalar for Id
-where
-    S: juniper::ScalarValue
-{
-    fn resolve(&self) -> juniper::Value {
-        juniper::Value::scalar(self.to_string())
-    }
-
-    fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
-        let s = value.as_string_value()?;
-        Some(s.parse().unwrap_or(Self::invalid()))
-    }
-
-    fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
-        <String as juniper::ParseScalarValue<S>>::from_str(value)
-    }
-}
-
-fn decode_base64(src: &[u8]) -> Option<Key> {
-    /// The reverse lookup table to `BASE64_DIGITS`. If you index by an ASCII value, you
-    /// either get the corresponding digit value OR `0xFF`, signalling that the
-    /// character is not a valid base64 character.
-    const DECODE_TABLE: [u8; 256] = create_decode_table();
-
-    const fn create_decode_table() -> [u8; 256] {
-        let mut out = [0xFF; 256];
-
-        // If you wonder why we are using `while` instead of a more idiomatic loop:
-        // const fns are still somewhat limited and do not allow `for`.
-        let mut i = 0;
-        while i < BASE64_DIGITS.len() {
-            out[BASE64_DIGITS[i] as usize] = i as u8;
-            i += 1;
-        }
-
-        out
-    }
-
-    fn lookup(ascii: u8) -> Option<u64> {
-        let raw = DECODE_TABLE[ascii as usize];
-        if raw == 0xFF {
-            return None;
-        }
-
-        Some(raw as u64)
-    }
-
-    let src: [u8; 11] = src.try_into().ok()?;
-
-    // Make sure the string doesn't decode to a number > `u64::MAX`. Luckily,
-    // checking that is easy. `u64::MAX` encodes to `P__________`, so the next
-    // higher number would carry through and make the highest digit a `Q`. So we
-    // just make sure the first digit is between 'A' and 'P'.
-    if src[0] > b'P' || src[0] < b'A' {
-        return None;
-    }
-
-    src.iter()
-        .rev()
-        .enumerate()
-        .map(|(i, &d)| lookup(d).map(|n| n * 64u64.pow(i as u32)))
-        .sum::<Option<u64>>()
-        .map(Key)
-}
-
-
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use super::{Id, Key, BASE64_DIGITS};
+    use super::{Id, Key};
 
     #[test]
     fn simple() {
@@ -280,18 +195,18 @@ mod tests {
     #[test]
     fn invalid_decode() {
         // Wrong length
-        assert_eq!(Id::from_str(""), Err(()));
-        assert_eq!(Id::from_str("re"), Err(()));
-        assert_eq!(Id::from_str("reAAAAAAAAAAAA"), Err(()));
+        assert_eq!(Id::from_str(""), Err("invalid length"));
+        assert_eq!(Id::from_str("re"), Err("invalid length"));
+        assert_eq!(Id::from_str("reAAAAAAAAAAAA"), Err("invalid length"));
 
         // Invalid characters
-        assert_eq!(Id::from_str("re0000000000*"), Err(()));
-        assert_eq!(Id::from_str("re0000000000?"), Err(()));
-        assert_eq!(Id::from_str("re0000000000/"), Err(()));
+        assert_eq!(Id::from_str("re0000000000*"), Err("invalid base64"));
+        assert_eq!(Id::from_str("re0000000000?"), Err("invalid base64"));
+        assert_eq!(Id::from_str("re0000000000/"), Err("invalid base64"));
 
         // Encoded value > u64::MAX
-        assert_eq!(Id::from_str("srQAAAAAAAAAA"), Err(()));
-        assert_eq!(Id::from_str("sr___________"), Err(()));
+        assert_eq!(Id::from_str("srQAAAAAAAAAA"), Err("invalid base64"));
+        assert_eq!(Id::from_str("sr___________"), Err("invalid base64"));
     }
 
     #[test]
@@ -305,7 +220,7 @@ mod tests {
                 let id = Id { kind: Id::REALM_KIND, key: Key((n as u64) << shift) };
                 let s = id.to_string();
                 assert_eq!(s[..2].as_bytes(), Id::REALM_KIND);
-                assert!(s[2..].bytes().all(|d| BASE64_DIGITS.contains(&d)));
+                assert!(s[2..].bytes().all(|d| crate::util::BASE64_DIGITS.contains(&d)));
             }
         }
     }

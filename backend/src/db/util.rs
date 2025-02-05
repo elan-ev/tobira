@@ -1,6 +1,6 @@
 use std::{future::Future, fmt, collections::HashMap};
 use postgres_types::FromSql;
-use tokio_postgres::{RowStream, Error, Row};
+use tokio_postgres::{binary_copy::BinaryCopyInWriter, Error, Row, RowStream};
 
 use crate::prelude::*;
 
@@ -32,6 +32,24 @@ where
         .map_ok(from_row)
         .try_collect::<Vec<_>>()
         .await
+}
+
+pub(crate) async fn bulk_insert(
+    table: &str,
+    columns: &[&str],
+    tx: &deadpool_postgres::Transaction<'_>,
+) -> Result<BinaryCopyInWriter> {
+    let col_list = columns.join(", ");
+    let placeholders = (1..=columns.len())
+        .map(|i| format!("${i}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let sql = format!("insert into {table} ({col_list}) values ({placeholders})");
+    let col_types = tx.prepare_cached(&sql).await?;
+
+    let sink = tx.copy_in(&format!("copy {table} ({col_list}) from stdin binary")).await?;
+    Ok(BinaryCopyInWriter::new(sink, col_types.params()))
 }
 
 
@@ -183,6 +201,7 @@ impl<'a> SqlSelection<'a> {
     /// For example, the column selection `${table:foo}.banana` would normally
     /// be emitted as `foo.banana`. To instead output just `banana`, call
     /// `.with_omitted_table_prefix("foo")`.
+    #[allow(dead_code)]
     pub(crate) fn with_omitted_table_prefix(mut self, table: &'a str) -> Self {
         self.table_renames.insert(table, None);
         self

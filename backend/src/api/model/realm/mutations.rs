@@ -1,9 +1,15 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    api::{Context, Id, err::{ApiResult, invalid_input, map_db_err}},
-    db::types::Key,
-    prelude::*, auth::AuthContext,
+    api::{
+        Context,
+        err::{invalid_input, map_db_err, ApiResult},
+        Id,
+        model::block::RemovedBlock,
+    },
+    auth::AuthContext,
+    model::Key,
+    prelude::*,
 };
 use super::{Realm, RealmOrder};
 
@@ -198,8 +204,11 @@ impl Realm {
         realm.require_moderator_rights(context)?;
 
         let db = &context.db;
-        if name.plain.is_some() == name.block.is_some() {
-            return Err(invalid_input!("exactly one of name.block and name.plain has to be set"));
+        if name.plain.is_some() && name.block.is_some() {
+            return Err(invalid_input!("both name.block and name.plain cannot be set"));
+        }
+        if !realm.is_main_root() && name.plain.is_none() && name.block.is_none() {
+            return Err(invalid_input!("exactly one of name.block and name.plain must be set for non-main-root realms"));
         }
         let block = name.block
             .map(|id| id.key_for(Id::BLOCK_KIND)
@@ -245,12 +254,12 @@ impl Realm {
             admin_roles = coalesce($3, admin_roles) \
             where id = $1",
             &[&realm.key, &permissions.moderator_roles, &permissions.admin_roles],
-        )
-        .await?;
+        ).await?;
 
         Self::load_by_key(realm.key, context).await.map(Option::unwrap).inspect_(|new| {
             info!(
-                "Updated permissions of realm {:?} ({}) from moderators: '{:?}' to '{:?}' and from admins: '{:?}' to '{:?}'",
+                "Updated permissions of realm {:?} ({}) from moderators: '{:?}' to '{:?}' \
+                and from admins: '{:?}' to '{:?}'",
                 realm.key,
                 realm.full_path,
                 realm.moderator_roles,
@@ -339,6 +348,41 @@ impl Realm {
         info!(%id, path = realm.full_path, "Removed realm");
         Ok(RemovedRealm { parent })
     }
+
+    pub(crate) async fn create_lineage(
+        realms: Vec<RealmLineageComponent>,
+        context: &Context,
+    ) -> ApiResult<CreateRealmLineageOutcome> {
+        context.auth.required_trusted_external()?;
+
+        if realms.len() == 0 {
+            return Ok(CreateRealmLineageOutcome { num_created: 0 });
+        }
+
+        if context.config.general.reserved_paths().any(|r| realms[0].path_segment == r) {
+            return Err(invalid_input!(key = "realm.path-is-reserved", "path is reserved and cannot be used"));
+        }
+
+        let mut parent_path = String::new();
+        let mut num_created = 0;
+        for realm in realms {
+            let sql = "\
+                insert into realms (parent, name, path_segment) \
+                values ((select id from realms where full_path = $1), $2, $3) \
+                on conflict do nothing";
+            let res = context.db.execute(sql, &[&parent_path, &realm.name, &realm.path_segment])
+                .await;
+            let affected = map_db_err!(res, {
+                if constraint == "valid_path" => invalid_input!("path invalid"),
+            })?;
+            num_created += affected as i32;
+
+            parent_path.push('/');
+            parent_path.push_str(&realm.path_segment);
+        }
+
+        Ok(CreateRealmLineageOutcome { num_created })
+    }
 }
 
 /// Makes sure the ID refers to a realm and returns its key.
@@ -379,6 +423,13 @@ impl UpdatedRealmName {
             block: Some(block),
         }
     }
+
+    pub(crate) fn plain(name: String) -> Self {
+        Self {
+            plain: Some(name),
+            block: None,
+        }
+    }
 }
 
 #[derive(juniper::GraphQLInputObject)]
@@ -394,8 +445,26 @@ pub(crate) struct RealmSpecifier {
     pub(crate) path_segment: String,
 }
 
+#[derive(Clone, juniper::GraphQLInputObject)]
+pub(crate) struct RealmLineageComponent {
+    pub(crate) name: String,
+    pub(crate) path_segment: String,
+}
+
 #[derive(juniper::GraphQLObject)]
 #[graphql(Context = Context)]
 pub(crate) struct RemovedRealm {
     parent: Option<Realm>,
+}
+
+#[derive(juniper::GraphQLObject)]
+pub struct CreateRealmLineageOutcome {
+    pub num_created: i32,
+}
+
+#[derive(juniper::GraphQLUnion)]
+#[graphql(Context = Context)]
+pub(crate) enum RemoveMountedSeriesOutcome {
+    RemovedRealm(RemovedRealm),
+    RemovedBlock(RemovedBlock),
 }

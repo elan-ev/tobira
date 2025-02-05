@@ -1,4 +1,4 @@
-import React, { ReactNode, StrictMode } from "react";
+import React, { ReactNode, StrictMode, Suspense } from "react";
 import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
@@ -7,7 +7,7 @@ import { GlobalErrorBoundary } from "./util/err";
 import { environment } from "./relay";
 import { GlobalStyle } from "./GlobalStyle";
 import { ActiveRoute, Router } from "./router";
-import { MatchedRoute } from "./rauta";
+import { RouteMatchInfo } from "./rauta";
 import { MenuProvider } from "./layout/MenuState";
 import { GraphQLErrorBoundary } from "./relay/boundary";
 import { LoadingIndicator } from "./ui/LoadingIndicator";
@@ -19,10 +19,11 @@ import {
 } from "@opencast/appkit";
 import { COLORS } from "./color";
 import { InitialConsent } from "./ui/InitialConsent";
+import { InitialLoading } from "./layout/Root";
 
 
 type Props = {
-    initialRoute: MatchedRoute;
+    initialRoute: RouteMatchInfo;
     consentGiven: boolean | null;
 };
 
@@ -39,7 +40,9 @@ export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
                                     <MenuProvider>
                                         <LoadingIndicator />
                                         <InitialConsent {...{ consentGiven }} />
-                                        <ActiveRoute />
+                                        <Suspense fallback={<InitialLoading />}>
+                                            <ActiveRoute />
+                                        </Suspense>
                                     </MenuProvider>
                                 </GraphQLErrorBoundary>
                             </Router>

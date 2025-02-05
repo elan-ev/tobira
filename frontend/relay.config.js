@@ -8,10 +8,11 @@ module.exports = {
     schema: path.join(APP_PATH, "schema.graphql"),
     language: "typescript",
     customScalarTypes: {
-        "DateTimeUtc": "string",
+        "DateTime": "string",
         "Cursor": "string",
+        "ByteSpan": "string",
         "ExtraMetadata": "Record<string, Record<string, string[]>>",
-        "TranslatedString": "Record<string, string>",
+        "TranslatedString": "{ default: string } & Record<string, string | undefined>",
     },
     schemaExtensions: [APP_PATH],
 };

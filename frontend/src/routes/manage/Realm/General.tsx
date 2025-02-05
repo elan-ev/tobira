@@ -60,16 +60,10 @@ type Props = {
 };
 
 export const General: React.FC<Props> = ({ fragRef }) => {
-    const { t } = useTranslation();
     const realm = useFragment(fragment, fragRef);
 
-    // We do not allow changing the name of the root realm.
-    if (realm.isMainRoot) {
-        return <p>{t("manage.realm.general.no-rename-root")}</p>;
-    }
-
     const { nameSource, ...rest } = realm;
-    if (nameSource == null) {
+    if (!realm.isMainRoot && nameSource == null) {
         return bug("name source is null for non-root realm");
     }
 
@@ -77,29 +71,29 @@ export const General: React.FC<Props> = ({ fragRef }) => {
 };
 
 type NameFormProps = {
-    realm: GeneralRealmData$data & {
-        nameSource: NonNullable<GeneralRealmData$data["nameSource"]>;
-    };
+    realm: GeneralRealmData$data;
 };
 
 export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
     type FormData = {
         name: string | null;
         block: string | null;
-        nameSource: "plain-name" | "name-from-block";
+        nameSource: "plain-name" | "name-from-block" | "no-name";
     };
 
     const initial = {
-        name: realm.nameSource.__typename === "PlainRealmName"
+        name: realm.nameSource?.__typename === "PlainRealmName"
             ? realm.name
             : null,
-        block: realm.nameSource.__typename === "RealmNameFromBlock"
+        block: realm.nameSource?.__typename === "RealmNameFromBlock"
             // TODO: this breaks when we add new block types
             ? realm.nameSource.block.id ?? null
             : null,
-        nameSource: realm.nameSource.__typename === "PlainRealmName"
-            ? "plain-name"
-            : "name-from-block",
+        nameSource: !realm.nameSource ? "no-name" : (
+            realm.nameSource.__typename === "PlainRealmName"
+                ? "plain-name"
+                : "name-from-block"
+        ),
     } as const;
 
     const { t } = useTranslation();
@@ -135,9 +129,11 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
     const block = watch("block");
     const nameSource = watch("nameSource");
     const isPlain = nameSource === "plain-name";
+    const fromBlock = nameSource === "name-from-block";
     const canSave = match(nameSource, {
         "name-from-block": () => block != null && block !== initial.block,
         "plain-name": () => !!name && name !== initial.name,
+        "no-name": () => initial.nameSource !== "no-name",
     });
 
     const suitableBlocks = realm.blocks
@@ -223,7 +219,7 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
                             </div>
                         </div>
                     </label>
-                    {!isPlain && <div>
+                    {fromBlock && <div>
                         {suitableBlocks.length === 0 && <div>
                             <Card kind="error">{t("manage.realm.general.no-blocks")}</Card>
                         </div>}
@@ -239,6 +235,12 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
                         </Select>}
                     </div>}
                 </div>
+                {realm.isMainRoot && <div>
+                    <label>
+                        <input type="radio" value="no-name" {...register("nameSource")} />
+                        {t("manage.realm.general.no-name")}
+                    </label>
+                </div>}
             </div>
 
             <div css={{ display: "flex", alignItems: "center" }}>

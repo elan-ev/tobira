@@ -5,7 +5,8 @@ use std::{
 };
 
 use crate::{
-    db::{DbConnection, types::Key, util::select},
+    db::{DbConnection, util::select},
+    model::Key,
     prelude::*,
     util::Never,
 };

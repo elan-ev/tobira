@@ -6,6 +6,7 @@ import { match } from "@opencast/appkit";
 import { Link, useRouter } from "../router";
 import CONFIG from "../config";
 import { LoginRoute, REDIRECT_STORAGE_KEY } from "./Login";
+import { AclArray } from "./Upload";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -94,4 +95,11 @@ export const LoginLink: React.FC<LoginLinkProps> = ({ className, children }) => 
         htmlLink={!!CONFIG.auth.loginLink}
         {...{ className }}
     >{children}</Link>
+);
+
+export const mapAcl = (acl?: AclArray) => new Map(
+    acl?.map(item => [item.role, {
+        actions: new Set(item.actions),
+        info: item.info,
+    }])
 );

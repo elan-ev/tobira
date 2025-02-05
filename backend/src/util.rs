@@ -4,9 +4,41 @@ use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use hyper_util::client::legacy::{connect::HttpConnector, Client};
 use hyperlocal::UnixConnector;
 use rand::{RngCore, CryptoRng};
-use secrecy::Secret;
+use secrecy::SecretBox;
 
 use crate::{http::Response, prelude::*};
+
+
+/// The URL-safe base64 alphabet.
+pub(crate) const BASE64_DIGITS: &[u8; 64] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+pub(crate) fn base64_decode(ascii: u8) -> Option<u8> {
+    /// The reverse lookup table to `BASE64_DIGITS`. If you index by an ASCII value, you
+    /// either get the corresponding digit value OR `0xFF`, signalling that the
+    /// character is not a valid base64 character.
+    const DECODE_TABLE: [u8; 256] = create_decode_table();
+
+    const fn create_decode_table() -> [u8; 256] {
+        let mut out = [0xFF; 256];
+
+        // If you wonder why we are using `while` instead of a more idiomatic loop:
+        // const fns are still somewhat limited and do not allow `for`.
+        let mut i = 0;
+        while i < BASE64_DIGITS.len() {
+            out[BASE64_DIGITS[i] as usize] = i as u8;
+            i += 1;
+        }
+
+        out
+    }
+    let raw = DECODE_TABLE[ascii as usize];
+    if raw == 0xFF {
+        return None;
+    }
+
+    Some(raw)
+}
 
 
 /// An empty `enum` for signaling the fact that a function (potentially) never returns.
@@ -16,7 +48,7 @@ use crate::{http::Response, prelude::*};
 pub(crate) enum Never {}
 
 /// Generate random bytes with a crypotgraphically secure RNG.
-pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> Secret<[u8; N]> {
+pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> SecretBox<[u8; N]> {
     // We use this extra function here to make sure we use a
     // cryptographically secure RNG, even after updating to newer `rand`
     // versions. Right now, we use `thread_rng` and it is cryptographically
@@ -32,7 +64,7 @@ pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> Secret<[u8; N]> {
         bytes
     }
 
-    Secret::new(imp(rand::thread_rng()))
+    SecretBox::new(Box::new(imp(rand::thread_rng())))
 }
 
 pub(crate) type HttpsClient<B> = Client<HttpsConnector<HttpConnector>, B>;

@@ -57,8 +57,15 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
     );
 };
 
-export const BreadcrumbsContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
-    <ol css={{
+type BreadcrumbsContainerProps = React.PropsWithChildren<{
+    className?: string;
+}>;
+
+export const BreadcrumbsContainer: React.FC<BreadcrumbsContainerProps> = ({
+    children,
+    className,
+}) => (
+    <ol {...{ className }} css={{
         display: "flex",
         alignItems: "center",
         padding: 0,

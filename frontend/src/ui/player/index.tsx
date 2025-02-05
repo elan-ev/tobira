@@ -39,9 +39,11 @@ export type PlayerEvent = {
         startTime?: string | null;
         endTime?: string | null;
         duration: number;
+        thumbnail?: string | null;
+    };
+    authorizedData: {
         tracks: readonly Track[];
         captions: readonly Caption[];
-        thumbnail?: string | null;
         segments: readonly Segment[];
     };
 };
@@ -96,7 +98,7 @@ export const Player: React.FC<PlayerProps> = ({ event, onEventStateChange }) => 
     });
 
     return (
-        <Suspense fallback={<PlayerFallback image={event.syncedData.thumbnail} />}>
+        <Suspense fallback={<PlayerFallback image={event.syncedData?.thumbnail} />}>
             {event.isLive && (hasStarted === false || hasEnded === true)
                 ? <LiveEventPlaceholder {...{
                     ...hasStarted === false
@@ -125,7 +127,10 @@ const delayTill = (date: Date): number => {
  * in order to work correctly.
  */
 export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
-    const aspectRatio = getPlayerAspectRatio(event.syncedData.tracks);
+    if (!event.authorizedData) {
+        return null;
+    }
+    const aspectRatio = getPlayerAspectRatio(event.authorizedData.tracks);
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef<HTMLDivElement>(null);
 
@@ -169,9 +174,11 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             flexDirection: "column",
             // We want to be able to see the full header, the video title and some metadata.
             // So: full height minus header, minus separation line (18px), minus main
-            // padding (16px), minus breadcrumbs (roughly 42px), minus the amount of space
-            // we want to see below the video (roughly 120px).
-            maxHeight: "calc(100vh - var(--header-height) - 18px - 16px - 38px - 60px)",
+            // padding (16px), minus breadcrumbs (roughly 38px), minus the amount of space
+            // we want to see below the video (roughly 60px).
+            maxHeight: `
+                calc(100vh - var(--header-height) - 18px - ${MAIN_PADDING}px - 38px - 60px)
+            `,
             minHeight: `min(320px, (100vw - 32px) / (${aspectRatio[0]} / ${aspectRatio[1]}))`,
             width: controlsFit ? "unset" : "100%",
             maxWidth: "100%",
@@ -273,8 +280,8 @@ export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => 
             strokeWidth: 1.5,
             ...isDark && { color: COLORS.neutral80 },
         },
-        div: {
-            ...isDark && { color: COLORS.neutral80 },
+        p: {
+            color: isDark ? COLORS.neutral80 : COLORS.neutral15,
         },
         [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
             "& > *": {

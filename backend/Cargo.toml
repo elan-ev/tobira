@@ -17,6 +17,7 @@ embed-in-debug = ["reinda/always-prod"]
 
 
 [dependencies]
+ahash = "0.8"
 anyhow = { version = "1.0.71", features = ["backtrace"] }
 base64 = "0.22.1"
 bincode = "1.3.3"
@@ -27,8 +28,9 @@ chrono = { version = "0.4", default-features = false, features = ["serde", "std"
 clap = { version = "4.2.2", features = ["derive", "string"] }
 confique = { version = "0.3", features = ["toml"] }
 cookie = "0.18.0"
-deadpool = { version = "0.10.0", default-features = false, features = ["managed", "rt_tokio_1"] }
-deadpool-postgres = { version = "0.12.1", default-features = false, features = ["rt_tokio_1"] }
+deadpool = { version = "0.12.1", default-features = false, features = ["managed", "rt_tokio_1"] }
+deadpool-postgres = { version = "0.14.0", default-features = false, features = ["rt_tokio_1"] }
+either = "1.13.0"
 elliptic-curve = { version = "0.13.4", features = ["jwk", "sec1"] }
 fallible-iterator = "0.2.0"
 form_urlencoded = "1.1.0"
@@ -38,12 +40,11 @@ hostname = "0.4.0"
 hyper = { version = "1", features = ["client", "http1", "http2"] }
 hyperlocal = "0.9.1"
 http-body-util = "0.1"
-hyper-rustls = { version = "0.26.0", features = ["http2"] }
+hyper-rustls = { version = "0.27.3", default-features = false, features = ["http1", "http2", "native-tokio", "logging", "tls12"] }
 hyper-util = { version = "0.1.3", features = ["client", "server", "http1", "http2"] }
-isahc = { version = "1", features = ["static-ssl"] }
-juniper = { version = "0.15.10", default-features = false, features = ["chrono", "schema-language"] }
-libz-sys = { version = "1", features = ["static"] }
-meilisearch-sdk = "0.24.3"
+iso8601 = "0.6.1"
+juniper = { version = "0.16.1", default-features = false, features = ["chrono", "schema-language", "anyhow", "backtrace"] }
+meilisearch-sdk = { path = "vendor/meilisearch-sdk" }
 mime_guess = { version = "2", default-features = false }
 nu-ansi-term = "0.50.1"
 ogrim = "0.1.1"
@@ -61,11 +62,11 @@ rand = "0.8.4"
 regex = "1.7.1"
 reinda = "0.3"
 ring = "0.17.8"
-rustls = "0.22.4"
-rustls-native-certs = "0.7.0"
+rustls = { version = "0.23.20", default-features = false, features = ["ring"] }
+rustls-native-certs = "0.8.1"
 rustls-pemfile = "2.1.0"
 scc = "2.0.17"
-secrecy = { version = "0.8", features = ["serde"] }
+secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9.21"
@@ -75,11 +76,15 @@ termcolor = "1.1.1"
 time = "0.3"
 tokio = { version = "1.36", features = ["fs", "rt-multi-thread", "macros", "time"] }
 tokio-postgres = { version = "0.7", features = ["with-chrono-0_4", "with-serde_json-1"] }
-tokio-postgres-rustls = "0.11.1"
+tokio-postgres-rustls = "0.13.0"
 url = "2.4.1"
 tracing = { version = "0.1.40", features = ["log"] }
 tracing-log = "0.2.0"
 tracing-subscriber = "0.3.18"
+reqwest = { version = "0.12.4", default-features = false, features = ["rustls-tls"] }
+subtp = "0.2.0"
+xmlparser = "0.13.6"
+sha1 = "0.10.6"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 procfs = "0.17.0"

@@ -1,15 +1,12 @@
 use juniper::graphql_object;
 
-use crate::{
-    api::model::event::RemovedEvent,
-    auth::AuthContext,
-};
+use crate::api::model::event::RemovedEvent;
 use super::{
     Context,
-    err::{ApiResult, invalid_input, not_authorized},
+    err::ApiResult,
     id::Id,
-    Node,
     model::{
+        acl::AclInputEntry,
         series::{Series, NewSeries},
         realm::{
             ChildIndex,
@@ -21,6 +18,9 @@ use super::{
             UpdatedRealmName,
             UpdateRealm,
             RealmSpecifier,
+            RealmLineageComponent,
+            CreateRealmLineageOutcome,
+            RemoveMountedSeriesOutcome,
         },
         block::{
             BlockValue,
@@ -35,8 +35,6 @@ use super::{
             UpdatePlaylistBlock,
             UpdateVideoBlock,
             RemovedBlock,
-            VideoListOrder,
-            VideoListLayout,
         },
         event::AuthorizedEvent,
     },
@@ -61,7 +59,7 @@ impl Mutation {
     /// Deletes the given event. Meaning: a deletion request is sent to Opencast, the event
     /// is marked as "deletion pending" in Tobira, and fully removed once Opencast
     /// finished deleting the event.
-    /// 
+    ///
     /// Returns the deletion timestamp in case of success and errors otherwise.
     /// Note that "success" in this case only means the request was successfully sent
     /// and accepted, not that the deletion itself succeeded, which is instead checked
@@ -70,18 +68,25 @@ impl Mutation {
         AuthorizedEvent::delete(id, context).await
     }
 
+    /// Updates the acl of a given event by sending the changes to Opencast.
+    /// The `acl` parameter can include `read` and `write` roles, as these are the
+    /// only roles that can be assigned in frontend for now. `preview` and
+    /// `custom_actions` will be added in the future.
+    /// If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
+    /// this means it might get overwritten again if the update in Opencast failed for some reason.
+    /// This solution should be improved in the future.
+    async fn update_event_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
+        AuthorizedEvent::update_acl(id, acl, context).await
+    }
+
     /// Sets the order of all children of a specific realm.
     ///
     /// `childIndices` must contain at least one element, i.e. do not call this
     /// for realms without children.
-    #[graphql(
-        arguments(
-            child_indices(default = None),
-        )
-    )]
     async fn set_child_order(
         parent: Id,
         child_order: RealmOrder,
+        #[graphql(default = None)]
         child_indices: Option<Vec<ChildIndex>>,
         context: &Context,
     ) -> ApiResult<Realm> {
@@ -232,6 +237,45 @@ impl Mutation {
         BlockValue::remove(id, context).await
     }
 
+    /// Basically `mkdir -p` for realms: makes sure the given realm lineage
+    /// exists, creating the missing realms. Existing realms are *not* updated.
+    /// Each realm in the given list is the sub-realm of the previous item in
+    /// the list. The first item is sub-realm of the root realm.
+    async fn create_realm_lineage(
+        realms: Vec<RealmLineageComponent>,
+        context: &Context,
+    ) -> ApiResult<CreateRealmLineageOutcome> {
+        Realm::create_lineage(realms, context).await
+    }
+
+    /// Stores series information in Tobira's DB, so it can be mounted without having to be harvested first.
+    async fn announce_series(series: NewSeries, context: &Context) -> ApiResult<Series> {
+        Series::announce(series, context).await
+    }
+
+    /// Adds a series block to an empty realm and makes that realm derive its name from said series.
+    async fn add_series_mount_point(
+        series_oc_id: String,
+        target_path: String,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        Series::add_mount_point(series_oc_id, target_path, context).await
+    }
+
+    /// Removes the series block of given series from the given realm.
+    /// If the realm has sub-realms and used to derive its name from the block,
+    /// it is renamed to its path segment. If the realm has no sub-realms,
+    /// it is removed completely.
+    /// Errors if the given realm does not have exactly one series block referring to the
+    /// specified series.
+    async fn remove_series_mount_point(
+        series_oc_id: String,
+        path: String,
+        context: &Context,
+    ) -> ApiResult<RemoveMountedSeriesOutcome> {
+        Series::remove_mount_point(series_oc_id, path, context).await
+    }
+
     /// Atomically mount a series into an (empty) realm.
     /// Creates all the necessary realms on the path to the target
     /// and adds a block with the given series at the leaf.
@@ -242,68 +286,6 @@ impl Mutation {
         new_realms: Vec<RealmSpecifier>,
         context: &Context,
     ) -> ApiResult<Realm> {
-        // Note: This is a rather ad hoc, use-case specific compound mutation.
-        // So for the sake of simplicity and being able to change it fast
-        // we just reuse all the mutations we already have.
-        // Once this code stabilizes, we might want to change that,
-        // because doing it like this duplicates some work
-        // like checking moderator rights, input validity, etc.
-
-        if context.auth != AuthContext::TrustedExternal {
-            return Err(not_authorized!("only trusted external applications can use this mutation"));
-        }
-
-        if new_realms.iter().rev().skip(1).any(|r| r.name.is_none()) {
-            return Err(invalid_input!("all new realms except the last need to have a name"));
-        }
-
-        let parent_realm = Realm::load_by_path(parent_realm_path, context)
-            .await?
-            .ok_or_else(|| invalid_input!("`parentRealmPath` does not refer to a valid realm"))?;
-
-        if new_realms.is_empty() {
-            let blocks = BlockValue::load_for_realm(parent_realm.key, context).await?;
-            if !blocks.is_empty() {
-                return Err(invalid_input!("series can only be mounted in empty realms"));
-            }
-        }
-
-        let series = Series::create(series, context).await?;
-
-        let target_realm = {
-            let mut target_realm = parent_realm;
-            for RealmSpecifier { name, path_segment } in new_realms {
-                target_realm = Realm::add(NewRealm {
-                    // The `unwrap_or` case is only potentially used for the
-                    // last realm, which is renamed below anyway. See the check
-                    // above.
-                    name: name.unwrap_or_else(|| "temporary-dummy-name".into()),
-                    path_segment,
-                    parent: Id::realm(target_realm.key),
-                }, context).await?
-            }
-            target_realm
-        };
-
-        BlockValue::add_series(
-            Id::realm(target_realm.key),
-            0,
-            NewSeriesBlock {
-                series: series.id(),
-                show_title: false,
-                show_metadata: true,
-                order: VideoListOrder::NewToOld,
-                layout: VideoListLayout::Gallery,
-            },
-            context,
-        ).await?;
-
-        let block = &BlockValue::load_for_realm(target_realm.key, context).await?[0];
-
-        Realm::rename(
-            target_realm.id(),
-            UpdatedRealmName::from_block(block.id()),
-            context,
-        ).await
+        Series::mount(series, parent_realm_path, new_realms, context).await
     }
 }

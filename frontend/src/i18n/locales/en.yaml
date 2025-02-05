@@ -47,6 +47,7 @@ errors:
   might-need-to-login-link: You might need to <1>login</1>.
   invalid-input: Invalid input.
   opencast-unavailable: Opencast is currently not available.
+  opencast-error: Opencast returned an unexpected response.
   internal-server-error: Internal server error (something is wrong with the server).
   are-you-connected-to-internet: Are you connected to the internet?
   unknown: Unknown error.
@@ -112,7 +113,7 @@ user:
   manage-content: Manage
 
 login-page:
-  heading: Login 
+  heading: Login
   user-id: User ID
   password: Password
   bad-credentials: 'Login failed: invalid credentials.'
@@ -131,6 +132,8 @@ video:
   more-from-playlist: More from “{{playlist}}”
   deleted-video-block: The video referenced here was deleted.
   not-allowed-video-block: You are not allowed to view the video embedded here.
+  preview: Preview
+  preview-only: You need additional permissions to watch this video.
   not-ready:
     title: Video not processed yet
     text: >
@@ -161,7 +164,7 @@ video:
     title: Download
     presenter: Video (speaker)
     slides: Video (presentation)
-    info: > 
+    info: >
       Here you can download the video(s) in different formats/qualities (Right click - Save as).
   manage: Manage
   start: Start
@@ -175,6 +178,18 @@ video:
     embed: Embed
     rss: RSS
     show-qr-code: Show QR code
+  password:
+    heading: Protected Video
+    sub-heading: Access to this video is restricted.
+    no-preview-permission: $t(api-remote-errors.view.event)
+    body: >
+      Please enter the username and the password you have received to access this video;
+      please note that these are not your login credentials.
+    label:
+      id: Identifier
+      password: Password
+      submit: Verify
+    invalid-credentials: Invalid credentials.
 
 playlist:
   deleted-playlist-block: The playlist referenced here was deleted.
@@ -303,6 +318,7 @@ upload:
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
+    failed-fetching-series-acl: Failed to fetch series acl.
 
 acl:
   unknown-user-note: unknown
@@ -318,6 +334,13 @@ manage:
   access:
     authorized-groups: Authorized groups
     authorized-users: Authorized users
+    editing-disabled: Access policy editing is disabled.
+    workflow-active: >
+      Changing the access policy is not possible at this time, since the video is being processed in the background.
+      <br />
+      Please try again later.
+    locked-to-series: >
+      The access policy of this video is determined by its series and can't be edited.
     users-no-options:
       initial-searchable: Type to search for users by name (or enter exact email/username)
       none-found-searchable: No user found
@@ -462,11 +485,9 @@ manage:
       name-from-block: Derive name from video or series
       name-from-block-description: >
         Link a video/series-element from this page: the page name will always be the title of the linked element.
+      no-name: Omit name
       no-blocks: There are no linkable video/series on this page.
       rename-failed: Failed to change the name.
-      no-rename-root: >
-        The homepage cannot be renamed. The heading is controlled by the global
-        site title setting.
 
     children:
       heading: Order of subpages
@@ -623,6 +644,12 @@ api-remote-errors:
         The video you are trying to delete does not exist.
         It might have been removed already.
       not-allowed: You are not allowed to delete this video.
+    acl:
+      not-found: "Access policy update failed: video not found."
+      not-allowed: You are not allowed to update the access policies of this video.
+    workflow:
+      not-allowed: You are not allowed to inquire about workflow activity of this video.
+      active: $t(manage.access.workflow-active)
 
 embed:
   not-supported: This page can't be embedded.

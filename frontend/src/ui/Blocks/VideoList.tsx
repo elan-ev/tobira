@@ -29,6 +29,7 @@ import {
 import { PlaylistBlockPlaylistData$data } from "./__generated__/PlaylistBlockPlaylistData.graphql";
 import { keyOfId } from "../../util";
 import { Link } from "../../router";
+import SeriesIcon from "../../icons/series.svg";
 import {
     BaseThumbnailReplacement, isPastLiveEvent, isUpcomingLiveEvent, Thumbnail,
     ThumbnailOverlayContainer,
@@ -56,10 +57,13 @@ export const videoListEventFragment = graphql`
         description
         series { title id }
         syncedData {
-            duration
             thumbnail
+            duration
             startTime
             endTime
+            audioOnly
+        }
+        authorizedData {
             tracks { resolution }
         }
     }
@@ -1012,6 +1016,7 @@ const Item: React.FC<ItemProps> = ({
                 {showSeries && item.series?.id && item.series.title && <PartOfSeriesLink
                     seriesId={item.series.id}
                     seriesTitle={item.series.title}
+                    css={{ marginTop: 4 }}
                 />}
             </>}
         </div>
@@ -1065,27 +1070,33 @@ const Item: React.FC<ItemProps> = ({
 };
 
 type PartOfSeriesLinkProps = {
-    seriesTitle: string;
+    seriesTitle: React.ReactNode;
     seriesId: string;
+    className?: string;
 }
 
-export const PartOfSeriesLink: React.FC<PartOfSeriesLinkProps> = ({ seriesTitle, seriesId }) => {
-    const { t } = useTranslation();
-    return <div css={{
+export const PartOfSeriesLink: React.FC<PartOfSeriesLinkProps> = ({
+    seriesTitle,
+    seriesId,
+    className,
+}) => (
+    <div className={className} css={{
         fontSize: 14,
         marginTop: "auto",
         paddingTop: 8,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
         whiteSpace: "nowrap",
-        padding: 3,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
     }}>
-        {t("video.part-of-series") + ": "}
+        <SeriesIcon css={{ flexShrink: 0, color: COLORS.neutral60, fontSize: 16 }} />
         <Link to={`/!s/${keyOfId(seriesId)}`} css={{
             borderRadius: 4,
             outlineOffset: 1,
             position: "relative",
             zIndex: 5,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
             // The next few rules are... unfortunate but necessary, as they will otherwise
             // be overwritten by the parent's css. This is in part due to the wonky nature of
             // having to workaround "nesting" links within other links.
@@ -1098,5 +1109,5 @@ export const PartOfSeriesLink: React.FC<PartOfSeriesLinkProps> = ({ seriesTitle,
                 },
             },
         }}>{seriesTitle}</Link>
-    </div>;
-};
+    </div>
+);

@@ -17,13 +17,8 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
             thumbnail?: string | null;
             startTime?: string | null;
             endTime?: string | null;
-        } & (
-            {
-                tracks: readonly { resolution?: readonly number[] | null }[];
-            } | {
-                audioOnly: boolean;
-            }
-        ) | null;
+            audioOnly?: boolean;
+        } | null;
     };
 
     /** If `true`, an indicator overlay is shown */
@@ -42,23 +37,18 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
-    const audioOnly = event.syncedData
-        ? (
-            "audioOnly" in event.syncedData
-                ? event.syncedData.audioOnly
-                : event.syncedData.tracks.every(t => t.resolution == null)
-        )
-        : false;
 
     let inner;
-    if (event.syncedData?.thumbnail != null && !deletionIsPending) {
+    if (event.syncedData?.thumbnail && !deletionIsPending) {
         // We have a proper thumbnail.
         inner = <ThumbnailImg
             src={event.syncedData.thumbnail}
             alt={t("video.thumbnail-for", { video: event.title })}
         />;
     } else {
-        inner = <ThumbnailReplacement {...{ audioOnly, isUpcoming, isDark, deletionIsPending }} />;
+        inner = <ThumbnailReplacement audioOnly={event.syncedData?.audioOnly} {...{
+            isUpcoming, isDark, deletionIsPending,
+        }}/>;
     }
 
     let overlay;
@@ -104,7 +94,7 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
 };
 
 type ThumbnailReplacementProps = {
-    audioOnly: boolean;
+    audioOnly?: boolean;
     isDark: boolean;
     isUpcoming?: boolean;
     deletionIsPending?: boolean;
@@ -287,7 +277,7 @@ export const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt 
 };
 
 type CreatorsProps = {
-    creators: readonly string[] | null;
+    creators: readonly (JSX.Element | string)[] | null;
     className?: string;
 };
 

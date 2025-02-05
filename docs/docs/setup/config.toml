@@ -5,11 +5,12 @@
 # units: 'ms', 's', 'min', 'h' and 'd'.
 #
 # All user-facing texts you can configure here have to be specified per
-# language, with two letter language key. Only English ('en') is required.
-# Take `general.site_title` for example:
+# language, with two letter language key. The special key 'default' is
+# required and used as fallback for languages that are not specified
+# explicitly. Take `general.site_title` for example:
 #
 #     [general]
-#     site_title.en = "My university"
+#     site_title.default = "My university"
 #     site_title.de = "Meine Universität"
 #
 
@@ -22,7 +23,7 @@
 
 # Public URL to Tobira (without path).
 # Used for RSS feeds, as those require specifying absolute URLs to resources.
-# 
+#
 # Example: "https://tobira.my-uni.edu".
 #
 # Required! This value must be specified.
@@ -34,16 +35,16 @@
 # These can be specified in multiple languages.
 # Consent is prompted upon first use and only if this is configured. It is
 # re-prompted when any of these values change.
-# 
+#
 # We recommend not to configure this unless absolutely necessary,
 # in order to not degrade the user experience needlessly.
-# 
+#
 # Example:
-# 
+#
 # ```
-# initial_consent.title.en = "Terms & Conditions"
-# initial_consent.button.en = "Agree"
-# initial_consent.text.en = """
+# initial_consent.title.default = "Terms & Conditions"
+# initial_consent.button.default = "Agree"
+# initial_consent.text.default = """
 # To use Tobira, you need to agree to our terms and conditions:
 # - [Terms](https://www.our-terms.de)
 # - [Conditions](https://www.our-conditions.de)
@@ -62,13 +63,13 @@
 # add custom ones. Note that these two default links are special and can
 # be specified with only the shown string. To add custom ones, you need
 # to define a label and a link. The link is either the same for every language
-# or can be specified for each language in the same manner as the label. 
+# or can be specified for each language in the same manner as the label.
 # Example:
 #
 # ```
 # footer_links = [
-#     { label = { en = "Example 1" }, link = "https://example.com" },
-#     { label = { en = "Example 2" }, link = { en = "https://example.com/en" } },
+#     { label = { default = "Example 1" }, link = "https://example.com" },
+#     { label = { default = "Example 2" }, link = { default = "https://example.com/en" } },
 #     "about",
 # ]
 # ```
@@ -79,8 +80,8 @@
 # Additional metadata that is shown below a video. Example:
 #
 #     [general.metadata]
-#     dcterms.spatial = { en = "Location", de = "Ort" }
-#     "http://my.domain/xml/namespace".courseLink = { en = "Course", de = "Kurs"}
+#     dcterms.spatial = { default = "Location", de = "Ort" }
+#     "http://my.domain/xml/namespace".courseLink = { default = "Course", de = "Kurs"}
 #
 # As you can see, this is a mapping of a metadata location (the XML
 # namespace and the name) to a translated label. For the XML namespace
@@ -122,6 +123,25 @@
 #
 # Default value: false
 #users_searchable = false
+
+# This allows users to edit the ACL of events they have write access for.
+# Doing so will update these in Opencast and start the `republish-metadata`
+# workflow to propagate the changes to other publications as well.
+# Instead of waiting for the workflow however, Tobira will also immediately
+# store the updated ACL in its database.
+#
+# Note that this might lead to situations where the event ACL in Tobira is different
+# from that in other publications, mainly if the afore mentioned workflow fails
+# or takes an unusually long time to complete.
+#
+# Default value: true
+#allow_acl_edit = true
+
+# Activating this will disable ACL editing for events that are part of a series.
+# For the uploader, this means that the ACL of the series will be used.
+#
+# Default value: false
+#lock_acl_to_series = false
 
 
 [db]
@@ -379,12 +399,6 @@
 # Default value: true
 #stdout = true
 
-# If set to `true`, HTTP header of each incoming request are logged
-# (with 'trace' level).
-#
-# Default value: false
-#log_http_headers = false
-
 
 [opencast]
 # URL to Opencast. Currently used for all purposes (syncing, Studio,
@@ -421,9 +435,14 @@
 # Example: "https://admin.oc.my-uni.edu/editor-ui/index.html".
 #editor_url =
 
+# Extra Opencast hosts not listed in any other value above, that can also
+# be trusted.
+#
+# Default value: []
+#other_hosts = []
 
-[sync]
-# Username of the user used to communicate with Opencast for data syncing.
+# Username of the user used to communicate with Opencast for data syncing
+# and external API authentication.
 # This user has to have access to all events and series. Currently, that
 # user has to be admin.
 #
@@ -435,6 +454,8 @@
 # Required! This value must be specified.
 #password =
 
+
+[sync]
 # A rough estimate of how many items (events & series) are transferred in
 # each HTTP request while harvesting (syncing) with the Opencast
 # instance.
@@ -459,6 +480,19 @@
 #
 # Default value: "30s"
 #poll_period = "30s"
+
+# Whether SHA1-hashed series passwords (as assignable by ETH's admin UI
+# build) are interpreted in Tobira.
+#
+# Default value: false
+#interpret_eth_passwords = false
+
+# Number of concurrent tasks with which Tobira downloads assets from
+# Opencast. The default should be a good sweet spot. Decrease to reduce
+# load on Opencast, increase to speed up download a bit.
+#
+# Default value: 8
+#concurrent_download_tasks = 8
 
 
 [meili]
@@ -500,30 +534,22 @@
 # Required! This value must be specified.
 #favicon =
 
-
 # Logo used in the top left corner of the page. Using SVG logos is recommended.
-# See the documentation on theming/logos for more info!
-[theme.logo]
-# The normal, usually wide logo that is shown on desktop screens. The
-# value is a map with a `path` and `resolution` key:
+# You can configure specific logos for small and large screens, dark and light mode,
+# and any number of languages. Example:
 #
-#     large = { path = "logo.svg", resolution = [20, 8] }
+# ```
+# logos = [
+#     { path = "logo-wide-light.svg", mode = "light", size = "wide", resolution = [425, 182] },
+#     { path = "logo-wide-dark.svg", mode = "dark", size = "wide", resolution = [425, 182] },
+#     { path = "logo-small.svg", size = "narrow", resolution = [212, 182] },
+# ]
+# ```
 #
-# The resolution is only an aspect ratio. It is used to avoid layout
-# shifts in the frontend by allocating the correct size for the logo
-# before the browser loaded the file.
+# See the documentation on theming/logos for more info and additional examples!
 #
 # Required! This value must be specified.
-#large =
-
-# A less wide logo used for narrow screens.
-#small =
-
-# Large logo for dark mode usage.
-#large_dark =
-
-# Small logo for dark mode usage.
-#small_dark =
+#logos =
 
 
 # Colors used in the UI. Specified in sRGB.

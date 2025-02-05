@@ -1,6 +1,8 @@
 use std::{str::FromStr, fmt};
 
 use hyper::Uri;
+use base64::Engine as _;
+use secrecy::{ExposeSecret as _, SecretString};
 use serde::Deserialize;
 
 use crate::{
@@ -45,6 +47,20 @@ pub(crate) struct OpencastConfig {
     ///
     /// Example: "https://admin.oc.my-uni.edu/editor-ui/index.html".
     pub(crate) editor_url: Option<ToolBaseUri>,
+
+    /// Extra Opencast hosts not listed in any other value above, that can also
+    /// be trusted.
+    #[config(default = [])]
+    pub(crate) other_hosts: Vec<HttpHost>,
+
+    /// Username of the user used to communicate with Opencast for data syncing
+    /// and external API authentication.
+    /// This user has to have access to all events and series. Currently, that
+    /// user has to be admin.
+    pub user: String,
+
+    /// Password of the user used to communicate with Opencast.
+    password: SecretString,
 }
 
 impl OpencastConfig {
@@ -105,6 +121,13 @@ impl OpencastConfig {
                 .unwrap();
             ToolBaseUri(uri)
         })
+    }
+
+    pub(crate) fn basic_auth_header(&self) -> SecretString {
+        let credentials = format!("{}:{}", self.user, self.password.expose_secret());
+        let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
+        let auth_header = format!("Basic {}", encoded_credentials);
+        SecretString::new(auth_header.into())
     }
 
     fn unwrap_host(&self) -> &HttpHost {

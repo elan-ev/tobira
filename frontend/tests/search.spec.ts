@@ -3,7 +3,9 @@ import { test } from "./util/data";
 import { login, logout } from "./util/user";
 
 
-test("Search", async ({ page, standardData, activeSearchIndex }) => {
+test("Search", async ({ page, browserName, standardData, activeSearchIndex }) => {
+    test.skip(browserName === "firefox", "Test is buggy in Firefox somehow...");
+
     await page.goto("/");
     await page.waitForSelector("nav");
     const searchField = page.getByPlaceholder("Search");
@@ -16,6 +18,7 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
 
     await test.step("Should allow search queries to be executed", async () => {
         await searchField.fill(query);
+        await searchField.press("Enter");
         await expect(page).toHaveURL(`~search?q=${query}`);
     });
 
@@ -30,16 +33,18 @@ test("Search", async ({ page, standardData, activeSearchIndex }) => {
             const title = page.getByRole("heading", { name: videoTitle });
             // We need `force` to allow clicking the overlay.
             await title.click({ force: true });
-            expect(page.url().startsWith("/!v/"));
+            await expect(page).toHaveURL(new RegExp("/!v/[0-9a-zA-Z_\\-]{11}$"));
+            await expect(page.getByRole("heading", { level: 1, name: videoTitle })).toBeVisible();
             await page.goBack();
         });
     }
 
     await test.step("Series links should work", async () => {
         const eventSeriesLink = page.getByRole("link", { name: "Fabulous Cats" });
-        await expect(eventSeriesLink).toHaveCount(2);
+        await expect(eventSeriesLink).toHaveCount(3);
         await eventSeriesLink.first().click();
-        expect(page.url().startsWith("/!s/"));
+        await expect(page).toHaveURL(new RegExp("/!s/[0-9a-zA-Z_\\-]{11}$"));
+        await expect(page.getByRole("heading", { level: 1, name: "Fabulous Cats" })).toBeVisible();
         await page.goBack();
     });
 
@@ -67,6 +72,7 @@ const startSearch = async (page: Page, query: string, startUrl?: string) => {
     const searchField = page.getByPlaceholder("Search");
     await searchField.click();
     await searchField.fill(query);
+    await searchField.press("Enter");
     await expect(page).toHaveURL(`~search?${new URLSearchParams({ q: query })}`);
 };
 

@@ -86,8 +86,6 @@ struct ConfigStats {
     logout_link_overridden: bool,
     /// Value of `auth.pre_auth_external_links`.
     uses_pre_auth: bool,
-    /// Whether `theme.logo.small` is set.
-    has_narrow_logo: bool,
 }
 
 
@@ -118,7 +116,6 @@ impl Stats {
                 login_link_overridden: config.auth.login_link.is_some(),
                 logout_link_overridden: config.auth.logout_link.is_some(),
                 uses_pre_auth: config.auth.pre_auth_external_links,
-                has_narrow_logo: config.theme.logo.small.is_some(),
             },
         })
     }

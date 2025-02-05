@@ -43,7 +43,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
         if (!paella.current) {
             // Video/event specific information we have to give to Paella.
             const tracksByKind: Record<string, Track[]> = {};
-            for (const track of event.syncedData.tracks) {
+            for (const track of event.authorizedData.tracks) {
                 const kind = track.flavor.split("/")[0];
                 if (!(kind in tracksByKind)) {
                     tracksByKind[kind] = [];
@@ -87,7 +87,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     content: key,
                     sources: tracksToPaellaSources(tracks, event.isLive),
                 })),
-                captions: event.syncedData.captions.map(({ uri, lang }, index) => ({
+                captions: event.authorizedData.captions.map(({ uri, lang }, index) => ({
                     format: "vtt",
                     url: uri,
                     lang: lang ?? undefined,
@@ -95,9 +95,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     // improved in the future, hopefully by getting better information.
                     text: t("video.caption")
                         + (lang ? ` (${lang})` : "")
-                        + (event.syncedData.captions.length > 1 ? ` [${index + 1}]` : ""),
+                        + (event.authorizedData.captions.length > 1 ? ` [${index + 1}]` : ""),
                 })),
-                frameList: event.syncedData.segments.map(segment => {
+                frameList: event.authorizedData.segments.map(segment => {
                     const time = segment.startTime / 1000;
                     return {
                         id: "frame_" + time,
@@ -116,7 +116,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             if (manifest.streams.length > 1 && !("presenter" in tracksByKind)) {
                 // eslint-disable-next-line no-console
                 console.warn("Picking first stream as main audio source. Tracks: ",
-                    event.syncedData.tracks);
+                    event.authorizedData.tracks);
                 manifest.streams[0].role = "mainAudio";
             }
 
@@ -513,13 +513,6 @@ const PAELLA_CONFIG = {
             showIcons: false,
             order: 7,
             tabIndex: 7,
-            parentContainer: "optionsContainer",
-        },
-        "es.upv.paella.frameControlButtonPlugin": {
-            enabled: true,
-            side: "right",
-            order: 8,
-            tabIndex: 8,
             parentContainer: "optionsContainer",
         },
 

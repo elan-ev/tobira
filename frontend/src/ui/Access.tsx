@@ -270,7 +270,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                 prev.set(option.role, {
                     actions: new Set([permissionLevels.default]),
                     info: {
-                        label: info?.label ?? { "_": option.label },
+                        label: info?.label ?? { "default": option.label },
                         implies: [...info?.implies ?? new Set()],
                         large: info?.large ?? false,
                     },
@@ -786,28 +786,26 @@ type AclEditButtonsProps = {
     saveModalRef: React.RefObject<ConfirmationModalHandle>;
 }
 
-export const AclEditButtons: React.FC<AclEditButtonsProps> = (
-    {
-        selections,
-        setSelections,
-        initialAcl,
-        onSubmit,
-        className,
-        inFlight,
-        inheritedAcl,
-        userIsOwner,
-        saveModalRef,
-        kind,
-    }
-) => {
+export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
+    selections,
+    setSelections,
+    initialAcl,
+    onSubmit,
+    className,
+    inFlight,
+    inheritedAcl,
+    userIsOwner,
+    saveModalRef,
+    kind,
+}) => {
     const { t } = useTranslation();
     const user = useUser();
     const resetModalRef = useRef<ModalHandle>(null);
 
-    const containsUser = (acl: Acl) => isRealUser(user) && (userIsOwner || user.roles.some(r =>
-        r === COMMON_ROLES.ADMIN
-        || acl.get(r)?.actions.has(kind)
-        || inheritedAcl?.get(r)?.actions.has(kind))
+    const containsUser = (acl: Acl) => isRealUser(user) && (
+        userIsOwner || user.roles.some(r => r === COMMON_ROLES.ADMIN
+            || acl.get(r)?.actions.has(kind)
+            || inheritedAcl?.get(r)?.actions.has(kind))
     );
 
     const selectionIsInitial = selections.size === initialAcl.size
@@ -817,8 +815,9 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
         });
 
     const submit = onSubmit;
+    const buttonsDisabled = inFlight || selectionIsInitial;
 
-    useNavBlocker(!selectionIsInitial);
+    useNavBlocker(inFlight || !selectionIsInitial);
 
     return (
         <div {...{ className }} css={{
@@ -829,9 +828,10 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
         }}>
             {/* Reset button */}
             <Button
-                disabled={selectionIsInitial}
+                kind="danger"
+                disabled={buttonsDisabled}
                 onClick={() => currentRef(resetModalRef).open()}
-                css={{ ...!selectionIsInitial && { ":hover": { color: COLORS.danger0 } } }}
+                css={{ ...!buttonsDisabled && { ":hover": { color: COLORS.danger0 } } }}
             >
                 {t("manage.access.reset-modal.label")}
             </Button>
@@ -856,13 +856,14 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
 
             {/* Save button */}
             <Button
-                disabled={selectionIsInitial}
-                onClick={() =>
-                    !containsUser(selections)
-                        ? currentRef(saveModalRef).open()
-                        : submit(selections)
+                type="submit"
+                kind="call-to-action"
+                disabled={buttonsDisabled}
+                onClick={() => !containsUser(selections)
+                    ? currentRef(saveModalRef).open()
+                    : submit(selections)
                 }
-                css={{ ...!selectionIsInitial && { ":hover": { color: COLORS.happy0 } } }}
+                css={{ ...!buttonsDisabled && { ":hover": { color: COLORS.happy0 } } }}
             >{t("general.action.save")}</Button>
             {inFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
             <ConfirmationModal
@@ -882,7 +883,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = (
 // ===== Helper functions
 // ==============================================================================================
 
-type TranslatedLabel = Record<string, string>;
+type TranslatedLabel = { default: string } & Record<string, string | undefined>;
 
 /** Returns a label for the role, if known to Tobira. */
 const getLabel = (role: string, label: TranslatedLabel | undefined, i18n: i18n) => {
@@ -890,7 +891,7 @@ const getLabel = (role: string, label: TranslatedLabel | undefined, i18n: i18n) 
         return i18n.t("acl.admin-user");
     }
     if (label) {
-        return label[i18n.language] ?? label.en ?? label._;
+        return label[i18n.language] ?? label.default;
     }
     return role;
 };
@@ -924,11 +925,14 @@ const insertBuiltinRoleInfo = (
     i18n: i18n,
     addAnonymous: boolean,
 ) => {
-    const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => Object.fromEntries(
-        i18n.languages
-            .filter(lng => i18n.exists(key, { lng }))
-            .map(lng => [lng, i18n.t(key, { lng })])
-    );
+    const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => ({
+        default: i18n.t(key, { lng: "en" }),
+        ...Object.fromEntries(
+            i18n.languages
+                .filter(lng => i18n.exists(key, { lng }))
+                .map(lng => [lng, i18n.t(key, { lng })])
+        ),
+    });
 
     const anonymousInfo = {
         implies: [],

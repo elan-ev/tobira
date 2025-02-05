@@ -1,4 +1,5 @@
 use bincode::Options;
+use juniper::{GraphQLScalar, InputValue, ScalarValue};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -7,18 +8,15 @@ use crate::{
         Context,
         err::{self, ApiResult},
         model::{
-            event::AuthorizedEvent, 
-            series::Series, 
-            realm::Realm, 
+            event::AuthorizedEvent,
+            series::Series,
+            realm::Realm,
             playlist::AuthorizedPlaylist,
+            search::{SearchEvent, SearchRealm, SearchSeries},
         },
     },
     prelude::*,
-    search::Event as SearchEvent,
-    search::Realm as SearchRealm,
-    search::Series as SearchSeries,
     search::Playlist as SearchPlaylist,
-    db::types::ExtraMetadata,
 };
 
 
@@ -61,7 +59,11 @@ super::util::impl_object_with_dummy_field!(NotAllowed);
 /// serialization format from `bincode`, a compact binary serializer. Of course
 /// we could also have serialized it as JSON and base64 encoded it then, but
 /// that would be a waste of network bandwidth.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, GraphQLScalar)]
+#[graphql(
+    description = "An opaque cursor used for pagination",
+    parse_token(String),
+)]
 pub(crate) struct Cursor(String);
 
 impl Cursor {
@@ -87,69 +89,13 @@ impl Cursor {
             .deserialize_from(b64reader)
             .map_err(|e| err::invalid_input!("given cursor is invalid: {}", e))
     }
-}
 
-#[juniper::graphql_scalar(
-    name = "Cursor",
-    description = "An opaque cursor used for pagination",
-)]
-impl<S> GraphQLScalar for Cursor
-where
-    S: juniper::ScalarValue,
-{
-    fn resolve(&self) -> juniper::Value {
+    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
         juniper::Value::scalar(self.0.clone())
     }
 
-    fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
-        value.as_string_value().map(|s| Self(s.into()))
-    }
-
-    fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
-        <String as juniper::ParseScalarValue<S>>::from_str(value)
-    }
-}
-
-
-#[juniper::graphql_scalar(
-    name = "ExtraMetadata",
-    description = "Arbitrary metadata for events/series. Serialized as JSON object.",
-)]
-impl<S> GraphQLScalar for ExtraMetadata
-where
-    S: juniper::ScalarValue
-{
-    fn resolve(&self) -> juniper::Value {
-        use juniper::Value;
-
-        std::iter::once(("dcterms", &self.dcterms))
-            .chain(self.extended.iter().map(|(k, v)| (&**k, v)))
-            .map(|(k, v)| {
-                let value = v.iter()
-                    .map(|(k, v)| {
-                        let elements = v.iter()
-                            .map(|s| Value::Scalar(S::from(s.clone())))
-                            .collect();
-                        (k, Value::List(elements))
-                    })
-                    .collect::<juniper::Object<S>>();
-
-                (k, Value::Object(value))
-            })
-            .collect::<juniper::Object<S>>()
-            .pipe(Value::Object)
-    }
-
-    fn from_input_value(value: &juniper::InputValue) -> Option<Self> {
-        // I did not want to waste time implementing this now, given that we
-        // likely never use it.
-        let _ = value;
-        todo!("ExtraMetadata cannot be used as input value yet")
-    }
-
-    fn from_str<'a>(value: juniper::ScalarToken<'a>) -> juniper::ParseScalarResult<'a, S> {
-        // See `from_input_value`
-        let _ = value;
-        todo!()
+    fn from_input<S: ScalarValue>(input: &InputValue<S>) -> Result<Self, String> {
+        let s = input.as_string_value().ok_or("expected string")?;
+        Ok(Self(s.into()))
     }
 }

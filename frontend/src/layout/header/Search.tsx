@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
@@ -6,14 +6,13 @@ import { LuX } from "react-icons/lu";
 
 import { useRouter } from "../../router";
 import {
-    handleNavigation,
     SearchRoute,
     isSearchActive,
     isValidSearchItemType,
+    SEARCH_TIMINGS,
 } from "../../routes/Search";
 import { focusStyle } from "../../ui";
-import { Spinner } from "@opencast/appkit";
-import { currentRef, useDebounce } from "../../util";
+import { currentRef } from "../../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
 import { useUser } from "../../User";
@@ -27,7 +26,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const { t } = useTranslation();
     const router = useRouter();
     const ref = useRef<HTMLInputElement>(null);
-    const { debounce } = useDebounce();
 
     // If the user is unknown, then we are still in the initial loading phase.
     // We don't want users to input anything into the search field in that
@@ -71,9 +69,6 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const iconStyle = { position: "absolute", right: paddingSpinner, top: paddingSpinner } as const;
 
 
-    const lastTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    useEffect(() => () => clearTimeout(lastTimeout.current));
-
     const onSearchRoute = isSearchActive();
     const getSearchParam = (searchParameter: string) => {
         const searchParams = new URLSearchParams(document.location.search);
@@ -84,14 +79,18 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     const defaultValue = getSearchParam("q");
 
 
-    const search = useCallback(debounce((expression: string) => {
+    const search = (q: string) => {
+        if (!(q in SEARCH_TIMINGS)) {
+            SEARCH_TIMINGS[q] = {};
+        }
+        SEARCH_TIMINGS[q].startSearch = window.performance.now();
         const filters = {
             itemType: isValidSearchItemType(getSearchParam("f")),
             start: getSearchParam("start"),
             end: getSearchParam("end"),
         };
-        router.goto(SearchRoute.url({ query: expression, ...filters }), onSearchRoute);
-    }, 250), []);
+        router.goto(SearchRoute.url({ query: q, ...filters }));
+    };
 
     return (
         <div css={{
@@ -114,8 +113,18 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             }} />
             <form onSubmit={event => {
                 event.preventDefault();
-                clearTimeout(lastTimeout.current);
                 search(currentRef(ref).value);
+
+                // Hide mobile keyboard on enter. The mobile keyboard hides lots
+                // of results and intuitively, pressing "enter" on it should
+                // close the keyboard. We don't want to remove focus for
+                // desktop users though, since that doesn't do any good. The
+                // check is not perfect but should actually detect virtual
+                // keyboard very reliably.
+                const visualHeight = window.visualViewport?.height;
+                if (visualHeight && visualHeight < window.innerHeight) {
+                    ref.current?.blur();
+                }
             }}>
                 <label css={{ display: "flex" }}>
                     <span css={{ display: "none" }}>{t("search.input-label")}</span>
@@ -125,16 +134,10 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         disabled={disabled}
                         placeholder={t("search.input-label")}
                         defaultValue={defaultValue}
-                        // The `onSearchRoute` part of this is a hacky fix to the search
-                        // losing focus when transitioning from any route to the search
-                        // route.
-                        autoFocus={variant === "mobile" || onSearchRoute}
-                        onChange={e => {
-                            clearTimeout(lastTimeout.current);
-                            lastTimeout.current = setTimeout(() => {
-                                search(e.target.value);
-                            }, 30);
-                        }}
+                        // We only want to autofocus if the user just pressed
+                        // the search button in the header (mobile only). This
+                        // only happens on non-search routes.
+                        autoFocus={variant === "mobile" && !onSearchRoute}
                         css={{
                             flex: 1,
                             color: COLORS.neutral60,
@@ -160,12 +163,13 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     />
                 </label>
             </form>
-            {router.isTransitioning && isSearchActive() && <Spinner
-                size={spinnerSize}
-                css={iconStyle}
-            />}
-            {!router.isTransitioning && isSearchActive() && <ProtoButton
-                onClick={() => handleNavigation(router, ref)}
+            <ProtoButton
+                // Just clear the search input
+                onClick={() => {
+                    const input = currentRef(ref);
+                    input.value = "";
+                    input.focus();
+                }}
                 css={{
                     ":hover, :focus": {
                         color: COLORS.neutral90,
@@ -177,7 +181,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     color: COLORS.neutral60,
                     ...iconStyle,
                 }}
-            ><LuX size={spinnerSize} css={{ display: "block" }} /></ProtoButton>}
+            ><LuX size={spinnerSize} css={{ display: "block" }} /></ProtoButton>
         </div>
     );
 };

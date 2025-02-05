@@ -1,17 +1,17 @@
 import React, { MutableRefObject, ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { fetchQuery, graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { Controller, useController, useForm } from "react-hook-form";
 import { LuCheckCircle, LuUpload, LuInfo } from "react-icons/lu";
-import { WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
+import { Spinner, WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
-import { loadQuery } from "../relay";
+import { environment, loadQuery } from "../relay";
 import { UploadQuery } from "./__generated__/UploadQuery.graphql";
 import { makeRoute } from "../rauta";
 import { ErrorDisplay, errorDisplayInfo } from "../util/err";
-import { useNavBlocker } from "./util";
+import { mapAcl, useNavBlocker } from "./util";
 import CONFIG from "../config";
 import { Button, boxError, ErrorBox, Card } from "@opencast/appkit";
 import { LinkButton } from "../ui/LinkButton";
@@ -34,6 +34,10 @@ import {
     AccessKnownRolesData$key,
 } from "../ui/__generated__/AccessKnownRolesData.graphql";
 import { READ_WRITE_ACTIONS } from "../util/permissionLevels";
+import {
+    UploadSeriesAclQuery,
+    UploadSeriesAclQuery$data,
+} from "./__generated__/UploadSeriesAclQuery.graphql";
 
 
 const PATH = "/~manage/upload" as const;
@@ -64,11 +68,14 @@ const query = graphql`
     }
 `;
 
-
+export type AclArray = NonNullable<UploadSeriesAclQuery$data["series"]>["acl"];
 type Metadata = {
     title: string;
     description: string;
-    series?: string;
+    series?: {
+        id: string;
+        acl: AclArray;
+    };
     acl: Acl;
 };
 
@@ -82,7 +89,6 @@ const Upload: React.FC<Props> = ({ knownRolesRef }) => {
 
     return (
         <div css={{
-            margin: "0 auto",
             height: "100%",
             display: "flex",
             flexDirection: "column",
@@ -225,8 +231,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
                 alignItems: "stretch",
                 gap: 32,
                 width: "100%",
-                maxWidth: 800,
-                margin: "0 auto",
+                maxWidth: 900,
             }}>
                 <UploadState state={uploadState.current} />
                 <div>
@@ -346,7 +351,7 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
 
 
     return (
-        <div css={{ margin: "0 auto" }}>
+        <div css={{ maxWidth: 750 }}>
             <Card kind="error">
                 <ErrorDisplay info={info} failedAction={t("upload.errors.failed-to-upload")} />
             </Card>
@@ -663,6 +668,14 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ state }) => {
 };
 
 
+const SeriesAclQuery = graphql`
+    query UploadSeriesAclQuery($seriesId: String!) {
+        series: seriesByOpencastId(id: $seriesId) {
+            acl { role actions info { label implies large } }
+        }
+    }
+`;
+
 type MetaDataEditProps = {
     onSave: (metadata: Metadata) => void;
     disabled: boolean;
@@ -680,12 +693,62 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
     const titleFieldId = useId();
     const descriptionFieldId = useId();
     const seriesFieldId = useId();
+    const [lockedAcl, setLockedAcl] = useState<Acl | null>(null);
+    const [aclError, setAclError] = useState<ReactNode>(null);
+    const [aclLoading, setAclLoading] = useState(false);
+    const aclEditingLocked = !!lockedAcl || aclLoading || !!aclError;
+
+    const fetchSeriesAcl = async (seriesId: string): Promise<Acl | null> => {
+        const data = await fetchQuery<UploadSeriesAclQuery>(
+            environment,
+            SeriesAclQuery,
+            { seriesId }
+        ).toPromise();
+
+        if (!data?.series?.acl) {
+            return null;
+        }
+
+        return mapAcl(data.series.acl);
+    };
+
+    const onSeriesChange = async (data: { opencastId?: string }) => {
+        setAclError(null);
+
+        if (!data?.opencastId) {
+            setLockedAcl(null);
+            return;
+        }
+
+        seriesField.onChange({ id: data.opencastId });
+
+        if (CONFIG.lockAclToSeries) {
+            setAclLoading(true);
+            try {
+                const seriesAcl = await fetchSeriesAcl(data.opencastId);
+                setLockedAcl(seriesAcl);
+                seriesField.onChange({
+                    id: data.opencastId,
+                    acl: seriesAcl,
+                });
+            } catch (e) {
+                setAclError(
+                    <ErrorDisplay
+                        error={e}
+                        failedAction={t("upload.errors.failed-fetching-series-acl")}
+                    />
+                );
+            } finally {
+                setAclLoading(false);
+            }
+        }
+    };
 
     const defaultAcl: Acl = new Map([
         [user.userRole, {
             actions: new Set(["read", "write"]),
             info: {
-                label: { "_": user.displayName },
+                label: { "default": user.displayName },
                 implies: null,
                 large: false,
             },
@@ -696,7 +759,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         }],
     ]);
 
-    const { register, handleSubmit, control, formState: { errors } } = useForm<Metadata>({
+    const { register, handleSubmit, control, formState: { isValid, errors } } = useForm<Metadata>({
         mode: "onChange",
         defaultValues: { acl: defaultAcl },
     });
@@ -741,41 +804,43 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                 {boxError(errors.title?.message)}
             </InputContainer>
 
-            {/* Description */}
-            <InputContainer>
-                <label htmlFor={descriptionFieldId}>{t("upload.metadata.description")}</label>
-                <TextArea id={descriptionFieldId} {...register("description")} />
-            </InputContainer>
+            <div css={{ maxWidth: 750 }}>
+                {/* Description */}
+                <InputContainer>
+                    <label htmlFor={descriptionFieldId}>{t("upload.metadata.description")}</label>
+                    <TextArea id={descriptionFieldId} {...register("description")} />
+                </InputContainer>
 
-            {/* Series */}
-            <InputContainer>
-                <label htmlFor={seriesFieldId}>
-                    {t("series.series")}
-                    {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
-                    <WithTooltip
-                        tooltip={t("upload.metadata.note-writable-series")}
-                        tooltipCss={{ width: 400 }}
-                        css={{
-                            display: "inline-block",
-                            verticalAlign: "middle",
-                            fontWeight: "normal",
-                            marginLeft: 8,
-                        }}
-                    >
-                        <span><LuInfo tabIndex={0} /></span>
-                    </WithTooltip>
-                </label>
-                <VideoListSelector
-                    type="series"
-                    inputId={seriesFieldId}
-                    writableOnly
-                    menuPlacement="top"
-                    onChange={data => seriesField.onChange(data?.opencastId)}
-                    onBlur={seriesField.onBlur}
-                    required={CONFIG.upload.requireSeries}
-                />
-                {boxError(errors.series?.message)}
-            </InputContainer>
+                {/* Series */}
+                <InputContainer>
+                    <label htmlFor={seriesFieldId}>
+                        {t("series.series")}
+                        {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
+                        <WithTooltip
+                            tooltip={t("upload.metadata.note-writable-series")}
+                            tooltipCss={{ width: 400 }}
+                            css={{
+                                display: "inline-block",
+                                verticalAlign: "middle",
+                                fontWeight: "normal",
+                                marginLeft: 8,
+                            }}
+                        >
+                            <span><LuInfo tabIndex={0} /></span>
+                        </WithTooltip>
+                    </label>
+                    <VideoListSelector
+                        type="series"
+                        inputId={seriesFieldId}
+                        writableOnly
+                        menuPlacement="top"
+                        onChange={data => onSeriesChange({ opencastId: data?.opencastId })}
+                        onBlur={seriesField.onBlur}
+                        required={CONFIG.upload.requireSeries}
+                    />
+                    {boxError(errors.series?.message)}
+                </InputContainer>
+            </div>
 
             {/* ACL */}
             <InputContainer>
@@ -784,23 +849,38 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     marginBottom: 12,
                     fontSize: 22,
                 }}>{t("manage.my-videos.acl.title")}</h2>
-                <Controller
-                    name="acl"
-                    control={control}
-                    render={({ field }) => <AclSelector
-                        userIsRequired
-                        onChange={field.onChange}
-                        acl={field.value}
-                        knownRoles={knownRoles}
-                        permissionLevels={READ_WRITE_ACTIONS}
-                    />}
-                />
+                {boxError(aclError)}
+                {aclLoading && <Spinner size={20} />}
+                {lockedAcl && (
+                    <Card kind="info" iconPos="left" css={{
+                        maxWidth: 700,
+                        fontSize: 14,
+                        marginBottom: 10,
+                    }}>
+                        {t("manage.access.locked-to-series")}
+                    </Card>
+                )}
+                <div {...aclEditingLocked && { inert: "true" }} css={{
+                    ...aclEditingLocked && { opacity: .7 },
+                }}>
+                    <Controller
+                        name="acl"
+                        control={control}
+                        render={({ field }) => <AclSelector
+                            userIsRequired
+                            onChange={field.onChange}
+                            acl={lockedAcl ?? field.value}
+                            knownRoles={knownRoles}
+                            permissionLevels={READ_WRITE_ACTIONS}
+                        />}
+                    />
+                </div>
             </InputContainer>
 
             {/* Submit button */}
             <Button
                 kind="call-to-action"
-                disabled={disabled}
+                disabled={!isValid || disabled}
                 css={{ marginTop: 32, marginBottom: 160 }}
                 onClick={onSubmit}>
                 {t("upload.metadata.save")}
@@ -1039,7 +1119,7 @@ const finishUpload = async (
         }
 
         // Add ACL
-        {
+        if (!CONFIG.lockAclToSeries) {
             const acl = constructAcl(metadata.acl);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
@@ -1088,7 +1168,7 @@ const constructDcc = (metadata: Metadata, user: User): string => {
             </dcterms:created>
             ${tag("dcterms:title", metadata.title)}
             ${tag("dcterms:description", metadata.description)}
-            ${tag("dcterms:isPartOf", metadata.series)}
+            ${tag("dcterms:isPartOf", metadata.series?.id)}
             ${tag("dcterms:creator", user.displayName)}
             ${tag("dcterms:spatial", "Tobira Upload")}
         </dublincore>
