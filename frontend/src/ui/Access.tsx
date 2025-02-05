@@ -270,7 +270,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                 prev.set(option.role, {
                     actions: new Set([permissionLevels.default]),
                     info: {
-                        label: info?.label ?? { "_": option.label },
+                        label: info?.label ?? { "default": option.label },
                         implies: [...info?.implies ?? new Set()],
                         large: info?.large ?? false,
                     },
@@ -883,7 +883,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
 // ===== Helper functions
 // ==============================================================================================
 
-type TranslatedLabel = Record<string, string>;
+type TranslatedLabel = { default: string } & Record<string, string | undefined>;
 
 /** Returns a label for the role, if known to Tobira. */
 const getLabel = (role: string, label: TranslatedLabel | undefined, i18n: i18n) => {
@@ -925,11 +925,14 @@ const insertBuiltinRoleInfo = (
     i18n: i18n,
     addAnonymous: boolean,
 ) => {
-    const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => Object.fromEntries(
-        i18n.languages
-            .filter(lng => i18n.exists(key, { lng }))
-            .map(lng => [lng, i18n.t(key, { lng })])
-    );
+    const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => ({
+        default: i18n.t(key, { lng: "en" }),
+        ...Object.fromEntries(
+            i18n.languages
+                .filter(lng => i18n.exists(key, { lng }))
+                .map(lng => [lng, i18n.t(key, { lng })])
+        ),
+    });
 
     const anonymousInfo = {
         implies: [],

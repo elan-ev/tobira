@@ -748,7 +748,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         [user.userRole, {
             actions: new Set(["read", "write"]),
             info: {
-                label: { "_": user.displayName },
+                label: { "default": user.displayName },
                 implies: null,
                 large: false,
             },

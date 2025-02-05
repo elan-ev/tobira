@@ -71,7 +71,7 @@ fn print_group(group: &KnownGroup) {
     print!(r#"    {}: {{ "label": {{"#, json!(group.role));
 
     // Sort by key to get consistent ordering (hashmap order is random).
-    let mut labels = group.label.0.iter().collect::<Vec<_>>();
+    let mut labels = group.label.iter().collect::<Vec<_>>();
     labels.sort();
     for (lang, label) in labels {
         print!(" {}: {}", json!(lang), json!(label));
