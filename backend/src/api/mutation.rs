@@ -1,6 +1,5 @@
 use juniper::graphql_object;
 
-use crate::api::model::event::RemovedEvent;
 use super::{
     Context,
     err::ApiResult,
@@ -64,7 +63,7 @@ impl Mutation {
     /// Note that "success" in this case only means the request was successfully sent
     /// and accepted, not that the deletion itself succeeded, which is instead checked
     /// in subsequent harvesting results.
-    async fn delete_video(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
+    async fn delete_video(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         AuthorizedEvent::delete(id, context).await
     }
 
@@ -77,6 +76,15 @@ impl Mutation {
     /// This solution should be improved in the future.
     async fn update_event_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
         AuthorizedEvent::update_acl(id, acl, context).await
+    }
+
+    /// Deletes the given series by sending a delete request to Opencast.
+    /// The series is marked as "deletion pending" in Tobira and fully removed once Opencast
+    /// finished deleting the series.
+    ///
+    /// Returns the deletion timestamp in case of success and errors otherwise.
+    async fn delete_series(id: Id, context: &Context) -> ApiResult<Series> {
+        Series::delete(id, context).await
     }
 
     /// Updates the acl of a given series by sending the changes to Opencast.
