@@ -27,6 +27,7 @@ general:
     select:
       no-options: No options
       select-option: Select option
+  no-description: No description
 
 welcome:
   title: Welcome to Tobira!
@@ -123,8 +124,6 @@ login-page:
 video:
   video: Video
   video-page: 'Video page: “{{video}}”'
-  created: Created
-  updated: Last updated
   duration: Duration
   link: Go to video page
   part-of-series: Part of series
@@ -197,6 +196,7 @@ playlist:
 
 series:
   series: Series
+  series-page: 'Series page: “{{series}}”'
   deleted: Deleted series
   deleted-series-block: The series referenced here was deleted.
   entry-of-series-thumbnail: "Thumbnail for entry of “{{series}}”"
@@ -205,6 +205,7 @@ series:
     text: >
       The data of the requested series has not been fully transferred yet. This should
       happen automatically soon. Try again in a few minutes.
+    label: not synchronized
 
 videolist-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"
@@ -212,7 +213,7 @@ videolist-block:
   no-videos: No videos
   unauthorized: Missing permissions
   hidden-items:
-    unauthorized_one: One video requires additional permissions to view. 
+    unauthorized_one: One video requires additional permissions to view.
     unauthorized_other: '{{count}} videos require additional permissions to view.'
     missing_one: One video is missing.
     missing_other: '{{count}} videos are missing.'
@@ -304,9 +305,6 @@ upload:
     Your video was uploaded successfully and is now being processed. It can be
     watched as soon as processing is done. You may close this page now.
   metadata:
-    title: Video title
-    description: Description
-    required: required
     save: Save and finish
     note-writable-series: >
       Videos can only be uploaded into series for which you have write-access.
@@ -314,11 +312,18 @@ upload:
   errors:
     failed-to-upload: Failed to upload video.
     unknown: Unknown error occurred during video upload.
-    field-required: This field is required (cannot be empty).
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
     failed-fetching-series-acl: Failed to fetch series acl.
+
+metadata-form:
+  title: Title
+  description: Description
+  required: required
+  save: Save changes
+  errors:
+    field-required: This field is required (cannot be empty).
 
 acl:
   unknown-user-note: unknown
@@ -404,8 +409,8 @@ manage:
       To rename, modify, and delete pages, navigate to the page in question. If you
       are logged in and have the necessary permissions, page management buttons will appear.
 
-  my-videos:
-    title: My videos
+  asset-table:
+    page-showing-ids: '{{start}}–{{end}} of {{total}}'
     navigation:
       first: First page
       previous: Previous page
@@ -417,34 +422,48 @@ manage:
       descending: descending
       title: Title
       created: Created
-    no-description: No description
-    page-showing-video-ids: '{{start}}–{{end}} of {{total}}'
-    no-videos-found: No videos found.
+      updated: Updated
+    no-entries-found: No entries found.
+    missing-date: Unknown
+
+  shared:
+    created: Created
+    updated: Last updated
+    details:
+      share-direct-link: Share via direct link
+      copy-direct-link-to-clipboard: Copy link to clipboard
+    acl:
+      title: Access policy
+    delete:
+      title: Delete {{item}}
+      confirm: Delete {{item}}?
+      cannot-be-undone: This action <strong>cannot</strong> be undone!
+      failed: Deleting the {{item}} failed.
+      failed-maybe: Deleting the {{item}} possibly failed.
+      pending: Deletion is pending.
+      tooltip:
+        failed: >
+          The deletion of this entry was requested {{time}} but still has not happened, so it might have failed.
+        pending: >
+          The deletion of this entry was requested in Opencast
+          and it will be removed from this list upon success.
+
+  my-series:
+    title: My series
+    content: Content
+    no-of-videos: '{{count}} videos'
+    details:
+      title: Series details
+
+  my-videos:
+    title: My videos
     details:
       title: Video details
-      share-direct-link: Share via direct link
       set-time: 'Start at: '
-      copy-direct-link-to-clipboard: Copy video link to clipboard
       open-in-editor: Open in video editor
       referencing-pages: Referencing pages
       referencing-pages-explanation: 'This video is referenced on the following pages:'
       no-referencing-pages: No pages reference this video.
-      delete:
-        title: Delete Video
-        confirm: Delete Video?
-        cannot-be-undone: This action <strong>cannot</strong> be undone!
-        failed: Deleting the video failed.
-        failed-maybe: Deleting the video possibly failed.
-        pending: Deletion is pending.
-        tooltip:
-          failed: >
-            The deletion was requested {{time}} but still has not happened, so it might have failed.
-          pending: >
-            The deletion of this video was requested in Opencast
-            and it will be removed from this list upon success.
-
-    acl:
-      title: Access policy
     technical-details:
       title: Technical details
       tracks: Video/audio tracks
@@ -650,6 +669,12 @@ api-remote-errors:
     workflow:
       not-allowed: You are not allowed to inquire about workflow activity of this video.
       active: $t(manage.access.workflow-active)
+  series:
+    acl:
+      not-found: "Access policy update failed: series not found."
+      not-allowed: You are not allowed to update the access policies of this series.
+    metadata:
+      not-found: "Metadata update failed: series not found."
 
 embed:
   not-supported: This page can't be embedded.
