@@ -26,6 +26,8 @@ import { ManageRoute } from "../../routes/manage";
 import { ManageVideosRoute } from "../../routes/manage/Video";
 import { LoginLink } from "../../routes/util";
 import { CREDENTIALS_STORAGE_KEY } from "../../routes/Video";
+import { ManageSeriesRoute } from "../../routes/manage/Series";
+import SeriesIcon from "../../icons/series.svg";
 
 
 
@@ -220,6 +222,12 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             icon: <LuFilm />,
             wrapper: <Link to={ManageVideosRoute.url} />,
             children: t("manage.my-videos.title"),
+            css: indent,
+        },
+        {
+            icon: <SeriesIcon />,
+            wrapper: <Link to={ManageSeriesRoute.url} />,
+            children: t("manage.my-series.title"),
             css: indent,
         },
         ...user.canUpload ? [{

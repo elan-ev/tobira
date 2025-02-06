@@ -1,12 +1,16 @@
 use crate::{
     api::{
         Context,
-        common::Cursor,
         err::ApiResult,
-        model::event::{AuthorizedEvent, EventConnection, EventSortOrder},
+        model::event::{AuthorizedEvent,EventConnection},
     },
     auth::User,
     prelude::*,
+};
+
+use super::{
+    series::{Series, SeriesConnection},
+    shared::{SeriesSortColumn, SeriesSortOrder, SortDirection, SortOrder, VideosSortColumn, VideosSortOrder}
 };
 
 
@@ -68,18 +72,41 @@ impl User {
     /// on the "my videos" page. This also returns events that have been marked
     /// as deleted (meaning their deletion in Opencast has been requested but they
     /// are not yet removed from Tobira's database).
-    ///
-    /// Exactly one of `first` and `last` must be set!
     async fn my_videos(
         &self,
-        #[graphql(default)]
-        order: EventSortOrder,
-        first: Option<i32>,
-        after: Option<Cursor>,
-        last: Option<i32>,
-        before: Option<Cursor>,
         context: &Context,
+        #[graphql(default)]
+        order: Option<VideosSortOrder>,
+        offset: i32,
+        limit: i32,
     ) -> ApiResult<EventConnection> {
-        AuthorizedEvent::load_writable_for_user(context, order, first, after, last, before).await
+        let order = order.unwrap_or(VideosSortOrder {
+            column: VideosSortColumn::Created,
+            direction: SortDirection::Descending,
+        });
+        AuthorizedEvent::load_writable_for_user(context, SortOrder {
+            column: order.column,
+            direction: order.direction
+        }, offset, limit).await
+    }
+
+    /// Returns all series that somehow "belong" to the user, i.e. that appear
+    /// on the "my series" page.
+    async fn my_series(
+        &self,
+        context: &Context,
+        #[graphql(default)]
+        order: Option<SeriesSortOrder>,
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<SeriesConnection> {
+        let order = order.unwrap_or(SeriesSortOrder {
+            column: SeriesSortColumn::Created,
+            direction: SortDirection::Descending,
+        });
+        Series::load_writable_for_user(context, SortOrder {
+            column: order.column,
+            direction: order.direction
+        }, offset, limit).await
     }
 }
