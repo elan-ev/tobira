@@ -381,7 +381,7 @@ type Mutation {
     and accepted, not that the deletion itself succeeded, which is instead checked
     in subsequent harvesting results.
   """
-  deleteVideo(id: ID!): RemovedEvent!
+  deleteVideo(id: ID!): AuthorizedEvent!
   """
     Updates the acl of a given event by sending the changes to Opencast.
     The `acl` parameter can include `read` and `write` roles, as these are the
@@ -392,6 +392,14 @@ type Mutation {
     This solution should be improved in the future.
   """
   updateEventAcl(id: ID!, acl: [AclInputEntry!]!): AuthorizedEvent!
+  """
+    Deletes the given series by sending a delete request to Opencast.
+    The series is marked as "deletion pending" in Tobira and fully removed once Opencast
+    finished deleting the series.
+
+    Returns the deletion timestamp in case of success and errors otherwise.
+  """
+  deleteSeries(id: ID!): Series!
   """
     Updates the acl of a given series by sending the changes to Opencast.
     The `acl` parameter can include `read` and `write` roles.
@@ -709,10 +717,6 @@ type RemovedBlock {
   realm: Realm!
 }
 
-type RemovedEvent {
-  id: ID!
-}
-
 type RemovedRealm {
   parent: Realm
 }
@@ -833,6 +837,7 @@ type Series implements Node {
   numVideos: Int!
   thumbnailStack: SeriesThumbnailStack!
   acl: [AclItem!]
+  tobiraDeletionTimestamp: DateTime
   hostRealms: [Realm!]!
   entries: [VideoListEntry!]!
   """

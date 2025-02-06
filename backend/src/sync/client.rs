@@ -141,8 +141,12 @@ impl OcClient {
         Ok(out)
     }
 
-    pub async fn delete_event(&self, oc_id: &str) -> Result<Response<Incoming>> {
-        let pq = format!("/api/events/{oc_id}");
+    pub async fn delete<T: OpencastItem>(&self, endpoint: &T) -> Result<Response<Incoming>> {
+        let pq = format!(
+            "/api/{endpoint}/{oc_id}",
+            endpoint = endpoint.endpoint_path(),
+            oc_id = endpoint.id(),
+        );
         let req = self.authed_req_builder(&self.external_api_node, &pq)
             .method(http::Method::DELETE)
             .body(RequestBody::empty())

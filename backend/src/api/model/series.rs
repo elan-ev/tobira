@@ -50,6 +50,7 @@ pub(crate) struct Series {
     pub(crate) write_roles: Option<Vec<String>>,
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<SeriesThumbnailStack>,
+    pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
 #[derive(GraphQLObject)]
@@ -65,6 +66,7 @@ impl_from_db!(
             title, description,
             metadata, created,
             read_roles, write_roles,
+            tobira_deletion_timestamp,
         },
         updated: "case \
             when ${table:series}.updated = '-infinity' then null \
@@ -81,6 +83,7 @@ impl_from_db!(
             metadata: row.metadata(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
+            tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             synced_data: (State::Ready == row.state()).then(
                 || SyncedSeriesData {
                     description: row.description(),
@@ -320,8 +323,8 @@ impl Series {
         limit: i32,
     ) -> ApiResult<Connection<Series>> {
         let parts = ConnectionQueryParts {
-            table: "series",
-            alias: None,
+            table: "all_series",
+            alias: Some("series"),
             join_clause: "",
         };
         let (selection, mapping) = select!(
@@ -463,6 +466,48 @@ impl Series {
             Err(err::opencast_error!("Opencast API error: {}", response.status()))
         }
     }
+
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<Series> {
+        let series = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "series.delete.not-found",
+                "series not found",
+            ),
+            err::not_authorized!(
+                key = "series.delete.not-allowed",
+                "deletion not allowed",
+            )
+        ).await?;
+
+        let response = context
+            .oc_client
+            .delete(&series)
+            .await
+            .map_err(|e| {
+                error!("Failed to send delete request: {}", e);
+                err::opencast_unavailable!("Failed to communicate with Opencast")
+            })?;
+
+        if response.status() == StatusCode::NO_CONTENT {
+            // 204: The series has been deleted
+            info!(series_id = %id, "Requested deletion of series");
+            context.db.execute("\
+                update all_series \
+                set tobira_deletion_timestamp = current_timestamp \
+                where id = $1 \
+            ", &[&series.key]).await?;
+            Ok(series)
+        } else {
+            warn!(
+                series_id = %id,
+                "Failed to delete series, OC returned status: {}",
+                response.status()
+            );
+            Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
+        }
+    }
 }
 
 /// Represents an Opencast series.
@@ -506,6 +551,10 @@ impl Series {
 
     async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
         self.load_acl(context).await
+    }
+
+    fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {
+        &self.tobira_deletion_timestamp
     }
 
     async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {

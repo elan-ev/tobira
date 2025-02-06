@@ -374,4 +374,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     39: "preview-roles-and-credentials",
     40: "realm-names-constraint-revision",
     41: "series-index",
+    42: "series-view-and-deletion-timestamp",
 ];
