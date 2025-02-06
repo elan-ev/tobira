@@ -11,21 +11,16 @@ import {
     ColumnProps,
     createQueryParamsParser,
     DateColumn,
-    descriptionStyle,
     ManageItems,
     TableRow,
-    thumbnailLinkStyle,
-    titleLinkStyle,
 } from "../Shared/Table";
 import {
     SeriesManageQuery,
     SeriesManageQuery$data,
     SeriesSortColumn,
 } from "./__generated__/SeriesManageQuery.graphql";
-import { Link } from "../../../router";
-import { ThumbnailStack } from "../../Search";
-import { SmallDescription } from "../../../ui/metadata";
 import { keyOfId } from "../../../util";
+import { ThumbnailStack } from "../../../ui/Series";
 
 
 const PATH = "/~manage/series" as const;
@@ -78,6 +73,7 @@ const query = graphql`
                     title
                     created
                     updated
+                    tobiraDeletionTimestamp
                     syncedData { description }
                     numVideos
                     thumbnailStack { thumbnails { url live audioOnly }}
@@ -113,29 +109,15 @@ export const seriesColumns: ColumnProps<SingleSeries>[] = [
 ];
 
 
-export const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => {
-    const link = `${PATH}/${keyOfId(item.id)}`;
+export const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
+    itemType="series"
+    item={item}
+    thumbnail={deletionIsPending => <SeriesThumbnail series={item} {...{ deletionIsPending }} />}
+    link={`${PATH}/${keyOfId(item.id)}`}
+    customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
+/>;
 
-    return (
-        <TableRow
-            thumbnail={<Link to={link} css={{ ...thumbnailLinkStyle }}>
-                <span css={{ "> div": { width: "100%" } }}>
-                    <ThumbnailStack title={item.title} thumbnailStack={item.thumbnailStack} />
-                </span>
-            </Link>}
-            title={<Link to={link} css={{ ...titleLinkStyle }}>{item.title}</Link>}
-            description={item.syncedData && <SmallDescription
-                css={{ ...descriptionStyle }}
-                text={item.syncedData.description}
-            />}
-            syncInfo={{
-                isSynced: !!item.syncedData,
-                notReadyLabel: "series.not-ready.label",
-            }}
-            customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
-        />
-    );
-};
+
 
 const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
     sortBy !== null

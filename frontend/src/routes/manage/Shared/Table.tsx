@@ -11,6 +11,10 @@ import {
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
+import { relativeDate } from "../../../ui/time";
+import { InfoWithTooltip } from "../../../ui";
+import CONFIG from "../../../config";
+import { SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
 import { PageTitle } from "../../../layout/header/ui";
@@ -253,15 +257,19 @@ export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
     </td>;
 };
 
-type TableRowProps = {
-    thumbnail: ReactNode;
-    title: ReactNode;
-    description: ReactNode;
+type TableRowItem = {
+    syncedData?: Record<string, unknown> | null;
+    tobiraDeletionTimestamp?: string | null;
+    title: string;
+    description?: string | null;
+}
+
+type TableRowProps<T extends TableRowItem> = {
+    itemType: "video" | "series";
+    thumbnail: (isPending?: boolean) => ReactNode;
+    link: string;
+    item: T;
     customColumns?: ReactNode[];
-    syncInfo?: {
-        isSynced: boolean;
-        notReadyLabel: ParseKeys;
-    };
 };
 
 /**
@@ -270,19 +278,28 @@ type TableRowProps = {
  * and description. These can still be somewhat customized.
  * Additional columns can be declared in the respective item column arrays.
  */
-export const TableRow: React.FC<TableRowProps> = ({
-    thumbnail,
-    title,
-    description,
-    customColumns,
-    syncInfo,
-}) => {
+export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowProps<T>) => {
     const { t } = useTranslation();
+    const deletionTimestamp = item.tobiraDeletionTimestamp;
+    const deletionIsPending = Boolean(deletionTimestamp);
+    const deletionDate = new Date(deletionTimestamp ?? "");
+
+    // This checks if the current time is later than the deletion timestamp + twice
+    // the configured poll period to ensure at least one sync has taken place
+    // (+ 1min to allow some time for the Opencast delete job).
+    // If it is, the deletion in Opencast has possibly failed.
+    const pollPeriod = CONFIG.sync.pollPeriod * 1000;
+    const deletionFailed = Boolean(deletionTimestamp
+        && Date.parse(deletionTimestamp) + pollPeriod * 2 + 60000 < Date.now());
 
     return <tr>
         {/* Thumbnail */}
-        <td>{thumbnail}</td>
-        {/* Title & description */}
+        <td>
+            {deletionIsPending
+                ? props.thumbnail(deletionIsPending)
+                : <Link to={props.link} css={{ ...thumbnailLinkStyle }}>{props.thumbnail()}</Link>
+            }
+        </td>
         <td>
             <div css={{
                 display: "flex",
@@ -298,22 +315,76 @@ export const TableRow: React.FC<TableRowProps> = ({
                         borderRadius: 4,
                         outline: `2.5px solid ${COLORS.focus}`,
                     },
-                }}>{title}</div>
-                {syncInfo && !syncInfo.isSynced && (
+                }}>
+                    {/* Title */}
+                    {deletionIsPending
+                        ? <span css={{ color: COLORS.neutral60 }}>{item.title}</span>
+                        : <Link to={props.link} css={{ ...titleLinkStyle }}>{item.title}</Link>
+                    }
+                </div>
+                {!item.syncedData && (
                     <span css={{
                         padding: "0 8px",
                         fontSize: "small",
                         borderRadius: 10,
                         backgroundColor: COLORS.neutral10,
                     }}>
-                        {t(syncInfo.notReadyLabel)}
+                        {t(`${props.itemType}.not-ready.label`)}
                     </span>
                 )}
             </div>
-            {description}
+            {/* Description */}
+            {deletionIsPending
+                ? <PendingDeletionBody
+                    itemType={props.itemType}
+                    {...{ deletionFailed, deletionDate }}
+                />
+                : <SmallDescription
+                    css={{ ...descriptionStyle }}
+                    text={item.description}
+                />
+            }
         </td>
-        {customColumns}
+        {props.customColumns}
     </tr>;
+};
+
+type PendingDeleteBodyProps = {
+    deletionFailed: boolean;
+    deletionDate: Date;
+    itemType: "video" | "series";
+}
+
+const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
+    deletionFailed, deletionDate, itemType,
+}) => {
+    const isDark = useColorScheme().scheme === "dark";
+    const { t } = useTranslation();
+
+    const now = Date.now();
+    const [, relative] = relativeDate(deletionDate, now);
+
+    return (
+        <div css={{
+            color: isDark ? COLORS.neutral60 : COLORS.neutral50,
+            display: "flex",
+            fontSize: 13,
+            marginTop: 4,
+            padding: "0 4px",
+        }}>
+            <span css={{ fontStyle: "italic" }}>
+                {t(`manage.shared.delete.${
+                    deletionFailed ? "failed-maybe" : "pending"
+                }`, { item: itemType })}
+            </span>
+            <InfoWithTooltip
+                tooltip={t(`manage.shared.delete.tooltip.${
+                    deletionFailed ? "failed" : "pending"
+                }`, { time: relative })}
+                mode={deletionFailed ? "warning" : "info"}
+            />
+        </div>
+    );
 };
 
 type ColumnHeaderProps = {
