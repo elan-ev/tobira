@@ -346,6 +346,7 @@ impl AuthorizedEvent {
                     metadata: None,
                     read_roles: None,
                     write_roles: None,
+                    tobira_deletion_timestamp: None,
                 }))
             } else {
                 // We need to load the series as fields were requested that were not preloaded.
@@ -509,7 +510,7 @@ impl AuthorizedEvent {
         Ok(event)
     }
 
-    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_for_api(
             id,
             context,
@@ -525,7 +526,7 @@ impl AuthorizedEvent {
 
         let response = context
             .oc_client
-            .delete_event(&event.opencast_id)
+            .delete(&event)
             .await
             .map_err(|e| {
                 error!("Failed to send delete request: {}", e);
@@ -540,7 +541,7 @@ impl AuthorizedEvent {
                 set tobira_deletion_timestamp = current_timestamp \
                 where id = $1 \
             ", &[&event.key]).await?;
-            Ok(RemovedEvent { id })
+            Ok(event)
         } else {
             warn!(
                 event_id = %id,
@@ -760,8 +761,3 @@ impl EventConnection {
     }
 }
 
-#[derive(juniper::GraphQLObject)]
-#[graphql(Context = Context)]
-pub(crate) struct RemovedEvent {
-    id: Id,
-}
