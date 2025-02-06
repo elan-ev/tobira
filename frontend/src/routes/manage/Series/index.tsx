@@ -12,21 +12,16 @@ import {
     ColumnProps,
     createQueryParamsParser,
     DateColumn,
-    descriptionStyle,
     ManageAssets,
     TableRow,
-    thumbnailLinkStyle,
-    titleLinkStyle,
 } from "../Shared/Table";
 import {
     SeriesManageQuery,
     SeriesManageQuery$data,
     SeriesSortColumn,
 } from "./__generated__/SeriesManageQuery.graphql";
-import { Link } from "../../../router";
-import { ThumbnailStack } from "../../Search";
-import { SmallDescription } from "../../../ui/metadata";
 import { keyOfId } from "../../../util";
+import { ThumbnailStack } from "../../../ui/Series";
 
 
 const PATH = "/~manage/series" as const;
@@ -80,6 +75,7 @@ const query = graphql`
                     title
                     created
                     updated
+                    tobiraDeletionTimestamp
                     syncedData { description }
                     entries {
                         __typename
@@ -120,29 +116,16 @@ export const seriesColumns: ColumnProps[] = [
 ];
 
 
-export const SeriesRow: React.FC<{ series: SingleSeries }> = ({ series }) => {
-    const link = `${PATH}/${keyOfId(series.id)}`;
+export const SeriesRow: React.FC<{ series: SingleSeries }> = ({ series }) => <TableRow
+    itemType="series"
+    item={{ ...series, description: series.syncedData?.description }}
+    thumbnail={deletionIsPending => <SeriesThumbnail {...{ series, deletionIsPending }} />}
+    link={`${PATH}/${keyOfId(series.id)}`}
+    customColumns={seriesColumns.map(col => <Fragment key={col.key}>
+        {col.column(series)}
+    </Fragment>)}
+/>;
 
-    return (
-        <TableRow
-            thumbnail={<Link to={link} css={{ ...thumbnailLinkStyle }}>
-                <SeriesThumbnail {...{ series }} />
-            </Link>}
-            title={<Link to={link} css={{ ...titleLinkStyle }}>{series.title}</Link>}
-            description={series.syncedData && <SmallDescription
-                css={{ ...descriptionStyle }}
-                text={series.syncedData.description}
-            />}
-            syncInfo={{
-                isSynced: !!series.syncedData,
-                notReadyLabel: "series.not-ready.label",
-            }}
-            customColumns={seriesColumns.map(col => (
-                <Fragment key={col.key}>{col.column(series)}</Fragment>
-            ))}
-        />
-    );
-};
 
 const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
     sortBy !== null ? match<string, SeriesSortColumn>(sortBy, {
@@ -155,10 +138,11 @@ const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
 const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);
 
 type SeriesThumbnailProps = {
-    series: SingleSeries;
+    series: Pick<SingleSeries, "title" | "entries">;
+    deletionIsPending?: boolean;
 }
 
-export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series }) => {
+export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, deletionIsPending }) => {
     // Seems odd, but simply checking `e => e.__typename === "AuthorizedEvent"` will produce
     // TS2339 errors when compiling.
     type Entry = SingleSeries["entries"][number];
@@ -175,6 +159,6 @@ export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series }) => {
         }));
 
     return <div css={{ "> div": { width: "100%" } }}>
-        <ThumbnailStack title={series.title} {...{ thumbnails }} />
+        <ThumbnailStack title={series.title} {...{ thumbnails, deletionIsPending }} />
     </div>;
 };
