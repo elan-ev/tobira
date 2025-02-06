@@ -1,10 +1,10 @@
 import { ParseKeys } from "i18next";
-import { ReactNode, PropsWithChildren, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { ReactNode, PropsWithChildren, useState, useRef } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { FormProvider } from "react-hook-form";
 import { UseMutationConfig } from "react-relay";
 import { MutationParameters } from "relay-runtime";
-import { boxError } from "@opencast/appkit";
+import { boxError, Button, currentRef } from "@opencast/appkit";
 
 import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
@@ -22,6 +22,8 @@ import { useUser, isRealUser } from "../../../User";
 import { secondsToTimeString } from "../../../util";
 import { PAGE_WIDTH } from "./Nav";
 import { displayCommitError } from "../Realm/util";
+import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
+import { useRouter } from "../../../router";
 
 
 type NarrowedAssetType = {
@@ -191,5 +193,65 @@ export const DetailsMetadataSection = <TMutation extends MutationParameters>({
             </MetadataForm>
         </FormProvider>
         {boxError(commitError)}
+    </>;
+};
+
+
+export const ButtonSection: React.FC<PropsWithChildren> = ({ children }) => (
+    <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
+        {children}
+    </div>
+);
+
+
+type DeleteButtonProps<TMutation extends MutationParameters> = {
+    itemId: string;
+    itemType: "video" | "series";
+    commit: (config: UseMutationConfig<TMutation>) => Disposable;
+    returnPath: string;
+};
+
+export const DeleteButton = <TMutation extends MutationParameters>({
+    itemId,
+    itemType,
+    commit,
+    returnPath,
+}: DeleteButtonProps<TMutation>) => {
+    const { t } = useTranslation();
+    const modalRef = useRef<ConfirmationModalHandle>(null);
+    const router = useRouter();
+    const item = t(`manage.shared.item.${itemType}`);
+
+    const onSubmit = () => {
+        commit({
+            variables: { id: itemId },
+            updater: store => store.invalidateStore(),
+            onCompleted: () => {
+                currentRef(modalRef).done();
+                router.goto(returnPath);
+            },
+            onError: error => {
+                const failedAction = t("manage.shared.delete.failed", { item: itemType });
+                currentRef(modalRef).reportError(displayCommitError(error, failedAction));
+            },
+        });
+    };
+
+    return <>
+        <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
+            <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
+                {t("manage.shared.delete.title", { item })}
+            </span>
+        </Button>
+        <ConfirmationModal
+            title={t("manage.shared.delete.confirm", { item })}
+            buttonContent={t("manage.shared.delete.title", { item })}
+            onSubmit={onSubmit}
+            ref={modalRef}
+        >
+            <p>
+                <Trans i18nKey="manage.shared.delete.cannot-be-undone" />
+            </p>
+        </ConfirmationModal>
     </>;
 };
