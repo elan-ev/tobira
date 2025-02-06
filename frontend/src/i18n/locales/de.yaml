@@ -447,11 +447,28 @@ manage:
   shared:
     created: Erstellt
     updated: Zuletzt verändert
+    item:
+      video: Video
+      series: Serie
     details:
       share-direct-link: Via Direktlink teilen
       copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
     acl:
       title: Zugriffsrechte
+    delete:
+      title: '{{item}} löschen'
+      confirm: '{{item}} löschen?'
+      cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
+      failed: Löschen fehlgeschlagen.
+      failed-maybe: Löschen möglicherweise fehlgeschlagen.
+      pending: Löschvorgang ausstehend.
+      tooltip:
+        failed: >
+          Der Löschvorgang für diesen Eintrag wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
+          und daher möglicherweise fehlgeschlagen.
+        pending: >
+          Der Löschvorgang dieses Eintrags in Opencast wurde angesetzt und es wird
+          nach dessen Erfolg hier entfernt.
 
   my-series:
     title: Meine Serien
@@ -459,6 +476,9 @@ manage:
     no-of-videos: '{{count}} Videos'
     details:
       title: Seriendetails
+    delete-note: >
+      In der Serie enthaltene Videos werden nicht gelöscht und können einer anderen Serie
+      zugeordnet werden.
 
   my-videos:
     title: Meine Videos
@@ -469,20 +489,6 @@ manage:
       referencing-pages: Referenzierende Seiten
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
-      delete:
-        title: Video löschen
-        confirm: Video löschen?
-        cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
-        failed: Löschen fehlgeschlagen.
-        failed-maybe: Löschen möglicherweise fehlgeschlagen.
-        pending: Löschvorgang ausstehend.
-        tooltip:
-          failed: >
-            Der Löschvorgang für dieses Video wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
-            und daher möglicherweise fehlgeschlagen.
-          pending: >
-            Der Löschvorgang dieses Videos in Opencast wurde angesetzt und es wird
-            nach dessen Erfolg hier entfernt.
     technical-details:
       title: Technische Details
       tracks: Video-/Audiospuren

@@ -429,11 +429,26 @@ manage:
   shared:
     created: Created
     updated: Last updated
+    item:
+      video: video
+      series: series
     details:
       share-direct-link: Share via direct link
       copy-direct-link-to-clipboard: Copy link to clipboard
     acl:
       title: Access policy
+    delete:
+      title: Delete {{item}}
+      confirm: Delete {{item}}?
+      cannot-be-undone: This action <strong>cannot</strong> be undone!
+      failed: Deleting the {{item}} failed.
+      failed-maybe: Deleting the {{item}} possibly failed.
+      pending: Deletion is pending.
+      tooltip:
+        failed: >
+          The deletion of this entry was requested {{time}} but still has not happened, so it might have failed.
+        pending: >
+          The deletion of this entry was requested in Opencast and it will be removed from this list upon success.
 
   my-series:
     title: My series
@@ -441,6 +456,9 @@ manage:
     no-of-videos: '{{count}} videos'
     details:
       title: Series details
+    delete-note: >
+      Videos in this series will not be deleted.
+      They will remain in the system and can be added to another series.
 
   my-videos:
     title: My videos
@@ -451,19 +469,6 @@ manage:
       referencing-pages: Referencing pages
       referencing-pages-explanation: 'This video is referenced on the following pages:'
       no-referencing-pages: No pages reference this video.
-      delete:
-        title: Delete Video
-        confirm: Delete Video?
-        cannot-be-undone: This action <strong>cannot</strong> be undone!
-        failed: Deleting the video failed.
-        failed-maybe: Deleting the video possibly failed.
-        pending: Deletion is pending.
-        tooltip:
-          failed: >
-            The deletion was requested {{time}} but still has not happened, so it might have failed.
-          pending: >
-            The deletion of this video was requested in Opencast
-            and it will be removed from this list upon success.
     technical-details:
       title: Technical details
       tracks: Video/audio tracks

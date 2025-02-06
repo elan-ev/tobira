@@ -1,26 +1,26 @@
 import i18n from "../../../i18n";
-import { useRef } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
-import { Button, buttonStyle, useAppkitConfig, useColorScheme } from "@opencast/appkit";
+import { buttonStyle, useAppkitConfig, useColorScheme } from "@opencast/appkit";
 
-import { Link, useRouter } from "../../../router";
+import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { isRealUser, useUser } from "../../../User";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
-import { currentRef, translatedConfig } from "../../../util";
+import { translatedConfig } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
-import { displayCommitError } from "../Realm/util";
-import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 import {
     UpdatedCreatedInfo,
     DetailsPage,
     DirectLink,
     MetadataSection,
+    DeleteButton,
+    ButtonSection,
 } from "../Shared/Details";
+import { VideoDetailsDeleteMutation } from "./__generated__/VideoDetailsDeleteMutation.graphql";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -36,9 +36,9 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
         sections={event => [
             <UpdatedCreatedInfo key="created-info" item={{
                 ...event,
-                updated: event.syncedData?.updated }}
-            />,
-            <ButtonSection key="button-section" event={authEvent} />,
+                updated: event.syncedData?.updated,
+            }} />,
+            <VideoButtonSection key="button-section" event={authEvent} />,
             <DirectLink key="direct-link" withTimestamp url={
                 new URL(DirectVideoRoute.url({ videoId: authEvent.id }), document.baseURI)
             } />,
@@ -56,16 +56,18 @@ const deleteVideoMutation = graphql`
     }
 `;
 
-const ButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
+const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
     const { t, i18n } = useTranslation();
-    const { isHighContrast } = useColorScheme();
-    const config = useAppkitConfig();
+    const [commit] = useMutation<VideoDetailsDeleteMutation>(deleteVideoMutation);
     const user = useUser();
+    const config = useAppkitConfig();
+    const { isHighContrast } = useColorScheme();
+
     if (!isRealUser(user)) {
         return <NotAuthorized />;
     }
 
-    return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
+    return <ButtonSection>
         {user.canUseEditor && !event.isLive && event.canWrite && (
             <ExternalLink
                 service="EDITOR"
@@ -80,58 +82,16 @@ const ButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
                 {t("manage.my-videos.details.open-in-editor")}
             </ExternalLink>
         )}
-        <DeleteButton {...{ event }} />
-    </div>;
+        <DeleteButton
+            itemId={event.id}
+            itemType="video"
+            returnPath="/~manage/videos"
+            commit={commit}
+        />
+    </ButtonSection>;
 };
 
-type Props = {
-    event: AuthorizedEvent;
-};
-
-const DeleteButton: React.FC<Props> = ({ event }) => {
-    const { t } = useTranslation();
-    const router = useRouter();
-    const [commit] = useMutation(deleteVideoMutation);
-    const modalRef = useRef<ConfirmationModalHandle>(null);
-
-
-    const deleteVideo = () => {
-        commit({
-            variables: {
-                id: event.id,
-            },
-            updater: store => store.invalidateStore(),
-            onCompleted: () => {
-                currentRef(modalRef).done();
-                router.goto("/~manage/videos");
-            },
-            onError: error => {
-                const failedAction = t("manage.my-videos.details.delete.failed");
-                currentRef(modalRef).reportError(displayCommitError(error, failedAction));
-            },
-        });
-    };
-
-    return <>
-        <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
-            <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
-                {t("manage.my-videos.details.delete.title")}
-            </span>
-        </Button>
-        <ConfirmationModal
-            title={t("manage.my-videos.details.delete.confirm")}
-            buttonContent={t("manage.my-videos.details.delete.title")}
-            onSubmit={deleteVideo}
-            ref={modalRef}
-        >
-            <p>
-                <Trans i18nKey="manage.my-videos.details.delete.cannot-be-undone" />
-            </p>
-        </ConfirmationModal>
-    </>;
-};
-
-const HostRealms: React.FC<Props> = ({ event }) => {
+const HostRealms: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
     const { t } = useTranslation();
 
     return <>

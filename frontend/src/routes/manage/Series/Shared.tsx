@@ -9,11 +9,12 @@ import { NotFound } from "../../NotFound";
 import { b64regex } from "../../util";
 import { seriesId, keyOfId } from "../../../util";
 import CONFIG from "../../../config";
-import { ManageSeriesRoute, SeriesThumbnail } from ".";
+import { ManageSeriesRoute, SingleSeries } from ".";
 import { SharedSeriesManageQuery } from "./__generated__/SharedSeriesManageQuery.graphql";
 import { DirectSeriesRoute } from "../../Series";
 import { ReturnLink, ManageNav, SharedManageNavProps } from "../Shared/Nav";
 import { COLORS } from "../../../color";
+import { ThumbnailStack } from "../../../ui/ThumbnailStack";
 
 
 export const PAGE_WIDTH = 1100;
@@ -140,3 +141,18 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
         additionalStyles,
     }} />;
 };
+
+type SeriesThumbnailProps = {
+    series: Pick<SingleSeries, "title" | "thumbnailStack">;
+    deletionIsPending?: boolean;
+}
+
+export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, deletionIsPending }) => (
+    <div css={{ "> div": { width: "100%" } }}>
+        <ThumbnailStack
+            thumbnails={series.thumbnailStack.thumbnails}
+            title={series.title}
+            {...{ deletionIsPending }}
+        />
+    </div>
+);
