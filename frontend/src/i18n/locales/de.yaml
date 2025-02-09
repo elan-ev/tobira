@@ -425,7 +425,7 @@ manage:
       Seite. Solange Sie angemeldet sind und die benötigten Rechte haben, gibt es dort entsprechende
       Seitenverwaltungs-Buttons in der Seitenleiste bzw. im Menu.
 
-  asset-table:
+  item-table:
     page-showing-ids: '{{start}}–{{end}} von {{total}}'
     navigation:
       first: Erste Seite

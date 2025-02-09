@@ -34,9 +34,9 @@ use super::{
     playlist::VideoListEntry,
     shared::{
         load_writable_for_user,
-        AssetMapping,
+        ItemMapping,
         Connection,
-        LoadableAsset,
+        LoadableItem,
         PageInfo,
         SortOrder,
         VideosSortColumn,
@@ -659,8 +659,8 @@ impl AuthorizedEvent {
     }
 }
 
-impl LoadableAsset for AuthorizedEvent {
-    fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
+impl LoadableItem for AuthorizedEvent {
+    fn selection() -> (String, ItemMapping<<Self as FromDb>::RowMapping>) {
         let (selection, mapping) = select!(resource: AuthorizedEvent);
         (selection, mapping.resource)
     }

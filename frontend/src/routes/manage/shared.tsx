@@ -26,7 +26,7 @@ import { SeriesSortColumn } from "./Series/__generated__/SeriesManageQuery.graph
 
 
 type Connection = EventConnection | SeriesConnection;
-type AssetVars = {
+type ItemVars = {
     order: {
         column: SortColumn;
         direction: SortDirection;
@@ -37,16 +37,16 @@ type AssetVars = {
 
 type SharedProps = {
     connection: Connection;
-    vars: AssetVars;
+    vars: ItemVars;
 };
 
-type ManageAssetsProps = SharedProps & {
+type ManageItemProps = SharedProps & {
     titleKey: ParseKeys;
 }
 
 const LIMIT = 15;
 
-export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, titleKey }) => {
+export const ManageItems: React.FC<ManageItemProps> = ({ connection, vars, titleKey }) => {
     const { t } = useTranslation();
 
     const totalCount = connection.totalCount;
@@ -66,12 +66,12 @@ export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, ti
 
     let inner;
     if (connection.items.length === 0 && connection.totalCount === 0) {
-        inner = <Card kind="info">{t("manage.asset-table.no-entries-found")}</Card>;
+        inner = <Card kind="info">{t("manage.item-table.no-entries-found")}</Card>;
     } else {
         inner = <>
             <PageNavigation {...{ vars, connection }} />
             <div css={{ flex: "1 0 0", margin: "16px 0" }}>
-                <AssetTable {...{ vars, connection }} />
+                <ItemTable {...{ vars, connection }} />
             </div>
             <PageNavigation {...{ vars, connection }} />
         </>;
@@ -97,21 +97,21 @@ export const ManageAssets: React.FC<ManageAssetsProps> = ({ connection, vars, ti
 
 const THUMBNAIL_WIDTH = 16 * 8;
 
-type Asset = Event | SingleSeries;
+type Item = Event | SingleSeries;
 type SortColumn = VideosSortColumn | SeriesSortColumn;
 
 export type ColumnProps = {
     key: SortColumn;
     label: ParseKeys;
     headerWidth?: number;
-    column: (item: Asset) => ReactNode;
+    column: (item: Item) => ReactNode;
 };
 
 type GenericTableProps = SharedProps & {
     thumbnailWidth?: number;
 }
 
-const AssetTable: React.FC<GenericTableProps> = ({
+const ItemTable: React.FC<GenericTableProps> = ({
     connection,
     vars,
     thumbnailWidth,
@@ -197,7 +197,7 @@ const AssetTable: React.FC<GenericTableProps> = ({
                     <th></th>
                     {/* Title */}
                     <ColumnHeader
-                        label={t("manage.asset-table.columns.title")}
+                        label={t("manage.item-table.columns.title")}
                         sortKey="TITLE"
                         {...{ vars }}
                     />
@@ -262,7 +262,7 @@ export const DateColumn: React.FC<{ date?: string }> = ({ date }) => {
                 </span>
             </>
             : <i css={greyColor}>
-                {t("manage.asset-table.missing-date")}
+                {t("manage.item-table.missing-date")}
             </i>
         }
     </td>;
@@ -280,10 +280,10 @@ type TableRowProps = {
 };
 
 /**
- * A row in the asset table
- * This is assuming that each asset (video, series, playlist) has a thumbnail, title,
+ * A row in the item table.
+ * This is assuming that each item (video, series, playlist) has a thumbnail, title,
  * and description. These can still be somewhat customized.
- * Additional columns can be declared in the respective asset column arrays.
+ * Additional columns can be declared in the respective item column arrays.
  */
 export const TableRow: React.FC<TableRowProps> = ({
     thumbnail,
@@ -334,7 +334,7 @@ export const TableRow: React.FC<TableRowProps> = ({
 type ColumnHeaderProps = {
     label: string;
     sortKey: SortColumn;
-    vars: AssetVars;
+    vars: ItemVars;
 };
 
 const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => {
@@ -346,8 +346,8 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
 
     return <th>
         <Link
-            aria-label={t("manage.asset-table.columns.description",
-                { title: label, direction: t(`manage.asset-table.columns.${directionTransKey}`) })
+            aria-label={t("manage.item-table.columns.description",
+                { title: label, direction: t(`manage.item-table.columns.${directionTransKey}`) })
             }
             to={varsToLink({
                 order: {
@@ -404,7 +404,7 @@ const PageNavigation: React.FC<SharedProps> = ({ connection, vars }) => {
             gap: 48,
         }}>
             <div>
-                {t("manage.asset-table.page-showing-ids", {
+                {t("manage.item-table.page-showing-ids", {
                     start: connection.pageInfo.startIndex ?? "?",
                     end: connection.pageInfo.endIndex ?? "?",
                     total,
@@ -415,25 +415,25 @@ const PageNavigation: React.FC<SharedProps> = ({ connection, vars }) => {
                 <PageLink
                     vars={{ ...vars, offset: 0 }}
                     disabled={!pageInfo.hasPreviousPage && connection.items.length === limit}
-                    label={t("manage.asset-table.navigation.first")}
+                    label={t("manage.item-table.navigation.first")}
                 ><FirstPage /></PageLink>
                 {/* Previous page */}
                 <PageLink
                     vars={{ ...vars, offset: prevOffset }}
                     disabled={!pageInfo.hasPreviousPage}
-                    label={t("manage.asset-table.navigation.previous")}
+                    label={t("manage.item-table.navigation.previous")}
                 ><LuChevronLeft /></PageLink>
                 {/* Next page */}
                 <PageLink
                     vars={{ ...vars, offset: nextOffset }}
                     disabled={!pageInfo.hasNextPage}
-                    label={t("manage.asset-table.navigation.next")}
+                    label={t("manage.item-table.navigation.next")}
                 ><LuChevronRight /></PageLink>
                 {/* Last page */}
                 <PageLink
                     vars={{ ...vars, offset: lastOffset }}
                     disabled={!pageInfo.hasNextPage}
-                    label={t("manage.asset-table.navigation.last")}
+                    label={t("manage.item-table.navigation.last")}
                 ><LastPage /></PageLink>
             </div>
         </div>
@@ -441,7 +441,7 @@ const PageNavigation: React.FC<SharedProps> = ({ connection, vars }) => {
 };
 
 type PageLinkProps = {
-    vars: AssetVars;
+    vars: ItemVars;
     disabled: boolean;
     children: ReactNode;
     label: string;
@@ -531,7 +531,7 @@ export function createQueryParamsParser<ColumnType extends string>(
 }
 
 /** Converts query variables to URL query parameters */
-const varsToQueryParams = (vars: AssetVars): URLSearchParams => {
+const varsToQueryParams = (vars: ItemVars): URLSearchParams => {
     const searchParams = new URLSearchParams();
 
     // Sort order
@@ -560,7 +560,7 @@ const varsToQueryParams = (vars: AssetVars): URLSearchParams => {
     return searchParams;
 };
 
-const varsToLink = (vars: AssetVars): string => {
+const varsToLink = (vars: ItemVars): string => {
     const url = new URL(document.location.href);
     url.search = varsToQueryParams(vars).toString();
     return url.href;

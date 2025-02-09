@@ -13,7 +13,7 @@ import {
     createQueryParamsParser,
     DateColumn,
     descriptionStyle,
-    ManageAssets,
+    ManageItems,
     TableRow,
     thumbnailLinkStyle,
     titleLinkStyle,
@@ -48,7 +48,7 @@ export const ManageSeriesRoute = makeRoute({
                 nav={() => <ManageNav active={PATH} />}
                 render={data => !data.currentUser
                     ? <NotAuthorized />
-                    : <ManageAssets
+                    : <ManageItems
                         vars={vars}
                         connection={data.currentUser.mySeries}
                         titleKey="manage.my-series.title"
@@ -109,12 +109,12 @@ export const seriesColumns: ColumnProps[] = [
     },
     {
         key: "UPDATED",
-        label: "manage.asset-table.columns.updated",
+        label: "manage.item-table.columns.updated",
         column: series => "updated" in series && <DateColumn date={series.updated ?? undefined} />,
     },
     {
         key: "CREATED",
-        label: "manage.asset-table.columns.created",
+        label: "manage.item-table.columns.created",
         column: series => <DateColumn date={series.created ?? undefined} />,
     },
 ];

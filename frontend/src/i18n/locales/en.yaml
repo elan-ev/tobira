@@ -406,7 +406,7 @@ manage:
       To rename, modify, and delete pages, navigate to the page in question. If you
       are logged in and have the necessary permissions, page management buttons will appear.
 
-  asset-table:
+  item-table:
     page-showing-ids: '{{start}}–{{end}} of {{total}}'
     navigation:
       first: First page

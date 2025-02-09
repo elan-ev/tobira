@@ -31,7 +31,7 @@ pub trait ToSqlColumn {
 /// Also includes implementations for the `ToSqlColumn` and `Default` traits of the enum.
 ///
 /// Note that some sort columns might require special join and/or group by clauses in the query.
-/// These must be defined in the `sort_clauses` method of the `LoadableAsset` trait.
+/// These must be defined in the `sort_clauses` method of the `LoadableItem` trait.
 ///
 /// Example usage:
 /// ```
@@ -167,9 +167,9 @@ pub struct PageInfo {
     pub end_index: Option<i32>,
 }
 
-pub type AssetMapping<ResourceMapping> = ResourceMapping;
+pub type ItemMapping<ResourceMapping> = ResourceMapping;
 
-pub trait LoadableAsset: FromDb<RowMapping: Copy> {
+pub trait LoadableItem: FromDb<RowMapping: Copy> {
     fn selection() -> (String, <Self as FromDb>::RowMapping);
     fn table_name() -> &'static str;
     fn alias() -> Option<&'static str>;
@@ -185,7 +185,7 @@ pub(crate) async fn load_writable_for_user<T, C>(
     limit: i32,
 ) -> ApiResult<Connection<T>>
 where
-    T: LoadableAsset + db::util::FromDb,
+    T: LoadableItem + db::util::FromDb,
     C: ToSqlColumn,
 {
     const MAX_COUNT: i32 = 100;

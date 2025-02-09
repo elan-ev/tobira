@@ -26,9 +26,9 @@ use super::{
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
     shared::{
         load_writable_for_user,
-        AssetMapping,
+        ItemMapping,
         Connection,
-        LoadableAsset,
+        LoadableItem,
         PageInfo,
         SeriesSortColumn,
         SortOrder,
@@ -396,8 +396,8 @@ pub(crate) struct NewSeries {
     // I think it's okay to leave it at that for now.
 }
 
-impl LoadableAsset for Series {
-    fn selection() -> (String, AssetMapping<<Self as FromDb>::RowMapping>) {
+impl LoadableItem for Series {
+    fn selection() -> (String, ItemMapping<<Self as FromDb>::RowMapping>) {
         let (selection, mapping) = select!(resource: Series);
         (selection, mapping.resource)
     }

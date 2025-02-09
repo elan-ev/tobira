@@ -26,7 +26,7 @@ import {
     createQueryParamsParser,
     DateColumn,
     descriptionStyle,
-    ManageAssets,
+    ManageItems,
     TableRow,
     thumbnailLinkStyle,
     titleLinkStyle,
@@ -52,7 +52,7 @@ export const ManageVideosRoute = makeRoute({
                 nav={() => <ManageNav active={PATH} />}
                 render={data => !data.currentUser
                     ? <NotAuthorized />
-                    : <ManageAssets
+                    : <ManageItems
                         vars={vars}
                         connection={data.currentUser.myVideos}
                         titleKey="manage.my-videos.title"
@@ -112,13 +112,13 @@ export type Event = Events[number];
 export const videoColumns: ColumnProps[] = [
     {
         key: "UPDATED",
-        label: "manage.asset-table.columns.updated",
+        label: "manage.item-table.columns.updated",
         column: event => (event.syncedData && "updated" in event.syncedData)
             && <DateColumn date={event.syncedData.updated} />,
     },
     {
         key: "CREATED",
-        label: "manage.asset-table.columns.created",
+        label: "manage.item-table.columns.created",
         column: event => <DateColumn date={event.created ?? undefined} />,
     },
 ];
