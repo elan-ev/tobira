@@ -52,6 +52,7 @@ export const ManageSeriesRoute = makeRoute({
                         vars={vars}
                         connection={data.currentUser.mySeries}
                         titleKey="manage.my-series.title"
+                        additionalColumns={seriesColumns}
                     />
                 }
             />,
@@ -97,25 +98,26 @@ const query = graphql`
 export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]>["mySeries"];
 export type Series = SeriesConnection["items"];
 export type SingleSeries = Series[number];
+export type Entry = SingleSeries["entries"][number];
 
 export const seriesColumns: ColumnProps[] = [
     {
         key: "EVENT_COUNT",
         label: "manage.my-series.content",
         headerWidth: 112,
-        column: series => "entries" in series && <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.my-series.no-of-videos", { count: series.entries.length })}
+        column: series => <td css={{ fontSize: 14 }}>
+            {i18n.t("manage.my-series.no-of-videos", { count: series.entries?.length })}
         </td>,
     },
     {
         key: "UPDATED",
         label: "manage.item-table.columns.updated",
-        column: series => "updated" in series && <DateColumn date={series.updated ?? undefined} />,
+        column: series => <DateColumn date={series.updated} />,
     },
     {
         key: "CREATED",
         label: "manage.item-table.columns.created",
-        column: series => <DateColumn date={series.created ?? undefined} />,
+        column: series => <DateColumn date={series.created} />,
     },
 ];
 
@@ -126,7 +128,6 @@ export const SeriesRow: React.FC<{ series: SingleSeries }> = ({ series }) => {
 
     // Seems odd, but simply checking `e => e.__typename === "AuthorizedEvent"` will produce
     // TS2339 errors when compiling.
-    type Entry = SingleSeries["entries"][number];
     type AuthorizedEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
     const isAuthorizedEvent = (e: Entry): e is AuthorizedEvent =>
         e.__typename === "AuthorizedEvent";

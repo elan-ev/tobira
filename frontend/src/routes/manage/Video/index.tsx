@@ -56,6 +56,7 @@ export const ManageVideosRoute = makeRoute({
                         vars={vars}
                         connection={data.currentUser.myVideos}
                         titleKey="manage.my-videos.title"
+                        additionalColumns={videoColumns}
                     />
                 }
             />,
@@ -113,13 +114,12 @@ export const videoColumns: ColumnProps[] = [
     {
         key: "UPDATED",
         label: "manage.item-table.columns.updated",
-        column: event => (event.syncedData && "updated" in event.syncedData)
-            && <DateColumn date={event.syncedData.updated} />,
+        column: event => <DateColumn date={event.updated} />,
     },
     {
         key: "CREATED",
         label: "manage.item-table.columns.created",
-        column: event => <DateColumn date={event.created ?? undefined} />,
+        column: event => <DateColumn date={event.created} />,
     },
 ];
 
@@ -157,7 +157,12 @@ export const EventRow: React.FC<{ event: Event }> = ({ event }) => {
             notReadyLabel: "video.not-ready.label",
         }}
         customColumns={videoColumns.map(col => <Fragment key={col.key}>
-            {col.column(event)}
+            {col.column({
+                ...event,
+                description: event.description,
+                updated: event.syncedData?.updated,
+                created: event.created,
+            })}
         </Fragment>)}
     />;
 };

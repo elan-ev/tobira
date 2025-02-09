@@ -15,17 +15,13 @@ import { ManageRoute } from ".";
 import { COLORS } from "../../color";
 import { PageTitle } from "../../layout/header/ui";
 import { Breadcrumbs } from "../../ui/Breadcrumbs";
-import {
-    SortDirection,
-    VideosSortColumn,
-} from "./Video/__generated__/VideoManageQuery.graphql";
-import { Event, EventConnection, EventRow, videoColumns } from "./Video";
 import { Link } from "../../router";
-import { SeriesConnection, SeriesRow, seriesColumns, SingleSeries } from "./Series";
+import { EventConnection, EventRow } from "./Video";
+import { SeriesConnection, SeriesRow, Entry } from "./Series";
+import { VideosSortColumn } from "./Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "./Series/__generated__/SeriesManageQuery.graphql";
 
 
-type Connection = EventConnection | SeriesConnection;
 type ItemVars = {
     order: {
         column: SortColumn;
@@ -36,8 +32,9 @@ type ItemVars = {
 };
 
 type SharedProps = {
-    connection: Connection;
+    connection: EventConnection | SeriesConnection;
     vars: ItemVars;
+    additionalColumns?: ColumnProps[];
 };
 
 type ManageItemProps = SharedProps & {
@@ -46,7 +43,12 @@ type ManageItemProps = SharedProps & {
 
 const LIMIT = 15;
 
-export const ManageItems: React.FC<ManageItemProps> = ({ connection, vars, titleKey }) => {
+export const ManageItems: React.FC<ManageItemProps> = ({
+    connection,
+    vars,
+    titleKey,
+    additionalColumns,
+}) => {
     const { t } = useTranslation();
 
     const totalCount = connection.totalCount;
@@ -71,7 +73,7 @@ export const ManageItems: React.FC<ManageItemProps> = ({ connection, vars, title
         inner = <>
             <PageNavigation {...{ vars, connection }} />
             <div css={{ flex: "1 0 0", margin: "16px 0" }}>
-                <ItemTable {...{ vars, connection }} />
+                <ItemTable {...{ vars, connection, additionalColumns }} />
             </div>
             <PageNavigation {...{ vars, connection }} />
         </>;
@@ -97,8 +99,17 @@ export const ManageItems: React.FC<ManageItemProps> = ({ connection, vars, title
 
 const THUMBNAIL_WIDTH = 16 * 8;
 
-type Item = Event | SingleSeries;
+type Item = {
+    id: string;
+    title: string;
+    description?: string | null;
+    created?: string | null;
+    updated?: string | null;
+    entries?: readonly Entry[];
+}
+
 type SortColumn = VideosSortColumn | SeriesSortColumn;
+type SortDirection = "ASCENDING" | "DESCENDING" | "%future added value";
 
 export type ColumnProps = {
     key: SortColumn;
@@ -107,14 +118,15 @@ export type ColumnProps = {
     column: (item: Item) => ReactNode;
 };
 
-type GenericTableProps = SharedProps & {
+type ItemTableProps = SharedProps & {
     thumbnailWidth?: number;
 }
 
-const ItemTable: React.FC<GenericTableProps> = ({
+const ItemTable: React.FC<ItemTableProps> = ({
     connection,
     vars,
     thumbnailWidth,
+    additionalColumns,
 }) => {
     const { t } = useTranslation();
 
@@ -135,11 +147,6 @@ const ItemTable: React.FC<GenericTableProps> = ({
             return () => observer.unobserve(tableHeader);
         }
         return () => {};
-    });
-
-    const additionalColumns = match(connection.__typename, {
-        "EventConnection": () => videoColumns,
-        "SeriesConnection": () => seriesColumns,
     });
 
     return <div css={{ position: "relative" }}>
@@ -181,7 +188,7 @@ const ItemTable: React.FC<GenericTableProps> = ({
             <colgroup>
                 {/* Each table has thumbnails, but their width might vary */}
                 <col span={1} css={{ width: (thumbnailWidth ?? THUMBNAIL_WIDTH) + 2 * 6 }} />
-                {/* Each table has a title and description */}
+                {/* Each table has a column for title and description */}
                 <col span={1} />
                 {/*
                     Additional columns can be declared in the specific column array.
@@ -246,7 +253,7 @@ export const descriptionStyle = {
 } as const;
 
 // Used for both `EventRow` and `SeriesRow`.
-export const DateColumn: React.FC<{ date?: string }> = ({ date }) => {
+export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
     const { t, i18n } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const parsedDate = date && new Date(date);
@@ -339,15 +346,16 @@ type ColumnHeaderProps = {
 
 const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => {
     const { t } = useTranslation();
-    const direction = vars.order.column === sortKey && vars.order.direction === "ASCENDING"
-        ? "DESCENDING"
-        : "ASCENDING";
-    const directionTransKey = direction.toLowerCase() as Lowercase<typeof direction>;
+    const direction = vars.order.direction === "ASCENDING" ? "DESCENDING" : "ASCENDING";
+    const directionTransKey = direction === "ASCENDING" ? "ascending" : "descending";
 
     return <th>
         <Link
-            aria-label={t("manage.item-table.columns.description",
-                { title: label, direction: t(`manage.item-table.columns.${directionTransKey}`) })
+            aria-label={
+                t("manage.item-table.columns.description", {
+                    title: label,
+                    direction: t(`manage.item-table.columns.${directionTransKey}`),
+                })
             }
             to={varsToLink({
                 order: {
