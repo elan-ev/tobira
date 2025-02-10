@@ -247,7 +247,7 @@ async fn store_in_db(
                 series.acl.write.retain(|role| !is_special_eth_role(role, config));
 
                 // We first simply upsert the series.
-                let new_id = upsert(db, "series", "opencast_id", &[
+                let new_id = upsert(db, "all_series", "opencast_id", &[
                     ("opencast_id", &series.id),
                     ("state", &SeriesState::Ready),
                     ("title", &series.title),
@@ -284,7 +284,7 @@ async fn store_in_db(
                 // what we want: treat it as if the event has no series
                 // attached to it. Also see the comment on the migration.
                 let rows_affected = db
-                    .execute("delete from series where opencast_id = $1", &[&opencast_id])
+                    .execute("delete from all_series where opencast_id = $1", &[&opencast_id])
                     .await?;
                 check_affected_rows_removed(rows_affected, "series", &opencast_id);
                 removed_series += 1;

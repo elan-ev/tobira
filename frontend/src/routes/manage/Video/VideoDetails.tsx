@@ -1,0 +1,125 @@
+import i18n from "../../../i18n";
+import { useTranslation } from "react-i18next";
+import { graphql, useMutation } from "react-relay";
+import { buttonStyle, useAppkitConfig, useColorScheme } from "@opencast/appkit";
+
+import { Link } from "../../../router";
+import { NotAuthorized } from "../../../ui/error";
+import { isRealUser, useUser } from "../../../User";
+import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
+import { ExternalLink } from "../../../relay/auth";
+import { translatedConfig } from "../../../util";
+import { DirectVideoRoute, VideoRoute } from "../../Video";
+import { ManageVideosRoute } from ".";
+import CONFIG from "../../../config";
+import {
+    DetailsPage,
+    UpdatedCreatedInfo,
+    DirectLink,
+    DetailsMetadataSection,
+    DeleteButton,
+    ButtonSection,
+} from "../Shared/Details";
+
+
+export const ManageVideoDetailsRoute = makeManageVideoRoute(
+    "details",
+    "",
+    authEvent => <DetailsPage
+        pageTitle="manage.my-videos.details.title"
+        asset={{
+            ...authEvent,
+            updated: authEvent.syncedData?.updated,
+            urlProps: {
+                url: new URL(DirectVideoRoute.url({ videoId: authEvent.id }), document.baseURI),
+                withTimestamp: true,
+            },
+        }}
+        breadcrumb={{
+            label: i18n.t("manage.my-videos.title"),
+            link: ManageVideosRoute.url,
+        }}
+        sections={event => [
+            <UpdatedCreatedInfo key="created-info" asset={event} />,
+            <VideoButtonSection key="button-section" event={authEvent} />,
+            <DirectLink key="direct-link" asset={event} />,
+            <div key="metadata" css={{ marginBottom: 32 }}>
+                <DetailsMetadataSection asset={event} />
+            </div>,
+            <div key="host-realms" css={{ marginBottom: 32 }}>
+                <HostRealms event={authEvent} />
+            </div>,
+        ]}
+    />
+);
+
+const deleteVideoMutation = graphql`
+    mutation VideoDetailsDeleteMutation($id: ID!) {
+        deleteVideo(id: $id) { id }
+    }
+`;
+
+const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
+    const { t, i18n } = useTranslation();
+    const [commit] = useMutation(deleteVideoMutation);
+    const user = useUser();
+    const config = useAppkitConfig();
+    const { isHighContrast } = useColorScheme();
+
+    if (!isRealUser(user)) {
+        return <NotAuthorized />;
+    }
+
+    return <ButtonSection>
+        {user.canUseEditor && !event.isLive && event.canWrite && (
+            <ExternalLink
+                service="EDITOR"
+                params={{
+                    id: event.opencastId,
+                    callbackUrl: document.location.href,
+                    callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
+                }}
+                fallback="button"
+                css={buttonStyle(config, "normal", isHighContrast)}
+            >
+                {t("manage.my-videos.details.open-in-editor")}
+            </ExternalLink>
+        )}
+        <DeleteButton
+            itemId={event.id}
+            itemType="video"
+            returnPath="/~manage/videos"
+            commit={config => {
+                const disposable = commit(config);
+                return { [Symbol.dispose]: () => disposable.dispose() };
+            }}
+        />
+    </ButtonSection>;
+};
+
+const HostRealms: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
+    const { t } = useTranslation();
+
+    return <>
+        <h2 css={{ fontSize: 20, marginBottom: 8 }}>
+            {t("manage.my-videos.details.referencing-pages")}
+        </h2>
+        {event.hostRealms.length === 0
+            ? <i>{t("manage.my-videos.details.no-referencing-pages")}</i>
+            : <>
+                <p>{t("manage.my-videos.details.referencing-pages-explanation")}</p>
+                <ul>{event.hostRealms.map(realm => (
+                    <li key={realm.id}>
+                        {realm.isMainRoot ? <i>{t("general.homepage")}</i> : realm.name}
+                        &nbsp;
+                        (<Link to={realm.path}>{t("general.page")}</Link>,
+                        &nbsp;
+                        <Link to={VideoRoute.url({ realmPath: realm.path, videoID: event.id })}>
+                            {t("video.video")}
+                        </Link>)
+                    </li>
+                ))}</ul>
+            </>
+        }
+    </>;
+};
