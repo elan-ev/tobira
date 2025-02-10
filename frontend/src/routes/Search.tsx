@@ -896,7 +896,7 @@ const SearchSeries: React.FC<SeriesItem> = ({
 
 type ThumbnailStackProps = Pick<SeriesItem, "title" | "thumbnails">
 
-const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => {
+export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => {
     const isDarkScheme = useColorScheme().scheme === "dark";
 
     return (

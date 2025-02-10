@@ -12,7 +12,10 @@ use crate::{
             acl::{self, Acl},
         },
     },
-    db::{types::SeriesState as State, util::impl_from_db},
+    db::{
+        types::SeriesState as State,
+        util::{impl_from_db, select},
+    },
     model::{Key, ExtraMetadata},
     prelude::*,
 };
@@ -21,6 +24,15 @@ use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
     playlist::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
+    shared::{
+        load_writable_for_user,
+        ItemMapping,
+        Connection,
+        LoadableItem,
+        PageInfo,
+        SeriesSortColumn,
+        SortOrder,
+    },
 };
 
 
@@ -30,6 +42,7 @@ pub(crate) struct Series {
     pub(crate) synced_data: Option<SyncedSeriesData>,
     pub(crate) title: String,
     pub(crate) created: Option<DateTime<Utc>>,
+    pub(crate) updated: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
@@ -45,9 +58,14 @@ impl_from_db!(
     select: {
         series.{
             id, opencast_id, state,
-            title, description, created,
-            metadata, read_roles, write_roles,
+            title, description,
+            metadata, created,
+            read_roles, write_roles,
         },
+        updated: "case \
+            when ${table:series}.updated = '-infinity' then null \
+            else ${table:series}.updated \
+        end",
     },
     |row| {
         Series {
@@ -55,6 +73,7 @@ impl_from_db!(
             opencast_id: row.opencast_id(),
             title: row.title(),
             created: row.created(),
+            updated: row.updated(),
             metadata: row.metadata(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
@@ -270,6 +289,19 @@ impl Series {
         // Create mount point
         Self::add_mount_point(series.opencast_id, target_realm.full_path, context).await
     }
+
+    pub(crate) async fn load_writable_for_user(
+        context: &Context,
+        order: SortOrder<SeriesSortColumn>,
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<SeriesConnection> {
+        let conn = load_writable_for_user::<Series, SeriesSortColumn>(
+            context, order, offset, limit,
+        ).await?;
+
+        Ok(SeriesConnection { inner: conn })
+    }
 }
 
 /// Represents an Opencast series.
@@ -289,6 +321,10 @@ impl Series {
 
     fn created(&self) -> &Option<DateTime<Utc>> {
         &self.created
+    }
+
+    fn updated(&self) -> &Option<DateTime<Utc>> {
+        &self.updated
     }
 
     fn metadata(&self) -> &Option<ExtraMetadata> {
@@ -358,4 +394,47 @@ pub(crate) struct NewSeries {
     // Since `mountSeries` feels even more like a private API
     // in some way, and since passing stuff like metadata isn't trivial either
     // I think it's okay to leave it at that for now.
+}
+
+impl LoadableItem for Series {
+    fn selection() -> (String, ItemMapping<<Self as FromDb>::RowMapping>) {
+        let (selection, mapping) = select!(resource: Series);
+        (selection, mapping.resource)
+    }
+
+    fn table_name() -> &'static str {
+        "series"
+    }
+
+    fn alias() -> Option<&'static str> {
+        None
+    }
+
+    fn sort_clauses(column: &str) -> (&str, &str) {
+        match column {
+            "count(all_events.id)" => (
+                "left join all_events on all_events.series = series.id",
+                "group by series.id",
+            ),
+            _ => ("", ""),
+        }
+    }
+}
+
+// Todo: Make this generic. It's basically the same code that's used for `EventConnection`.
+pub(crate) struct SeriesConnection {
+    inner: Connection<Series>,
+}
+
+#[graphql_object(context = Context)]
+impl SeriesConnection {
+    fn page_info(&self) -> &PageInfo {
+        &self.inner.page_info
+    }
+    fn items(&self) -> &Vec<Series> {
+        &self.inner.items
+    }
+    fn total_count(&self) -> i32 {
+        self.inner.total_count
+    }
 }

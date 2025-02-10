@@ -29,6 +29,7 @@ import { ManageVideoTechnicalDetailsRoute } from "./routes/manage/Video/Technica
 import React from "react";
 import { ManageVideoAccessRoute } from "./routes/manage/Video/Access";
 import { DirectPlaylistOCRoute, DirectPlaylistRoute } from "./routes/Playlist";
+import { ManageSeriesRoute } from "./routes/manage/Series";
 
 
 
@@ -65,6 +66,7 @@ const {
         ManageVideoDetailsRoute,
         ManageVideoTechnicalDetailsRoute,
         ManageRealmRoute,
+        ManageSeriesRoute,
         UploadRoute,
         AddChildRoute,
         ManageRealmContentRoute,
