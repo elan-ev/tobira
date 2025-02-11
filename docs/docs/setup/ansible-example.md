@@ -5,6 +5,7 @@ sidebar_position: 6
 # Ansible example
 
 This document shows some Ansible scripts that can serve as a starting point to deploy Tobira.
+Also see [this repository](https://github.com/elan-ev/tobira-ansible-example) for a full playbook example.
 
 :::note
 These are **not** ready-to-use scripts. You have to adjust them according to your needs!
