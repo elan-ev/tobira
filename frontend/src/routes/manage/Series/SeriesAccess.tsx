@@ -1,21 +1,23 @@
-import { graphql, useMutation } from "react-relay";
 import { currentRef } from "@opencast/appkit";
+import { graphql, useMutation } from "react-relay";
+import { useTranslation } from "react-i18next";
 
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import { makeManageSeriesRoute, Series } from "./Shared";
 import { ManageSeriesRoute } from ".";
 import { ManageSeriesDetailsRoute } from "./SeriesDetails";
 import { displayCommitError } from "../Realm/util";
-import { AccessEditor, AclPage, SubmitAclProps } from "../Shared/Access";
+import { AccessEditor, AclPage, NoteWithTooltip, SubmitAclProps } from "../Shared/Access";
 import i18n from "../../../i18n";
 import { SeriesAccessAclMutation } from "./__generated__/SeriesAccessAclMutation.graphql";
+import { isSynced } from "../../../util";
 
 
 export const ManageSeriesAccessRoute = makeManageSeriesRoute(
     "acl",
     "/access",
     (series, data) => (
-        <AclPage breadcrumbTails={[
+        <AclPage note={!isSynced(series) && <NotSyncedNote />} breadcrumbTails={[
             { label: i18n.t("manage.my-series.title"), link: ManageSeriesRoute.url },
             { label: series.title, link: ManageSeriesDetailsRoute.url({ seriesId: series.id }) },
         ]}>
@@ -23,6 +25,15 @@ export const ManageSeriesAccessRoute = makeManageSeriesRoute(
         </AclPage>
     ),
 );
+
+const NotSyncedNote: React.FC = () => {
+    const { t } = useTranslation();
+
+    return <NoteWithTooltip
+        note={t("series.not-ready.title")}
+        tooltip={t("series.not-ready.text")}
+    />;
+};
 
 
 const updateSeriesAcl = graphql`
@@ -62,6 +73,10 @@ const SeriesAclEditor: React.FC<SeriesAclPageProps> = ({ series, data }) => {
         });
     };
 
-    return <AccessEditor {...{ onSubmit, inFlight, data }} rawAcl={series.acl} />;
+    return <AccessEditor
+        {...{ onSubmit, inFlight, data }}
+        rawAcl={series.acl}
+        editingBlocked={!isSynced(series)}
+    />;
 };
 

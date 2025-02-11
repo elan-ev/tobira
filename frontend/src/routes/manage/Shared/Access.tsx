@@ -1,7 +1,7 @@
 import { useRef, useState, RefObject, SetStateAction, PropsWithChildren, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
-import { Card, ConfirmationModalHandle, boxError } from "@opencast/appkit";
+import { Card, ConfirmationModalHandle, WithTooltip, boxError } from "@opencast/appkit";
 
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import { Acl, AclSelector, AclEditButtons, knownRolesFragment } from "../../../ui/Access";
@@ -14,6 +14,9 @@ import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { NotAuthorized } from "../../../ui/error";
 import { useUser, isRealUser } from "../../../User";
+import { Inertable } from "../../../util";
+import { COLORS } from "../../../color";
+import { LuInfo } from "react-icons/lu";
 
 
 type AclPageProps = PropsWithChildren & {
@@ -75,28 +78,49 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
     const [selections, setSelections] = useState<Acl>(acl);
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
 
-    return <div css={{ maxWidth: 1040 }}>
-        <div css={{ display: "flex", flexDirection: "column", width: "100%" }}>
-            <div {...(editingBlocked && { inert: "true" })} css={{
-                ...editingBlocked && { opacity: 0.7 },
-            }}>
-                <AclSelector
-                    acl={selections}
-                    onChange={setSelections}
-                    knownRoles={knownRoles}
-                    permissionLevels={READ_WRITE_ACTIONS}
-                />
-                <AclEditButtons
-                    selections={selections}
-                    setSelections={setSelections}
-                    initialAcl={acl}
-                    inFlight={inFlight}
-                    saveModalRef={saveModalRef}
-                    onSubmit={() => onSubmit({ selections, saveModalRef, setCommitError })}
-                    kind="write"
-                />
-            </div>
-            {boxError(commitError)}
-        </div>
+    return <div css={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: 1040 }}>
+        <Inertable isInert={editingBlocked}>
+            <AclSelector
+                acl={selections}
+                onChange={setSelections}
+                knownRoles={knownRoles}
+                permissionLevels={READ_WRITE_ACTIONS}
+            />
+            <AclEditButtons
+                selections={selections}
+                setSelections={setSelections}
+                initialAcl={acl}
+                inFlight={inFlight}
+                saveModalRef={saveModalRef}
+                onSubmit={() => onSubmit({ selections, saveModalRef, setCommitError })}
+                kind="write"
+            />
+        </Inertable>
+        {boxError(commitError)}
     </div>;
 };
+
+type NoteWithTooltipProps = {
+    note: string;
+    tooltip: string;
+}
+export const NoteWithTooltip: React.FC<NoteWithTooltipProps> = ({ note, tooltip }) => (
+    <WithTooltip
+        tooltip={tooltip}
+        placement="bottom"
+        tooltipCss={{ width: 400 }}
+        css={{ display: "inline-block" }}
+    >
+        <div css={{
+            fontSize: 14,
+            lineHeight: 1,
+            color: COLORS.neutral60,
+            display: "flex",
+            gap: 4,
+            marginBottom: 16,
+        }}>
+            <LuInfo />
+            {note}
+        </div>
+    </WithTooltip>
+);
