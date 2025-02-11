@@ -24,11 +24,15 @@ import { UploadRoute } from "./routes/Upload";
 import { SearchRoute } from "./routes/Search";
 import { InvalidUrlRoute } from "./routes/InvalidUrl";
 import { BlockEmbedRoute, EmbedOpencastVideoRoute, EmbedVideoRoute } from "./routes/Embed";
-import { ManageVideoDetailsRoute } from "./routes/manage/Video/Details";
+import { ManageVideoDetailsRoute } from "./routes/manage/Video/VideoDetails";
 import { ManageVideoTechnicalDetailsRoute } from "./routes/manage/Video/TechnicalDetails";
 import React from "react";
-import { ManageVideoAccessRoute } from "./routes/manage/Video/Access";
+import { ManageVideoAccessRoute } from "./routes/manage/Video/VideoAccess";
 import { DirectPlaylistOCRoute, DirectPlaylistRoute } from "./routes/Playlist";
+import { ManageSeriesRoute } from "./routes/manage/Series";
+import { ManageSeriesDetailsRoute } from "./routes/manage/Series/SeriesDetails";
+import { ManageSeriesAccessRoute } from "./routes/manage/Series/SeriesAccess";
+import { CreateSeriesRoute } from "./routes/manage/Series/Create";
 
 
 
@@ -65,7 +69,11 @@ const {
         ManageVideoDetailsRoute,
         ManageVideoTechnicalDetailsRoute,
         ManageRealmRoute,
+        ManageSeriesAccessRoute,
+        ManageSeriesRoute,
+        ManageSeriesDetailsRoute,
         UploadRoute,
+        CreateSeriesRoute,
         AddChildRoute,
         ManageRealmContentRoute,
         EmbedVideoRoute,

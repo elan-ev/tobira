@@ -28,6 +28,7 @@ general:
     select:
       no-options: Keine Optionen
       select-option: Option auswählen
+  no-description: Keine Beschreibung
 
 welcome:
   title: Willkommen zu Tobira!
@@ -125,8 +126,6 @@ login-page:
 video:
   video: Video
   video-page: 'Video Seite: „{{video}}“'
-  created: Erstellt
-  updated: Zuletzt verändert
   duration: Abspielzeit
   link: Zur Videoseite
   part-of-series: Teil der Serie
@@ -152,7 +151,7 @@ video:
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
   started: Gestartet
   started-when: Gestartet {{duration}}
-  starts: Startet 
+  starts: Startet
   starts-in: Startet {{duration}}
   description:
     show-more: ...mehr anzeigen
@@ -207,6 +206,7 @@ series:
     text: >
       Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
       in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
+    label: nicht synchronisiert
 
 videolist-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
@@ -214,7 +214,7 @@ videolist-block:
   no-videos: Keine Videos
   unauthorized: Fehlende Berechtigung
   hidden-items:
-    unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte. 
+    unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte.
     unauthorized_other: 'Für {{count}} Videos fehlen Ihnen die Zugriffsrechte.'
     missing_one: Ein Video wurde nicht gefunden.
     missing_other: '{{count}} Videos wurden nicht gefunden.'
@@ -307,9 +307,6 @@ upload:
     angeschaut werden, sobald die Verarbeitung abgeschlossen ist. Sie können diese
     Seite jetzt schließen.
   metadata:
-    title: Videotitel
-    description: Beschreibung
-    required: Pflichtfeld
     save: Speichern und fertigstellen
     note-writable-series: >
       Sie können Videos nur in Serien hochladen, auf die Sie Schreibzugriff haben.
@@ -317,11 +314,18 @@ upload:
   errors:
     failed-to-upload: Hochladen fehlgeschlagen.
     unknown: Während des Dateiuploads ist ein unbekannter Fehler aufgetreten.
-    field-required: Dieses Feld darf nicht leer sein.
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
     failed-fetching-series-acl: Abruf der Serienzugangsberechtigungen fehlgeschlagen.
+
+metadata-form:
+  title: Titel
+  description: Beschreibung
+  required: Pflichtfeld
+  save: Änderungen speichern
+  errors:
+    field-required: Dieses Feld darf nicht leer sein.
 
 acl:
   unknown-user-note: unbekannt
@@ -423,8 +427,8 @@ manage:
       Seite. Solange Sie angemeldet sind und die benötigten Rechte haben, gibt es dort entsprechende
       Seitenverwaltungs-Buttons in der Seitenleiste bzw. im Menu.
 
-  my-videos:
-    title: Meine Videos
+  item-table:
+    page-showing-ids: '{{start}}–{{end}} von {{total}}'
     navigation:
       first: Erste Seite
       previous: Vorherige Seite
@@ -436,35 +440,54 @@ manage:
       descending: absteigend
       title: Titel
       created: Erstellt
-    no-description: Keine Beschreibung
-    page-showing-video-ids: '{{start}}–{{end}} von {{total}}'
-    no-videos-found: Keine Videos gefunden.
+      updated: Aktualisiert
+    no-entries-found: Keine Einträge gefunden.
+    missing-date: Unbekannt
+
+  shared:
+    created: Erstellt
+    updated: Zuletzt verändert
+    item:
+      video: Video
+      series: Serie
+    details:
+      share-direct-link: Via Direktlink teilen
+      copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
+    acl:
+      title: Zugriffsrechte
+    delete:
+      title: '{{item}} löschen'
+      confirm: '{{item}} löschen?'
+      cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
+      failed: Löschen fehlgeschlagen.
+      failed-maybe: Löschen möglicherweise fehlgeschlagen.
+      pending: Löschvorgang ausstehend.
+      tooltip:
+        failed: >
+          Der Löschvorgang für diesen Eintrag wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
+          und daher möglicherweise fehlgeschlagen.
+        pending: >
+          Der Löschvorgang dieses Eintrags in Opencast wurde angesetzt und es wird
+          nach dessen Erfolg hier entfernt.
+
+  my-series:
+    title: Meine Serien
+    content: Inhalt
+    no-of-videos: '{{count}} Videos'
+    details:
+      title: Seriendetails
+    create:
+      title: Serie erstellen
+
+  my-videos:
+    title: Meine Videos
     details:
       title: Videodetails
-      share-direct-link: Via Direktlink teilen
       set-time: 'Starten bei: '
-      copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
       open-in-editor: Im Videoeditor öffnen
       referencing-pages: Referenzierende Seiten
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
-      delete:
-        title: Video löschen
-        confirm: Video löschen?
-        cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
-        failed: Löschen fehlgeschlagen.
-        failed-maybe: Löschen möglicherweise fehlgeschlagen.
-        pending: Löschvorgang ausstehend.
-        tooltip:
-          failed: >
-            Der Löschvorgang für dieses Video wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
-            und daher möglicherweise fehlgeschlagen.
-          pending: >
-            Der Löschvorgang dieses Videos in Opencast wurde angesetzt und es wird
-            nach dessen Erfolg hier entfernt.
-
-    acl:
-      title: Zugriffsrechte
     technical-details:
       title: Technische Details
       tracks: Video-/Audiospuren
@@ -675,6 +698,12 @@ api-remote-errors:
     workflow:
       not-allowed: Sie haben nicht die Berechtigung, die Workflowaktivität für dieses Video abzufragen.
       active: $t(manage.access.workflow-active)
+  series:
+    acl:
+      not-found: "Zugriffsrechte konnten nicht geändert werden: Serie nicht gefunden."
+      not-allowed: Sie haben nicht die Berechtigung, die Zugriffsreche dieser Serie zu ändern.
+    metadata:
+      not-found: "Metadaten konnten nicht geändert werden: Serie nicht gefunden."
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.
