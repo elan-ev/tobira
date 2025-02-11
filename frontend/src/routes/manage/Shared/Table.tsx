@@ -12,7 +12,7 @@ import {
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { relativeDate } from "../../../ui/time";
-import { InfoWithTooltip } from "../../../ui";
+import { IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
 import { SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
@@ -377,7 +377,7 @@ const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
                     deletionFailed ? "failed-maybe" : "pending"
                 }`, { item: itemType })}
             </span>
-            <InfoWithTooltip
+            <IconWithTooltip
                 tooltip={t(`manage.shared.delete.tooltip.${
                     deletionFailed ? "failed" : "pending"
                 }`, { time: relative })}

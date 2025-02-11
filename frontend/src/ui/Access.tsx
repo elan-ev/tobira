@@ -28,7 +28,7 @@ import AsyncCreatableSelect from "react-select/async-creatable";
 import { fetchQuery, graphql } from "react-relay";
 import { i18n, ParseKeys } from "i18next";
 
-import { InfoWithTooltip, focusStyle } from ".";
+import { IconWithTooltip, focusStyle } from ".";
 import { useUser, isRealUser } from "../User";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
@@ -411,7 +411,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                         paddingRight: 12,
                     }}>
                         {t("manage.access.table.inherited")}
-                        <InfoWithTooltip
+                        <IconWithTooltip
                             mode="info"
                             tooltip={t("manage.access.table.inherited-tooltip")}
                         />
@@ -553,7 +553,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
     return <TableRow
         labelCol={<>
             {label}
-            {isSubset && <InfoWithTooltip mode="info" tooltip={
+            {isSubset && <IconWithTooltip mode="info" tooltip={
                 t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
             } />}
         </>}
@@ -563,7 +563,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
             : <>
                 <ActionsMenu {...{ item, kind }} />
                 {item.large && noteworthyAccessType
-                    ? <InfoWithTooltip
+                    ? <IconWithTooltip
                         mode="warning"
                         tooltip={t("manage.access.table.actions.large-group-warning", {
                             val: t(`manage.access.table.actions.${noteworthyAccessType}-access`),

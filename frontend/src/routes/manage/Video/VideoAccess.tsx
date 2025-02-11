@@ -1,11 +1,9 @@
 import { Trans, useTranslation } from "react-i18next";
-import { Card, currentRef, WithTooltip } from "@opencast/appkit";
+import { Card, currentRef } from "@opencast/appkit";
 import { useState } from "react";
-import { LuInfo } from "react-icons/lu";
 import { graphql, useMutation } from "react-relay";
 
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
-import { COLORS } from "../../../color";
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import { ManageVideosRoute } from ".";
 import { ManageVideoDetailsRoute } from "./VideoDetails";
@@ -14,6 +12,7 @@ import CONFIG from "../../../config";
 import { AccessEditor, AclPage, SubmitAclProps } from "../Shared/Access";
 import i18n from "../../../i18n";
 import { VideoAccessAclMutation } from "./__generated__/VideoAccessAclMutation.graphql";
+import { NoteWithTooltip } from "../../../ui";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -34,26 +33,10 @@ export const ManageVideoAccessRoute = makeManageVideoRoute(
 const UnlistedNote: React.FC = () => {
     const { t } = useTranslation();
 
-    return (
-        <WithTooltip
-            tooltip={t("manage.access.unlisted.explanation")}
-            placement="bottom"
-            tooltipCss={{ width: 400 }}
-            css={{ display: "inline-block" }}
-        >
-            <div css={{
-                fontSize: 14,
-                lineHeight: 1,
-                color: COLORS.neutral60,
-                display: "flex",
-                gap: 4,
-                marginBottom: 16,
-            }}>
-                <LuInfo />
-                {t("manage.access.unlisted.note")}
-            </div>
-        </WithTooltip>
-    );
+    return <NoteWithTooltip
+        note={t("manage.access.unlisted.note")}
+        tooltip={t("manage.access.unlisted.explanation")}
+    />;
 };
 
 

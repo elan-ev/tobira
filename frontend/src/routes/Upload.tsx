@@ -18,7 +18,7 @@ import { mapAcl, useNavBlocker } from "./util";
 import CONFIG from "../config";
 import { LinkButton } from "../ui/LinkButton";
 import { isRealUser, User, useUser } from "../User";
-import { currentRef, useRefState } from "../util";
+import { currentRef, Inertable, useRefState } from "../util/index";
 import {
     FieldIsRequiredNote,
     InputContainer,
@@ -817,9 +817,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                         {t("manage.access.locked-to-series")}
                     </Card>
                 )}
-                <div {...aclEditingLocked && { inert: "true" }} css={{
-                    ...aclEditingLocked && { opacity: .7 },
-                }}>
+                <Inertable isInert={aclEditingLocked}>
                     <Controller
                         name="acl"
                         control={control}
@@ -831,7 +829,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                             permissionLevels={READ_WRITE_ACTIONS}
                         />}
                     />
-                </div>
+                </Inertable>
             </InputContainer>
 
             {/* Submit */}

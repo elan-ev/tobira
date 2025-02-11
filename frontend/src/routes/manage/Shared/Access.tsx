@@ -14,6 +14,7 @@ import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { NotAuthorized } from "../../../ui/error";
 import { useUser, isRealUser } from "../../../User";
+import { Inertable } from "../../../util";
 
 
 type AclPageProps = PropsWithChildren<{
@@ -76,28 +77,24 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
     const [selections, setSelections] = useState<Acl>(acl);
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
 
-    return <div css={{ maxWidth: 1040 }}>
-        <div css={{ display: "flex", flexDirection: "column", width: "100%" }}>
-            <div {...(editingBlocked && { inert: "true" })} css={{
-                ...editingBlocked && { opacity: 0.7 },
-            }}>
-                <AclSelector
-                    acl={selections}
-                    onChange={setSelections}
-                    knownRoles={knownRoles}
-                    permissionLevels={READ_WRITE_ACTIONS}
-                />
-                <AclEditButtons
-                    selections={selections}
-                    setSelections={setSelections}
-                    initialAcl={acl}
-                    inFlight={inFlight}
-                    saveModalRef={saveModalRef}
-                    onSubmit={() => onSubmit({ selections, saveModalRef, setCommitError })}
-                    kind="write"
-                />
-            </div>
-            {boxError(commitError)}
-        </div>
+    return <div css={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: 1040 }}>
+        <Inertable isInert={editingBlocked}>
+            <AclSelector
+                acl={selections}
+                onChange={setSelections}
+                knownRoles={knownRoles}
+                permissionLevels={READ_WRITE_ACTIONS}
+            />
+            <AclEditButtons
+                selections={selections}
+                setSelections={setSelections}
+                initialAcl={acl}
+                inFlight={inFlight}
+                saveModalRef={saveModalRef}
+                onSubmit={() => onSubmit({ selections, saveModalRef, setCommitError })}
+                kind="write"
+            />
+        </Inertable>
+        {boxError(commitError)}
     </div>;
 };
