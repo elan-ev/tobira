@@ -24,7 +24,7 @@ import { PAGE_WIDTH } from "./Nav";
 import { Item } from "./Table";
 import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
-import { useRouter } from "../../../router";
+import { Link, useRouter } from "../../../router";
 
 
 type UrlProps = {
@@ -247,5 +247,40 @@ export const DeleteButton = <TMutation extends MutationParameters>({
                 <Trans i18nKey="manage.shared.delete.cannot-be-undone" />
             </p>
         </ConfirmationModal>
+    </>;
+};
+
+type HostRealmsProps = {
+   hostRealms: readonly {
+        readonly id: string;
+        readonly isMainRoot: boolean;
+        readonly name: string | null | undefined;
+        readonly path: string;
+    }[];
+    itemLink: (path: string) => ReactNode;
+};
+
+export const HostRealms: React.FC<HostRealmsProps> = ({ hostRealms, itemLink }) => {
+    const { t } = useTranslation();
+
+    return <>
+        <h2 css={{ fontSize: 20, marginBottom: 8 }}>
+            {t("manage.my-videos.details.referencing-pages")}
+        </h2>
+        {hostRealms.length === 0
+            ? <i>{t("manage.my-videos.details.no-referencing-pages")}</i>
+            : <>
+                <p>{t("manage.my-videos.details.referencing-pages-explanation")}</p>
+                <ul>{hostRealms.map(realm => (
+                    <li key={realm.id}>
+                        {realm.isMainRoot ? <i>{t("general.homepage")}</i> : realm.name}
+                        &nbsp;
+                        (<Link to={realm.path}>{t("general.page")}</Link>,
+                        &nbsp;
+                        {itemLink(realm.path)})
+                    </li>
+                ))}</ul>
+            </>
+        }
     </>;
 };

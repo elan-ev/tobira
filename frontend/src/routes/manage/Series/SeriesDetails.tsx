@@ -3,19 +3,21 @@ import { graphql, useMutation } from "react-relay";
 import i18n from "../../../i18n";
 import { makeManageSeriesRoute } from "./Shared";
 import { ManageSeriesRoute } from ".";
-import { DirectSeriesRoute } from "../../Series";
+import { DirectSeriesRoute, SeriesRoute } from "../../Series";
 import {
     DetailsPage,
     UpdatedCreatedInfo,
     DirectLink,
     DetailsMetadataSection,
     DeleteButton,
+    HostRealms,
 } from "../Shared/Details";
 import {
     SeriesDetailsMetadataMutation,
 } from "./__generated__/SeriesDetailsMetadataMutation.graphql";
 import { Item } from "../Shared/Table";
 import { isSynced } from "../../../util";
+import { Link } from "../../../router";
 
 
 const updateSeriesMetadata = graphql`
@@ -44,14 +46,21 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
             label: i18n.t("manage.my-series.title"),
             link: ManageSeriesRoute.url,
         }}
-        sections={series => [
-            <UpdatedCreatedInfo key="created-info" item={series} />,
+        sections={seriesItem => [
+            <UpdatedCreatedInfo key="created-info" item={seriesItem} />,
             <SeriesButtonSection key="button-section" seriesId={series.id} />,
             <DirectLink key="direct-link" url={
                 new URL(DirectSeriesRoute.url({ seriesId: series.id }), document.baseURI)
             } />,
             <div key="metadata" css={{ marginBottom: 32 }}>
-                <SeriesMetadataSection series={series} />
+                <SeriesMetadataSection series={seriesItem} />
+            </div>,
+            <div key="host-realms" css={{ marginBottom: 32 }}>
+                <HostRealms hostRealms={series.hostRealms} itemLink={realmPath => (
+                    <Link to={SeriesRoute.url({ realmPath: realmPath, seriesId: series.id })}>
+                        {i18n.t("series.series")}
+                    </Link>
+                )}/>
             </div>,
         ]}
     />,

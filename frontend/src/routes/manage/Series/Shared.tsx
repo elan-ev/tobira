@@ -87,6 +87,7 @@ const query = graphql`
                     syncedData { thumbnail audioOnly }
                 }
             }
+            hostRealms { id isMainRoot name path }
         }
     }
 `;
