@@ -23,6 +23,7 @@ import { COLORS } from "../color";
 import { Creators } from "./Video";
 import { Input, TextArea } from "./Input";
 import { Form } from "./Form";
+import { Inertable } from "../util";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -299,24 +300,21 @@ export const MetadataForm: React.FC<MetadataFormProps> = ({
     hasError = false,
     children,
     ...props
-}) => (
+}) => <Inertable isInert={hasError}>
     <Form
         noValidate
         // We only allow submitting the form on clicking a button, so that
         // pressing 'enter' inside inputs won't submit the form too early.
         onSubmit={e => e.preventDefault()}
-        // On some forms, all inputs need to be disabled when there is an error.
-        {...(hasError && { inert: "true" })}
         css={{
             margin: "32px 2px",
             label: { color: "var(--color-neutral90)" },
-            ...hasError && { opacity: 0.7 },
         }}
         {...props}
     >
         {children}
     </Form>
-);
+</Inertable>;
 
 type MetadataFieldsProps = {
     disabled?: boolean;
