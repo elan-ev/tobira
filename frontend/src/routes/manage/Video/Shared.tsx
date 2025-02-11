@@ -1,21 +1,20 @@
 import { useTranslation } from "react-i18next";
-import { LuCornerLeftUp, LuInfo, LuShieldCheck, LuPlay, LuPenLine } from "react-icons/lu";
+import { LuInfo, LuShieldCheck, LuPlay, LuPenLine } from "react-icons/lu";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
 import { makeRoute, Route } from "../../../rauta";
 import { loadQuery } from "../../../relay";
-import { ellipsisOverflowCss, LinkList, LinkWithIcon } from "../../../ui";
 import { NotAuthorized } from "../../../ui/error";
 import { NotFound } from "../../NotFound";
 import { b64regex } from "../../util";
 import { Thumbnail } from "../../../ui/Video";
 import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.graphql";
-import { Link } from "../../../router";
 import { eventId, keyOfId } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
+import { ReturnLink, ManageNav, ManageSubPageType } from "../Shared/Nav";
 
 
 export const PAGE_WIDTH = 1100;
@@ -28,7 +27,7 @@ type ManageVideoSubPageType = "details" | "technical-details" | "acl";
 
 /** Helper around `makeRoute` for manage single video subpages. */
 export const makeManageVideoRoute = (
-    page: ManageVideoSubPageType,
+    page: ManageSubPageType,
     path: string,
     render: (event: AuthorizedEvent, data: QueryResponse) => JSX.Element,
     options?: { fetchWorkflowState?: boolean },
@@ -53,7 +52,11 @@ export const makeManageVideoRoute = (
                     {...{ query, queryRef }}
                     noindex
                     nav={data => [
-                        <BackLink key={1} />,
+                        <ReturnLink
+                            key={1}
+                            url={ManageVideosRoute.url}
+                            title="manage.my-videos.title"
+                        />,
                         <ManageVideoNav key={2} event={data.event} active={page} />,
                     ]}
                     render={data => {
@@ -117,20 +120,6 @@ const query = graphql`
 `;
 
 
-/** Simple nav element linking back to "my videos" overview page. */
-const BackLink: React.FC = () => {
-    const { t } = useTranslation();
-    const items = [
-        <LinkWithIcon key={ManageVideosRoute.url} to={ManageVideosRoute.url} iconPos="left">
-            <LuCornerLeftUp />
-            {t("manage.my-videos.title")}
-        </LinkWithIcon>,
-    ];
-
-    return <LinkList items={items} />;
-};
-
-
 type ManageVideoNavProps = {
     event: Event;
     active: ManageVideoSubPageType;
@@ -148,7 +137,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
 
     const id = keyOfId(event.id);
 
-    const entries = [
+    const navEntries = [
         {
             url: `/~manage/videos/${id}`,
             page: "details",
@@ -162,61 +151,34 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
     ];
 
     if (CONFIG.allowAclEdit) {
-        entries.splice(1, 0, {
+        navEntries.splice(1, 0, {
             url: `/~manage/videos/${id}/access`,
             page: "acl",
-            body: <><LuShieldCheck />{t("manage.my-videos.acl.title")}</>,
+            body: <><LuShieldCheck />{t("manage.shared.acl.title")}</>,
         });
     }
 
-    const items = entries.map(({ url, page, body }, i) => (
-        <LinkWithIcon key={i} to={url} iconPos="left" active={page === active}>
-            {body}
-        </LinkWithIcon>
-    ));
-
-    const videoLink = event.hostRealms.length === 1
+    const link = event.hostRealms.length === 1
         ? VideoRoute.url({ realmPath: event.hostRealms[0].path, videoID: id })
         : DirectVideoRoute.url({ videoId: id });
+    const title = event.title;
+    const ariaLabel = t("video.video-page", { video: event.title });
+    const additionalStyles = {
+        backgroundColor: "black",
+        borderRadius: 8,
+    };
+    const thumbnail = <>
+        <LuPlay />
+        <Thumbnail event={event} />
+    </>;
 
-    const header = (
-        <div css={{ display: "flex", flexDirection: "column" }}>
-            <Link aria-label={t("video.video-page", { video: event.title })} to={videoLink} css={{
-                display: "block",
-                position: "relative",
-                width: "100%",
-                maxWidth: "calc(40vh * 16 / 9)",
-                alignSelf: "center",
-                "& > svg": {
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    zIndex: 5,
-                    fontSize: 64,
-                    color: "white",
-                    transform: "translate(-50%, -50%)",
-                },
-                "&:not(:hover, :focus) > svg": {
-                    display: "none",
-                },
-                "&:hover > div, &:focus > div": {
-                    opacity: 0.7,
-                },
-                backgroundColor: "black",
-                borderRadius: 8,
-            }}>
-                <LuPlay />
-                <Thumbnail event={event} />
-            </Link>
-            <div css={{
-                textAlign: "center",
-                fontWeight: "bold",
-                marginTop: 4,
-                marginBottom: 8,
-                ...ellipsisOverflowCss(2),
-            }}>{event.title}</div>
-        </div>
-    );
-
-    return <LinkList items={[header, ...items]} />;
+    return <ManageNav {...{
+        active,
+        link,
+        ariaLabel,
+        title,
+        thumbnail,
+        navEntries,
+        additionalStyles,
+    }} />;
 };
