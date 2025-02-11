@@ -83,6 +83,7 @@ const query = graphql`
             syncedData { description }
             numVideos
             thumbnailStack { thumbnails { url live audioOnly }}
+            hostRealms { id isMainRoot name path }
         }
     }
 `;
