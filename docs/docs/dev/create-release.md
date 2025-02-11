@@ -38,6 +38,8 @@ Otherwise it might be confusing.
 
 - Once all that is done, publish the release.
 
+- Afterwards, consider updating [the example Ansible scripts](https://github.com/elan-ev/tobira-ansible-example) (release URL and config).
+
 
 ## Checklist for writing release notes
 
