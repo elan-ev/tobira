@@ -23,7 +23,7 @@ import { secondsToTimeString } from "../../../util";
 import { PAGE_WIDTH } from "./Nav";
 import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
-import { useRouter } from "../../../router";
+import { Link, useRouter } from "../../../router";
 
 
 type UrlProps = {
@@ -275,5 +275,41 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
             <p><Trans i18nKey="manage.shared.delete.cannot-be-undone" /></p>
             {children}
         </ConfirmationModal>
+    </>;
+};
+
+type HostRealmsProps = {
+   hostRealms: readonly {
+        readonly id: string;
+        readonly isMainRoot: boolean;
+        readonly name: string | null | undefined;
+        readonly path: string;
+    }[];
+    itemLink: (path: string) => ReactNode;
+    kind: "videos" | "series";
+};
+
+export const HostRealms: React.FC<HostRealmsProps> = ({ hostRealms, itemLink, kind }) => {
+    const { t } = useTranslation();
+
+    return <>
+        <h2 css={{ fontSize: 20, marginBottom: 8 }}>
+            {t("manage.shared.details.referencing-pages")}
+        </h2>
+        {hostRealms.length === 0
+            ? <i>{t(`manage.my-${kind}.details.no-referencing-pages`)}</i>
+            : <>
+                <p>{t(`manage.my-${kind}.details.referencing-pages-explanation`)}</p>
+                <ul>{hostRealms.map(realm => (
+                    <li key={realm.id}>
+                        {realm.isMainRoot ? <i>{t("general.homepage")}</i> : realm.name}
+                        &nbsp;
+                        (<Link to={realm.path}>{t("general.page")}</Link>,
+                        &nbsp;
+                        {itemLink(realm.path)})
+                    </li>
+                ))}</ul>
+            </>
+        }
     </>;
 };

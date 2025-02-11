@@ -453,6 +453,7 @@ manage:
     details:
       share-direct-link: Via Direktlink teilen
       copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
+      referencing-pages: Referenzierende Seiten
     acl:
       title: Zugriffsrechte
     delete:
@@ -476,6 +477,8 @@ manage:
     no-of-videos: '{{count}} Videos'
     details:
       title: Seriendetails
+      referencing-pages-explanation: 'Diese Serie wird von den folgenden Seiten referenziert:'
+      no-referencing-pages: Diese Serie wird von keiner Seite referenziert.
     delete-note: >
       In der Serie enthaltene Videos werden nicht gelöscht und können einer anderen Serie
       zugeordnet werden.

@@ -435,6 +435,7 @@ manage:
     details:
       share-direct-link: Share via direct link
       copy-direct-link-to-clipboard: Copy link to clipboard
+      referencing-pages: Referencing pages
     acl:
       title: Access policy
     delete:
@@ -456,6 +457,8 @@ manage:
     no-of-videos: '{{count}} videos'
     details:
       title: Series details
+      referencing-pages-explanation: 'This series is referenced on the following pages:'
+      no-referencing-pages: No pages reference this series.
     delete-note: >
       Videos in this series will not be deleted.
       They will remain in the system and can be added to another series.

@@ -4,18 +4,20 @@ import { graphql, useMutation } from "react-relay";
 import i18n from "../../../i18n";
 import { makeManageSeriesRoute, Series } from "./Shared";
 import { ManageSeriesRoute } from ".";
-import { DirectSeriesRoute } from "../../Series";
+import { DirectSeriesRoute, SeriesRoute } from "../../Series";
 import {
     UpdatedCreatedInfo,
     DetailsPage,
     DirectLink,
     MetadataSection,
     DeleteButton,
+    HostRealms,
 } from "../Shared/Details";
 import {
     SeriesDetailsMetadataMutation,
 } from "./__generated__/SeriesDetailsMetadataMutation.graphql";
 import { SeriesDetailsDeleteMutation } from "./__generated__/SeriesDetailsDeleteMutation.graphql";
+import { Link } from "../../../router";
 
 
 const updateSeriesMetadata = graphql`
@@ -47,6 +49,13 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
                 new URL(DirectSeriesRoute.url({ seriesId: series.id }), document.baseURI)
             } />,
             <SeriesMetadataSection key="metadata" series={series} />,
+            <div key="host-realms" css={{ marginBottom: 32 }}>
+                <HostRealms kind="series" hostRealms={series.hostRealms} itemLink={realmPath => (
+                    <Link to={SeriesRoute.url({ realmPath: realmPath, seriesId: series.id })}>
+                        {i18n.t("series.series")}
+                    </Link>
+                )}/>
+            </div>,
         ]}
     />,
 );

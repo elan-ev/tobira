@@ -19,6 +19,7 @@ import {
     MetadataSection,
     DeleteButton,
     ButtonSection,
+    HostRealms,
 } from "../Shared/Details";
 import { VideoDetailsDeleteMutation } from "./__generated__/VideoDetailsDeleteMutation.graphql";
 
@@ -44,7 +45,11 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
             } />,
             <MetadataSection key="metadata" item={event} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
-                <HostRealms event={authEvent} />
+                <HostRealms kind="videos" hostRealms={authEvent.hostRealms} itemLink={realmPath => (
+                    <Link to={VideoRoute.url({ realmPath: realmPath, videoID: authEvent.id })}>
+                        {i18n.t("video.video")}
+                    </Link>
+                )}/>
             </div>,
         ]}
     />
@@ -91,29 +96,3 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
     </ButtonSection>;
 };
 
-const HostRealms: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
-    const { t } = useTranslation();
-
-    return <>
-        <h2 css={{ fontSize: 20, marginBottom: 8 }}>
-            {t("manage.my-videos.details.referencing-pages")}
-        </h2>
-        {event.hostRealms.length === 0
-            ? <i>{t("manage.my-videos.details.no-referencing-pages")}</i>
-            : <>
-                <p>{t("manage.my-videos.details.referencing-pages-explanation")}</p>
-                <ul>{event.hostRealms.map(realm => (
-                    <li key={realm.id}>
-                        {realm.isMainRoot ? <i>{t("general.homepage")}</i> : realm.name}
-                        &nbsp;
-                        (<Link to={realm.path}>{t("general.page")}</Link>,
-                        &nbsp;
-                        <Link to={VideoRoute.url({ realmPath: realm.path, videoID: event.id })}>
-                            {t("video.video")}
-                        </Link>)
-                    </li>
-                ))}</ul>
-            </>
-        }
-    </>;
-};
