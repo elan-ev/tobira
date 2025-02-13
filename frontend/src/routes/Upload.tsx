@@ -685,10 +685,8 @@ type MetaDataEditProps = {
 /** Form that lets the user set metadata about the video */
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRoles }) => {
     const { t } = useTranslation();
-    const user = useUser();
-    if (!isRealUser(user)) {
-        return unreachable();
-    }
+    const u = useUser();
+    const user = isRealUser(u) ? u : unreachable();
 
     const titleFieldId = useId();
     const descriptionFieldId = useId();

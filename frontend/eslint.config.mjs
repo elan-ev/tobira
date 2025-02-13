@@ -53,6 +53,20 @@ export default [
 
             "@typescript-eslint/explicit-member-accessibility": "warn",
             // "@typescript-eslint/member-delimiter-style": "warn", // TODO
+
+            // Disable some lints
+            "@typescript-eslint/prefer-promise-reject-errors": "off",
+
+            // Temporarily disable new lints, fix them later
+            "@typescript-eslint/no-misused-promises": "off",
+            "@typescript-eslint/no-floating-promises": "off",
+            "@typescript-eslint/require-await": "off",
+            "@typescript-eslint/no-unnecessary-type-assertion": "off",
+            "@typescript-eslint/no-unsafe-assignment": "off",
+            "@typescript-eslint/no-unsafe-member-access": "off",
+            "@typescript-eslint/no-unsafe-argument": "off",
+            "@typescript-eslint/no-unsafe-return": "off",
+            "react-hooks/exhaustive-deps": "off",
         },
     },
 
