@@ -40,13 +40,12 @@ type AclPageProps = {
 
 const AclPage: React.FC<AclPageProps> = ({ event, data }) => {
     const { t } = useTranslation();
-    const user = useUser();
+    const knownRoles = useFragment(knownRolesFragment, data);
 
+    const user = useUser();
     if (!isRealUser(user)) {
         return <NotAuthorized />;
     }
-
-    const knownRoles = useFragment(knownRolesFragment, data);
 
     const breadcrumbs = [
         { label: t("user.manage-content"), link: ManageRoute.url },
@@ -182,4 +181,3 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
         </div>
     </>;
 };
-

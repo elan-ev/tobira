@@ -72,7 +72,8 @@ for (const realmType of realmTypes) {
                     [1, 2, 3].map(n => options.locator(`li:nth-child(${n})`).textContent()),
                 );
                 // Indexes should change from 0 1 2 => 1 2 0.
-                const postOrder = [1, 2, 0].map(n => preOrder[n] as string);
+                expect(preOrder).not.toContain(null);
+                const postOrder = [1, 2, 0].map(n => preOrder[n]!);
 
                 for (const index of [3, 1, 2, 0]) {
                     await buttons[index].click();

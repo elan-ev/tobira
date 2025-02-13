@@ -301,7 +301,7 @@ export const DirectOpencastVideoRoute = makeRoute({
 
         const query = graphql`
             query VideoPageDirectOpencastLinkQuery(
-                $id: String!, 
+                $id: String!,
                 $listId: ID!,
                 $eventUser: String,
                 $eventPassword: String
