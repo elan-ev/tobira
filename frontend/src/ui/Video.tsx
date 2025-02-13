@@ -100,7 +100,7 @@ type ThumbnailReplacementProps = {
     deletionIsPending?: boolean;
 }
 export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
-    { audioOnly, isDark, isUpcoming, deletionIsPending }
+    { audioOnly, isDark, isUpcoming, deletionIsPending },
 ) => {
     // We have no thumbnail. If the resolution is `null` as well, we are
     // dealing with an audio-only event and show an appropriate icon.
@@ -154,7 +154,7 @@ type ThumbnailOverlayProps = PropsWithChildren<{
     backgroundColor: string;
 }>;
 export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = (
-    { children, backgroundColor }
+    { children, backgroundColor },
 ) => (
     <div css={{
         display: "inline-flex",
@@ -175,7 +175,7 @@ export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = (
 
 type ThumbnailOverlayContainerProps = JSX.IntrinsicElements["div"];
 export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps> = (
-    { children, ...rest }
+    { children, ...rest },
 ) => {
     const isDark = useColorScheme().scheme === "dark";
 

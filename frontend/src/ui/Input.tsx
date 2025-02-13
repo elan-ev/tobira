@@ -80,7 +80,7 @@ type InputWithCheckboxProps = {
 
 /** Checkbox with a label to enable/disable an adjacent input */
 export const InputWithCheckbox: React.FC<InputWithCheckboxProps> = (
-    { checkboxChecked, setCheckboxChecked, label, input }
+    { checkboxChecked, setCheckboxChecked, label, input },
 ) => {
     const id = useId();
     return (
@@ -308,7 +308,7 @@ type DisplayOptionGroup<TFieldValues extends FieldValues> = {
 
 /** Group of input elements to be used with react-hook-form */
 export function DisplayOptionGroup<TFieldValues extends FieldValues>(
-    { form, type, optionProps }: DisplayOptionGroup<TFieldValues>
+    { form, type, optionProps }: DisplayOptionGroup<TFieldValues>,
 ): JSX.Element {
     const id = useId();
 

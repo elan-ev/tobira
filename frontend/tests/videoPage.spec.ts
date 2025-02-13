@@ -56,7 +56,7 @@ test("Video page", async ({ page, standardData, browserName }) => {
 
         await test.step("Block is present", async () => {
             await expect(
-                page.getByRole("heading", { name: `More from “${series}”` })
+                page.getByRole("heading", { name: `More from “${series}”` }),
             ).toBeVisible();
         });
 

@@ -702,7 +702,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         const data = await fetchQuery<UploadSeriesAclQuery>(
             environment,
             SeriesAclQuery,
-            { seriesId }
+            { seriesId },
         ).toPromise();
 
         if (!data?.series?.acl) {
@@ -737,7 +737,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     <ErrorDisplay
                         error={e}
                         failedAction={t("upload.errors.failed-fetching-series-acl")}
-                    />
+                    />,
                 );
             } finally {
                 setAclLoading(false);
