@@ -101,5 +101,5 @@ export const mapAcl = (acl?: AclArray) => new Map(
     acl?.map(item => [item.role, {
         actions: new Set(item.actions),
         info: item.info,
-    }])
+    }]),
 );

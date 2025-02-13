@@ -114,7 +114,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
     const [commit, inFlight] = useMutation<AccessUpdateAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && event.series;
     const [editingBlocked, setEditingBlocked] = useState(
-        event.hasActiveWorkflows || aclLockedToSeries
+        event.hasActiveWorkflows || aclLockedToSeries,
     );
 
     const initialAcl: Acl = mapAcl(event.acl);
@@ -129,7 +129,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
                     ([role, { actions }]) => ({
                         role,
                         actions: [...actions],
-                    })
+                    }),
                 ),
             },
             onCompleted: () => currentRef(saveModalRef).done(),
