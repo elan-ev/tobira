@@ -3,7 +3,14 @@ use std::collections::HashSet;
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
 use postgres_types::ToSql;
-use juniper::{graphql_object, Executor, GraphQLObject, ScalarValue};
+use juniper::{
+    graphql_object,
+    GraphQLInputObject,
+    Executor,
+    GraphQLEnum,
+    GraphQLObject,
+    ScalarValue,
+};
 use sha1::{Sha1, Digest};
 
 use crate::{
@@ -14,6 +21,7 @@ use crate::{
             acl::{self, Acl},
             realm::Realm,
             series::Series,
+            shared::{ToSqlColumn, SortDirection}
         },
         Context,
         Id,
@@ -22,7 +30,7 @@ use crate::{
     },
     db::{
         types::{EventCaption, EventSegment, EventState, EventTrack, Credentials},
-        util::{impl_from_db, select},
+        util::impl_from_db,
     },
     model::{Key, ExtraMetadata},
     prelude::*,
@@ -33,13 +41,12 @@ use self::{acl::AclInputEntry, err::ApiError};
 use super::{
     playlist::VideoListEntry,
     shared::{
+        define_sort_column_and_order,
         load_writable_for_user,
-        ItemMapping,
         Connection,
-        LoadableItem,
+        ConnectionQueryParts,
         PageInfo,
         SortOrder,
-        VideosSortColumn,
     },
 };
 
@@ -650,31 +657,14 @@ impl AuthorizedEvent {
         order: SortOrder<VideosSortColumn>,
         offset: i32,
         limit: i32,
-    ) -> ApiResult<EventConnection> {
-        let conn = load_writable_for_user::<AuthorizedEvent, VideosSortColumn>(
-            context, order, offset, limit,
-        ).await?;
+    ) -> ApiResult<Connection<AuthorizedEvent>> {
+        let parts = ConnectionQueryParts {
+            table: "all_events",
+            alias: Some("events"),
+            join_clause: "left join series on series.id = events.series",
+        };
 
-        Ok(EventConnection { inner: conn })
-    }
-}
-
-impl LoadableItem for AuthorizedEvent {
-    fn selection() -> (String, ItemMapping<<Self as FromDb>::RowMapping>) {
-        let (selection, mapping) = select!(resource: AuthorizedEvent);
-        (selection, mapping.resource)
-    }
-
-    fn table_name() -> &'static str {
-        "all_events"
-    }
-
-    fn alias() -> Option<&'static str> {
-        Some("events")
-    }
-
-    fn sort_clauses(_column: &str) -> (&str, &str) {
-        ("left join series on series.id = events.series", "")
+        load_writable_for_user(context, order, offset, limit, parts).await
     }
 }
 
@@ -708,22 +698,30 @@ impl From<EventSegment> for Segment {
     }
 }
 
-pub(crate) struct EventConnection {
-    inner: Connection<AuthorizedEvent>,
-}
-
-#[graphql_object(context = Context)]
-impl EventConnection {
+#[graphql_object(name = "EventConnection", context = Context)]
+impl Connection<AuthorizedEvent> {
     fn page_info(&self) -> &PageInfo {
-        &self.inner.page_info
+        &self.page_info
     }
-    fn items(&self) -> &Vec<AuthorizedEvent> {
-        &self.inner.items
+    fn items(&self) -> &[AuthorizedEvent] {
+        &self.items
     }
     fn total_count(&self) -> i32 {
-        self.inner.total_count
+        self.total_count
     }
 }
+
+define_sort_column_and_order!(
+    pub enum VideosSortColumn {
+        Title    => "events.title",
+        #[default]
+        Created  => "created",
+        Updated  => "updated",
+        Series   => "series",
+    };
+    pub struct VideosSortOrder
+);
+
 
 #[derive(juniper::GraphQLObject)]
 #[graphql(Context = Context)]

@@ -1,5 +1,5 @@
 use tokio_postgres::types::ToSql;
-use juniper::{GraphQLEnum, GraphQLInputObject, GraphQLObject};
+use juniper::{GraphQLEnum, GraphQLObject};
 
 use crate::{
     api::{
@@ -7,42 +7,36 @@ use crate::{
         err::{invalid_input, ApiResult},
     },
     db,
-    FromDb,
+    dbargs,
     HasRoles,
 };
 
 
-
-#[derive(Debug, Clone, Copy)]
-pub struct SortOrder<C> {
-    pub column: C,
-    pub direction: SortDirection,
-}
-
-pub trait ToSqlColumn {
-    fn to_sql(&self) -> &'static str;
-}
-
 /// Generates an enum for custom table sort columns and a sort order struct.
+///
 /// The enum holds all sort columns that are possible for a specific table and also includes
 /// a default value.
+/// This also includes an implementation of `ToSqlColumn` for the enum, which is used to convert
+/// the individual variants to the actual SQL column name.
+///
 /// The order struct holds the actual sort column as an enum variant, and the sort direction,
 /// which is always either `Ascending` or `Descending`.
-/// Also includes implementations for the `ToSqlColumn` and `Default` traits of the enum.
+/// It has a `From` implementation to convert the struct to a `SortOrder` struct,
+/// and a `Default` implementation to set the default sort column and direction.
 ///
-/// Note that some sort columns might require special join and/or group by clauses in the query.
-/// These must be defined in the `sort_clauses` method of the `LoadableItem` trait.
+/// Note that some sort columns might require special join clauses in the query.
+/// These must be defined in the `ConnectionQueryParts` struct input parameter for
+/// the `load_writable_for_user` function.
 ///
 /// Example usage:
 /// ```
 /// define_sort_column_and_order!(
 ///     pub enum SeriesSortColumn {
-///         default = Created,
 ///         Title    => "title",
+///         #[default]
 ///         Created  => "created",
 ///         Updated  => "updated",
 ///     };
-///     pub struct SeriesSortOrder
 /// );
 /// ```
 ///
@@ -51,6 +45,7 @@ pub trait ToSqlColumn {
 /// #[derive(Debug, Clone, Copy, GraphQLEnum)]
 /// pub enum SeriesSortColumn {
 ///     Title,
+///     #[default]
 ///     Created,
 ///     Updated,
 /// }
@@ -68,26 +63,29 @@ pub trait ToSqlColumn {
 ///         }
 ///     }
 /// }
-/// impl Default for SeriesSortColumn {
-///     fn default() -> Self {
-///         Self::Created
-///     }
-/// }
 /// ```
 macro_rules! define_sort_column_and_order {
     (
         // Default and enum definition
         $vis_enum:vis enum $enum_name:ident {
-            default = $default:ident,
-            $($variant:ident => $sql:expr),+ $(,)?
+            $( $(#[$attr:meta])* $variant:ident => $sql:expr ),+ $(,)?
         };
         // Struct definition
         $vis_order:vis struct $order_name:ident
     ) => {
-        // Generate enum
-        #[derive(Debug, Clone, Copy, GraphQLEnum)]
+        // Generate enum with optional default.
+        #[derive(Debug, Clone, Copy, Default, GraphQLEnum)]
         $vis_enum enum $enum_name {
-            $($variant),+
+            $( $(#[$attr])* $variant ),+
+        }
+
+        // Generate ToSqlColumn implementation for the enum
+        impl ToSqlColumn for $enum_name {
+            fn to_sql(&self) -> &'static str {
+                match self {
+                    $(Self::$variant => $sql),+
+                }
+            }
         }
 
         // Generate order struct
@@ -97,45 +95,42 @@ macro_rules! define_sort_column_and_order {
             pub direction: SortDirection,
         }
 
-        impl ToSqlColumn for $enum_name {
-            fn to_sql(&self) -> &'static str {
-                match self {
-                    $(Self::$variant => $sql),+
+
+        // Generate `Default` implementation for the order struct
+        impl Default for $order_name {
+            fn default() -> Self {
+                Self {
+                    column: $enum_name::default(),
+                    direction: SortDirection::Descending,
                 }
             }
         }
 
-        impl Default for $enum_name {
-            fn default() -> Self {
-                Self::$default
+        // Generate `From` implementation to convert order struct to SortOrder<Enum>
+        impl From<$order_name> for SortOrder<$enum_name> {
+            fn from(order: $order_name) -> Self {
+                Self {
+                    column: order.column,
+                    direction: order.direction,
+                }
             }
         }
     };
 }
 
+pub(crate) use define_sort_column_and_order;
 
-define_sort_column_and_order!(
-    pub enum SeriesSortColumn {
-        default = Created,
-        Title    => "title",
-        Created  => "created",
-        Updated  => "updated",
-        EventCount => "count(all_events.id)",
-    };
-    pub struct SeriesSortOrder
-);
 
-define_sort_column_and_order!(
-    pub enum VideosSortColumn {
-        default = Created,
-        Title    => "events.title",
-        Created  => "created",
-        Updated  => "updated",
-        Series   => "series",
-    };
-    pub struct VideosSortOrder
-);
+/// Used to convert enum variants to their respective SQL column names.
+pub trait ToSqlColumn {
+    fn to_sql(&self) -> &'static str;
+}
 
+#[derive(Debug, Clone, Copy)]
+pub struct SortOrder<C> {
+    pub column: C,
+    pub direction: SortDirection,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, GraphQLEnum)]
 pub enum SortDirection {
@@ -162,30 +157,25 @@ pub struct Connection<T> {
 #[derive(Debug, Clone, GraphQLObject)]
 pub struct PageInfo {
     pub has_next_page: bool,
-    pub has_previous_page: bool,
-    pub start_index: Option<i32>,
-    pub end_index: Option<i32>,
+    pub has_prev_page: bool,
 }
 
-pub type ItemMapping<ResourceMapping> = ResourceMapping;
-
-pub trait LoadableItem: FromDb<RowMapping: Copy> {
-    fn selection() -> (String, <Self as FromDb>::RowMapping);
-    fn table_name() -> &'static str;
-    fn alias() -> Option<&'static str>;
-    /// Returns custom `join` and `group by` clauses that might be required
-    /// for ordering by certain columns.
-    fn sort_clauses(column: &str) -> (&str, &str);
+pub(crate) struct ConnectionQueryParts {
+    pub(crate) table: &'static str,
+    pub(crate) alias: Option<&'static str>,
+    pub(crate) join_clause: &'static str,
 }
+
 
 pub(crate) async fn load_writable_for_user<T, C>(
     context: &Context,
     order: SortOrder<C>,
     offset: i32,
     limit: i32,
+    parts: ConnectionQueryParts,
 ) -> ApiResult<Connection<T>>
 where
-    T: LoadableItem + db::util::FromDb,
+    T: db::util::FromDb,
     C: ToSqlColumn,
 {
     const MAX_COUNT: i32 = 100;
@@ -199,18 +189,8 @@ where
     }
     let limit = std::cmp::min(limit, MAX_COUNT);
 
-    let mut args = vec![];
-    let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
-    let acl_filter = if context.auth.is_admin() {
-        String::new()
-    } else {
-        args.push(arg_user_roles);
-        let arg_index = args.len();
-        format!("where write_roles && ${arg_index} and read_roles && ${arg_index}")
-    };
-
-    let table = T::table_name();
-    let alias = T::alias();
+    let table = parts.table;
+    let alias = parts.alias;
 
     let table_alias = match alias {
         Some(a) => format!("{table} as {a}"),
@@ -218,43 +198,53 @@ where
     };
     let table = alias.unwrap_or(table);
 
-    // We need to know the item count before querying the actual items,
-    // to check if the offset is too high. If it is, it's set to the maximum.
-    let total_count = {
-        let query = format!("select count(*) from {table} {acl_filter}");
-        context.db.query_one(&query, &args).await?.get::<_, i64>(0)
-    };
-
-    let offset = ((offset as i64).clamp(0, (total_count - limit as i64).max(0))) as i32;
     let sort_order = order.direction.to_sql();
     let sort_column = order.column.to_sql();
 
-    let (selection, mapping) = T::selection();
-    let (join_clause, group_by_clause) = T::sort_clauses(&sort_column);
+    let selection = T::select();
+    let join_clause = parts.join_clause;
+
+    let mut args = vec![];
+    let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
+    let acl_filter = if context.auth.is_admin() {
+        String::new()
+    } else {
+        args.push(arg_user_roles);
+        let arg_index = args.len() + 2;
+        format!("where {table}.write_roles && ${arg_index} and {table}.read_roles && ${arg_index}")
+    };
 
     let query = format!(
-        "select {selection} from {table_alias} \
+        "select {selection}, count(*) over() as total_count \
+            from {table_alias} \
             {join_clause} \
             {acl_filter} \
-            {group_by_clause} \
             order by {sort_column} {sort_order}, {table}.id {sort_order} \
-            limit {limit} offset {offset} \
+            limit $1 offset $2 \
         ",
     );
 
+    let mut total_count = 0;
+    let mut params = vec![];
+    let db_limit = limit as i64;
+    let db_offset = offset as i64;
+
+    params.extend(dbargs![&db_limit, &db_offset]);
+    params.extend(args);
+
     // Execute query
-    let items = context.db.query_mapped(&query, args, |row| {
+    let items = context.db.query_mapped(&query, params, |row| {
+        // Retrieve total count
+        total_count = row.get::<_, i64>("total_count");
         // Retrieve actual row data
-        T::from_row(&row, mapping)
+        T::from_row_start(&row)
     }).await?;
 
     let total_count = total_count.try_into().expect("more than 2^31 items?!");
 
     let page_info = PageInfo {
         has_next_page: (offset + limit) < total_count,
-        has_previous_page: offset > 0,
-        start_index: (!items.is_empty()).then_some(offset + 1),
-        end_index: (!items.is_empty()).then_some(offset + items.len() as i32),
+        has_prev_page: offset > 0,
     };
 
     Ok(Connection {

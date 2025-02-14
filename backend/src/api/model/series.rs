@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use juniper::{graphql_object, GraphQLObject, GraphQLInputObject};
+use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use postgres_types::ToSql;
 
 use crate::{
@@ -10,11 +10,12 @@ use crate::{
             event::AuthorizedEvent,
             realm::Realm,
             acl::{self, Acl},
+            shared::{ToSqlColumn, SortDirection}
         },
     },
     db::{
         types::SeriesState as State,
-        util::{impl_from_db, select},
+        util::impl_from_db,
     },
     model::{Key, ExtraMetadata},
     prelude::*,
@@ -25,12 +26,11 @@ use super::{
     playlist::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
     shared::{
+        define_sort_column_and_order,
         load_writable_for_user,
-        ItemMapping,
         Connection,
-        LoadableItem,
+        ConnectionQueryParts,
         PageInfo,
-        SeriesSortColumn,
         SortOrder,
     },
 };
@@ -295,12 +295,13 @@ impl Series {
         order: SortOrder<SeriesSortColumn>,
         offset: i32,
         limit: i32,
-    ) -> ApiResult<SeriesConnection> {
-        let conn = load_writable_for_user::<Series, SeriesSortColumn>(
-            context, order, offset, limit,
-        ).await?;
-
-        Ok(SeriesConnection { inner: conn })
+    ) -> ApiResult<Connection<Series>> {
+        let parts = ConnectionQueryParts {
+            table: "series",
+            alias: None,
+            join_clause: "",
+        };
+        load_writable_for_user(context, order, offset, limit, parts).await
     }
 }
 
@@ -396,45 +397,27 @@ pub(crate) struct NewSeries {
     // I think it's okay to leave it at that for now.
 }
 
-impl LoadableItem for Series {
-    fn selection() -> (String, ItemMapping<<Self as FromDb>::RowMapping>) {
-        let (selection, mapping) = select!(resource: Series);
-        (selection, mapping.resource)
-    }
-
-    fn table_name() -> &'static str {
-        "series"
-    }
-
-    fn alias() -> Option<&'static str> {
-        None
-    }
-
-    fn sort_clauses(column: &str) -> (&str, &str) {
-        match column {
-            "count(all_events.id)" => (
-                "left join all_events on all_events.series = series.id",
-                "group by series.id",
-            ),
-            _ => ("", ""),
-        }
-    }
-}
-
-// Todo: Make this generic. It's basically the same code that's used for `EventConnection`.
-pub(crate) struct SeriesConnection {
-    inner: Connection<Series>,
-}
-
-#[graphql_object(context = Context)]
-impl SeriesConnection {
+#[graphql_object(name = "SeriesConnection", context = Context)]
+impl Connection<Series> {
     fn page_info(&self) -> &PageInfo {
-        &self.inner.page_info
+        &self.page_info
     }
     fn items(&self) -> &Vec<Series> {
-        &self.inner.items
+        &self.items
     }
     fn total_count(&self) -> i32 {
-        self.inner.total_count
+        self.total_count
     }
 }
+
+define_sort_column_and_order!(
+    pub enum SeriesSortColumn {
+        Title      => "title",
+        #[default]
+        Created    => "created",
+        Updated    => "updated",
+        EventCount => "(select count(*) from events where events.series = series.id)",
+    };
+    pub struct SeriesSortOrder
+);
+

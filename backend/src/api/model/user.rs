@@ -2,15 +2,16 @@ use crate::{
     api::{
         Context,
         err::ApiResult,
-        model::event::{AuthorizedEvent,EventConnection},
+        model::event::AuthorizedEvent,
     },
     auth::User,
     prelude::*,
 };
 
 use super::{
-    series::{Series, SeriesConnection},
-    shared::{SeriesSortColumn, SeriesSortOrder, SortDirection, SortOrder, VideosSortColumn, VideosSortOrder}
+    event::VideosSortOrder,
+    series::{Series, SeriesSortOrder},
+    shared::Connection,
 };
 
 
@@ -76,18 +77,11 @@ impl User {
         &self,
         context: &Context,
         #[graphql(default)]
-        order: Option<VideosSortOrder>,
+        order: VideosSortOrder,
         offset: i32,
         limit: i32,
-    ) -> ApiResult<EventConnection> {
-        let order = order.unwrap_or(VideosSortOrder {
-            column: VideosSortColumn::Created,
-            direction: SortDirection::Descending,
-        });
-        AuthorizedEvent::load_writable_for_user(context, SortOrder {
-            column: order.column,
-            direction: order.direction
-        }, offset, limit).await
+    ) -> ApiResult<Connection<AuthorizedEvent>> {
+        AuthorizedEvent::load_writable_for_user(context, order.into(), offset, limit).await
     }
 
     /// Returns all series that somehow "belong" to the user, i.e. that appear
@@ -96,17 +90,10 @@ impl User {
         &self,
         context: &Context,
         #[graphql(default)]
-        order: Option<SeriesSortOrder>,
+        order: SeriesSortOrder,
         offset: i32,
         limit: i32,
-    ) -> ApiResult<SeriesConnection> {
-        let order = order.unwrap_or(SeriesSortOrder {
-            column: SeriesSortColumn::Created,
-            direction: SortDirection::Descending,
-        });
-        Series::load_writable_for_user(context, SortOrder {
-            column: order.column,
-            direction: order.direction
-        }, offset, limit).await
+    ) -> ApiResult<Connection<Series>> {
+        Series::load_writable_for_user(context, order.into(), offset, limit).await
     }
 }
