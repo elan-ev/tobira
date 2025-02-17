@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { graphql } from "react-relay";
 import i18n from "../../../i18n";
 import { match } from "@opencast/appkit";
@@ -53,6 +52,7 @@ export const ManageSeriesRoute = makeRoute({
                         connection={data.currentUser.mySeries}
                         titleKey="manage.my-series.title"
                         additionalColumns={seriesColumns}
+                        RenderRow={SeriesRow}
                     />
                 }
             />,
@@ -72,10 +72,7 @@ const query = graphql`
             mySeries(order: $order, offset: $offset, limit: $limit) {
                 __typename
                 totalCount
-                pageInfo {
-                    hasNextPage hasPreviousPage
-                    startIndex endIndex
-                }
+                pageInfo { hasNextPage hasPrevPage }
                 items {
                     id
                     title
@@ -100,40 +97,35 @@ export type Series = SeriesConnection["items"];
 export type SingleSeries = Series[number];
 export type Entry = SingleSeries["entries"][number];
 
-export const seriesColumns: ColumnProps[] = [
+export const seriesColumns: ColumnProps<SingleSeries>[] = [
     {
         key: "EVENT_COUNT",
         label: "manage.my-series.content",
         headerWidth: 112,
-        column: series => <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.my-series.no-of-videos", { count: series.entries?.length })}
+        column: ({ item }) => <td css={{ fontSize: 14 }}>
+            {i18n.t("manage.my-series.no-of-videos", { count: item.entries?.length })}
         </td>,
     },
     {
         key: "UPDATED",
         label: "manage.item-table.columns.updated",
-        column: series => <DateColumn date={series.updated} />,
+        column: ({ item }) => <DateColumn date={item.updated} />,
     },
     {
         key: "CREATED",
         label: "manage.item-table.columns.created",
-        column: series => <DateColumn date={series.created} />,
+        column: ({ item }) => <DateColumn date={item.created} />,
     },
 ];
 
 
-export const SeriesRow: React.FC<{ series: SingleSeries }> = ({ series }) => {
+export const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => {
     // Todo: change to "series details" route when available
-    const link = DirectSeriesRoute.url({ seriesId: series.id });
+    const link = DirectSeriesRoute.url({ seriesId: item.id });
 
-    // Seems odd, but simply checking `e => e.__typename === "AuthorizedEvent"` will produce
-    // TS2339 errors when compiling.
     type AuthorizedEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
-    const isAuthorizedEvent = (e: Entry): e is AuthorizedEvent =>
-        e.__typename === "AuthorizedEvent";
-
-    const thumbnails = series.entries
-        .filter(isAuthorizedEvent)
+    const thumbnails = item.entries
+        .filter((e): e is AuthorizedEvent => e.__typename === "AuthorizedEvent")
         .map(e => ({
             isLive: e.isLive,
             audioOnly: e.syncedData ? e.syncedData.audioOnly : false,
@@ -144,31 +136,31 @@ export const SeriesRow: React.FC<{ series: SingleSeries }> = ({ series }) => {
         <TableRow
             thumbnail={<Link to={link} css={{ ...thumbnailLinkStyle }}>
                 <span css={{ "> div": { width: "100%" } }}>
-                    <ThumbnailStack title={series.title} {...{ thumbnails }} />
+                    <ThumbnailStack title={item.title} {...{ thumbnails }} />
                 </span>
             </Link>}
-            title={<Link to={link} css={{ ...titleLinkStyle }}>{series.title}</Link>}
-            description={series.syncedData && <SmallDescription
+            title={<Link to={link} css={{ ...titleLinkStyle }}>{item.title}</Link>}
+            description={item.syncedData && <SmallDescription
                 css={{ ...descriptionStyle }}
-                text={series.syncedData.description}
+                text={item.syncedData.description}
             />}
             syncInfo={{
-                isSynced: !!series.syncedData,
+                isSynced: !!item.syncedData,
                 notReadyLabel: "series.not-ready.label",
             }}
-            customColumns={seriesColumns.map(col => (
-                <Fragment key={col.key}>{col.column(series)}</Fragment>
-            ))}
+            customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
         />
     );
 };
 
 const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
-    sortBy !== null ? match<string, SeriesSortColumn>(sortBy, {
-        "title": () => "TITLE",
-        "created": () => "CREATED",
-        "updated": () => "UPDATED",
-        "event_count": () => "EVENT_COUNT",
-    }) : "CREATED";
+    sortBy !== null
+        ? match<string, SeriesSortColumn>(sortBy, {
+            "title": () => "TITLE",
+            "created": () => "CREATED",
+            "updated": () => "UPDATED",
+            "event_count": () => "EVENT_COUNT",
+        }, () => "CREATED")
+        : "CREATED";
 
 const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);
