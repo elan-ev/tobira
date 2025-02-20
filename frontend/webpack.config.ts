@@ -3,6 +3,7 @@ import { CallableOption } from "webpack-cli";
 import YAML from "yaml";
 import { CleanWebpackPlugin } from "clean-webpack-plugin";
 import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
+import ESLintPlugin from "eslint-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import * as fs from "fs";
@@ -86,13 +87,14 @@ const config: CallableOption = (_env, argv) => ({
             });
         },
         new ForkTsCheckerWebpackPlugin({
-            eslint: {
-                files: ["."],
-            },
             typescript: {
                 mode: "write-references",
             },
             formatter: "basic",
+        }),
+        new ESLintPlugin({
+            extensions: ["ts", "tsx", "js"],
+            configType: "flat",
         }),
         new CopyPlugin({
             patterns: [
