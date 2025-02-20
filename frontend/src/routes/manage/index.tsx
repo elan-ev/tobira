@@ -89,7 +89,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     ];
     if (isRealUser(user) && user.canCreateUserRealm) {
         entries.splice(
-            1, 0, [`/@${user.username}`, t("realm.user-realm.my-page"), <HiOutlineFire />]
+            1, 0, [`/@${user.username}`, t("realm.user-realm.my-page"), <HiOutlineFire />],
         );
     }
     if (isRealUser(user) && user.canUpload) {
@@ -131,7 +131,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
             >
                 <LuVideo />
                 {t("manage.dashboard.studio-tile-title")}
-            </ExternalLink>
+            </ExternalLink>,
         );
     }
 

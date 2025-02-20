@@ -107,7 +107,7 @@ export const AclSelector: React.FC<AclSelectorProps> = (
         ownerDisplayName = "",
         permissionLevels,
         addAnonymous = true,
-    }
+    },
 ) => {
     const { i18n } = useTranslation();
     const knownGroups = [...knownRoles.knownGroups];
@@ -587,7 +587,7 @@ type TableRowProps = {
 }
 
 const TableRow: React.FC<TableRowProps> = (
-    { labelCol, mutedLabel, actionCol, onRemove, inherited }
+    { labelCol, mutedLabel, actionCol, onRemove, inherited },
 ) => (
     <tr css={{
         height: 44,
@@ -714,7 +714,7 @@ type ActionMenuItemProps = {
 };
 
 const ActionMenuItem: React.FC<ActionMenuItemProps> = (
-    { label, description, onClick, close, disabled }
+    { label, description, onClick, close, disabled },
 ) => {
     const ref = useRef<HTMLButtonElement>(null);
     const isDark = useColorScheme().scheme === "dark";
@@ -930,7 +930,7 @@ const insertBuiltinRoleInfo = (
         ...Object.fromEntries(
             i18n.languages
                 .filter(lng => i18n.exists(key, { lng }))
-                .map(lng => [lng, i18n.t(key, { lng })])
+                .map(lng => [lng, i18n.t(key, { lng })]),
         ),
     });
 

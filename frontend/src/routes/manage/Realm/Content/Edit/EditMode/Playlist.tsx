@@ -67,18 +67,19 @@ export const EditPlaylistBlock: React.FC<EditPlaylistBlockProps> = ({ block: blo
     const { t } = useTranslation();
     const user = useUser();
 
-    if (playlist != null && playlist.__typename !== "AuthorizedPlaylist") {
-        return t("playlist.not-allowed-playlist-block");
-    }
+    const currentPlaylist = playlist?.__typename === "AuthorizedPlaylist"
+        ? playlist
+        : undefined;
 
     const form = useFormContext<PlaylistFormData>();
     const { formState: { errors }, control } = form;
     const { field: playlistField } = useController({
-        defaultValue: playlist?.id,
+        defaultValue: currentPlaylist?.id,
         name: "playlist",
         control,
         rules: { required: true },
     });
+
 
 
     return <EditModeForm create={create} save={save} map={(data: PlaylistFormData) => data}>
@@ -91,11 +92,14 @@ export const EditPlaylistBlock: React.FC<EditPlaylistBlockProps> = ({ block: blo
         {"playlist" in errors && <div css={{ margin: "8px 0" }}>
             <Card kind="error">{t("manage.realm.content.playlist.playlist.invalid")}</Card>
         </div>}
+        {playlist?.__typename === "NotAllowed" && <Card kind="error" css={{ margin: "8px 0" }}>
+            {t("playlist.not-allowed-playlist-block")}
+        </Card>}
         <VideoListSelector
             type="playlist"
-            defaultValue={playlist == null ? undefined : {
-                ...playlist,
-                description: playlist.description ?? null,
+            defaultValue={currentPlaylist == null ? undefined : {
+                ...currentPlaylist,
+                description: currentPlaylist.description ?? null,
             }}
             onChange={data => playlistField.onChange(data?.id)}
             onBlur={playlistField.onBlur}
@@ -110,5 +114,3 @@ export const EditPlaylistBlock: React.FC<EditPlaylistBlockProps> = ({ block: blo
         }} />
     </EditModeForm>;
 };
-
-

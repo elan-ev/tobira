@@ -7,6 +7,7 @@ import { Link, useRouter } from "../router";
 import CONFIG from "../config";
 import { LoginRoute, REDIRECT_STORAGE_KEY } from "./Login";
 import { AclArray } from "./Upload";
+import { RealmOrder } from "../layout/__generated__/NavigationData.graphql";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -18,7 +19,7 @@ export const MissingRealmName: React.FC = () => {
     return <i>{t("realm.missing-name")}</i>;
 };
 
-type RealmSortOrder = "ALPHABETIC_ASC" | "ALPHABETIC_DESC" | "BY_INDEX" | string;
+type RealmSortOrder = RealmOrder;
 
 /**
  * Returns a sorted version of the given realms according to `sortOrder`. It is
@@ -101,5 +102,5 @@ export const mapAcl = (acl?: AclArray) => new Map(
     acl?.map(item => [item.role, {
         actions: new Set(item.actions),
         info: item.info,
-    }])
+    }]),
 );
