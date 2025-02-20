@@ -23,7 +23,7 @@ mkdir -p build
         -- '../util/scripts/clr.sh; ./node_modules/.bin/relay-compiler --output quiet-with-errors' &
 
     # Let webpack do the watching itself as startup time for webpack are really bad.
-    npx webpack watch --mode=development --no-stats &
+    npx webpack watch --mode=development --stats=errors-warnings &
 
     # Watch the build directory to trigger a reload when webpack is done building.
     watchexec --watch build --postpone -- $reload_command
