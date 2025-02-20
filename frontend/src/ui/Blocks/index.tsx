@@ -47,9 +47,10 @@ export const Blocks: React.FC<BlocksProps> = ({ realm: realmRef }) => {
 type BlockProps = {
     realm: BlocksRealmData$key;
     block: BlocksBlockData$key;
+    edit?: boolean;
 };
 
-export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
+export const Block: React.FC<BlockProps> = ({ block: blockRef, realm, edit }) => {
     const { path } = useFragment(graphql`
         fragment BlocksRealmData on Realm {
             path
@@ -74,9 +75,11 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm }) => {
         {match(__typename, {
             "TitleBlock": () => <TitleBlock fragRef={block} />,
             "TextBlock": () => <TextBlockByQuery fragRef={block} />,
-            "SeriesBlock": () => <SeriesBlockFromBlock fragRef={block} basePath={basePath} />,
-            "VideoBlock": () => <VideoBlock fragRef={block} basePath={basePath} />,
-            "PlaylistBlock": () => <PlaylistBlockFromBlock fragRef={block} basePath={basePath} />,
+            "SeriesBlock": () => <SeriesBlockFromBlock fragRef={block} {...{ basePath, edit }} />,
+            "VideoBlock": () => <VideoBlock fragRef={block} {...{ basePath, edit }} />,
+            "PlaylistBlock": () => (
+                <PlaylistBlockFromBlock fragRef={block} {...{ basePath, edit }} />
+            ),
         })}
     </div>;
 };

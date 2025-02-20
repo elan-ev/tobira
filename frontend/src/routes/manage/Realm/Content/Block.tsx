@@ -143,7 +143,7 @@ export const EditBlock: React.FC<Props> = ({
 
                     {/* TODO This counters the negative margin we employ to render title blocks. */}
                     <div css={{ marginBottom: 16 }}>
-                        <Block {...{ block, realm }} />
+                        <Block edit {...{ block, realm }} />
                     </div>
                 </>}
         </div>
