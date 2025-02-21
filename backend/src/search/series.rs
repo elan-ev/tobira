@@ -6,7 +6,8 @@ use tokio_postgres::GenericClient;
 use crate::{
     prelude::*,
     model::Key,
-    db::{types::SearchThumbnailInfo, util::{collect_rows_mapped, impl_from_db}},
+    model::SearchThumbnailInfo,
+    db::util::{collect_rows_mapped, impl_from_db},
 };
 
 use super::{realm::Realm, util::{self, FieldAbilities}, IndexItem, IndexItemKind, SearchId};
