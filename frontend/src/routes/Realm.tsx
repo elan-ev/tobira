@@ -120,16 +120,13 @@ const query = graphql`
         ... UserData
         currentUser { username canCreateUserRealm }
         realm: realmByPath(path: $path) {
-            id
             name
             path
             isMainRoot
             isUserRealm
             ownerDisplayName
-            children { id }
             canCurrentUserModerate
             ancestors { name path ownerDisplayName }
-            parent { id }
             ... BlocksData
             ... NavigationData
         }
