@@ -325,6 +325,10 @@ impl Realm {
     /// (excluding both, the root realm and this realm). It starts with a
     /// direct child of the root and ends with the parent of `self`.
     async fn ancestors(&self, context: &Context) -> ApiResult<Vec<Realm>> {
+        if self.parent_key.is_none() {
+            return Ok(vec![]);
+        }
+
         let selection = Self::select().with_renamed_table("realms", "ancestors");
         let query = format!(
             "select {selection} \
