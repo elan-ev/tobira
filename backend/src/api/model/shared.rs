@@ -1,4 +1,3 @@
-use tokio_postgres::types::ToSql;
 use juniper::{GraphQLEnum, GraphQLObject};
 
 use crate::{
@@ -195,14 +194,12 @@ where
     };
     let table = parts.alias.unwrap_or(parts.table);
 
-    let mut args = vec![];
-    let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
-    let acl_filter = if context.auth.is_admin() {
-        String::new()
+    let mut acl_filter = format!("where {table}.write_roles && $1 and {table}.read_roles && $1");
+    let mut user_roles = vec![];
+    if context.auth.is_admin() {
+        acl_filter.push_str("or true");
     } else {
-        args.push(arg_user_roles);
-        let arg_index = args.len() + 2;
-        format!("where {table}.write_roles && ${arg_index} and {table}.read_roles && ${arg_index}")
+        user_roles = context.auth.roles_vec();
     };
 
     let query = format!(
@@ -211,7 +208,7 @@ where
             {join_clause} \
             {acl_filter} \
             order by {sort_column} {sort_order}, {table}.id {sort_order} \
-            limit $1 offset $2 \
+            limit $2 offset $3 \
         ",
         selection = T::select(),
         join_clause = parts.join_clause,
@@ -220,15 +217,9 @@ where
     );
 
     let mut total_count = 0;
-    let mut params = vec![];
-    let db_limit = limit as i64;
-    let db_offset = offset as i64;
-
-    params.extend(dbargs![&db_limit, &db_offset]);
-    params.extend(args);
 
     // Execute query
-    let items = context.db.query_mapped(&query, params, |row| {
+    let items = context.db.query_mapped(&query, dbargs![&user_roles, &(limit as i64), &(offset as i64)], |row| {
         // Retrieve total count
         total_count = row.get::<_, i64>("total_count");
         // Retrieve actual row data
