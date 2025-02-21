@@ -202,6 +202,14 @@ where
         user_roles = context.auth.roles_vec();
     };
 
+    // Retrieve total number of items. This can be done in the query below, but
+    // the added complexity is really not worth it.
+    let total_count = context.db.query_one(
+        &format!("select count(*) from {table_alias} {acl_filter}"),
+        &[&user_roles],
+    ).await?.get::<_, i64>(0);
+    let total_count = total_count.try_into().expect("more than 2^31 items?!");
+
     let query = format!(
         "select {selection}, count(*) over() as total_count \
             from {table_alias} \
@@ -216,17 +224,13 @@ where
         sort_column = order.column.to_sql(),
     );
 
-    let mut total_count = 0;
-
     // Execute query
-    let items = context.db.query_mapped(&query, dbargs![&user_roles, &(limit as i64), &(offset as i64)], |row| {
-        // Retrieve total count
-        total_count = row.get::<_, i64>("total_count");
-        // Retrieve actual row data
-        T::from_row_start(&row)
-    }).await?;
+    let items = context.db.query_mapped(
+        &query,
+        dbargs![&user_roles, &(limit as i64), &(offset as i64)],
+        |row| T::from_row_start(&row),
+    ).await?;
 
-    let total_count = total_count.try_into().expect("more than 2^31 items?!");
 
     let page_info = PageInfo {
         has_next_page: (offset + limit) < total_count,
