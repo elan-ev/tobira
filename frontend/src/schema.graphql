@@ -813,6 +813,8 @@ type Series implements Node {
   updated: DateTime
   metadata: ExtraMetadata
   syncedData: SyncedSeriesData
+  numVideos: Int!
+  thumbnailStack: SeriesThumbnailStack!
   acl: [AclItem!]
   hostRealms: [Realm!]!
   entries: [VideoListEntry!]!

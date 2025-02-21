@@ -1,11 +1,11 @@
 use juniper::{GraphQLEnum, GraphQLObject};
+use tokio_postgres::Row;
 
 use crate::{
     api::{
         Context,
         err::{invalid_input, ApiResult},
     },
-    db,
     dbargs,
     HasRoles,
 };
@@ -172,9 +172,10 @@ pub(crate) async fn load_writable_for_user<T, C>(
     offset: i32,
     limit: i32,
     parts: ConnectionQueryParts,
+    selection: impl std::fmt::Display,
+    mut from_row: impl FnMut(&Row) -> T,
 ) -> ApiResult<Connection<T>>
 where
-    T: db::util::FromDb,
     C: ToSqlColumn,
 {
     const MAX_COUNT: i32 = 100;
@@ -218,7 +219,6 @@ where
             order by {sort_column} {sort_order}, {table}.id {sort_order} \
             limit $2 offset $3 \
         ",
-        selection = T::select(),
         join_clause = parts.join_clause,
         sort_order = order.direction.to_sql(),
         sort_column = order.column.to_sql(),
@@ -228,7 +228,7 @@ where
     let items = context.db.query_mapped(
         &query,
         dbargs![&user_roles, &(limit as i64), &(offset as i64)],
-        |row| T::from_row_start(&row),
+        |row| from_row(&row),
     ).await?;
 
 

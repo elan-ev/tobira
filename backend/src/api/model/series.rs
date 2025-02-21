@@ -12,12 +12,13 @@ use crate::{
             acl::{self, Acl},
             shared::{ToSqlColumn, SortDirection}
         },
+        util::LazyLoad,
     },
     db::{
         types::SeriesState as State,
-        util::impl_from_db,
+        util::{impl_from_db, select},
     },
-    model::{Key, ExtraMetadata},
+    model::{Key, ExtraMetadata, SeriesThumbnailStack, ThumbnailInfo, SearchThumbnailInfo},
     prelude::*,
 };
 
@@ -46,6 +47,8 @@ pub(crate) struct Series {
     pub(crate) metadata: Option<ExtraMetadata>,
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
+    pub(crate) num_videos: LazyLoad<u32>,
+    pub(crate) thumbnail_stack: LazyLoad<SeriesThumbnailStack>,
 }
 
 #[derive(GraphQLObject)]
@@ -82,6 +85,8 @@ impl_from_db!(
                     description: row.description(),
                 },
             ),
+            num_videos: LazyLoad::NotLoaded,
+            thumbnail_stack: LazyLoad::NotLoaded,
         }
     },
 );
@@ -301,7 +306,26 @@ impl Series {
             alias: None,
             join_clause: "",
         };
-        load_writable_for_user(context, order, offset, limit, parts).await
+        let (selection, mapping) = select!(
+            series: Series,
+            num_videos: "(select count(*) from events where events.series = series.id)",
+            thumbnails: "array(\
+                select search_thumbnail_info_for_event(events.*) \
+                from events \
+                where events.series = series.id \
+                order by events.created asc)",
+        );
+        load_writable_for_user(context, order, offset, limit, parts, selection, |row| {
+            let mut out = Self::from_row(row, mapping.series);
+            out.num_videos = LazyLoad::Loaded(mapping.num_videos.of::<i64>(row) as u32);
+            out.thumbnail_stack = LazyLoad::Loaded(SeriesThumbnailStack {
+                thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(row)
+                    .into_iter()
+                    .filter_map(|info| ThumbnailInfo::from_search(info, &context.auth))
+                    .collect(),
+            });
+            out
+        }).await
     }
 }
 
@@ -334,6 +358,14 @@ impl Series {
 
     fn synced_data(&self) -> &Option<SyncedSeriesData> {
         &self.synced_data
+    }
+
+    fn num_videos(&self) -> i32 {
+        self.num_videos.unwrap() as i32
+    }
+
+    fn thumbnail_stack(&self) -> &SeriesThumbnailStack {
+        self.thumbnail_stack.as_ref().unwrap()
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
@@ -420,4 +452,3 @@ define_sort_column_and_order!(
     };
     pub struct SeriesSortOrder
 );
-
