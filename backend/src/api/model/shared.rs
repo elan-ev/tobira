@@ -189,20 +189,11 @@ where
     }
     let limit = std::cmp::min(limit, MAX_COUNT);
 
-    let table = parts.table;
-    let alias = parts.alias;
-
-    let table_alias = match alias {
-        Some(a) => format!("{table} as {a}"),
-        None => table.to_string(),
+    let table_alias = match parts.alias {
+        Some(a) => format!("{table} as {a}", table = parts.table),
+        None => parts.table.to_string(),
     };
-    let table = alias.unwrap_or(table);
-
-    let sort_order = order.direction.to_sql();
-    let sort_column = order.column.to_sql();
-
-    let selection = T::select();
-    let join_clause = parts.join_clause;
+    let table = parts.alias.unwrap_or(parts.table);
 
     let mut args = vec![];
     let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
@@ -222,6 +213,10 @@ where
             order by {sort_column} {sort_order}, {table}.id {sort_order} \
             limit $1 offset $2 \
         ",
+        selection = T::select(),
+        join_clause = parts.join_clause,
+        sort_order = order.direction.to_sql(),
+        sort_column = order.column.to_sql(),
     );
 
     let mut total_count = 0;
