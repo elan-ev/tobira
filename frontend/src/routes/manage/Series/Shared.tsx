@@ -81,8 +81,13 @@ const query = graphql`
             updated
             acl { role actions info { label implies large } }
             syncedData { description }
-            numVideos
-            thumbnailStack { thumbnails { url live audioOnly }}
+            entries {
+                __typename
+                ...on AuthorizedEvent {
+                    isLive
+                    syncedData { thumbnail audioOnly }
+                }
+            }
             hostRealms { id isMainRoot name path }
         }
     }
@@ -129,7 +134,25 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
 
     const thumbnail = <>
         <LuEye />
-        <SeriesThumbnail {...{ series }} />
+        <SeriesThumbnail series={{
+            ...series,
+            thumbnailStack: {
+                thumbnails: series.entries.slice(0, 3).map(entry => {
+                    if (entry.__typename !== "AuthorizedEvent") {
+                        return {
+                            audioOnly: false,
+                            live: false,
+                            url: null,
+                        };
+                    }
+                    return {
+                        url: entry.syncedData?.thumbnail,
+                        audioOnly: entry.syncedData?.audioOnly ?? false,
+                        live: entry.isLive,
+                    };
+                }),
+            },
+        }} />
     </>;
 
     return <ManageNav {...{
