@@ -38,6 +38,7 @@ use super::{
 };
 
 
+#[derive(Clone)]
 pub(crate) struct Series {
     pub(crate) key: Key,
     pub(crate) opencast_id: String,
@@ -53,7 +54,7 @@ pub(crate) struct Series {
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
-#[derive(GraphQLObject)]
+#[derive(Clone, GraphQLObject)]
 pub(crate) struct SyncedSeriesData {
     description: Option<String>,
 }
@@ -481,32 +482,49 @@ impl Series {
             )
         ).await?;
 
-        let response = context
-            .oc_client
-            .delete(&series)
-            .await
-            .map_err(|e| {
-                error!("Failed to send delete request: {}", e);
-                err::opencast_unavailable!("Failed to communicate with Opencast")
-            })?;
+        info!(series_id = %id, "Attempting to send request to delete series in Opencast");
 
-        if response.status() == StatusCode::NO_CONTENT {
-            // 204: The series has been deleted
-            info!(series_id = %id, "Requested deletion of series");
-            context.db.execute("\
-                update all_series \
-                set tobira_deletion_timestamp = current_timestamp \
-                where id = $1 \
-            ", &[&series.key]).await?;
-            Ok(series)
-        } else {
-            warn!(
-                series_id = %id,
-                "Failed to delete series, OC returned status: {}",
-                response.status()
-            );
-            Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
-        }
+        context.db.execute("\
+            update all_series \
+            set tobira_deletion_timestamp = current_timestamp \
+            where id = $1 \
+        ", &[&series.key]).await?;
+        // Todo: Consider optimistically updating events as well.
+
+
+        let oc_client = context.oc_client.clone();
+        let series_clone = series.clone();
+
+        // Unfortunately we can't wait for the http response. The Opencast delete endpoint will
+        // automatically start `republish metadata` workflows for all events in the series, which
+        // takes roughly 10 seconds per event, and only returns once all have finished.
+        // This would block the request for a long time.
+        tokio::spawn(async move {
+            let response = match oc_client.delete(&series_clone).await {
+                Ok(response) => response,
+                Err(e) => {
+                    error!("Failed to send delete request: {}", e);
+                    return;
+                }
+            };
+
+            if response.status() == StatusCode::NO_CONTENT {
+                info!(series_id = %id, "Series successfully deleted");
+            } else {
+                // This is kinda pointless. Depending on the number of videos, the request takes
+                // super long to respond and will potentially return with `504 Gateway Timeout`.
+                // This is not necessarily an error in this case as the deletion could still be
+                // in progress.
+                warn!(
+                    series_id = %id,
+                    "Failed to delete series, Opencast returned status: {}",
+                    response.status()
+                );
+            }
+            // Todo: Consider reverting DB changes on error or unexpected response.
+        });
+
+        Ok(series)
     }
 }
 

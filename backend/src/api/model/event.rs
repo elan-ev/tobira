@@ -764,10 +764,3 @@ define_sort_column_and_order!(
     };
     pub struct VideosSortOrder
 );
-
-
-#[derive(juniper::GraphQLObject)]
-#[graphql(Context = Context)]
-pub(crate) struct RemovedEvent {
-    id: Id,
-}
