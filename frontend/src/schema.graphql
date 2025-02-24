@@ -782,7 +782,7 @@ type SearchSeries implements Node {
   title: String!
   description: String
   hostRealms: [SearchRealm!]!
-  thumbnails: [ThumbnailInfo!]!
+  thumbnailStack: SeriesThumbnailStack!
   matches: SearchSeriesMatches!
 }
 
@@ -813,6 +813,8 @@ type Series implements Node {
   updated: DateTime
   metadata: ExtraMetadata
   syncedData: SyncedSeriesData
+  numVideos: Int!
+  thumbnailStack: SeriesThumbnailStack!
   acl: [AclItem!]
   hostRealms: [Realm!]!
   entries: [VideoListEntry!]!
@@ -846,6 +848,10 @@ type SeriesSearchResults {
   totalHits: Int!
   "How long searching took in ms."
   duration: Int!
+}
+
+type SeriesThumbnailStack {
+  thumbnails: [ThumbnailInfo!]!
 }
 
 type SyncedEventData {
@@ -887,9 +893,10 @@ type TextMatch {
   highlights: [ByteSpan!]!
 }
 
+"Information necessary to render a thumbnail."
 type ThumbnailInfo {
-  thumbnail: String
-  isLive: Boolean!
+  url: String
+  live: Boolean!
   audioOnly: Boolean!
 }
 

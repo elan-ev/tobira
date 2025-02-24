@@ -7,12 +7,16 @@
 //! either of `db`, `api` or any other submodule as they are used in multiple
 //! situations (loading from DB, exposing via API, ...).
 
+mod event;
 mod extra_metadata;
 mod key;
+mod series;
 mod translated_string;
 
 pub(crate) use self::{
     extra_metadata::ExtraMetadata,
     key::Key,
+    event::{SearchThumbnailInfo, ThumbnailInfo},
+    series::SeriesThumbnailStack,
     translated_string::{LangKey, TranslatedString},
 };

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use juniper::{GraphQLObject, GraphQLScalar, InputValue, ScalarValue};
+use juniper::{GraphQLScalar, InputValue, ScalarValue};
 use meilisearch_sdk::search::{FederationOptions, MatchRange, QueryFederationOptions};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -111,13 +111,6 @@ pub(crate) struct Filters {
     item_type: Option<ItemType>,
     start: Option<DateTime<Utc>>,
     end: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, GraphQLObject)]
-pub(crate) struct ThumbnailInfo {
-    pub(crate) thumbnail: Option<String>,
-    pub(crate) is_live: bool,
-    pub(crate) audio_only: bool,
 }
 
 

@@ -79,13 +79,8 @@ const query = graphql`
                     created
                     updated
                     syncedData { description }
-                    entries {
-                        __typename
-                        ...on AuthorizedEvent {
-                            isLive
-                            syncedData { thumbnail audioOnly }
-                        }
-                    }
+                    numVideos
+                    thumbnailStack { thumbnails { url live audioOnly }}
                 }
             }
         }
@@ -95,7 +90,6 @@ const query = graphql`
 export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]>["mySeries"];
 export type Series = SeriesConnection["items"];
 export type SingleSeries = Series[number];
-export type Entry = SingleSeries["entries"][number];
 
 export const seriesColumns: ColumnProps<SingleSeries>[] = [
     {
@@ -103,7 +97,7 @@ export const seriesColumns: ColumnProps<SingleSeries>[] = [
         label: "manage.my-series.content",
         headerWidth: 112,
         column: ({ item }) => <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.my-series.no-of-videos", { count: item.entries?.length })}
+            {i18n.t("manage.my-series.no-of-videos", { count: item.numVideos })}
         </td>,
     },
     {
@@ -123,20 +117,11 @@ export const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => {
     // Todo: change to "series details" route when available
     const link = DirectSeriesRoute.url({ seriesId: item.id });
 
-    type AuthorizedEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
-    const thumbnails = item.entries
-        .filter((e): e is AuthorizedEvent => e.__typename === "AuthorizedEvent")
-        .map(e => ({
-            isLive: e.isLive,
-            audioOnly: e.syncedData ? e.syncedData.audioOnly : false,
-            thumbnail: e.syncedData?.thumbnail,
-        }));
-
     return (
         <TableRow
             thumbnail={<Link to={link} css={{ ...thumbnailLinkStyle }}>
                 <span css={{ "> div": { width: "100%" } }}>
-                    <ThumbnailStack title={item.title} {...{ thumbnails }} />
+                    <ThumbnailStack title={item.title} thumbnailStack={item.thumbnailStack} />
                 </span>
             </Link>}
             title={<Link to={link} css={{ ...titleLinkStyle }}>{item.title}</Link>}

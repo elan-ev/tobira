@@ -1,12 +1,11 @@
-use tokio_postgres::types::ToSql;
 use juniper::{GraphQLEnum, GraphQLObject};
+use tokio_postgres::Row;
 
 use crate::{
     api::{
         Context,
         err::{invalid_input, ApiResult},
     },
-    db,
     dbargs,
     HasRoles,
 };
@@ -173,9 +172,10 @@ pub(crate) async fn load_writable_for_user<T, C>(
     offset: i32,
     limit: i32,
     parts: ConnectionQueryParts,
+    selection: impl std::fmt::Display,
+    mut from_row: impl FnMut(&Row) -> T,
 ) -> ApiResult<Connection<T>>
 where
-    T: db::util::FromDb,
     C: ToSqlColumn,
 {
     const MAX_COUNT: i32 = 100;
@@ -189,30 +189,27 @@ where
     }
     let limit = std::cmp::min(limit, MAX_COUNT);
 
-    let table = parts.table;
-    let alias = parts.alias;
-
-    let table_alias = match alias {
-        Some(a) => format!("{table} as {a}"),
-        None => table.to_string(),
+    let table_alias = match parts.alias {
+        Some(a) => format!("{table} as {a}", table = parts.table),
+        None => parts.table.to_string(),
     };
-    let table = alias.unwrap_or(table);
+    let table = parts.alias.unwrap_or(parts.table);
 
-    let sort_order = order.direction.to_sql();
-    let sort_column = order.column.to_sql();
-
-    let selection = T::select();
-    let join_clause = parts.join_clause;
-
-    let mut args = vec![];
-    let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
-    let acl_filter = if context.auth.is_admin() {
-        String::new()
+    let mut acl_filter = format!("where {table}.write_roles && $1 and {table}.read_roles && $1");
+    let mut user_roles = vec![];
+    if context.auth.is_admin() {
+        acl_filter.push_str("or true");
     } else {
-        args.push(arg_user_roles);
-        let arg_index = args.len() + 2;
-        format!("where {table}.write_roles && ${arg_index} and {table}.read_roles && ${arg_index}")
+        user_roles = context.auth.roles_vec();
     };
+
+    // Retrieve total number of items. This can be done in the query below, but
+    // the added complexity is really not worth it.
+    let total_count = context.db.query_one(
+        &format!("select count(*) from {table_alias} {acl_filter}"),
+        &[&user_roles],
+    ).await?.get::<_, i64>(0);
+    let total_count = total_count.try_into().expect("more than 2^31 items?!");
 
     let query = format!(
         "select {selection}, count(*) over() as total_count \
@@ -220,27 +217,20 @@ where
             {join_clause} \
             {acl_filter} \
             order by {sort_column} {sort_order}, {table}.id {sort_order} \
-            limit $1 offset $2 \
+            limit $2 offset $3 \
         ",
+        join_clause = parts.join_clause,
+        sort_order = order.direction.to_sql(),
+        sort_column = order.column.to_sql(),
     );
 
-    let mut total_count = 0;
-    let mut params = vec![];
-    let db_limit = limit as i64;
-    let db_offset = offset as i64;
-
-    params.extend(dbargs![&db_limit, &db_offset]);
-    params.extend(args);
-
     // Execute query
-    let items = context.db.query_mapped(&query, params, |row| {
-        // Retrieve total count
-        total_count = row.get::<_, i64>("total_count");
-        // Retrieve actual row data
-        T::from_row_start(&row)
-    }).await?;
+    let items = context.db.query_mapped(
+        &query,
+        dbargs![&user_roles, &(limit as i64), &(offset as i64)],
+        |row| from_row(&row),
+    ).await?;
 
-    let total_count = total_count.try_into().expect("more than 2^31 items?!");
 
     let page_info = PageInfo {
         has_next_page: (offset + limit) < total_count,

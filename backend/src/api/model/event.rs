@@ -27,6 +27,7 @@ use crate::{
         Id,
         Node,
         NodeValue,
+        util::LazyLoad,
     },
     db::{
         types::{EventCaption, EventSegment, EventState, EventTrack, Credentials},
@@ -353,6 +354,8 @@ impl AuthorizedEvent {
                     metadata: None,
                     read_roles: None,
                     write_roles: None,
+                    num_videos: LazyLoad::NotLoaded,
+                    thumbnail_stack: LazyLoad::NotLoaded,
                 }))
             } else {
                 // We need to load the series as fields were requested that were not preloaded.
@@ -664,7 +667,11 @@ impl AuthorizedEvent {
             join_clause: "left join series on series.id = events.series",
         };
 
-        load_writable_for_user(context, order, offset, limit, parts).await
+        load_writable_for_user(
+            context, order, offset, limit, parts,
+            AuthorizedEvent::select(),
+            AuthorizedEvent::from_row_start,
+        ).await
     }
 }
 
