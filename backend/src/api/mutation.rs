@@ -82,7 +82,7 @@ impl Mutation {
     /// The series is marked as "deletion pending" in Tobira and fully removed once Opencast
     /// finished deleting the series.
     ///
-    /// Returns the deletion timestamp in case of success and errors otherwise.
+    /// Returns the preliminary deletion timestamp.
     async fn delete_series(id: Id, context: &Context) -> ApiResult<Series> {
         Series::delete(id, context).await
     }
