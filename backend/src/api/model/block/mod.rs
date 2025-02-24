@@ -1,7 +1,9 @@
 //! Blocks that make up the content of realm pages.
 
+use std::fmt;
 use juniper::{graphql_interface, graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
+use serde::Serialize;
 
 use crate::{
     api::{
@@ -69,8 +71,9 @@ macro_rules! impl_block {
 }
 
 
-#[derive(Debug, Clone, Copy, FromSql)]
+#[derive(Debug, Clone, Copy, FromSql, Serialize)]
 #[postgres(name = "block_type")]
+#[serde(rename_all = "lowercase")]
 pub(crate) enum BlockType {
     #[postgres(name = "title")]
     Title,
@@ -82,6 +85,12 @@ pub(crate) enum BlockType {
     Video,
     #[postgres(name = "playlist")]
     Playlist,
+}
+
+impl fmt::Display for BlockType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.serialize(f)
+    }
 }
 
 #[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
@@ -243,8 +252,7 @@ impl VideoBlock {
     async fn event(&self, context: &Context) -> ApiResult<Option<Event>> {
         match self.event {
             None => Ok(None),
-            // `unwrap` is okay here because of our foreign key constraint
-            Some(event_id) => Ok(Some(AuthorizedEvent::load_by_id(event_id, context).await?.unwrap())),
+            Some(event_id) => Ok(AuthorizedEvent::load_by_id(event_id, context).await?),
         }
     }
 

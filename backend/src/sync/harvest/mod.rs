@@ -11,7 +11,8 @@ use crate::{
     auth::{is_special_eth_role, ROLE_ADMIN, ROLE_ANONYMOUS, ETH_ROLE_CREDENTIALS_RE},
     config::Config,
     db::{
-        self, types::{Credentials, EventCaption, EventSegment, EventState, EventTrack, SeriesState},
+        self,
+        types::{Credentials, EventCaption, EventSegment, EventState, EventTrack, SeriesState},
     },
     prelude::*,
 };
@@ -234,7 +235,9 @@ async fn store_in_db(
                 upserted_events += 1;
             }
 
-            HarvestItem::EventDeleted { id: opencast_id, .. } => {
+            HarvestItem::EventDeleted { id: ref opencast_id, .. } => {
+                remove_realms(db, config, &item).await?;
+
                 let rows_affected = db
                     .execute("delete from all_events where opencast_id = $1", &[&opencast_id])
                     .await?;
@@ -282,7 +285,9 @@ async fn store_in_db(
                 upserted_series += 1;
             },
 
-            HarvestItem::SeriesDeleted { id: opencast_id, .. } => {
+            HarvestItem::SeriesDeleted { id: ref opencast_id, .. } => {
+                remove_realms(db, config, &item).await?;
+
                 // We simply remove the series and do not care about any linked
                 // events. The foreign key has `on delete set null`. That's
                 // what we want: treat it as if the event has no series
@@ -327,7 +332,10 @@ async fn store_in_db(
                 upserted_playlists += 1;
             }
 
-            HarvestItem::PlaylistDeleted { id: opencast_id, .. } => {
+            HarvestItem::PlaylistDeleted { id: ref opencast_id, .. } => {
+                // This doesn't have any effect since realms can't derive their name from playlists yet.
+                remove_realms(db, config, &item).await?;
+
                 let rows_affected = db
                     .execute("delete from playlists where opencast_id = $1", &[&opencast_id])
                     .await?;
@@ -472,4 +480,54 @@ async fn upsert(
     // actually makes sense to do here.
     let statement = db.prepare_cached(&*query).await?;
     Ok(db.query_one(&statement, &values).await?.get::<_, i64>(0))
+}
+
+
+/// Removes realms that reference a deleted series, event, or playlist,
+/// if the configuration allows it.
+///
+/// If realm deletion is enabled for the given type, the function:
+/// 1. Finds all realms whose names are derived from the deleted series/event/playlist.
+/// 2. Ensures that those realms have no child realms.
+/// 3. If `eager = false`, ensures that the realm has **only one** block (the deleted one).
+/// 4. Deletes the qualifying realms from the database.
+async fn remove_realms(
+    db: &deadpool_postgres::Transaction<'_>,
+    config: &Config,
+    item: &HarvestItem,
+) -> Result<(), tokio_postgres::Error> {
+    let Some(props) = item.deleted_props(config) else {
+        return Ok(());
+    };
+
+    let block_count_condition = if props.eager {
+        ""
+    } else {
+        "and (select count(*) from blocks b2 where b2.realm = r.id) = 1"
+    };
+
+    let query = format!(" \
+        delete from realms r \
+        where r.name_from_block in ( \
+            select b.id from blocks b \
+            join {table_name} t on b.{block_type} = t.id \
+            where t.opencast_id = $1 and b.type = '{block_type}' \
+        ) \
+        and not exists ( \
+            select 1 from realms child where child.parent = r.id \
+        ) \
+        {block_count_condition}",
+        table_name = props.table_name,
+        block_type = props.block_type,
+    );
+
+    let rows_affected = db.execute(&query, &[&props.id]).await?;
+    info!(
+        eager = props.eager,
+        "Removed {rows_affected} realms referencing {} {}",
+        props.block_type,
+        props.id,
+    );
+
+    Ok(())
 }
