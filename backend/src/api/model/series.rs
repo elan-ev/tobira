@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use juniper::{graphql_object, GraphQLObject, GraphQLInputObject};
+use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use postgres_types::ToSql;
 
 use crate::{
@@ -10,10 +10,15 @@ use crate::{
             event::AuthorizedEvent,
             realm::Realm,
             acl::{self, Acl},
+            shared::{ToSqlColumn, SortDirection}
         },
+        util::LazyLoad,
     },
-    db::{types::SeriesState as State, util::impl_from_db},
-    model::{Key, ExtraMetadata},
+    db::{
+        types::SeriesState as State,
+        util::{impl_from_db, select},
+    },
+    model::{Key, ExtraMetadata, SeriesThumbnailStack, ThumbnailInfo, SearchThumbnailInfo},
     prelude::*,
 };
 
@@ -21,6 +26,14 @@ use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
     playlist::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
+    shared::{
+        define_sort_column_and_order,
+        load_writable_for_user,
+        Connection,
+        ConnectionQueryParts,
+        PageInfo,
+        SortOrder,
+    },
 };
 
 
@@ -30,9 +43,12 @@ pub(crate) struct Series {
     pub(crate) synced_data: Option<SyncedSeriesData>,
     pub(crate) title: String,
     pub(crate) created: Option<DateTime<Utc>>,
+    pub(crate) updated: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
+    pub(crate) num_videos: LazyLoad<u32>,
+    pub(crate) thumbnail_stack: LazyLoad<SeriesThumbnailStack>,
 }
 
 #[derive(GraphQLObject)]
@@ -45,9 +61,14 @@ impl_from_db!(
     select: {
         series.{
             id, opencast_id, state,
-            title, description, created,
-            metadata, read_roles, write_roles,
+            title, description,
+            metadata, created,
+            read_roles, write_roles,
         },
+        updated: "case \
+            when ${table:series}.updated = '-infinity' then null \
+            else ${table:series}.updated \
+        end",
     },
     |row| {
         Series {
@@ -55,6 +76,7 @@ impl_from_db!(
             opencast_id: row.opencast_id(),
             title: row.title(),
             created: row.created(),
+            updated: row.updated(),
             metadata: row.metadata(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
@@ -63,6 +85,8 @@ impl_from_db!(
                     description: row.description(),
                 },
             ),
+            num_videos: LazyLoad::NotLoaded,
+            thumbnail_stack: LazyLoad::NotLoaded,
         }
     },
 );
@@ -270,6 +294,39 @@ impl Series {
         // Create mount point
         Self::add_mount_point(series.opencast_id, target_realm.full_path, context).await
     }
+
+    pub(crate) async fn load_writable_for_user(
+        context: &Context,
+        order: SortOrder<SeriesSortColumn>,
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<Connection<Series>> {
+        let parts = ConnectionQueryParts {
+            table: "series",
+            alias: None,
+            join_clause: "",
+        };
+        let (selection, mapping) = select!(
+            series: Series,
+            num_videos: "(select count(*) from events where events.series = series.id)",
+            thumbnails: "array(\
+                select search_thumbnail_info_for_event(events.*) \
+                from events \
+                where events.series = series.id \
+                order by events.created asc)",
+        );
+        load_writable_for_user(context, order, offset, limit, parts, selection, |row| {
+            let mut out = Self::from_row(row, mapping.series);
+            out.num_videos = LazyLoad::Loaded(mapping.num_videos.of::<i64>(row) as u32);
+            out.thumbnail_stack = LazyLoad::Loaded(SeriesThumbnailStack {
+                thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(row)
+                    .into_iter()
+                    .filter_map(|info| ThumbnailInfo::from_search(info, &context.auth))
+                    .collect(),
+            });
+            out
+        }).await
+    }
 }
 
 /// Represents an Opencast series.
@@ -291,12 +348,24 @@ impl Series {
         &self.created
     }
 
+    fn updated(&self) -> &Option<DateTime<Utc>> {
+        &self.updated
+    }
+
     fn metadata(&self) -> &Option<ExtraMetadata> {
         &self.metadata
     }
 
     fn synced_data(&self) -> &Option<SyncedSeriesData> {
         &self.synced_data
+    }
+
+    fn num_videos(&self) -> i32 {
+        self.num_videos.unwrap() as i32
+    }
+
+    fn thumbnail_stack(&self) -> &SeriesThumbnailStack {
+        self.thumbnail_stack.as_ref().unwrap()
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
@@ -359,3 +428,27 @@ pub(crate) struct NewSeries {
     // in some way, and since passing stuff like metadata isn't trivial either
     // I think it's okay to leave it at that for now.
 }
+
+#[graphql_object(name = "SeriesConnection", context = Context)]
+impl Connection<Series> {
+    fn page_info(&self) -> &PageInfo {
+        &self.page_info
+    }
+    fn items(&self) -> &Vec<Series> {
+        &self.items
+    }
+    fn total_count(&self) -> i32 {
+        self.total_count
+    }
+}
+
+define_sort_column_and_order!(
+    pub enum SeriesSortColumn {
+        Title      => "title",
+        #[default]
+        Created    => "created",
+        Updated    => "updated",
+        EventCount => "(select count(*) from events where events.series = series.id)",
+    };
+    pub struct SeriesSortOrder
+);

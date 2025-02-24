@@ -189,7 +189,7 @@ const query = graphql`
                         id
                         title
                         description
-                        thumbnails { thumbnail isLive audioOnly }
+                        thumbnailStack { thumbnails { url live audioOnly } }
                         hostRealms { path ancestorNames }
                         matches { title description }
                     }
@@ -848,12 +848,12 @@ const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textM
 
 type ThumbnailInfo = {
     readonly audioOnly: boolean;
-    readonly isLive: boolean;
-    readonly thumbnail: string | null | undefined;
+    readonly live: boolean;
+    readonly url: string | null | undefined;
 }
 
 const SearchSeries: React.FC<SeriesItem> = ({
-    id, title, description, thumbnails, matches, hostRealms,
+    id, title, description, thumbnailStack, matches, hostRealms,
 }) => {
     // TODO: decide what to do in the case of more than two host realms. Direct
     // link should be avoided.
@@ -863,7 +863,7 @@ const SearchSeries: React.FC<SeriesItem> = ({
 
     return <Item key={id} breakpoint={550} link={link}>{{
         image: <Link to={link} tabIndex={-1}>
-            <ThumbnailStack {...{ thumbnails, title }} />
+            <ThumbnailStack {...{ thumbnailStack, title }} />
         </Link>,
         info: <div css={{
             display: "flex",
@@ -894,9 +894,9 @@ const SearchSeries: React.FC<SeriesItem> = ({
     }}</Item>;
 };
 
-type ThumbnailStackProps = Pick<SeriesItem, "title" | "thumbnails">
+type ThumbnailStackProps = Pick<SeriesItem, "title" | "thumbnailStack">
 
-const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => {
+export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnailStack, title }) => {
     const isDarkScheme = useColorScheme().scheme === "dark";
 
     return (
@@ -939,12 +939,12 @@ const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) =>
                 gridRow: "1 / span 10",
             },
         }}>
-            {thumbnails.slice(0, 3).map((info, idx) => <div key={idx}>
+            {thumbnailStack.thumbnails.slice(0, 3).map((info, idx) => <div key={idx}>
                 <SeriesThumbnail {...{ info, title }} />
             </div>)}
             {/* Add fake thumbnails to always have 3. The visual image of 3 things behind each other
                 is more important than actually showing the correct number of thumbnails. */}
-            {[...Array(Math.max(0, 3 - thumbnails.length))].map((_, idx) => (
+            {[...Array(Math.max(0, 3 - thumbnailStack.thumbnails.length))].map((_, idx) => (
                 <div key={"dummy" + idx}>
                     <DummySeriesStackThumbnail isDark={isDarkScheme} />
                 </div>
@@ -999,10 +999,10 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
     const isDark = useColorScheme().scheme === "dark";
 
     let inner;
-    if (info.thumbnail != null) {
+    if (info.url != null) {
         // We have a proper thumbnail.
         inner = <ThumbnailImg
-            src={info.thumbnail}
+            src={info.url}
             alt={t("series.entry-of-series-thumbnail", { series: title })}
         />;
     } else {
@@ -1016,7 +1016,7 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
 
     return <ThumbnailOverlayContainer>
         {inner}
-        {info.isLive && overlay}
+        {info.live && overlay}
     </ThumbnailOverlayContainer>;
 };
 

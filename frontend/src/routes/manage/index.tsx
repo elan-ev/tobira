@@ -24,6 +24,8 @@ import { translatedConfig } from "../../util";
 import i18n from "../../i18n";
 import { UploadRoute } from "../Upload";
 import { ManageVideosRoute } from "./Video";
+import SeriesIcon from "../../icons/series.svg";
+import { ManageSeriesRoute } from "./Series";
 
 
 const PATH = "/~manage" as const;
@@ -73,7 +75,11 @@ const Manage: React.FC = () => {
 
 
 type ManageNavProps = {
-    active?: typeof PATH | typeof ManageVideosRoute.url | typeof UploadRoute.url | `/@${string}`;
+    active?: typeof PATH
+        | typeof ManageVideosRoute.url
+        | typeof UploadRoute.url
+        | typeof ManageSeriesRoute.url
+        | `/@${string}`;
 };
 
 export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
@@ -86,6 +92,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
         [PATH, t("manage.dashboard.title"), <LuLayoutTemplate />],
         [ManageVideosRoute.url, t("manage.my-videos.title"), <LuFilm />],
+        [ManageSeriesRoute.url, t("manage.my-series.title"), <SeriesIcon />],
     ];
     if (isRealUser(user) && user.canCreateUserRealm) {
         entries.splice(

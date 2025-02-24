@@ -83,16 +83,6 @@ pub struct PlaylistEntry {
     pub content_id: String,
 }
 
-/// Represents the `playlist_entry` type defined in `31-playlists.sql`.
-#[derive(Debug, FromSql, ToSql, Clone, Serialize, Deserialize)]
-#[postgres(name = "search_thumbnail_info")]
-pub struct SearchThumbnailInfo {
-    pub url: Option<String>,
-    pub live: bool,
-    pub audio_only: bool,
-    pub read_roles: Vec<String>,
-}
-
 /// Represents the `timespan_text` type.
 #[derive(Debug, FromSql, ToSql)]
 #[postgres(name = "timespan_text")]
