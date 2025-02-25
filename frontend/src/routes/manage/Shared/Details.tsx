@@ -24,6 +24,7 @@ import { PAGE_WIDTH } from "./Nav";
 import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 import { Link, useRouter } from "../../../router";
+import { useNotification } from "../../../ui/NotificationContext";
 
 
 type UrlProps = {
@@ -218,6 +219,7 @@ export const ButtonSection: React.FC<PropsWithChildren> = ({ children }) => (
 
 type DeleteButtonProps<TMutation extends MutationParameters> = PropsWithChildren & {
     itemId: string;
+    itemTitle: string;
     itemType: "video" | "series";
     commit: (config: UseMutationConfig<TMutation>) => Disposable;
     returnPath: string;
@@ -225,14 +227,17 @@ type DeleteButtonProps<TMutation extends MutationParameters> = PropsWithChildren
 
 export const DeleteButton = <TMutation extends MutationParameters>({
     itemId,
+    itemTitle,
     itemType,
     commit,
     returnPath,
     children,
 }: DeleteButtonProps<TMutation>) => {
     const { t } = useTranslation();
+    const { setNotification } = useNotification();
     const modalRef = useRef<ConfirmationModalHandle>(null);
     const router = useRouter();
+
     const item = t(`manage.shared.item.${itemType}`);
 
     const onSubmit = () => {
@@ -241,6 +246,11 @@ export const DeleteButton = <TMutation extends MutationParameters>({
             updater: store => store.invalidateStore(),
             onCompleted: () => {
                 currentRef(modalRef).done();
+                setNotification({
+                    kind: "info",
+                    message: () => t("manage.shared.delete.in-progress", { itemTitle }),
+                    scope: returnPath,
+                });
                 router.goto(returnPath);
             },
             onError: error => {

@@ -463,6 +463,7 @@ manage:
       failed: Löschen fehlgeschlagen.
       failed-maybe: Löschen möglicherweise fehlgeschlagen.
       pending: Löschvorgang ausstehend.
+      in-progress: '„{{itemTitle}}“ wird gelöscht.'
       tooltip:
         failed: >
           Der Löschvorgang für diesen Eintrag wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
