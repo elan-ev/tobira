@@ -1,4 +1,4 @@
-import { Card, match, useColorScheme } from "@opencast/appkit";
+import { Card, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
 import { useState, useRef, useEffect, ReactNode, ComponentType } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,7 @@ import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { Link } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
+import { useNotification } from "../../../ui/NotificationContext";
 
 
 type ItemVars = {
@@ -63,13 +64,29 @@ export const ManageItems = <T extends Item>({
     RenderRow,
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
+    const { Notification } = useNotification();
 
     let inner;
     if (connection.items.length === 0) {
-        inner = <Card kind="info">{t("manage.item-table.no-entries-found")}</Card>;
+        inner = <div css={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Notification />
+            <Card kind="info" css={{ width: "fit-content" }}>
+                {t("manage.item-table.no-entries-found")}
+            </Card>
+        </div>;
     } else {
         inner = <>
-            <PageNavigation {...{ vars, connection }} />
+            <div css={{
+                display: "flex",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 16,
+            }}>
+                <Notification />
+                <span css={{ marginLeft: "auto" }}>
+                    <PageNavigation {...{ vars, connection }} />
+                </span>
+            </div>
             <div css={{ flex: "1 0 0", margin: "16px 0" }}>
                 <ItemTable {...{ vars, connection, additionalColumns, RenderRow }} />
             </div>
@@ -136,7 +153,7 @@ const ItemTable = <T extends Item>({
         return () => {};
     });
 
-    return <div css={{ position: "relative" }}>
+    return <div css={{ position: "relative", overflow: "auto" }}>
         <table css={{
             width: "100%",
             borderSpacing: 0,
@@ -176,7 +193,7 @@ const ItemTable = <T extends Item>({
                 {/* Each table has thumbnails, but their width might vary */}
                 <col span={1} css={{ width: THUMBNAIL_WIDTH + 2 * 6 }} />
                 {/* Each table has a column for title and description */}
-                <col span={1} />
+                <col span={1} css={{ [screenWidthAtMost(1000)]: { width: 135 } }} />
                 {/*
                     Additional columns can be declared in the specific column array.
                 */}

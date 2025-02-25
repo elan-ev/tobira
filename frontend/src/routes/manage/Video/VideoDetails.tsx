@@ -89,6 +89,7 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
         )}
         <DeleteButton
             itemId={event.id}
+            itemTitle={event.title}
             itemType="video"
             returnPath="/~manage/videos"
             commit={commit}

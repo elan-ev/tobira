@@ -5,6 +5,7 @@ import i18n from "../../../i18n";
 import { makeManageSeriesRoute, Series } from "./Shared";
 import { ManageSeriesRoute } from ".";
 import { DirectSeriesRoute, SeriesRoute } from "../../Series";
+import { Link } from "../../../router";
 import {
     UpdatedCreatedInfo,
     DetailsPage,
@@ -13,11 +14,10 @@ import {
     DeleteButton,
     HostRealms,
 } from "../Shared/Details";
+import { SeriesDetailsDeleteMutation } from "./__generated__/SeriesDetailsDeleteMutation.graphql";
 import {
     SeriesDetailsMetadataMutation,
 } from "./__generated__/SeriesDetailsMetadataMutation.graphql";
-import { SeriesDetailsDeleteMutation } from "./__generated__/SeriesDetailsDeleteMutation.graphql";
-import { Link } from "../../../router";
 
 
 const updateSeriesMetadata = graphql`
@@ -44,7 +44,7 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
         }}
         sections={series => [
             <UpdatedCreatedInfo key="date-info" item={series} />,
-            <SeriesButtonSection key="button-section" seriesId={series.id} />,
+            <SeriesButtonSection key="button-section" {...{ series }} />,
             <DirectLink key="direct-link" url={
                 new URL(DirectSeriesRoute.url({ seriesId: series.id }), document.baseURI)
             } />,
@@ -60,13 +60,14 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
     />,
 );
 
-const SeriesButtonSection: React.FC<{ seriesId: string }> = ({ seriesId }) => {
+const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
     const { t } = useTranslation();
     const [commit] = useMutation<SeriesDetailsDeleteMutation>(deleteSeriesMutation);
 
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <DeleteButton
-            itemId={seriesId}
+            itemId={series.id}
+            itemTitle={series.title}
             itemType="series"
             returnPath="/~manage/series"
             commit={commit}
