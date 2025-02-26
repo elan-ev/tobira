@@ -20,6 +20,11 @@ import { ManageNav } from "..";
 import { PageTitle } from "../../../layout/header/ui";
 import { displayCommitError } from "../Realm/util";
 import { LuCircleCheck } from "react-icons/lu";
+import { useRouter } from "../../../router";
+import { keyOfId } from "../../../util";
+import { PATH as MANAGE_PATH } from ".";
+import { CreateSeriesMutation } from "./__generated__/CreateSeriesMutation.graphql";
+import { useNotification } from "../../../ui/NotificationContext";
 
 
 export const CREATE_SERIES_PATH = "/~manage/create-series" as const;
@@ -69,23 +74,21 @@ type CreateSeriesPageProps = {
 };
 
 const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) => {
-    const u = useUser();
-    const user = isRealUser(u) ? u : unreachable();
-
     const { t } = useTranslation();
+    const router = useRouter();
     const titleFieldId = useId();
     const descriptionFieldId = useId();
     const knownRoles = useFragment(knownRolesFragment, knownRolesRef);
-    const [commit, inFlight] = useMutation(createSeriesMutation);
+    const [commit, inFlight] = useMutation<CreateSeriesMutation>(createSeriesMutation);
     const [success, setSuccess] = useState(false);
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const { setNotification } = useNotification();
+    const u = useUser();
+    const user = isRealUser(u) ? u : unreachable();
 
     const defaultAcl = defaultAclMap(user);
     const {
-        register,
-        handleSubmit,
-        control,
-        reset,
+        register, handleSubmit, control,
         formState: { errors, isValid, isDirty },
     } = useForm<Metadata>({
         mode: "onChange",
@@ -104,9 +107,15 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
                     }),
                 ),
             },
-            onCompleted: () => {
+            onCompleted: response => {
+                const returnPath = `${MANAGE_PATH}/${keyOfId(response.createSeries.id)}`;
                 setSuccess(true);
-                reset();
+                setNotification({
+                    kind: "info",
+                    message: () => t("manage.my-series.details.created-note"),
+                    scope: returnPath,
+                });
+                router.goto(returnPath);
             },
             onError: error => setCommitError(displayCommitError(error)),
         });
