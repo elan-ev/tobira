@@ -167,7 +167,7 @@ impl Series {
             None => (None, None),
         };
 
-        let selection = Self::select();
+        let selection = Self::select().with_renamed_table("series", "all_series");
         let query = format!(
             "insert into all_series ( \
                 opencast_id, title, description, state, updated, read_roles, write_roles \

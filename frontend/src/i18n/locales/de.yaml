@@ -484,6 +484,7 @@ manage:
       title: Seriendetails
       referencing-pages-explanation: 'Diese Serie wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Diese Serie wird von keiner Seite referenziert.
+      created-note: Serie wurde erstellt.
     delete-note: >
       In der Serie enthaltene Videos werden nicht gelöscht und können einer anderen Serie
       zugeordnet werden.

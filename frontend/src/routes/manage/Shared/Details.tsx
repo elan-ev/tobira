@@ -57,9 +57,7 @@ export const DetailsPage = <T extends { title: string }>({
     return <>
         <Breadcrumbs path={breadcrumbs} tail={item.title} />
         <PageTitle title={t(pageTitle)} />
-        {sections(item).map((section, i) => (
-            <DetailsSection key={i}>{section}</DetailsSection>
-        ))}
+        {sections(item).map((section, i) => <DetailsSection key={i}>{section}</DetailsSection>)}
     </>;
 };
 

@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useTranslation } from "react-i18next";
-import { boxError, unreachable } from "@opencast/appkit";
+import { boxError } from "@opencast/appkit";
 
 import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
@@ -19,6 +19,11 @@ import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownR
 import { ManageNav } from "..";
 import { PageTitle } from "../../../layout/header/ui";
 import { displayCommitError } from "../Realm/util";
+import { useRouter } from "../../../router";
+import { CreateSeriesMutation } from "./__generated__/CreateSeriesMutation.graphql";
+import { useNotification } from "../../../ui/NotificationContext";
+import { NotAuthorized } from "../../../ui/error";
+import { ManageSeriesDetailsRoute } from "./SeriesDetails";
 
 
 export const CREATE_SERIES_PATH = "/~manage/create-series" as const;
@@ -68,28 +73,28 @@ type CreateSeriesPageProps = {
 };
 
 const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) => {
-    const u = useUser();
-    const user = isRealUser(u) ? u : unreachable();
-
     const { t } = useTranslation();
+    const router = useRouter();
     const titleFieldId = useId();
     const descriptionFieldId = useId();
     const knownRoles = useFragment(knownRolesFragment, knownRolesRef);
-    const [commit, inFlight] = useMutation(createSeriesMutation);
+    const [commit, inFlight] = useMutation<CreateSeriesMutation>(createSeriesMutation);
     const [success, setSuccess] = useState(false);
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const { setNotification } = useNotification();
+    const user = useUser();
 
-    const defaultAcl = defaultAclMap(user);
     const {
-        register,
-        handleSubmit,
-        control,
-        reset,
+        register, handleSubmit, control,
         formState: { errors, isValid, isDirty },
     } = useForm<Metadata>({
         mode: "onChange",
-        defaultValues: { acl: defaultAcl },
+        defaultValues: { acl: isRealUser(user) ? defaultAclMap(user) : [] },
     });
+
+    if (!isRealUser(user)) {
+        return <NotAuthorized />;
+    }
 
     const createSeries = (data: Metadata) => {
         commit({
@@ -105,9 +110,17 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
                     }),
                 ),
             },
-            onCompleted: () => {
+            onCompleted: response => {
+                const returnPath = ManageSeriesDetailsRoute.url({
+                    seriesId: response.createSeries.id,
+                });
                 setSuccess(true);
-                reset();
+                setNotification({
+                    kind: "info",
+                    message: () => t("manage.my-series.details.created-note"),
+                    scope: returnPath,
+                });
+                router.goto(returnPath);
             },
             onError: error => setCommitError(displayCommitError(error)),
             updater: store => store.invalidateStore(),
