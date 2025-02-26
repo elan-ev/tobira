@@ -14,6 +14,7 @@ import {
     HostRealms,
 } from "../Shared/Details";
 import { Link } from "../../../router";
+import { useNotification } from "../../../ui/NotificationContext";
 
 
 const updateSeriesMetadata = graphql`
@@ -39,6 +40,7 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
             link: ManageSeriesRoute.url,
         }}
         sections={series => [
+            <NotificationSection key="notification" />,
             <UpdatedCreatedInfo key="date-info" item={series} />,
             <SeriesButtonSection key="button-section" {...{ series }} />,
             <DirectLink key="direct-link" url={
@@ -55,6 +57,11 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
         ]}
     />,
 );
+
+const NotificationSection: React.FC = () => {
+    const { Notification } = useNotification();
+    return <Notification />;
+};
 
 const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
     const { t } = useTranslation();

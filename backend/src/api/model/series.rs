@@ -172,9 +172,9 @@ impl Series {
             None => (None, None),
         };
 
-        let selection = Self::select();
+        let selection = Self::select().with_renamed_table("series", "all_series");
         let query = format!(
-            "insert into series (opencast_id, title, state, updated, read_roles, write_roles) \
+            "insert into all_series (opencast_id, title, state, updated, read_roles, write_roles) \
                 values ($1, $2, 'waiting', '-infinity', $3, $4) \
                 returning {selection}",
         );

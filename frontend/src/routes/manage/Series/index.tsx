@@ -27,7 +27,7 @@ import { CREATE_SERIES_PATH } from "./Create";
 import { LinkButton } from "../../../ui/LinkButton";
 
 
-const PATH = "/~manage/series" as const;
+export const PATH = "/~manage/series" as const;
 
 export const ManageSeriesRoute = makeRoute({
     url: PATH,
