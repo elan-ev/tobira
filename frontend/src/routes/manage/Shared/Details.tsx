@@ -1,7 +1,7 @@
 import { ParseKeys } from "i18next";
 import { ReactNode, PropsWithChildren, useState, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { FormProvider } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { UseMutationConfig } from "react-relay";
 import { MutationParameters, Disposable } from "relay-runtime";
 import { boxError, Button, currentRef } from "@opencast/appkit";
@@ -12,12 +12,7 @@ import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { NotAuthorized } from "../../../ui/error";
 import { CopyableInput, InputWithCheckbox, TimeInput } from "../../../ui/Input";
-import {
-    MetadataFields,
-    MetadataForm,
-    SubmitButtonWithStatus,
-    useMetadataForm,
-} from "../../../ui/metadata";
+import { MetadataFields, MetadataForm, SubmitButtonWithStatus } from "../../../ui/metadata";
 import { useUser, isRealUser } from "../../../User";
 import { secondsToTimeString } from "../../../util";
 import { PAGE_WIDTH } from "./Nav";
@@ -171,15 +166,14 @@ export const MetadataSection = <TMutation extends MetadataMutationParams>({
     inFlight,
 }: MetadataSectionProps<TMutation>) => {
     const { t } = useTranslation();
-    const {
-        formMethods,
-        success,
-        setSuccess,
-        commitError,
-        setCommitError,
-    } = useMetadataForm<MetadataInput>({
-        title: item.title,
-        description: item.description ?? "",
+    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [success, setSuccess] = useState(false);
+
+    const formMethods = useForm<MetadataInput>({
+        defaultValues: {
+            title: item.title,
+            description: item.description ?? "",
+        },
     });
 
     const { handleSubmit, reset, formState: { isValid, isDirty } } = formMethods;
@@ -209,8 +203,7 @@ export const MetadataSection = <TMutation extends MetadataMutationParams>({
                     label={t("metadata-form.save")}
                     onClick={onSubmit}
                     disabled={!!commitError || !isValid || !isDirty || inFlight}
-                    inFlight={inFlight}
-                    success={success && !isDirty}
+                    {...{ inFlight, success, setSuccess }}
                 />}
             </MetadataForm>
         </FormProvider>

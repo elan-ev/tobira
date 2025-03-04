@@ -7,13 +7,7 @@ import {
     useRef,
     useState,
 } from "react";
-import {
-    DefaultValues,
-    FieldValues,
-    useForm,
-    useFormContext,
-    UseFormReturn,
-} from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { LuCheckCircle } from "react-icons/lu";
 import { boxError, Button, ProtoButton, Spinner, useColorScheme } from "@opencast/appkit";
@@ -256,41 +250,6 @@ export const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = (
     );
 };
 
-/**
- * Custom hook for managing form state and submissions with success tracking and error handling.
- * The timeout can be used to display a success message for a certain amount of time.
- */
-export const useMetadataForm = <TFieldValues extends FieldValues>(
-    defaultValues: DefaultValues<TFieldValues>,
-    timeout = 1000,
-): {
-    formMethods: UseFormReturn<TFieldValues>;
-    success: boolean;
-    setSuccess: (bool: boolean) => void;
-    commitError: JSX.Element | null;
-    setCommitError: (e: JSX.Element | null) => void;
-} => {
-    const [success, setSuccess] = useState(false);
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
-
-    useEffect(() => {
-        if (!success) {
-            return;
-        }
-        const timer = setTimeout(() => setSuccess(false), timeout);
-        return () => clearTimeout(timer);
-    }, [success]);
-
-    const formMethods = useForm<TFieldValues>({ mode: "onChange", defaultValues });
-
-    return {
-        formMethods,
-        success,
-        setSuccess,
-        commitError,
-        setCommitError,
-    };
-};
 
 type MetadataFormProps = PropsWithChildren & React.HTMLAttributes<HTMLFormElement> & {
     hasError?: boolean;
@@ -362,7 +321,9 @@ type SubmitButtonWithStatusProps = {
     onClick: () => void;
     disabled?: boolean;
     inFlight?: boolean;
-    success?: boolean;
+    success: boolean;
+    setSuccess: React.Dispatch<React.SetStateAction<boolean>>;
+    timeout?: number;
 };
 
 export const SubmitButtonWithStatus: React.FC<SubmitButtonWithStatusProps> = ({
@@ -371,27 +332,40 @@ export const SubmitButtonWithStatus: React.FC<SubmitButtonWithStatusProps> = ({
     disabled,
     inFlight,
     success,
-}) => <div css={{ display: "flex", marginTop: 32 }}>
-    <Button kind="call-to-action" disabled={disabled} onClick={onClick}>
-        {label}
-    </Button>
-    <span css={{
-        display: "flex",
-        alignSelf: "center",
-        marginLeft: 12,
-        position: "relative",
-        width: 20,
-        height: 20,
-    }}>
-        <Spinner size={20} css={{
-            position: "absolute",
-            transition: "opacity ease-out 250ms",
-            opacity: inFlight ? 1 : 0,
-        }} />
-        <LuCheckCircle size={20} css={{
-            position: "absolute",
-            transition: "opacity ease-in 300ms",
-            opacity: success ? 1 : 0,
-        }} />
-    </span>
-</div>;
+    setSuccess,
+    timeout = 1000,
+}) => {
+
+    useEffect(() => {
+        if (!success) {
+            return;
+        }
+        const timer = setTimeout(() => setSuccess(false), timeout);
+        return () => clearTimeout(timer);
+    }, [success]);
+
+    return <div css={{ display: "flex", marginTop: 32 }}>
+        <Button kind="call-to-action" disabled={disabled} onClick={onClick}>
+            {label}
+        </Button>
+        <span css={{
+            display: "flex",
+            alignSelf: "center",
+            marginLeft: 12,
+            position: "relative",
+            width: 20,
+            height: 20,
+        }}>
+            <Spinner size={20} css={{
+                position: "absolute",
+                transition: "opacity ease-out 250ms",
+                opacity: inFlight ? 1 : 0,
+            }} />
+            <LuCheckCircle size={20} css={{
+                position: "absolute",
+                transition: "opacity ease-in 300ms",
+                opacity: success ? 1 : 0,
+            }} />
+        </span>
+    </div>;
+};
