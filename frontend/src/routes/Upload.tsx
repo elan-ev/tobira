@@ -2,7 +2,7 @@ import React, { MutableRefObject, ReactNode, useEffect, useId, useRef, useState 
 import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
-import { Controller, FormProvider, useController } from "react-hook-form";
+import { Controller, FormProvider, useController, useForm } from "react-hook-form";
 import { LuCheckCircle, LuUpload, LuInfo } from "react-icons/lu";
 import {
     Spinner, WithTooltip, assertNever, bug,
@@ -24,7 +24,6 @@ import {
     InputContainer,
     MetadataFields,
     MetadataForm,
-    useMetadataForm,
 } from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
@@ -748,7 +747,10 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         }
     };
 
-    const { formMethods } = useMetadataForm<Metadata>({ acl: defaultAclMap(user) });
+    const formMethods = useForm<Metadata>({
+        mode: "onChange",
+        defaultValues: { acl: defaultAclMap(user) },
+    });
     const { handleSubmit, control, formState: { isValid, errors } } = formMethods;
 
     const { field: seriesField } = useController({
