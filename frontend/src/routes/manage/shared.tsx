@@ -61,7 +61,7 @@ export const ManageItems = <T extends Item>({
     const { t } = useTranslation();
 
     let inner;
-    if (connection.items.length === 0 && connection.totalCount === 0) {
+    if (connection.items.length === 0) {
         inner = <Card kind="info">{t("manage.item-table.no-entries-found")}</Card>;
     } else {
         inner = <>
