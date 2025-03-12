@@ -2,9 +2,12 @@ import React, { MutableRefObject, ReactNode, useEffect, useId, useRef, useState 
 import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
-import { Controller, useController, useForm } from "react-hook-form";
+import { Controller, FormProvider, useController, useForm } from "react-hook-form";
 import { LuCheckCircle, LuUpload, LuInfo } from "react-icons/lu";
-import { Spinner, WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
+import {
+    Spinner, WithTooltip, assertNever, bug,
+    unreachable, Button, boxError, ErrorBox, Card,
+} from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { environment, loadQuery } from "../relay";
@@ -13,13 +16,15 @@ import { makeRoute } from "../rauta";
 import { ErrorDisplay, errorDisplayInfo } from "../util/err";
 import { mapAcl, useNavBlocker } from "./util";
 import CONFIG from "../config";
-import { Button, boxError, ErrorBox, Card } from "@opencast/appkit";
 import { LinkButton } from "../ui/LinkButton";
-import { Form } from "../ui/Form";
-import { Input, TextArea } from "../ui/Input";
 import { isRealUser, User, useUser } from "../User";
-import { currentRef, useRefState } from "../util";
-import { FieldIsRequiredNote, InputContainer, TitleLabel } from "../ui/metadata";
+import { currentRef, Inertable, useRefState } from "../util/index";
+import {
+    FieldIsRequiredNote,
+    InputContainer,
+    MetadataFields,
+    MetadataForm,
+} from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
@@ -27,7 +32,7 @@ import { VideoListSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav, ManageRoute } from "./manage";
 import { COLORS } from "../color";
-import { COMMON_ROLES } from "../util/roles";
+import { defaultAclMap } from "../util/roles";
 import { Acl, AclSelector, knownRolesFragment } from "../ui/Access";
 import {
     AccessKnownRolesData$data,
@@ -690,8 +695,6 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         return unreachable();
     }
 
-    const titleFieldId = useId();
-    const descriptionFieldId = useId();
     const seriesFieldId = useId();
     const [lockedAcl, setLockedAcl] = useState<Acl | null>(null);
     const [aclError, setAclError] = useState<ReactNode>(null);
@@ -744,103 +747,59 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         }
     };
 
-    const defaultAcl: Acl = new Map([
-        [user.userRole, {
-            actions: new Set(["read", "write"]),
-            info: {
-                label: { "default": user.displayName },
-                implies: null,
-                large: false,
-            },
-        }],
-        [COMMON_ROLES.ANONYMOUS, {
-            actions: new Set(["read"]),
-            info: null,
-        }],
-    ]);
-
-    const { register, handleSubmit, control, formState: { isValid, errors } } = useForm<Metadata>({
+    const formMethods = useForm<Metadata>({
         mode: "onChange",
-        defaultValues: { acl: defaultAcl },
+        defaultValues: { acl: defaultAclMap(user) },
     });
+    const { handleSubmit, control, formState: { isValid, errors } } = formMethods;
 
     const { field: seriesField } = useController({
         name: "series",
         control,
         rules: {
-            required: CONFIG.upload.requireSeries ? t("upload.errors.field-required") : false,
+            required: CONFIG.upload.requireSeries
+                ? t("metadata-form.errors.field-required")
+                : false,
         },
     });
 
     const onSubmit = handleSubmit(data => onSave(data));
 
-    // We only allow submitting the form on clicking the button below so that
-    // pressing 'enter' inside inputs doesn't lead to submit the form too
-    // early.
-    return (
-        <Form
-            noValidate
-            onSubmit={e => e.preventDefault()}
-            css={{
-                margin: "32px 2px",
-                "label": {
-                    color: "var(--color-neutral90)",
-                },
-            }}
-        >
-            {/* Title */}
-            <InputContainer>
-                <TitleLabel htmlFor={titleFieldId} />
-                <Input
-                    id={titleFieldId}
-                    required
-                    error={!!errors.title}
-                    css={{ width: 400, maxWidth: "100%" }}
-                    autoFocus
-                    {...register("title", {
-                        required: t("upload.errors.field-required") as string,
-                    })}
+
+    return <FormProvider {...formMethods}>
+        <MetadataForm>
+            {/* Title & Description */}
+            <MetadataFields />
+
+            {/* Series */}
+            <InputContainer css={{ maxWidth: 750 }}>
+                <label htmlFor={seriesFieldId}>
+                    {t("series.series")}
+                    {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
+                    <WithTooltip
+                        tooltip={t("upload.metadata.note-writable-series")}
+                        tooltipCss={{ width: 400 }}
+                        css={{
+                            display: "inline-block",
+                            verticalAlign: "middle",
+                            fontWeight: "normal",
+                            marginLeft: 8,
+                        }}
+                    >
+                        <span><LuInfo tabIndex={0} /></span>
+                    </WithTooltip>
+                </label>
+                <VideoListSelector
+                    type="series"
+                    inputId={seriesFieldId}
+                    writableOnly
+                    menuPlacement="top"
+                    onChange={data => onSeriesChange({ opencastId: data?.opencastId })}
+                    onBlur={seriesField.onBlur}
+                    required={CONFIG.upload.requireSeries}
                 />
-                {boxError(errors.title?.message)}
+                {boxError(errors.series?.message)}
             </InputContainer>
-
-            <div css={{ maxWidth: 750 }}>
-                {/* Description */}
-                <InputContainer>
-                    <label htmlFor={descriptionFieldId}>{t("upload.metadata.description")}</label>
-                    <TextArea id={descriptionFieldId} {...register("description")} />
-                </InputContainer>
-
-                {/* Series */}
-                <InputContainer>
-                    <label htmlFor={seriesFieldId}>
-                        {t("series.series")}
-                        {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
-                        <WithTooltip
-                            tooltip={t("upload.metadata.note-writable-series")}
-                            tooltipCss={{ width: 400 }}
-                            css={{
-                                display: "inline-block",
-                                verticalAlign: "middle",
-                                fontWeight: "normal",
-                                marginLeft: 8,
-                            }}
-                        >
-                            <span><LuInfo tabIndex={0} /></span>
-                        </WithTooltip>
-                    </label>
-                    <VideoListSelector
-                        type="series"
-                        inputId={seriesFieldId}
-                        writableOnly
-                        menuPlacement="top"
-                        onChange={data => onSeriesChange({ opencastId: data?.opencastId })}
-                        onBlur={seriesField.onBlur}
-                        required={CONFIG.upload.requireSeries}
-                    />
-                    {boxError(errors.series?.message)}
-                </InputContainer>
-            </div>
 
             {/* ACL */}
             <InputContainer>
@@ -848,7 +807,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     marginTop: 32,
                     marginBottom: 12,
                     fontSize: 22,
-                }}>{t("manage.my-videos.acl.title")}</h2>
+                }}>{t("manage.shared.acl.title")}</h2>
                 {boxError(aclError)}
                 {aclLoading && <Spinner size={20} />}
                 {lockedAcl && (
@@ -860,9 +819,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                         {t("manage.access.locked-to-series")}
                     </Card>
                 )}
-                <div {...aclEditingLocked && { inert: "true" }} css={{
-                    ...aclEditingLocked && { opacity: .7 },
-                }}>
+                <Inertable isInert={aclEditingLocked}>
                     <Controller
                         name="acl"
                         control={control}
@@ -874,10 +831,10 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                             permissionLevels={READ_WRITE_ACTIONS}
                         />}
                     />
-                </div>
+                </Inertable>
             </InputContainer>
 
-            {/* Submit button */}
+            {/* Submit */}
             <Button
                 kind="call-to-action"
                 disabled={!isValid || disabled}
@@ -885,8 +842,8 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                 onClick={onSubmit}>
                 {t("upload.metadata.save")}
             </Button>
-        </Form>
-    );
+        </MetadataForm>
+    </FormProvider>;
 };
 
 

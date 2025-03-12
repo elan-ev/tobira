@@ -16,7 +16,7 @@ use crate::prelude::*;
 /// `"dcterms"` for the dc terms (most common namespace). The value for each
 /// namespace is a simple string-key map where each value is an array of string
 /// values.
-#[derive(Debug, Serialize, Deserialize, Default, GraphQLScalar)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default, GraphQLScalar)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
 #[graphql(
     description = "Arbitrary metadata for events/series. Serialized as JSON object.",

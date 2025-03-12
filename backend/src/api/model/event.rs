@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
 use postgres_types::ToSql;
@@ -21,7 +19,7 @@ use crate::{
             acl::{self, Acl},
             realm::Realm,
             series::Series,
-            shared::{ToSqlColumn, SortDirection}
+            shared::{ToSqlColumn, SortDirection, convert_acl_input}
         },
         Context,
         Id,
@@ -30,11 +28,12 @@ use crate::{
         util::LazyLoad,
     },
     db::{
-        types::{EventCaption, EventSegment, EventState, EventTrack, Credentials},
+        types::{Credentials, EventCaption, EventSegment, EventState, EventTrack},
         util::impl_from_db,
     },
-    model::{Key, ExtraMetadata},
+    model::{ExtraMetadata, Key},
     prelude::*,
+    sync::client::{AclInput, OcEndpoint}
 };
 
 use self::{acl::AclInputEntry, err::ApiError};
@@ -356,6 +355,7 @@ impl AuthorizedEvent {
                     write_roles: None,
                     num_videos: LazyLoad::NotLoaded,
                     thumbnail_stack: LazyLoad::NotLoaded,
+                    tobira_deletion_timestamp: None,
                 }))
             } else {
                 // We need to load the series as fields were requested that were not preloaded.
@@ -519,7 +519,7 @@ impl AuthorizedEvent {
         Ok(event)
     }
 
-    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_for_api(
             id,
             context,
@@ -535,7 +535,7 @@ impl AuthorizedEvent {
 
         let response = context
             .oc_client
-            .delete_event(&event.opencast_id)
+            .delete(&event)
             .await
             .map_err(|e| {
                 error!("Failed to send delete request: {}", e);
@@ -550,7 +550,7 @@ impl AuthorizedEvent {
                 set tobira_deletion_timestamp = current_timestamp \
                 where id = $1 \
             ", &[&event.key]).await?;
-            Ok(RemovedEvent { id })
+            Ok(event)
         } else {
             warn!(
                 event_id = %id,
@@ -589,7 +589,7 @@ impl AuthorizedEvent {
 
         let response = context
             .oc_client
-            .update_event_acl(&event.opencast_id, &acl, context)
+            .update_acl(&event, &acl, context)
             .await
             .map_err(|e| {
                 error!("Failed to send acl update request: {}", e);
@@ -675,6 +675,42 @@ impl AuthorizedEvent {
     }
 }
 
+
+impl OcEndpoint for AuthorizedEvent {
+    fn endpoint_name(&self) -> &'static str {
+        "events"
+    }
+    fn opencast_id(&self) -> &str {
+        &self.opencast_id
+    }
+
+    fn metadata_flavor(&self) -> &'static str {
+        "dublincore/episode"
+    }
+
+    async fn extra_roles(&self, context: &Context, oc_id: &str) -> Result<Vec<AclInput>> {
+        let query = "\
+            select unnest(preview_roles) as role, 'preview' as action from events where opencast_id = $1
+            union
+            select role, key as action
+            from jsonb_each_text(
+                (select custom_action_roles from events where opencast_id = $1)
+            ) as actions(key, value)
+            cross join lateral jsonb_array_elements_text(value::jsonb) as role(role)
+        ";
+
+        context.db.query_mapped(&query, dbargs![&oc_id], |row| {
+            let role: String = row.get("role");
+            let action: String = row.get("action");
+            AclInput {
+                allow: true,
+                action,
+                role,
+            }
+        }).await.map_err(Into::into)
+    }
+}
+
 impl From<EventTrack> for Track {
     fn from(src: EventTrack) -> Self {
         Self {
@@ -728,59 +764,3 @@ define_sort_column_and_order!(
     };
     pub struct VideosSortOrder
 );
-
-
-#[derive(juniper::GraphQLObject)]
-#[graphql(Context = Context)]
-pub(crate) struct RemovedEvent {
-    id: Id,
-}
-
-#[derive(Debug)]
-struct AclForDB {
-    // todo: add custom and preview roles when sent by frontend
-    // preview_roles: Vec<String>,
-    read_roles: Vec<String>,
-    write_roles: Vec<String>,
-    // custom_action_roles: CustomActions,
-}
-
-fn convert_acl_input(entries: Vec<AclInputEntry>) -> AclForDB {
-    // let mut preview_roles = HashSet::new();
-    let mut read_roles = HashSet::new();
-    let mut write_roles = HashSet::new();
-    // let mut custom_action_roles = CustomActions::default();
-
-    for entry in entries {
-        let role = entry.role;
-        for action in entry.actions {
-            match action.as_str() {
-                // "preview" => {
-                //     preview_roles.insert(role.clone());
-                // }
-                "read" => {
-                    read_roles.insert(role.clone());
-                }
-                "write" => {
-                    write_roles.insert(role.clone());
-                }
-                _ => {
-                    // custom_action_roles
-                    //     .0
-                    //     .entry(action)
-                    //     .or_insert_with(Vec::new)
-                    //     .push(role.clone());
-                    todo!();
-                }
-            };
-        }
-    }
-
-    AclForDB {
-        // todo: add custom and preview roles when sent by frontend
-        // preview_roles: preview_roles.into_iter().collect(),
-        read_roles: read_roles.into_iter().collect(),
-        write_roles: write_roles.into_iter().collect(),
-        // custom_action_roles,
-    }
-}

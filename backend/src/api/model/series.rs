@@ -1,26 +1,27 @@
 use chrono::{DateTime, Utc};
+use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use postgres_types::ToSql;
 
 use crate::{
     api::{
-        Context, Id, Node, NodeValue,
-        err::{invalid_input, ApiResult},
-        model::{
+        err::{self, invalid_input, ApiError, ApiResult}, model::{
+            acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
-            acl::{self, Acl},
-            shared::{ToSqlColumn, SortDirection}
-        },
-        util::LazyLoad,
+            shared::{convert_acl_input, SortDirection, ToSqlColumn},
+        }, util::LazyLoad, Context, Id, Node, NodeValue
     },
     db::{
         types::SeriesState as State,
         util::{impl_from_db, select},
     },
-    model::{Key, ExtraMetadata, SeriesThumbnailStack, ThumbnailInfo, SearchThumbnailInfo},
+    model::{ExtraMetadata, Key, SearchThumbnailInfo, SeriesThumbnailStack, ThumbnailInfo},
     prelude::*,
+    sync::client::{AclInput, OcEndpoint},
 };
+
+use self::acl::AclInputEntry;
 
 use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
@@ -29,6 +30,7 @@ use super::{
     shared::{
         define_sort_column_and_order,
         load_writable_for_user,
+        AclForDB,
         Connection,
         ConnectionQueryParts,
         PageInfo,
@@ -37,6 +39,7 @@ use super::{
 };
 
 
+#[derive(Clone)]
 pub(crate) struct Series {
     pub(crate) key: Key,
     pub(crate) opencast_id: String,
@@ -49,9 +52,10 @@ pub(crate) struct Series {
     pub(crate) write_roles: Option<Vec<String>>,
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<SeriesThumbnailStack>,
+    pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
-#[derive(GraphQLObject)]
+#[derive(Clone, GraphQLObject)]
 pub(crate) struct SyncedSeriesData {
     description: Option<String>,
 }
@@ -64,6 +68,7 @@ impl_from_db!(
             title, description,
             metadata, created,
             read_roles, write_roles,
+            tobira_deletion_timestamp,
         },
         updated: "case \
             when ${table:series}.updated = '-infinity' then null \
@@ -80,6 +85,7 @@ impl_from_db!(
             metadata: row.metadata(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
+            tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             synced_data: (State::Ready == row.state()).then(
                 || SyncedSeriesData {
                     description: row.description(),
@@ -122,6 +128,23 @@ impl Series {
             .pipe(Ok)
     }
 
+    async fn load_for_api(
+        id: Id,
+        context: &Context,
+        not_found_error: ApiError,
+        not_authorized_error: ApiError,
+    ) -> ApiResult<Series> {
+        let series = Self::load_by_id(id, context)
+            .await?
+            .ok_or_else(|| not_found_error)?;
+
+        if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[])) {
+            return Err(not_authorized_error);
+        }
+
+        Ok(series)
+    }
+
     async fn load_acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
         match (self.read_roles.as_ref(), self.write_roles.as_ref()) {
             (None, None) => Ok(None),
@@ -139,23 +162,64 @@ impl Series {
         }
     }
 
-    pub(crate) async fn create(series: NewSeries, context: &Context) -> ApiResult<Self> {
-        let selection = Self::select();
+    pub(crate) async fn create(
+        series: NewSeries,
+        context: &Context,
+        acl: Option<AclForDB>,
+    ) -> ApiResult<Self> {
+        let (read_roles, write_roles) = match &acl {
+            Some(roles) => (Some(&roles.read_roles), Some(&roles.write_roles)),
+            None => (None, None),
+        };
+
+        let selection = Self::select().with_renamed_table("series", "all_series");
         let query = format!(
-            "insert into series (opencast_id, title, state, updated) \
-                values ($1, $2, 'waiting', '-infinity') \
+            "insert into all_series (opencast_id, title, state, updated, read_roles, write_roles) \
+                values ($1, $2, 'waiting', '-infinity', $3, $4) \
                 returning {selection}",
         );
         context.db(context.require_tobira_admin()?)
-            .query_one(&query, &[&series.opencast_id, &series.title])
+            .query_one(&query, &[&series.opencast_id, &series.title, &read_roles, &write_roles])
             .await?
             .pipe(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
 
+    pub(crate) async fn create_in_oc(
+        title: &str,
+        description: Option<&str>,
+        acl: Vec<AclInputEntry>,
+        context: &Context,
+    ) -> ApiResult<Self> {
+        let response = context
+            .oc_client
+            .create_series(&acl, &title, description)
+            .await
+            .map_err(|e| {
+                error!("Failed to send series creation request: {}", e);
+                err::opencast_unavailable!("Failed to send series creation request")
+            })?;
+
+        let db_acl = Some(convert_acl_input(acl));
+
+        // If the request returned an Opencast identifier, the series was created successfully.
+        // The series is created in the database, so the user doesn't have to wait for sync to see
+        // the new series in the "My series" overview.
+        let series = Self::create(
+            NewSeries {
+                opencast_id: response.identifier,
+                title: title.to_owned(),
+            },
+            context,
+            db_acl,
+        ).await?;
+
+        Ok(series)
+    }
+
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
         context.auth.required_trusted_external()?;
-        Self::create(series, context).await
+        Self::create(series, context, None).await
     }
 
     pub(crate) async fn add_mount_point(
@@ -273,7 +337,7 @@ impl Series {
         }
 
         // Create series
-        let series = Series::create(series, context).await?;
+        let series = Series::create(series, context, None).await?;
 
         // Create realms
         let target_realm = {
@@ -302,8 +366,8 @@ impl Series {
         limit: i32,
     ) -> ApiResult<Connection<Series>> {
         let parts = ConnectionQueryParts {
-            table: "series",
-            alias: None,
+            table: "all_series",
+            alias: Some("series"),
             join_clause: "",
         };
         let (selection, mapping) = select!(
@@ -326,6 +390,193 @@ impl Series {
             });
             out
         }).await
+    }
+
+    pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
+        if !context.config.general.allow_acl_edit {
+            return Err(err::not_authorized!("editing ACLs is not allowed"));
+        }
+
+        let series = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "series.acl.not-found",
+                "series not found",
+            ),
+            err::not_authorized!(
+                key = "series.acl.not-allowed",
+                "acl update not allowed",
+            )
+        ).await?;
+
+        info!(series_id = %id, "Requesting ACL update of series");
+
+        let response = context
+            .oc_client
+            .update_acl(&series, &acl, context)
+            .await
+            .map_err(|e| {
+                error!("Failed to send acl update request: {}", e);
+                err::opencast_unavailable!("Failed to send acl update request")
+            })?;
+
+        if response.status() == StatusCode::OK {
+            // 200: The updated access control list is returned.
+            let db_acl = convert_acl_input(acl);
+
+            context.db.execute("\
+                update series \
+                set read_roles = $2, write_roles = $3 \
+                where id = $1 \
+            ", &[&series.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
+
+            if context.config.general.lock_acl_to_series {
+                context.db.execute("\
+                    update events \
+                    set read_roles = $2, write_roles = $3 \
+                    where series = $1 \
+                ", &[&series.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
+            }
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "series.acl.not-found",
+                    "series not found",
+                ))
+        } else {
+            warn!(
+                series_id = %id,
+                "Failed to update series acl, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
+
+    pub(crate) async fn update_metadata(
+        id: Id,
+        title: &str,
+        description: Option<&str>,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        let series = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "series.metadata.not-found",
+                "series not found",
+            ),
+            err::not_authorized!(
+                key = "series.metadata.not-allowed",
+                "metadata update not allowed",
+            )
+        ).await?;
+
+        info!(series_id = %id, "Requesting metadata update of series");
+
+        let metadata = serde_json::json!([
+            {
+                "id": "title",
+                "value": title
+            },
+            {
+                "id": "description",
+                "value": description
+            },
+        ]);
+
+        let response = context
+            .oc_client
+            .update_metadata(&series, metadata)
+            .await
+            .map_err(|e| {
+                error!("Failed to send metadata update request: {}", e);
+                err::opencast_unavailable!("Failed to send metadata update request")
+            })?;
+
+        if response.status() == StatusCode::OK {
+            // 200: The series' metadata has been updated.
+            context.db.execute("\
+                update series \
+                set title = $2, description = $3 \
+                where id = $1 \
+            ", &[&series.key, &title, &description]).await?;
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "series.metadata.not-found",
+                    "series not found",
+                ))
+        } else {
+            warn!(
+                series_id = %id,
+                "Failed to update series metadata, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
+
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<Series> {
+        let series = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "series.delete.not-found",
+                "series not found",
+            ),
+            err::not_authorized!(
+                key = "series.delete.not-allowed",
+                "deletion not allowed",
+            )
+        ).await?;
+
+        info!(series_id = %id, "Attempting to send request to delete series in Opencast");
+
+        context.db.execute("\
+            update all_series \
+            set tobira_deletion_timestamp = current_timestamp \
+            where id = $1 \
+        ", &[&series.key]).await?;
+        // Todo: Consider optimistically updating events as well.
+
+
+        let oc_client = context.oc_client.clone();
+        let series_clone = series.clone();
+
+        // Unfortunately we can't wait for the http response. The Opencast delete endpoint will
+        // automatically start `republish metadata` workflows for all events in the series, which
+        // takes roughly 10 seconds per event, and only returns once all have finished.
+        // This would block the request for a long time.
+        tokio::spawn(async move {
+            let response = match oc_client.delete(&series_clone).await {
+                Ok(response) => response,
+                Err(e) => {
+                    error!("Failed to send delete request: {}", e);
+                    return;
+                }
+            };
+
+            if response.status() == StatusCode::NO_CONTENT {
+                info!(series_id = %id, "Deletion successfully requested");
+            } else {
+                // This is kinda pointless. Depending on the number of videos, the request takes
+                // super long to respond and will potentially return with `504 Gateway Timeout`.
+                // This is not necessarily an error in this case as the deletion could still be
+                // in progress.
+                warn!(
+                    series_id = %id,
+                    "Failed to delete series, Opencast returned status: {}",
+                    response.status()
+                );
+            }
+            // Todo: Consider reverting DB changes on error or unexpected response.
+        });
+
+        Ok(series)
     }
 }
 
@@ -370,6 +621,10 @@ impl Series {
 
     async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
         self.load_acl(context).await
+    }
+
+    fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {
+        &self.tobira_deletion_timestamp
     }
 
     async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
@@ -417,6 +672,24 @@ impl Node for Series {
     }
 }
 
+impl OcEndpoint for Series {
+    fn endpoint_name(&self) -> &'static str {
+        "series"
+    }
+    fn opencast_id(&self) -> &str {
+        &self.opencast_id
+    }
+
+    fn metadata_flavor(&self) -> &'static str {
+        "dublincore/series"
+    }
+
+    async fn extra_roles(&self, _context: &Context, _oc_id: &str) -> Result<Vec<AclInput>> {
+        // Series do not have custom or preview roles.
+        Ok(vec![])
+    }
+}
+
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewSeries {
@@ -452,3 +725,4 @@ define_sort_column_and_order!(
     };
     pub struct SeriesSortOrder
 );
+
