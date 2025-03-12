@@ -6,7 +6,7 @@ use crate::{auth::AuthContext, HasRoles};
 
 
 /// Information necessary to render a thumbnail.
-#[derive(Debug, GraphQLObject)]
+#[derive(Debug, GraphQLObject, Clone)]
 pub(crate) struct ThumbnailInfo {
     pub(crate) url: Option<String>,
     pub(crate) live: bool,
