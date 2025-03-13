@@ -11,7 +11,7 @@ use crate::{
         NodeValue,
     },
     auth::AuthContext,
-    db::util::{impl_from_db, select},
+    db::util::impl_from_db,
     model::Key,
     prelude::*,
 };
@@ -87,9 +87,19 @@ impl_from_db!(
     select: {
         realms.{
             id, parent, name, name_from_block, path_segment, full_path, index,
-            child_order, resolved_name, owner_display_name, moderator_roles,
+            child_order, owner_display_name, moderator_roles,
             admin_roles, flattened_moderator_roles, flattened_admin_roles,
         },
+        resolved_name: "case \
+           		when ${table:realms}.name_from_block is null then ${table:realms}.name \
+           		else (\
+           			select coalesce(series.title, events.title) \
+           			from blocks \
+           			left join events on blocks.video = events.id \
+           			left join series on blocks.series = series.id \
+           			where blocks.id = ${table:realms}.name_from_block\
+           		)\
+           	end",
     },
     |row| {
         Self {
@@ -113,34 +123,12 @@ impl_from_db!(
 
 impl Realm {
     pub(crate) async fn root(context: &Context) -> ApiResult<Self> {
-        let (selection, mapping) = select!(
-            child_order,
-            moderator_roles,
-            admin_roles,
-            name,
-            name_from_block,
-            resolved_name: "realms.resolved_name",
-        );
+        let selection = Self::select();
         let row = context.db
             .query_one(&format!("select {selection} from realms where id = 0"), &[])
             .await?;
 
-        Ok(Self {
-            key: Key(0),
-            parent_key: None,
-            plain_name: mapping.name.of(&row),
-            resolved_name: mapping.resolved_name.of(&row),
-            name_from_block: mapping.name_from_block.of(&row),
-            path_segment: String::new(),
-            full_path: String::new(),
-            index: 0,
-            child_order: mapping.child_order.of(&row),
-            owner_display_name: None,
-            moderator_roles: mapping.moderator_roles.of(&row),
-            admin_roles: mapping.admin_roles.of(&row),
-            flattened_moderator_roles: mapping.moderator_roles.of(&row),
-            flattened_admin_roles: mapping.admin_roles.of(&row),
-        })
+        Ok(Self::from_row_start(&row))
     }
 
     pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
@@ -337,6 +325,10 @@ impl Realm {
     /// (excluding both, the root realm and this realm). It starts with a
     /// direct child of the root and ends with the parent of `self`.
     async fn ancestors(&self, context: &Context) -> ApiResult<Vec<Realm>> {
+        if self.parent_key.is_none() {
+            return Ok(vec![]);
+        }
+
         let selection = Self::select().with_renamed_table("realms", "ancestors");
         let query = format!(
             "select {selection} \
