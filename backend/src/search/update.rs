@@ -4,6 +4,8 @@ use std::{
     time::Instant,
 };
 
+use deadpool_postgres::Pool;
+
 use crate::{
     db::{DbConnection, util::select},
     model::Key,
@@ -26,13 +28,16 @@ use super::{
 
 
 /// Calls `update_index` roughly every `config.update_interval` and never returns.
-pub(crate) async fn update_index_daemon(meili: &Client, db: &mut DbConnection) -> Result<Never> {
-    meili.prepare_and_rebuild_if_necessary(db).await?;
+pub(crate) async fn update_index_daemon(meili: &Client, pool: &Pool) -> Result<Never> {
+    let mut db = pool.get().await?;
+    meili.prepare_and_rebuild_if_necessary(&mut db).await?;
 
     loop {
         let loop_started_at = Instant::now();
 
-        update_index(meili, db).await?;
+        let mut db = pool.get().await?;
+        update_index(meili, &mut db).await?;
+        drop(db);
 
         let next_update_in = meili.config.update_interval.saturating_sub(loop_started_at.elapsed());
         trace!("Cleared search index queue: waiting for {:.1?}", next_update_in);

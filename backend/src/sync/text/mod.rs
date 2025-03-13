@@ -1,6 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use chrono::{DateTime, Utc};
+use deadpool_postgres::Pool;
 use futures::{pin_mut, StreamExt};
 use hyper::StatusCode;
 use secrecy::ExposeSecret as _;
@@ -40,7 +41,7 @@ const MAX_BACKOFF: Duration = Duration::from_secs(60 * 30);
 
 
 pub(crate) async fn fetch_update(
-    mut db: DbConnection,
+    pool: &Pool,
     config: &Config,
     daemon: bool,
 ) -> Result<()> {
@@ -55,6 +56,8 @@ pub(crate) async fn fetch_update(
     let mut backoff = INITIAL_BACKOFF;
     let mut did_work_last = false;
     loop {
+        let mut db = pool.get().await?;
+
         // Check whether there are entries in the queue and whether they are
         // ready yet.
         let sql = "\
@@ -84,6 +87,7 @@ pub(crate) async fn fetch_update(
                 SingleUpdateOutcome::Backoff => {
                     info!("Some error during text fetching indicates Tobira should backoff \
                         for now. Waiting {backoff:.2?}");
+                    drop(db);
                     tokio::time::sleep(backoff).await;
                     backoff = std::cmp::min(MAX_BACKOFF, backoff * 2);
                 }
@@ -111,6 +115,7 @@ pub(crate) async fn fetch_update(
             }
 
             did_work_last = false;
+            drop(db);
             tokio::time::sleep(DB_POLL_PERIOD).await;
         }
     }

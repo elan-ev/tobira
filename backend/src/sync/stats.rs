@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use deadpool_postgres::Pool;
 use hyper::StatusCode;
 use serde::Serialize;
 use tokio_postgres::Row;
@@ -16,7 +17,7 @@ const SEND_PERIOD: Duration = Duration::from_secs(60 * 60 * 24);
 /// to sharing basic data as part of adopter registration, this data is sent to
 /// the Opencast server. Otherwise it is not used at all (and only stored in
 /// memory at the Opencast side).
-pub(crate) async fn run_daemon(db: DbConnection, config: &Config) -> Result<Never> {
+pub(crate) async fn run_daemon(pool: &Pool, config: &Config) -> Result<Never> {
     // Let the other more important worker processes do stuff first. This is
     // mainly to have less interleaved output in the log.
     tokio::time::sleep(Duration::from_secs(3)).await;
@@ -24,9 +25,11 @@ pub(crate) async fn run_daemon(db: DbConnection, config: &Config) -> Result<Neve
     let client = OcClient::new(config)?;
 
     loop {
+        let db = pool.get().await?;
         if let Err(e) = send_stats(&client, &db, config).await {
             warn!("Failed to send stats for adopter registration to Opencast: {e:?}");
         }
+        drop(db);
         tokio::time::sleep(SEND_PERIOD).await;
     }
 }

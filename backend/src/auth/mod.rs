@@ -2,7 +2,7 @@ use std::{borrow::Cow, collections::HashSet, time::Duration};
 
 use base64::Engine;
 use cookie::Cookie;
-use deadpool_postgres::Client;
+use deadpool_postgres::{Client, Pool};
 use hyper::{http::HeaderValue, HeaderMap, Request, StatusCode};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -16,7 +16,7 @@ use crate::{
     db::util::select,
     http::{response, Context, Response},
     prelude::*,
-    util::{download_body, ByteBody},
+    util::{download_body, ByteBody}, Never,
 };
 
 
@@ -536,7 +536,7 @@ impl HasRoles for AuthContext {
 }
 
 /// Long running task to perform various DB maintenance.
-pub(crate) async fn db_maintenance(db: &Client, config: &AuthConfig) -> ! {
+pub(crate) async fn db_maintenance(pool: &Pool, config: &AuthConfig) -> Result<Never> {
     /// Delete outdated user sessions every hour. Note that the session
     /// expiration time is still checked whenever the session is validated. So
     /// this duration is not about correctness, just about how often to clean
@@ -545,6 +545,7 @@ pub(crate) async fn db_maintenance(db: &Client, config: &AuthConfig) -> ! {
 
     loop {
         // Remove outdated user sessions.
+        let db = pool.get().await?;
         let sql = "delete from user_sessions \
             where extract(epoch from now() - created) > $1::double precision";
         match db.execute(sql, &[&config.session.duration.as_secs_f64()]).await {
@@ -552,6 +553,7 @@ pub(crate) async fn db_maintenance(db: &Client, config: &AuthConfig) -> ! {
             Ok(0) => debug!("No outdated user sessions found in DB"),
             Ok(num) => info!("Deleted {num} outdated user sessions from DB"),
         }
+        drop(db);
 
         tokio::time::sleep(RUN_PERIOD).await;
     }
