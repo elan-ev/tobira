@@ -717,6 +717,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
 
         if (!data?.opencastId) {
             setLockedAcl(null);
+            seriesField.onChange(undefined);
             return;
         }
 
@@ -1119,7 +1120,7 @@ const finishUpload = async (
         }
 
         // Add ACL
-        if (!CONFIG.lockAclToSeries) {
+        if (!CONFIG.lockAclToSeries || !metadata.series) {
             const acl = constructAcl(metadata.acl);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");
