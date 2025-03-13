@@ -18,9 +18,10 @@ export type AuthorizedBlockEvent = Extract<BlockEvent, { __typename: "Authorized
 type Props = {
     fragRef: VideoBlockData$key;
     basePath: string;
+    edit?: boolean;
 };
 
-export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
+export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
     const { t } = useTranslation();
     const { event: protoEvent, showTitle, showLink } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
@@ -55,8 +56,12 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     `, fragRef);
     const [event, refetch] = useEventWithAuthData(protoEvent);
 
-    if (event == null) {
+    if (event == null && edit) {
         return <Card kind="error">{t("video.deleted-video-block")}</Card>;
+    }
+
+    if (event == null) {
+        return null;
     }
 
     if (event.__typename === "NotAllowed") {

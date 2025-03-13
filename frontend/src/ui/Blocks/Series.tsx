@@ -49,14 +49,16 @@ const seriesFragment = graphql`
 
 type FromBlockProps = SharedProps & {
     fragRef: SeriesBlockData$key;
+    edit?: boolean;
 };
 
 export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...rest }) => {
     const { t } = useTranslation();
     const { series, ...block } = useFragment(blockFragment, fragRef);
-    return series == null
+
+    return series == null && rest.edit
         ? <Card kind="error">{t("series.deleted-series-block")}</Card>
-        : <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
+        : series != null && <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };
 
 type BlockProps = Partial<Omit<Fields<SeriesBlockData$data>, "series">>;
