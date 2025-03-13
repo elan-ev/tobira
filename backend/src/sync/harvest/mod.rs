@@ -3,6 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use deadpool_postgres::Pool;
 use serde::de::DeserializeOwned;
 use tokio_postgres::types::ToSql;
 
@@ -10,7 +11,7 @@ use crate::{
     auth::{is_special_eth_role, ROLE_ADMIN, ROLE_ANONYMOUS, ETH_ROLE_CREDENTIALS_RE},
     config::Config,
     db::{
-        self, types::{Credentials, EventCaption, EventSegment, EventState, EventTrack, SeriesState}, DbConnection
+        self, types::{Credentials, EventCaption, EventSegment, EventState, EventTrack, SeriesState},
     },
     prelude::*,
 };
@@ -34,7 +35,7 @@ pub(crate) async fn run(
     daemon: bool,
     config: &Config,
     client: &OcClient,
-    mut db: DbConnection,
+    pool: &Pool,
 ) -> Result<()> {
     // Some duration to wait before the next attempt. Is only set to non-zero in
     // case of an error.
@@ -49,6 +50,7 @@ pub(crate) async fn run(
     }
 
     loop {
+        let mut db = pool.get().await?;
         let sync_status = SyncStatus::fetch(&**db).await
             .context("failed to fetch sync status from DB")?;
 
@@ -62,6 +64,7 @@ pub(crate) async fn run(
                 // We increase the backoff duration exponentially until we hit the
                 // defined maximum.
                 info!("Waiting {:.1?} due to error before trying again", backoff);
+                drop(db);
                 tokio::time::sleep(backoff).await;
                 backoff = min(MAX_BACKOFF, backoff.mul_f32(1.5));
 
@@ -93,6 +96,7 @@ pub(crate) async fn run(
 
 
         // Decide how to proceed (immediately continue, sleep or exit).
+        drop(db);
         if harvest_data.has_more {
             let last_updated = last_updated
                 .ok_or(anyhow!("Unexpected Opencast response: no items, but `hasMore = true`"))?;
@@ -416,7 +420,7 @@ fn hashed_eth_credentials(read_roles: &[String]) -> Option<Credentials> {
     read_roles.iter().find_map(|role| {
         ETH_ROLE_CREDENTIALS_RE.captures(role).map(|captures| Credentials {
             name: format!("sha1:{}", &captures[1]),
-            password: format!("sha1:{}", &captures[2]), 
+            password: format!("sha1:{}", &captures[2]),
         })
     })
 }

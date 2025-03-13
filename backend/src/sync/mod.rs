@@ -1,7 +1,9 @@
 use core::fmt;
 use std::time::Duration;
 
-use crate::{config::Config, db::DbConnection, prelude::*};
+use deadpool_postgres::Pool;
+
+use crate::{config::Config, prelude::*};
 
 
 pub(crate) mod cmd;
@@ -18,10 +20,10 @@ pub(crate) use self::client::OcClient;
 const MIN_REQUIRED_API_VERSION: ApiVersion = ApiVersion::new(1, 0);
 
 
-pub(crate) async fn run(daemon: bool, db: DbConnection, config: &Config) -> Result<()> {
+pub(crate) async fn run(daemon: bool, pool: &Pool, config: &Config) -> Result<()> {
     let client = OcClient::new(config)?;
     check_compatibility(&client).await?;
-    harvest::run(daemon, config, &client, db).await
+    harvest::run(daemon, config, &client, pool).await
 }
 
 pub(crate) async fn check_compatibility(client: &OcClient) -> Result<()> {
