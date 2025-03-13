@@ -29,6 +29,7 @@ export type ExternalLinkProps = PropsWithChildren<{
     };
 } | {
     service: "EDITOR";
+    event: string;
     params: {
         id: string;
         callbackUrl: string;
@@ -50,6 +51,7 @@ export const ExternalLink = React.forwardRef<HTMLButtonElement, ExternalLinkProp
     service,
     children,
     params,
+    ...rest
 }, ref) => {
     const target = serviceUrl(service);
     for (const [key, value] of Object.entries(params)) {
@@ -72,7 +74,7 @@ export const ExternalLink = React.forwardRef<HTMLButtonElement, ExternalLinkProp
     const onSubmit = async (event: FormEvent) => {
         event.preventDefault();
         const form = event.target as HTMLFormElement & { jwt: HTMLInputElement };
-        form.jwt.value = await getJwt(service);
+        form.jwt.value = await getJwt(service, "event" in rest ? rest.event : undefined);
         form.submit();
     };
 
@@ -95,19 +97,19 @@ export const ExternalLink = React.forwardRef<HTMLButtonElement, ExternalLinkProp
  * with using Relay observables. Errors (as opposed to rejects) when the query returns
  * more or less than one result(s).
  */
-export const getJwt = (service: JwtService): Promise<string> => (
+export const getJwt = (service: JwtService, event?: string): Promise<string> => (
     new Promise((resolve, reject) => {
         let gotResult = false;
         let out: authJwtQuery["response"];
         const query = graphql`
-            query authJwtQuery($service: JwtService!) {
-                jwt(service: $service)
+            query authJwtQuery($service: JwtService!, $event: ID) {
+                jwt(service: $service, event: $event)
             }
         `;
         fetchQuery<authJwtQuery>(
             environment,
             query,
-            { service },
+            { service, event },
             // Use "network-only" as we always want a fresh JWTs. `fetchQuery` should already
             // never write any values into the cache, but better make sure.
             { fetchPolicy: "network-only" },

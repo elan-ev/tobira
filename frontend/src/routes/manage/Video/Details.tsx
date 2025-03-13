@@ -68,6 +68,7 @@ const Page: React.FC<Props> = ({ event }) => {
                     {user.canUseEditor && !event.isLive && event.canWrite && (
                         <ExternalLink
                             service="EDITOR"
+                            event={event.id}
                             params={{
                                 id: event.opencastId,
                                 callbackUrl: document.location.href,
