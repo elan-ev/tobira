@@ -82,7 +82,6 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = props => (
 
 // For use in block mutations that might have an effect on the realm name.
 // Only used to be included in queries in order to update the store
-// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 const _frag = graphql`
     fragment EditBlockUpdateRealmNameData on Block {
         realm {

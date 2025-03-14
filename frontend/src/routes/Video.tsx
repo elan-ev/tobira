@@ -301,7 +301,7 @@ export const DirectOpencastVideoRoute = makeRoute({
 
         const query = graphql`
             query VideoPageDirectOpencastLinkQuery(
-                $id: String!, 
+                $id: String!,
                 $listId: ID!,
                 $eventUser: String,
                 $eventPassword: String
@@ -1064,7 +1064,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     </div>;
 
     const ShowQRCodeButton: React.FC<{ target: string; label: MenuState }> = (
-        { target, label }
+        { target, label },
     ) => <>
         <Button
             onClick={() => currentRef(qrModalRef).open()}
