@@ -544,8 +544,12 @@ type Query {
   playlistById(id: ID!): Playlist
   "Returns the current user."
   currentUser: User
-  "Returns a new JWT that can be used to authenticate against Opencast for using the given service"
-  jwt(service: JwtService!): String!
+  """
+    Returns a new JWT that can be used to authenticate against Opencast for
+    using the given service. For `service = Editor`, `event` has to be
+    specified.
+  """
+  jwt(service: JwtService!, event: ID): String!
   "Retrieve a node by globally unique ID. Mostly useful for relay."
   node(id: ID!): Node
   "Returns `null` if the query is too short."
