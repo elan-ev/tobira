@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt, path::PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::model::LangKey;
-use super::{color::ColorConfig};
+use super::color::ColorConfig;
 
 
 #[derive(Debug, confique::Config)]

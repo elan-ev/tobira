@@ -494,6 +494,27 @@
 # Default value: 8
 #concurrent_download_tasks = 8
 
+# List of deletion modes that determine which, if any, realm pages are to be deleted
+# automatically when the corresponding Opencast item (series, event or playlist)
+# is deleted.
+# If configured, Tobira will delete the corresponding realm page(s) when they meet
+# the following conditions:
+# - Realm name is derived from the deleted item.
+# - Realm has no sub realms.
+# - Realm has no other blocks than the deleted item.
+#
+# The last option can be disabled by adding `:eager` to the deletion mode.
+#
+# Example:
+# ```
+# auto_delete_pages = ["series", "events:eager"]
+# ```
+#
+# This would delete series pages in non-eager mode and event pages in eager mode.
+#
+# Default value: []
+#auto_delete_pages = []
+
 
 [meili]
 # The access key. This can be the master key, but ideally should be an API
