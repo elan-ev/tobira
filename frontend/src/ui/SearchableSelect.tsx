@@ -19,7 +19,7 @@ import {
 import { LuCalendar } from "react-icons/lu";
 
 
-type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],
+export type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],
     "theme"
     | "loadOptions"
     | "formatOptionLabel"

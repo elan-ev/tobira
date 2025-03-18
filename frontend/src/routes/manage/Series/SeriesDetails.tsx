@@ -19,6 +19,8 @@ import {
     SeriesDetailsMetadataMutation,
 } from "./__generated__/SeriesDetailsMetadataMutation.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
+import { ManageVideoListContent } from "../Shared/EditVideoList";
+import { SeriesDetailsContentMutation } from "./__generated__/SeriesDetailsContentMutation.graphql";
 
 
 const updateSeriesMetadata = graphql`
@@ -30,6 +32,26 @@ const updateSeriesMetadata = graphql`
 const deleteSeriesMutation = graphql`
     mutation SeriesDetailsDeleteMutation($id: ID!) {
         deleteSeries(id: $id) { id }
+    }
+`;
+
+const editSeriesContent = graphql`
+    mutation SeriesDetailsContentMutation($id: ID!, $addedEvents: [ID!]!, $removedEvents: [ID!]!) {
+        updateSeriesContent(id: $id, addedEvents: $addedEvents, removedEvents: $removedEvents) {
+            entries {
+                __typename
+                ...on AuthorizedEvent {
+                    id
+                    isLive
+                    title
+                    created
+                    creators
+                    description
+                    canWrite
+                    syncedData { thumbnail audioOnly duration startTime endTime }
+                }
+            }
+        }
     }
 `;
 
@@ -52,6 +74,7 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
                 new URL(DirectSeriesRoute.url({ seriesId: series.id }), document.baseURI)
             } />,
             <SeriesMetadataSection key="metadata" series={series} />,
+            <SeriesContentSection key="content" series={series} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms kind="series" hostRealms={series.hostRealms} itemLink={realmPath => (
                     <Link to={SeriesRoute.url({ realmPath: realmPath, seriesId: series.id })}>
@@ -90,6 +113,19 @@ const SeriesMetadataSection: React.FC<{ series: Series }> = ({ series }) => {
 
     return <MetadataSection
         item={series}
+        {...{ commit, inFlight }}
+    />;
+};
+
+const SeriesContentSection: React.FC<{ series: Series }> = ({ series }) => {
+    const { t } = useTranslation();
+    const [commit, inFlight] = useMutation<SeriesDetailsContentMutation>(editSeriesContent);
+
+    return <ManageVideoListContent
+        listId={series.id}
+        listEntries={[...series.entries]}
+        getUpdatedEntries={data => [...data.updateSeriesContent.entries]}
+        description={t("manage.my-series.details.edit-note")}
         {...{ commit, inFlight }}
     />;
 };

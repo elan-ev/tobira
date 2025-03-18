@@ -320,7 +320,7 @@ metadata-form:
   title: Title
   description: Description
   required: required
-  save: Save changes
+  save: Save metadata
   errors:
     field-required: This field is required (cannot be empty).
   event-workflow-active: >
@@ -460,15 +460,34 @@ manage:
         pending: >
           The deletion of this entry was requested in Opencast and it will be removed from this list upon success.
 
+  video-list:
+    content: Videos
+    no-content: No videos
+    no-of-videos_one: '{{count}} video'
+    no-of-videos_other: '{{count}} videos'
+    edit:
+      add-video: Add video
+      to-be-added: will be added
+      remove: Remove
+      to-be-removed: will be removed
+      cannot-be-removed: "Can't be removed: Missing write access"
+      undo: Undo
+      save: Save changes
+    error: Failed to update series content.
+
   my-series:
     title: My series
-    content: Content
-    no-of-videos: '{{count}} videos'
     details:
       title: Series details
       referencing-pages-explanation: 'This series is referenced on the following pages:'
       no-referencing-pages: No pages reference this series.
       created-note: Series has been created.
+      edit-note: >
+        You can upload new videos as part of this series and add or remove existing videos that you
+        have write access for.
+        You may only add videos that are not part of any other series.
+        Removing a video from this list does not delete the video itself but just removes it from
+        this series.
     delete-note: >
       Videos in this series will not be deleted.
       They will remain in the system and can be added to another series.
@@ -678,9 +697,8 @@ api-remote-errors:
       thus you cannot create your own page. Contact a system administrator for
       further assistance.
   event:
-    update:
-      not-found: "Action failed: event not found."
-      not-allowed: You are not allowed to perform this event action.
+    not-found: "Action failed: event not found."
+    not-allowed: You are not allowed to perform this event action.
     workflow:
       not-allowed: You are not allowed to inquire about workflow activity of this video.
       active-acl: $t(manage.access.workflow-active)
