@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use bytes::Bytes;
-use chrono::{DateTime, Utc, TimeZone};
+use chrono::{DateTime, TimeZone, Utc};
 use form_urlencoded::Serializer;
 use hyper::{
     Response, Request, StatusCode,
@@ -141,8 +141,12 @@ impl OcClient {
         Ok(out)
     }
 
-    pub async fn delete_event(&self, oc_id: &str) -> Result<Response<Incoming>> {
-        let pq = format!("/api/events/{oc_id}");
+    pub async fn delete<T: OcEndpoint>(&self, endpoint: &T) -> Result<Response<Incoming>> {
+        let pq = format!(
+            "/api/{endpoint}/{oc_id}",
+            endpoint = endpoint.endpoint_name(),
+            oc_id = endpoint.opencast_id(),
+        );
         let req = self.authed_req_builder(&self.external_api_node, &pq)
             .method(http::Method::DELETE)
             .body(RequestBody::empty())
@@ -151,37 +155,19 @@ impl OcClient {
         self.http_client.request(req).await.map_err(Into::into)
     }
 
-    pub async fn update_event_acl(
+    pub async fn update_acl<T: OcEndpoint>(
         &self,
-        oc_id: &str,
+        endpoint: &T,
         acl: &[AclInputEntry],
         context: &Context,
     ) -> Result<Response<Incoming>> {
-        let pq = format!("/api/events/{oc_id}/acl");
+        let oc_id = endpoint.opencast_id();
+        let pq = format!("/api/{}/{oc_id}/acl", endpoint.endpoint_name());
+        let mut access_policy = Vec::new();
 
         // Temporary solution to add custom and preview roles
         // Todo: remove again once frontend sends these roles.
-        let extra_roles_sql = "\
-            select unnest(preview_roles) as role, 'preview' as action from events where opencast_id = $1
-            union
-            select role, key as action
-            from jsonb_each_text(
-                (select custom_action_roles from events where opencast_id = $1)
-            ) as actions(key, value)
-            cross join lateral jsonb_array_elements_text(value::jsonb) as role(role)
-        ";
-
-        let extra_roles = context.db.query_mapped(&extra_roles_sql, dbargs![&oc_id], |row| {
-            let role: String = row.get("role");
-            let action: String = row.get("action");
-            AclInput {
-                allow: true,
-                action,
-                role,
-            }
-        }).await?;
-
-        let mut access_policy = Vec::new();
+        let extra_roles = endpoint.extra_roles(context, oc_id).await?;
         access_policy.extend(extra_roles);
 
         for entry in acl {
@@ -197,13 +183,27 @@ impl OcClient {
         let params = Serializer::new(String::new())
             .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
             .finish();
-        let req = self.authed_req_builder(&self.external_api_node, &pq)
-            .method(http::Method::PUT)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
 
-        self.http_client.request(req).await.map_err(Into::into)
+        self.send_put_request(&pq, params).await
+    }
+
+    pub async fn update_metadata<T: OcEndpoint>(
+        &self,
+        endpoint: &T,
+        metadata: &serde_json::Value,
+    ) -> Result<Response<Incoming>> {
+        let pq = format!(
+            "/api/{endpoint}/{id}/metadata?type={flavor}",
+            endpoint = endpoint.endpoint_name(),
+            id = endpoint.opencast_id(),
+            flavor = endpoint.metadata_flavor(),
+        );
+
+        let params = Serializer::new(String::new())
+            .append_pair("metadata", &serde_json::to_string(metadata).expect("Failed to serialize"))
+            .finish();
+
+        self.send_put_request(&pq, params).await
     }
 
     pub async fn start_workflow(&self, oc_id: &str, workflow_id: &str) -> Result<Response<Incoming>> {
@@ -232,6 +232,67 @@ impl OcClient {
 
         let (out, _) = self.deserialize_response::<EventStatus>(response, &uri).await?;
         Ok(out.processing_state == "RUNNING")
+    }
+
+    pub async fn create_series(
+        &self,
+        acl: &[AclInputEntry],
+        title: &str,
+        description: Option<&str>,
+    ) -> Result<CreateSeriesResponse> {
+        let access_policy: Vec<AclInput> = acl.iter()
+            .flat_map(|entry| entry.actions.iter()
+                .map(|action| AclInput {
+                    allow: true,
+                    action: action.clone(),
+                    role: entry.role.clone(),
+                }))
+            .collect();
+
+        let metadata = serde_json::json!([{
+            "label": "Opencast Series DublinCore",
+            "flavor": "dublincore/series",
+            "fields": [
+                {
+                    "id": "title",
+                    "value": title
+                },
+                {
+                    "id": "description",
+                    "value": description
+                },
+            ]
+        }]);
+
+        let params = Serializer::new(String::new())
+            .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
+            .append_pair("metadata", &serde_json::to_string(&metadata).expect("Failed to serialize"))
+            .finish();
+
+        let req = self.authed_req_builder(&self.external_api_node, "/api/series")
+            .method(http::Method::POST)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        let uri = req.uri().clone();
+        let response = self.http_client.request(req).await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}'"))?;
+
+        let (out, _) = self.deserialize_response::<CreateSeriesResponse>(response, &uri).await?;
+
+        Ok(out)
+    }
+
+
+    async fn send_put_request(&self, path_and_query: &str, params: String) -> Result<Response<Incoming>> {
+        let req = self.authed_req_builder(&self.external_api_node, &path_and_query)
+            .method(http::Method::PUT)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        self.http_client.request(req).await.map_err(Into::into)
     }
 
     fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
@@ -267,7 +328,7 @@ impl OcClient {
         let body = download_body(body).await
             .with_context(|| format!("failed to download body from '{uri}'"))?;
 
-        if parts.status != StatusCode::OK {
+        if parts.status != StatusCode::OK && parts.status != StatusCode::CREATED {
             trace!("HTTP response: {:#?}", parts);
             if parts.status == StatusCode::UNAUTHORIZED {
                 bail!(
@@ -298,13 +359,25 @@ pub struct ExternalApiVersions {
 }
 
 #[derive(Debug, Serialize)]
-struct AclInput {
-    allow: bool,
-    action: String,
-    role: String,
+pub(crate) struct AclInput {
+    pub allow: bool,
+    pub action: String,
+    pub role: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct CreateSeriesResponse {
+    pub identifier: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct EventStatus {
     pub processing_state: String,
+}
+
+pub(crate) trait OcEndpoint {
+    fn endpoint_name(&self) -> &'static str;
+    fn opencast_id(&self) -> &str;
+    fn metadata_flavor(&self) -> &'static str;
+    async fn extra_roles(&self, context: &Context, oc_id: &str) -> Result<Vec<AclInput>>;
 }

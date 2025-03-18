@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
+import { LuPlusCircle } from "react-icons/lu";
 import { graphql } from "react-relay";
-import i18n from "../../../i18n";
 import { match } from "@opencast/appkit";
 
+import i18n from "../../../i18n";
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
@@ -11,24 +13,21 @@ import {
     ColumnProps,
     createQueryParamsParser,
     DateColumn,
-    descriptionStyle,
     ManageItems,
     TableRow,
-    thumbnailLinkStyle,
-    titleLinkStyle,
-} from "../shared";
+} from "../Shared/Table";
 import {
     SeriesManageQuery,
     SeriesManageQuery$data,
     SeriesSortColumn,
 } from "./__generated__/SeriesManageQuery.graphql";
-import { Link } from "../../../router";
-import { ThumbnailStack } from "../../Search";
-import { DirectSeriesRoute } from "../../Series";
-import { SmallDescription } from "../../../ui/metadata";
+import { keyOfId } from "../../../util";
+import { ThumbnailStack } from "../../../ui/Series";
+import { CREATE_SERIES_PATH } from "./Create";
+import { LinkButton } from "../../../ui/LinkButton";
 
 
-const PATH = "/~manage/series" as const;
+export const PATH = "/~manage/series" as const;
 
 export const ManageSeriesRoute = makeRoute({
     url: PATH,
@@ -53,7 +52,9 @@ export const ManageSeriesRoute = makeRoute({
                         titleKey="manage.my-series.title"
                         additionalColumns={seriesColumns}
                         RenderRow={SeriesRow}
-                    />
+                    >
+                        <CreateSeriesLink />
+                    </ManageItems>
                 }
             />,
             dispose: () => queryRef.dispose(),
@@ -78,6 +79,7 @@ const query = graphql`
                     title
                     created
                     updated
+                    tobiraDeletionTimestamp
                     syncedData { description }
                     numVideos
                     thumbnailStack { thumbnails { url live audioOnly }}
@@ -87,6 +89,15 @@ const query = graphql`
     }
 `;
 
+const CreateSeriesLink: React.FC = () => {
+    const { t } = useTranslation();
+    return <LinkButton to={CREATE_SERIES_PATH} css={{ width: "fit-content" }}>
+        {t("manage.my-series.create.title")}
+        <LuPlusCircle />
+    </LinkButton>;
+};
+
+
 export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]>["mySeries"];
 export type Series = SeriesConnection["items"];
 export type SingleSeries = Series[number];
@@ -94,10 +105,10 @@ export type SingleSeries = Series[number];
 export const seriesColumns: ColumnProps<SingleSeries>[] = [
     {
         key: "EVENT_COUNT",
-        label: "manage.my-series.content",
+        label: "manage.video-list.content",
         headerWidth: 112,
         column: ({ item }) => <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.my-series.no-of-videos", { count: item.numVideos })}
+            {i18n.t("manage.video-list.no-of-videos", { count: item.numVideos })}
         </td>,
     },
     {
@@ -113,30 +124,15 @@ export const seriesColumns: ColumnProps<SingleSeries>[] = [
 ];
 
 
-export const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => {
-    // Todo: change to "series details" route when available
-    const link = DirectSeriesRoute.url({ seriesId: item.id });
+export const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
+    itemType="series"
+    item={item}
+    thumbnail={deletionIsPending => <SeriesThumbnail series={item} {...{ deletionIsPending }} />}
+    link={`${PATH}/${keyOfId(item.id)}`}
+    customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
+/>;
 
-    return (
-        <TableRow
-            thumbnail={<Link to={link} css={{ ...thumbnailLinkStyle }}>
-                <span css={{ "> div": { width: "100%" } }}>
-                    <ThumbnailStack title={item.title} thumbnailStack={item.thumbnailStack} />
-                </span>
-            </Link>}
-            title={<Link to={link} css={{ ...titleLinkStyle }}>{item.title}</Link>}
-            description={item.syncedData && <SmallDescription
-                css={{ ...descriptionStyle }}
-                text={item.syncedData.description}
-            />}
-            syncInfo={{
-                isSynced: !!item.syncedData,
-                notReadyLabel: "series.not-ready.label",
-            }}
-            customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
-        />
-    );
-};
+
 
 const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
     sortBy !== null
@@ -149,3 +145,13 @@ const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
         : "CREATED";
 
 const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);
+
+type SeriesThumbnailProps = {
+    series: SingleSeries;
+}
+
+export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series }) => (
+    <div css={{ "> div": { width: "100%" } }}>
+        <ThumbnailStack title={series.title} thumbnailStack={series.thumbnailStack} />
+    </div>
+);

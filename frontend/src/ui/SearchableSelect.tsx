@@ -18,7 +18,7 @@ import {
 } from "./__generated__/SearchableSelectSeriesQuery.graphql";
 
 
-type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],
+export type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],
     "theme"
     | "loadOptions"
     | "formatOptionLabel"

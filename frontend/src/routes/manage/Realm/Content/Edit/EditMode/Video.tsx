@@ -3,8 +3,9 @@ import { fetchQuery, graphql, useFragment, useMutation } from "react-relay";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
 import { Controller, useFormContext } from "react-hook-form";
-
+import { SingleValue } from "react-select";
 import { Card } from "@opencast/appkit";
+
 import { EditModeForm } from ".";
 import { Heading } from "./util";
 import type {
@@ -13,7 +14,10 @@ import type {
 } from "./__generated__/VideoEditModeBlockData.graphql";
 import type { VideoEditSaveMutation } from "./__generated__/VideoEditSaveMutation.graphql";
 import type { VideoEditCreateMutation } from "./__generated__/VideoEditCreateMutation.graphql";
-import { SearchableSelect } from "../../../../../../ui/SearchableSelect";
+import {
+    DerivedProps as SelectProps,
+    SearchableSelect,
+} from "../../../../../../ui/SearchableSelect";
 import { Creators, Thumbnail } from "../../../../../../ui/Video";
 import { environment } from "../../../../../../relay";
 import { VideoEditModeSearchQuery } from "./__generated__/VideoEditModeSearchQuery.graphql";
@@ -47,7 +51,8 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                     created
                     isLive
                     creators
-                    syncedData { duration startTime endTime audioOnly }
+                    description
+                    syncedData { thumbnail duration startTime endTime audioOnly }
                 }
             }
             showTitle
@@ -107,7 +112,11 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
             name="event"
             rules={{ required: true }}
             render={({ field: { onChange, onBlur } }) => (
-                <EventSelector defaultValue={currentEvent} {...{ onChange, onBlur }} />
+                <EventSelector
+                    defaultValue={currentEvent}
+                    {...{ onBlur }}
+                    onChange={selectedEvent => onChange(selectedEvent?.id)}
+                />
             )}
         />
         <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
@@ -125,19 +134,38 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
     </EditModeForm>;
 };
 
-type EventSelectorProps = {
-    onChange: (eventId?: string) => void;
-    onBlur: () => void;
+type EventSelectorProps = SelectProps<Option> & {
+    onChange: (option?: SingleValue<Option>) => void;
+    onBlur?: () => void;
     defaultValue?: Option;
+    additionalOptions?: {
+        excludeSeriesMembers?: boolean;
+        excludedIds?: string[];
+    };
 };
 
-const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, defaultValue }) => {
+export const EventSelector = ({
+    onChange,
+    onBlur,
+    defaultValue,
+    additionalOptions,
+    ...props
+}: EventSelectorProps) => {
     const { t } = useTranslation();
     const [error, setError] = useState<ReactNode>(null);
 
     const query = graphql`
-        query VideoEditModeSearchQuery($q: String!) {
-            events: searchAllEvents(query: $q, writableOnly: false) {
+        query VideoEditModeSearchQuery(
+            $q: String!,
+            $excludeSeriesMembers: Boolean!,
+            $excludedIds: [String!]!,
+        ) {
+            events: searchAllEvents(
+                query: $q,
+                writableOnly: false,
+                excludeSeriesMembers: $excludeSeriesMembers,
+                excludedIds: $excludedIds,
+            ) {
                 ... on EventSearchResults {
                     items {
                         id
@@ -152,6 +180,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                         startTime
                         endTime
                         audioOnly
+                        description
                     }
                 }
             }
@@ -159,7 +188,11 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
     `;
 
     const loadEvents = (input: string, callback: (options: readonly Option[]) => void) => {
-        fetchQuery<VideoEditModeSearchQuery>(environment, query, { q: input }).subscribe({
+        fetchQuery<VideoEditModeSearchQuery>(environment, query, {
+            q: input,
+            excludeSeriesMembers: additionalOptions?.excludeSeriesMembers ?? false,
+            excludedIds: additionalOptions?.excludedIds ?? [],
+        }).subscribe({
             next: ({ events }) => {
                 if (events.items === undefined) {
                     setError(t("search.unavailable"));
@@ -174,6 +207,7 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
                     id: item.id.replace(/^es/, "ev"),
                     syncedData: item,
                     authorizedData: item,
+                    description: item.description,
                     series: (item.seriesTitle == null || item.seriesId == null) ? null : {
                         id: item.seriesId,
                         title: item.seriesTitle,
@@ -188,10 +222,11 @@ const EventSelector: React.FC<EventSelectorProps> = ({ onChange, onBlur, default
     return <>
         {error && <Card kind="error" css={{ marginBottom: 8 }}>{error}</Card>}
         <SearchableSelect
+            {...props}
             autoFocus
             loadOptions={loadEvents}
             format={formatOption}
-            onChange={data => onChange(data?.id)}
+            onChange={selectedEvent => onChange(selectedEvent)}
             isDisabled={!!error}
             {...{ onBlur, defaultValue }}
         />

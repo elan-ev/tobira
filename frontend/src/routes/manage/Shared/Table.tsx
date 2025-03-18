@@ -1,5 +1,5 @@
-import { Card, match, useColorScheme } from "@opencast/appkit";
-import { useState, useRef, useEffect, ReactNode, ComponentType } from "react";
+import { Card, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
+import { useState, useRef, useEffect, ReactNode, ComponentType, PropsWithChildren } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -9,15 +9,20 @@ import {
     LuChevronRight,
 } from "react-icons/lu";
 
-import FirstPage from "../../icons/first-page.svg";
-import LastPage from "../../icons/last-page.svg";
-import { ManageRoute } from ".";
-import { COLORS } from "../../color";
-import { PageTitle } from "../../layout/header/ui";
-import { Breadcrumbs } from "../../ui/Breadcrumbs";
-import { Link } from "../../router";
-import { VideosSortColumn } from "./Video/__generated__/VideoManageQuery.graphql";
-import { SeriesSortColumn } from "./Series/__generated__/SeriesManageQuery.graphql";
+import FirstPage from "../../../icons/first-page.svg";
+import LastPage from "../../../icons/last-page.svg";
+import { relativeDate } from "../../../ui/time";
+import { InfoWithTooltip } from "../../../ui";
+import CONFIG from "../../../config";
+import { SmallDescription } from "../../../ui/metadata";
+import { ManageRoute } from "..";
+import { COLORS } from "../../../color";
+import { PageTitle } from "../../../layout/header/ui";
+import { Breadcrumbs } from "../../../ui/Breadcrumbs";
+import { Link } from "../../../router";
+import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
+import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
+import { useNotification } from "../../../ui/NotificationContext";
 
 
 type ItemVars = {
@@ -28,7 +33,7 @@ type ItemVars = {
     page: number;
 };
 
-type SharedProps<T> = {
+export type SharedManageProps<T> = {
     connection: {
         items: readonly T[];
         totalCount: number;
@@ -40,12 +45,12 @@ type SharedProps<T> = {
     vars: ItemVars;
 };
 
-type SharedTableProps<T> = SharedProps<T> & {
+type SharedTableProps<T> = SharedManageProps<T> & {
     RenderRow: ComponentType<{ item: T }>;
     additionalColumns?: ColumnProps<T>[];
 }
 
-type ManageItemProps<T> = SharedTableProps<T> & {
+type ManageItemProps<T> = PropsWithChildren & SharedTableProps<T> & {
     titleKey: ParseKeys;
 }
 
@@ -56,16 +61,33 @@ export const ManageItems = <T extends Item>({
     vars,
     titleKey,
     additionalColumns,
+    children,
     RenderRow,
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
+    const { Notification } = useNotification();
 
     let inner;
     if (connection.items.length === 0) {
-        inner = <Card kind="info">{t("manage.item-table.no-entries-found")}</Card>;
+        inner = <div css={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 32 }}>
+            <Notification />
+            <Card kind="info" css={{ width: "fit-content", marginTop: 16 }}>
+                {t("manage.item-table.no-entries-found")}
+            </Card>
+        </div>;
     } else {
         inner = <>
-            <PageNavigation {...{ vars, connection }} />
+            <div css={{
+                display: "flex",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 16,
+            }}>
+                <Notification />
+                <span css={{ marginLeft: "auto" }}>
+                    <PageNavigation {...{ vars, connection }} />
+                </span>
+            </div>
             <div css={{ flex: "1 0 0", margin: "16px 0" }}>
                 <ItemTable {...{ vars, connection, additionalColumns, RenderRow }} />
             </div>
@@ -81,11 +103,12 @@ export const ManageItems = <T extends Item>({
             flexDirection: "column",
             height: "100%",
         }}>
-            <Breadcrumbs
-                path={[{ label: t("user.manage-content"), link: ManageRoute.url }]}
-                tail={title}
-            />
-            <PageTitle title={title} css={{ marginBottom: 32 }}/>
+            <Breadcrumbs tail={title} path={[{
+                label: t("user.manage-content"),
+                link: ManageRoute.url,
+            }]} />
+            <PageTitle title={title} css={{ marginBottom: 32 }} />
+            {children}
             {inner}
         </div>
     );
@@ -132,7 +155,7 @@ const ItemTable = <T extends Item>({
         return () => {};
     });
 
-    return <div css={{ position: "relative" }}>
+    return <div css={{ position: "relative", overflow: "auto" }}>
         <table css={{
             width: "100%",
             borderSpacing: 0,
@@ -172,7 +195,7 @@ const ItemTable = <T extends Item>({
                 {/* Each table has thumbnails, but their width might vary */}
                 <col span={1} css={{ width: THUMBNAIL_WIDTH + 2 * 6 }} />
                 {/* Each table has a column for title and description */}
-                <col span={1} />
+                <col span={1} css={{ [screenWidthAtMost(1000)]: { width: 135 } }} />
                 {/*
                     Additional columns can be declared in the specific column array.
                 */}
@@ -253,36 +276,49 @@ export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
     </td>;
 };
 
-type TableRowProps = {
-    thumbnail: ReactNode;
-    title: ReactNode;
-    description: ReactNode;
+type TableRowItem = {
+    syncedData?: Record<string, unknown> | null;
+    tobiraDeletionTimestamp?: string | null;
+    title: string;
+    description?: string | null;
+}
+
+type TableRowProps<T extends TableRowItem> = {
+    itemType: "video" | "series";
+    thumbnail: (isPending?: boolean) => ReactNode;
+    link: string;
+    item: T;
     customColumns?: ReactNode[];
-    syncInfo?: {
-        isSynced: boolean;
-        notReadyLabel: ParseKeys;
-    };
 };
 
 /**
- * A row in the item table.
+ * A row in the item table
  * This is assuming that each item (video, series, playlist) has a thumbnail, title,
  * and description. These can still be somewhat customized.
  * Additional columns can be declared in the respective item column arrays.
  */
-export const TableRow: React.FC<TableRowProps> = ({
-    thumbnail,
-    title,
-    description,
-    customColumns,
-    syncInfo,
-}) => {
+export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowProps<T>) => {
     const { t } = useTranslation();
+    const deletionTimestamp = item.tobiraDeletionTimestamp;
+    const deletionIsPending = Boolean(deletionTimestamp);
+    const deletionDate = new Date(deletionTimestamp ?? "");
+
+    // This checks if the current time is later than the deletion timestamp + twice
+    // the configured poll period to ensure at least one sync has taken place
+    // (+ 1min to allow some time for the Opencast delete job).
+    // If it is, the deletion in Opencast has possibly failed.
+    const pollPeriod = CONFIG.sync.pollPeriod * 1000;
+    const deletionFailed = Boolean(deletionTimestamp
+        && Date.parse(deletionTimestamp) + pollPeriod * 2 + 60000 < Date.now());
 
     return <tr>
         {/* Thumbnail */}
-        <td>{thumbnail}</td>
-        {/* Title & description */}
+        <td>
+            {deletionIsPending
+                ? props.thumbnail(deletionIsPending)
+                : <Link to={props.link} css={{ ...thumbnailLinkStyle }}>{props.thumbnail()}</Link>
+            }
+        </td>
         <td>
             <div css={{
                 display: "flex",
@@ -298,22 +334,76 @@ export const TableRow: React.FC<TableRowProps> = ({
                         borderRadius: 4,
                         outline: `2.5px solid ${COLORS.focus}`,
                     },
-                }}>{title}</div>
-                {syncInfo && !syncInfo.isSynced && (
+                }}>
+                    {/* Title */}
+                    {deletionIsPending
+                        ? <span css={{ color: COLORS.neutral60 }}>{item.title}</span>
+                        : <Link to={props.link} css={{ ...titleLinkStyle }}>{item.title}</Link>
+                    }
+                </div>
+                {!item.syncedData && (
                     <span css={{
                         padding: "0 8px",
                         fontSize: "small",
                         borderRadius: 10,
                         backgroundColor: COLORS.neutral10,
                     }}>
-                        {t(syncInfo.notReadyLabel)}
+                        {t(`${props.itemType}.not-ready.label`)}
                     </span>
                 )}
             </div>
-            {description}
+            {/* Description */}
+            {deletionIsPending
+                ? <PendingDeletionBody
+                    itemType={props.itemType}
+                    {...{ deletionFailed, deletionDate }}
+                />
+                : <SmallDescription
+                    css={{ ...descriptionStyle }}
+                    text={item.description}
+                />
+            }
         </td>
-        {customColumns}
+        {props.customColumns}
     </tr>;
+};
+
+type PendingDeleteBodyProps = {
+    deletionFailed: boolean;
+    deletionDate: Date;
+    itemType: "video" | "series";
+}
+
+const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
+    deletionFailed, deletionDate, itemType,
+}) => {
+    const isDark = useColorScheme().scheme === "dark";
+    const { t } = useTranslation();
+
+    const now = Date.now();
+    const [, relative] = relativeDate(deletionDate, now);
+
+    return (
+        <div css={{
+            color: isDark ? COLORS.neutral60 : COLORS.neutral50,
+            display: "flex",
+            fontSize: 13,
+            marginTop: 4,
+            padding: "0 4px",
+        }}>
+            <span css={{ fontStyle: "italic" }}>
+                {t(`manage.shared.delete.${
+                    deletionFailed ? "failed-maybe" : "pending"
+                }`, { item: itemType })}
+            </span>
+            <InfoWithTooltip
+                tooltip={t(`manage.shared.delete.tooltip.${
+                    deletionFailed ? "failed" : "pending"
+                }`, { time: relative })}
+                mode={deletionFailed ? "warning" : "info"}
+            />
+        </div>
+    );
 };
 
 type ColumnHeaderProps = {
@@ -367,7 +457,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
     </th>;
 };
 
-const PageNavigation = <T, >({ connection, vars }: SharedProps<T>) => {
+const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
     const { t } = useTranslation();
     const pageInfo = connection.pageInfo;
     const total = connection.totalCount;

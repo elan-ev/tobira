@@ -1,9 +1,11 @@
-import { loadQuery as relayLoadQuery, LoadQueryOptions } from "react-relay";
-import type { PreloadedQuery } from "react-relay";
+import { useCallback } from "react";
+import { loadQuery as relayLoadQuery, LoadQueryOptions, useMutation } from "react-relay";
+import type { PreloadedQuery, UseMutationConfig } from "react-relay";
 import { Environment, Store, RecordSource, Network } from "relay-runtime";
 import type {
     GraphQLSingularResponse,
     GraphQLTaggedNode,
+    MutationParameters,
     OperationType,
     VariablesOf,
 } from "relay-runtime";
@@ -56,6 +58,28 @@ export function loadQuery<TQuery extends OperationType>(
     return relayLoadQuery(environment, preloadableRequest, variables, options);
 }
 
+
+type DisposableCommitFn<T extends MutationParameters> = (config: UseMutationConfig<T>) => {
+    [Symbol.dispose]: () => void;
+};
+
+/**
+ * Allows passing a wrapped commit function to generic components that need to accept different
+ * mutations. Relay requires the function to be wrapped in a disposable object (which can
+ * be used to cancel the mutation).
+ */
+export function useDisposableMutation<T extends MutationParameters>(
+    mutation: GraphQLTaggedNode
+): [DisposableCommitFn<T>, boolean] {
+    const [commit, inFlight] = useMutation<T>(mutation);
+
+    const commitWithDisposable = useCallback((config: UseMutationConfig<T>) => {
+        const disposable = commit(config);
+        return { [Symbol.dispose]: () => disposable.dispose() };
+    }, [commit]);
+
+    return [commitWithDisposable, inFlight];
+}
 
 /** Extract queried fields from Relay types. Removes internal properties. */
 export type Fields<T> = {
