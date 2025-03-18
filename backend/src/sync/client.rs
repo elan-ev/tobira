@@ -190,7 +190,7 @@ impl OcClient {
    pub async fn update_metadata<T: OpencastItem>(
         &self,
         endpoint: &T,
-        metadata: serde_json::Value,
+        metadata: &serde_json::Value,
     ) -> Result<Response<Incoming>> {
         let pq = format!(
             "/api/{endpoint}/{id}/metadata?type={flavor}",
@@ -200,7 +200,7 @@ impl OcClient {
         );
 
         let params = Serializer::new(String::new())
-            .append_pair("metadata", &serde_json::to_string(&metadata).expect("Failed to serialize"))
+            .append_pair("metadata", &serde_json::to_string(metadata).expect("Failed to serialize"))
             .finish();
 
         self.send_put_request(&pq, params).await
