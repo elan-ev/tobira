@@ -323,7 +323,7 @@ metadata-form:
   title: Titel
   description: Beschreibung
   required: Pflichtfeld
-  save: Änderungen speichern
+  save: Metadaten speichern
   errors:
     field-required: Dieses Feld darf nicht leer sein.
 
@@ -472,17 +472,32 @@ manage:
           Der Löschvorgang dieses Eintrags in Opencast wurde angesetzt und es wird
           nach dessen Erfolg hier entfernt.
 
+  video-list:
+    content: Inhalt
+    no-content: Keine Videos
+    no-of-videos_one: '{{count}} Videos'
+    no-of-videos_other: '{{count}} Videos'
+    edit:
+      description: >
+        Sie können Video hinzufügen, die momentan in keiner Serie enthalten sind.
+        Hier entfernte Videos werden nicht gelöscht, sondern können anschließend
+        in diese oder andere Serien eingebunden werden.
+      add-video: Video hinzufügen
+      to-be-added: wird hinzugefügt
+      remove: Entfernen
+      to-be-removed: wird entfernt
+      undo: Widerrufen
+      save: Inhalt speichern
+
   my-series:
     title: Meine Serien
-    content: Inhalt
-    no-of-videos: '{{count}} Videos'
     details:
       title: Seriendetails
       referencing-pages-explanation: 'Diese Serie wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Diese Serie wird von keiner Seite referenziert.
       created-note: Serie wurde erstellt.
     delete-note: >
-      In der Serie enthaltene Video werden nicht gelöschtund können einer anderen Serie
+      In der Serie enthaltene Video werden nicht gelöscht und können einer anderen Serie
       zugeordnet werden.
     create:
       title: Serie erstellen

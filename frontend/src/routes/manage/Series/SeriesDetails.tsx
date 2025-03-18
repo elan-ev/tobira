@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { graphql, useMutation } from "react-relay";
+import { graphql } from "react-relay";
 
 import i18n from "../../../i18n";
 import { makeManageSeriesRoute, Series } from "./Shared";
@@ -15,6 +15,12 @@ import {
 } from "../Shared/Details";
 import { Link } from "../../../router";
 import { useNotification } from "../../../ui/NotificationContext";
+import { ManageVideoListContent } from "../Shared/EditVideoList";
+import { useDisposableMutation } from "../../../relay";
+import {
+    SeriesDetailsMetadataMutation,
+} from "./__generated__/SeriesDetailsMetadataMutation.graphql";
+import { SeriesDetailsContentMutation } from "./__generated__/SeriesDetailsContentMutation.graphql";
 
 
 const updateSeriesMetadata = graphql`
@@ -26,6 +32,25 @@ const updateSeriesMetadata = graphql`
 const deleteSeriesMutation = graphql`
     mutation SeriesDetailsDeleteMutation($id: ID!) {
         deleteSeries(id: $id) { id }
+    }
+`;
+
+const editSeriesContent = graphql`
+    mutation SeriesDetailsContentMutation($id: ID!, $addedEvents: [ID!]!, $removedEvents: [ID!]!) {
+        updateSeriesContent(id: $id, addedEvents: $addedEvents, removedEvents: $removedEvents) {
+            entries {
+                __typename
+                ...on AuthorizedEvent {
+                    id
+                    isLive
+                    title
+                    created
+                    creators
+                    description
+                    syncedData { thumbnail audioOnly duration startTime endTime }
+                }
+            }
+        }
     }
 `;
 
@@ -47,6 +72,7 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
                 new URL(DirectSeriesRoute.url({ seriesId: series.id }), document.baseURI)
             } />,
             <SeriesMetadataSection key="metadata" series={series} />,
+            <SeriesContentSection key="content" series={series} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms kind="series" hostRealms={series.hostRealms} itemLink={realmPath => (
                     <Link to={SeriesRoute.url({ realmPath: realmPath, seriesId: series.id })}>
@@ -65,7 +91,7 @@ const NotificationSection: React.FC = () => {
 
 const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
     const { t } = useTranslation();
-    const [commit] = useMutation(deleteSeriesMutation);
+    const [commit] = useDisposableMutation(deleteSeriesMutation);
 
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <DeleteButton
@@ -73,10 +99,7 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
             itemTitle={series.title}
             itemType="series"
             returnPath="/~manage/series"
-            commit={config => {
-                const disposable = commit(config);
-                return { [Symbol.dispose]: () => disposable.dispose() };
-            }}
+            commit={commit}
         >
             <br />
             <p>{t("manage.my-series.delete-note")}</p>
@@ -85,14 +108,25 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
 };
 
 const SeriesMetadataSection: React.FC<{ series: Series }> = ({ series }) => {
-    const [commit, inFlight] = useMutation(updateSeriesMetadata);
+    const [commit, inFlight]
+        = useDisposableMutation<SeriesDetailsMetadataMutation>(updateSeriesMetadata);
 
     return <MetadataSection
         item={{ ...series, description: series.syncedData?.description }}
-        inFlight={inFlight}
-        commit={config => {
-            const disposable = commit(config);
-            return { [Symbol.dispose]: () => disposable.dispose() };
-        }}
+        {...{ commit, inFlight }}
+    />;
+};
+
+const SeriesContentSection: React.FC<{ series: Series }> = ({ series }) => {
+    const { t } = useTranslation();
+    const [commit, inFlight]
+        = useDisposableMutation<SeriesDetailsContentMutation>(editSeriesContent);
+
+    return <ManageVideoListContent
+        listId={series.id}
+        listEntries={[...series.entries]}
+        getUpdatedEntries={data => [...data.updateSeriesContent.entries]}
+        description={t("manage.my-series.details.edit-note")}
+        {...{ commit, inFlight }}
     />;
 };

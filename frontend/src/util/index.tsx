@@ -288,11 +288,14 @@ export const useLogoConfig = () => {
 
 
 // I know "Inertable" is not a word, but it's a good name for this utility and I like it.
-type InertableProps = PropsWithChildren & { isInert: boolean }
+type InertableProps = PropsWithChildren & {
+    isInert: boolean;
+    className?: string;
+}
 
 /** Can be used to conditionally disable and grey out control elements. */
-export const Inertable: React.FC<InertableProps> = ({ children, isInert }) => (
-    <div {...isInert && { inert: "true", css: { opacity: 0.7 } }}>
+export const Inertable: React.FC<InertableProps> = ({ children, isInert, className }) => (
+    <div {...{ className }} {...isInert && { inert: "true", css: { opacity: 0.7 } }}>
         {children}
     </div>
 );

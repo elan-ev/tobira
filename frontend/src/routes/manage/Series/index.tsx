@@ -105,10 +105,10 @@ export type SingleSeries = Series[number];
 export const seriesColumns: ColumnProps<SingleSeries>[] = [
     {
         key: "EVENT_COUNT",
-        label: "manage.my-series.content",
+        label: "manage.video-list.content",
         headerWidth: 112,
         column: ({ item }) => <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.my-series.no-of-videos", { count: item.numVideos })}
+            {i18n.t("manage.video-list.no-of-videos", { count: item.numVideos })}
         </td>,
     },
     {

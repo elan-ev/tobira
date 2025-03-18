@@ -84,8 +84,13 @@ const query = graphql`
             entries {
                 __typename
                 ...on AuthorizedEvent {
+                    id
                     isLive
-                    syncedData { thumbnail audioOnly }
+                    title
+                    created
+                    creators
+                    description
+                    syncedData { thumbnail audioOnly duration startTime endTime }
                 }
             }
             hostRealms { id isMainRoot name path }

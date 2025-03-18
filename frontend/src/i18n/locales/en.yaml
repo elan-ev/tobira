@@ -321,7 +321,7 @@ metadata-form:
   title: Title
   description: Description
   required: required
-  save: Save changes
+  save: Save metadata
   errors:
     field-required: This field is required (cannot be empty).
 
@@ -452,15 +452,30 @@ manage:
         pending: >
           The deletion of this entry was requested in Opencast and it will be removed from this list upon success.
 
+  video-list:
+    content: Content
+    no-content: No videos
+    no-of-videos_one: '{{count}} video'
+    no-of-videos_other: '{{count}} videos'
+    edit:
+      add-video: Add video
+      to-be-added: will be added
+      remove: Remove
+      to-be-removed: will be removed
+      undo: Undo
+      save: Save content
+
   my-series:
     title: My series
-    content: Content
-    no-of-videos: '{{count}} videos'
     details:
       title: Series details
       referencing-pages-explanation: 'This series is referenced on the following pages:'
       no-referencing-pages: No pages reference this series.
       created-note: Series has been created.
+      edit-note: >
+        You can add videos that you have write access for and that are currently not part of any series.
+        Removing a video from this list does not delete the video itself, but will make it available for
+        this or other series.
     delete-note: >
       Videos in this series will not be deleted.
       They will remain in the system and can be added to another series.
