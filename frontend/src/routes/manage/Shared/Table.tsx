@@ -71,7 +71,7 @@ export const ManageItems = <T extends Item>({
 
     let inner;
     if (connection.items.length === 0) {
-        inner = <div css={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        inner = <div css={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 32 }}>
             <Notification />
             <Card kind="info" css={{ width: "fit-content", marginTop: 16 }}>
                 {t("manage.item-table.no-entries-found")}

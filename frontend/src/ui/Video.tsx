@@ -169,6 +169,10 @@ export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = ({
         fontSize: 14,
         backgroundColor,
         color: "white",
+        "@container thumbnail (width < 110px)": {
+            fontSize: 12,
+            " > svg": { fontSize: 15 },
+        },
     }}>
         {children}
     </div>
@@ -181,6 +185,7 @@ export const ThumbnailOverlayContainer: React.FC<JSX.IntrinsicElements["div"]> =
     const isDark = useColorScheme().scheme === "dark";
 
     return <div css={{
+        container: "thumbnail / inline-size",
         position: "relative",
         transition: "0.2s box-shadow",
         overflow: "hidden",
