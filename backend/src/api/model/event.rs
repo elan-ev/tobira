@@ -477,7 +477,8 @@ impl AuthorizedEvent {
         let query = format!(
             "select {selection} from series \
                 inner join events on events.series = series.id \
-                where series.id = $1",
+                where series.id = $1 \
+                order by events.updated desc",
         );
         context.db
             .query_mapped(&query, dbargs![&series_key], |row| {
@@ -501,7 +502,7 @@ impl AuthorizedEvent {
         self.series.as_ref().map(|s| s.key)
     }
 
-    async fn load_for_api(
+    pub(crate) async fn load_for_api(
         id: Id,
         context: &Context,
         not_found_error: ApiError,
@@ -626,7 +627,7 @@ impl AuthorizedEvent {
     }
 
     /// Starts a workflow on the event.
-    async fn start_workflow(oc_id: &str, workflow_id: &str, context: &Context) -> ApiResult<StatusCode> {
+    pub(crate) async fn start_workflow(oc_id: &str, workflow_id: &str, context: &Context) -> ApiResult<StatusCode> {
         let response = context
             .oc_client
             .start_workflow(&oc_id, workflow_id)

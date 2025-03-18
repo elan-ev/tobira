@@ -1,16 +1,21 @@
 use chrono::{DateTime, Utc};
+use futures:: StreamExt;
 use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use postgres_types::ToSql;
+use serde_json::json;
 
 use crate::{
     api::{
-        err::{self, invalid_input, ApiError, ApiResult}, model::{
+        Context, Id, Node, NodeValue,
+        err::{self, invalid_input, ApiError, ApiResult},
+        model::{
             acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
-            shared::{convert_acl_input, SortDirection, ToSqlColumn},
-        }, util::LazyLoad, Context, Id, Node, NodeValue
+            shared::{SortDirection, ToSqlColumn, convert_acl_input},
+        },
+        util::LazyLoad,
     },
     db::{
         types::SeriesState as State,
@@ -489,7 +494,7 @@ impl Series {
 
         let response = context
             .oc_client
-            .update_metadata(&series, metadata)
+            .update_metadata(&series, &metadata)
             .await
             .map_err(|e| {
                 error!("Failed to send metadata update request: {}", e);
@@ -518,6 +523,128 @@ impl Series {
             );
             Err(err::opencast_error!("Opencast API error: {}", response.status()))
         }
+    }
+
+    pub(crate) async fn update_content(
+        id: Id,
+        added_events: Vec<Id>,
+        removed_events: Vec<Id>,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        let series = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "series.metadata.not-found",
+                "series not found",
+            ),
+            err::not_authorized!(
+                key = "series.metadata.not-allowed",
+                "metadata update not allowed",
+            )
+        ).await?;
+
+        info!(series_id = %id, "Starting content update of series");
+
+        let metadata = |value: Option<String>| json!([{ "id": "isPartOf", "value": value }]);
+
+
+        let modified_events = added_events
+            .into_iter()
+            .map(|id| (id, Some(series.opencast_id.clone())))
+            .chain(removed_events.into_iter().map(|id| (id, None)));
+
+        // Todo: maybe just pass opencast ids of events. Then this wouldn't need to do all this extra loading.
+        let changes = futures::stream::iter(modified_events)
+            .map(|(id, oc_id_option)| async move {
+                let event = AuthorizedEvent::load_for_api(
+                    id,
+                    context,
+                    err::invalid_input!(key = "event.metadata.not-found", "event not found"),
+                    err::not_authorized!(
+                        key = "event.metadata.not-allowed",
+                        "not allowed to modify this event",
+                    ),
+                ).await?;
+
+                Ok::<_, ApiError>((event, metadata(oc_id_option)))
+            })
+            .buffer_unordered(8)
+            .try_collect::<Vec<_>>()
+            .await?;
+
+        let mut removed_events = Vec::new();
+        let mut added_events = Vec::new();
+
+        for (event, metadata) in changes {
+            let response = context
+                .oc_client
+                .update_metadata(&event, &metadata)
+                .await
+                .map_err(|e| {
+                    error!("Failed to send metadata update request: {}", e);
+                    err::opencast_unavailable!("Failed to send metadata update request")
+                })?;
+
+            if response.status() == StatusCode::NO_CONTENT {
+                //204: The metadata of the given namespace (i.e. "isPartOf") has been updated.
+                info!(event_id = %event.id(), "Event updated, attempting metadata republish");
+
+                // Todo: Is this even necessary? The DB is already updated below and sync wouldn't
+                // add any new information.
+                if let Err(e) = AuthorizedEvent::start_workflow(
+                    &event.opencast_id,
+                    "republish-metadata",
+                    context,
+                ).await {
+                    warn!(
+                        event_id = %event.id(),
+                        error = %e.msg,
+                        "Failed to republish metadata for event"
+                    );
+                    continue;
+                }
+
+                if metadata[0]["value"].is_null() {
+                    removed_events.push(event.key);
+                } else {
+                    added_events.push(event.key);
+                }
+            } else {
+                warn!(
+                    event_id = %event.id(),
+                    "Failed to update event, OC returned status: {}",
+                    response.status(),
+                );
+            }
+        }
+
+        if !removed_events.is_empty() || !added_events.is_empty() {
+            let query = "\
+                update events \
+                set \
+                    series = case \
+                        when id = any($1) then $3 \
+                        when id = any($2) then null \
+                        else series \
+                    end, \
+                    part_of = case \
+                        when id = any($1) then $4 \
+                        when id = any($2) then null \
+                        else part_of \
+                    end, \
+                    updated = current_timestamp \
+                where id = any($1) or id = any($2) \
+            ";
+
+            context.db
+                .execute(query, &[&added_events, &removed_events, &series.key, &series.opencast_id])
+                .await?;
+        }
+
+        Self::load_by_id(id, context)
+            .await?
+            .ok_or_else(|| invalid_input!("`seriesId` does not refer to a valid series"))
     }
 
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<Series> {

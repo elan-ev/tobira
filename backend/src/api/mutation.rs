@@ -106,6 +106,15 @@ impl Mutation {
         Series::update_metadata(id, &title, description.as_deref(), context).await
     }
 
+    async fn update_series_content(
+        id: Id,
+        added_events: Vec<Id>,
+        removed_events: Vec<Id>,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        Series::update_content(id, added_events, removed_events, context).await
+    }
+
     /// Sends an http request to Opencast to create a new series,
     /// and stores the series in Tobira's DB.
     async fn create_series(
