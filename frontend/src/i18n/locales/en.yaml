@@ -424,6 +424,8 @@ manage:
       title: Title
       created: Created
       updated: Updated
+      series: Series
+    no-series: None
     no-entries-found: No entries found.
     missing-date: Unknown
 

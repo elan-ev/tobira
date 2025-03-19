@@ -20,6 +20,8 @@ import {
     ManageItems,
     TableRow,
 } from "../Shared/Table";
+import { useTranslation } from "react-i18next";
+import { ellipsisOverflowCss } from "../../../ui";
 
 
 const PATH = "/~manage/videos" as const;
@@ -74,7 +76,7 @@ const query = graphql`
                     description
                     isLive
                     tobiraDeletionTimestamp
-                    series { id }
+                    series { id title }
                     syncedData {
                         duration
                         thumbnail
@@ -99,6 +101,11 @@ export type Event = Events[number];
 // Todo: add series column
 const videoColumns: ColumnProps<Event>[] = [
     {
+        key: "SERIES",
+        label: "manage.item-table.columns.series",
+        column: ({ item }) => <SeriesColumn title={item.series?.title} />,
+    },
+    {
         key: "UPDATED",
         label: "manage.item-table.columns.updated",
         column: ({ item }) => <DateColumn date={item.syncedData?.updated} />,
@@ -109,6 +116,25 @@ const videoColumns: ColumnProps<Event>[] = [
         column: ({ item }) => <DateColumn date={item.created} />,
     },
 ];
+
+const SeriesColumn: React.FC<{ title?: string }> = ({ title }) => {
+    const { t } = useTranslation();
+
+    return (
+        <td css={{
+            "&&": { display: "block" },
+            fontSize: 14,
+            ...ellipsisOverflowCss(3),
+        }}>
+            {title
+                // Todo 1: consider making this a link to the series
+                // Todo 2: improve backend sorting so that videos without series are also grouped
+                ? <>{title}</>
+                : <i>{t("manage.item-table.no-series")}</i>
+            }
+        </td>
+    );
+};
 
 const EventRow: React.FC<{ item: Event }> = ({ item }) => <TableRow
     itemType="video"
