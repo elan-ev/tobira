@@ -441,6 +441,8 @@ manage:
       title: Titel
       created: Erstellt
       updated: Aktualisiert
+      series: Serie
+    no-series: Keine
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt
 
