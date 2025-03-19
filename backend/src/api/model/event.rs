@@ -625,6 +625,74 @@ impl AuthorizedEvent {
         }
     }
 
+    pub(crate) async fn update_metadata(
+        id: Id,
+        title: &str,
+        description: Option<&str>,
+        context: &Context,
+    ) -> ApiResult<AuthorizedEvent> {
+        let event = Self::load_for_api(
+            id,
+            context,
+            err::invalid_input!(
+                key = "event.metadata.not-found",
+                "event not found",
+            ),
+            err::not_authorized!(
+                key = "event.metadata.not-allowed",
+                "metadata update not allowed",
+            )
+        ).await?;
+
+        info!(event_id = %id, "Requesting metadata update of event");
+
+        let metadata = serde_json::json!([
+            {
+                "id": "title",
+                "value": title
+            },
+            {
+                "id": "description",
+                "value": description
+            },
+        ]);
+
+        let response = context
+            .oc_client
+            .update_metadata(&event, metadata)
+            .await
+            .map_err(|e| {
+                error!("Failed to send metadata update request: {}", e);
+                err::opencast_unavailable!("Failed to send metadata update request")
+            })?;
+
+        if response.status() == StatusCode::NO_CONTENT {
+            // 204: The metadata of the given namespace has been updated.
+            Self::start_workflow(&event.opencast_id, "republish-metadata", &context).await?;
+
+            context.db.execute("\
+                update all_events \
+                set title = $2, description = $3 \
+                where id = $1 \
+            ", &[&event.key, &title, &description]).await?;
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "event.acl.not-found",
+                    "event not found",
+                ))?
+                .into_result()
+        } else {
+            warn!(
+                event_id = %id,
+                "Failed to update event acl, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
+
     /// Starts a workflow on the event.
     async fn start_workflow(oc_id: &str, workflow_id: &str, context: &Context) -> ApiResult<StatusCode> {
         let response = context

@@ -78,6 +78,17 @@ impl Mutation {
         AuthorizedEvent::update_acl(id, acl, context).await
     }
 
+    /// Updates the title and description of an event. A request for this is sent to Opencast,
+    /// and the event is optimistically updated in Tobira's DB.
+    async fn update_event_metadata(
+        id: Id,
+        title: String,
+        description: Option<String>,
+        context: &Context,
+    ) -> ApiResult<AuthorizedEvent> {
+        AuthorizedEvent::update_metadata(id, &title, description.as_deref(), context).await
+    }
+
     /// Deletes the given series by sending a delete request to Opencast.
     /// The series is marked as "deletion pending" in Tobira and fully removed once Opencast
     /// finished deleting the series.

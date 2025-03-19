@@ -388,6 +388,11 @@ type Mutation {
   """
   updateEventAcl(id: ID!, acl: [AclInputEntry!]!): AuthorizedEvent!
   """
+    Updates the title and description of an event. A request for this is sent to Opencast,
+    and the event is optimistically updated in Tobira's DB.
+  """
+  updateEventMetadata(id: ID!, title: String!, description: String): AuthorizedEvent!
+  """
     Deletes the given series by sending a delete request to Opencast.
     The series is marked as "deletion pending" in Tobira and fully removed once Opencast
     finished deleting the series.
