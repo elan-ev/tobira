@@ -1,7 +1,7 @@
 import i18n from "../../../i18n";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
-import { buttonStyle, useAppkitConfig, useColorScheme } from "@opencast/appkit";
+import { buttonStyle, Card, useAppkitConfig, useColorScheme } from "@opencast/appkit";
 
 import { Link } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
@@ -22,6 +22,7 @@ import {
     HostRealms,
 } from "../Shared/Details";
 import { VideoDetailsDeleteMutation } from "./__generated__/VideoDetailsDeleteMutation.graphql";
+import { VideoDetailsMetadataMutation } from "./__generated__/VideoDetailsMetadataMutation.graphql";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
@@ -44,7 +45,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
             <DirectLink key="direct-link" withTimestamp url={
                 new URL(DirectVideoRoute.url({ videoId: authEvent.id }), document.baseURI)
             } />,
-            <MetadataSection key="metadata" item={event} />,
+            <VideoMetadataSection key="metadata" event={event} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms kind="videos" hostRealms={authEvent.hostRealms} itemLink={realmPath => (
                     <Link to={VideoRoute.url({ realmPath: realmPath, videoID: authEvent.id })}>
@@ -54,7 +55,14 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
             </div>,
         ]}
     />,
+    { fetchWorkflowState: true },
 );
+
+const updateEventMetadata = graphql`
+    mutation VideoDetailsMetadataMutation($id: ID!, $metadata: BasicMetadata!) {
+        updateEventMetadata(id: $id, metadata: $metadata) { id hasActiveWorkflows }
+    }
+`;
 
 const deleteVideoMutation = graphql`
     mutation VideoDetailsDeleteMutation($id: ID!) {
@@ -96,5 +104,20 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
             commit={commit}
         />
     </ButtonSection>;
+};
+
+const VideoMetadataSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
+    const [commit, inFlight] = useMutation<VideoDetailsMetadataMutation>(updateEventMetadata);
+
+    return <>
+        {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: -14 }}>
+            <Trans i18nKey="metadata-form.event-workflow-active" />
+        </Card>}
+        <MetadataSection
+            disabled={event.hasActiveWorkflows}
+            {...{ commit, inFlight }}
+            item={event}
+        />
+    </>;
 };
 

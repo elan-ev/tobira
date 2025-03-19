@@ -231,7 +231,10 @@ impl OcClient {
             .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
 
         let (out, _) = self.deserialize_response::<EventStatus>(response, &uri).await?;
-        Ok(out.processing_state == "RUNNING")
+        Ok(out.processing_state == "RUNNING"
+            || out.processing_state == "INSTANTIATED"
+            || out.processing_state == "FAILING"
+        )
     }
 
     pub async fn create_series(

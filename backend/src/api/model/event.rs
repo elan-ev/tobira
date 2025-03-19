@@ -43,6 +43,7 @@ use super::{
     shared::{
         define_sort_column_and_order,
         load_writable_for_user,
+        BasicMetadata,
         Connection,
         ConnectionQueryParts,
         PageInfo,
@@ -502,7 +503,7 @@ impl AuthorizedEvent {
         self.series.as_ref().map(|s| s.key)
     }
 
-    async fn load_for_api(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
+    async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_by_id(id, context)
             .await?
             .ok_or_else(||  err::invalid_input!(key = "event.not-found", "event not found"))?
@@ -516,7 +517,7 @@ impl AuthorizedEvent {
     }
 
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
-        let event = Self::load_for_api(id, context).await?;
+        let event = Self::load_for_mutation(id, context).await?;
 
         let response = context
             .oc_client
@@ -552,11 +553,11 @@ impl AuthorizedEvent {
         }
 
         info!(event_id = %id, "Requesting ACL update of event");
-        let event = Self::load_for_api(id, context).await?;
+        let event = Self::load_for_mutation(id, context).await?;
 
         if Self::has_active_workflows(&event, context).await? {
             return Err(err::opencast_error!(
-                key = "event.workflow.active",
+                key = "event.workflow.active-acl",
                 "ACL change blocked by another workflow",
             ));
         }
@@ -582,17 +583,68 @@ impl AuthorizedEvent {
                 where id = $1 \
             ", &[&event.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
 
-            Self::load_by_id(id, context)
-                .await?
-                .ok_or_else(|| err::invalid_input!(
-                    key = "event.not-found",
-                    "event not found",
-                ))?
-                .into_result()
+            Self::load_for_mutation(id, context).await
         } else {
             warn!(
                 event_id = %id,
                 "Failed to update event ACL, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
+
+    pub(crate) async fn update_metadata(
+        id: Id,
+        metadata: BasicMetadata,
+        context: &Context,
+    ) -> ApiResult<AuthorizedEvent> {
+        let event = Self::load_for_mutation(id, context).await?;
+
+        if Self::has_active_workflows(&event, context).await? {
+            return Err(err::opencast_error!(
+                key = "event.workflow.active-metadata",
+                "Metadata change blocked by another workflow",
+            ));
+        }
+
+        info!(event_id = %id, "Requesting metadata update of event");
+
+        let metadata_json = serde_json::json!([
+            {
+                "id": "title",
+                "value": metadata.title
+            },
+            {
+                "id": "description",
+                "value": metadata.description
+            },
+        ]);
+
+        let response = context
+            .oc_client
+            .update_metadata(&event, metadata_json)
+            .await
+            .map_err(|e| {
+                error!("Failed to send metadata update request: {}", e);
+                err::opencast_unavailable!("Failed to send metadata update request")
+            })?;
+
+        if response.status() == StatusCode::NO_CONTENT {
+            // 204: The metadata of the given namespace has been updated.
+            Self::start_workflow(&event.opencast_id, "republish-metadata", &context).await?;
+
+            context.db.execute("\
+                update all_events \
+                set title = $2, description = $3 \
+                where id = $1 \
+            ", &[&event.key, &metadata.title, &metadata.description]).await?;
+
+            Self::load_for_mutation(id, context).await
+        } else {
+            warn!(
+                event_id = %id,
+                "Failed to update event metadata, OC returned status: {}",
                 response.status(),
             );
             Err(err::opencast_error!("Opencast API error: {}", response.status()))
@@ -734,7 +786,7 @@ define_sort_column_and_order!(
         #[default]
         Created  => "created",
         Updated  => "updated",
-        Series   => "series",
+        Series   => "series.title",
     };
     pub struct VideosSortOrder
 );

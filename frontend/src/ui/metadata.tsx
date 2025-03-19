@@ -377,7 +377,6 @@ export const SubmitButtonWithStatus: React.FC<SubmitButtonWithStatusProps> = ({
     setSuccess,
     timeout = 1000,
 }) => {
-
     useEffect(() => {
         if (!success) {
             return;

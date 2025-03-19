@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use juniper::{GraphQLEnum, GraphQLObject};
+use juniper::{GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use tokio_postgres::Row;
 
 use crate::{
@@ -297,3 +297,8 @@ pub(crate) fn convert_acl_input(entries: Vec<AclInputEntry>) -> AclForDB {
     }
 }
 
+#[derive(GraphQLInputObject)]
+pub(crate) struct BasicMetadata {
+    pub(crate) title: String,
+    pub(crate) description: Option<String>,
+}

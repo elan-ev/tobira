@@ -22,6 +22,9 @@ import {
 } from "../Shared/Table";
 import { useTranslation } from "react-i18next";
 import { ellipsisOverflowCss } from "../../../ui";
+import { Link } from "../../../router";
+import { DirectSeriesRoute } from "../../Series";
+import { COLORS } from "../../../color";
 
 
 const PATH = "/~manage/videos" as const;
@@ -103,7 +106,11 @@ const videoColumns: ColumnProps<Event>[] = [
     {
         key: "SERIES",
         label: "manage.item-table.columns.series",
-        column: ({ item }) => <SeriesColumn title={item.series?.title} />,
+        headerWidth: 175,
+        column: ({ item }) => <SeriesColumn
+            title={item.series?.title}
+            seriesId={item.series?.id}
+        />,
     },
     {
         key: "UPDATED",
@@ -117,22 +124,28 @@ const videoColumns: ColumnProps<Event>[] = [
     },
 ];
 
-const SeriesColumn: React.FC<{ title?: string }> = ({ title }) => {
+type SeriesColumnProps = {
+    seriesId?: string;
+    title?: string;
+};
+
+const SeriesColumn: React.FC<SeriesColumnProps> = ({ title, seriesId }) => {
     const { t } = useTranslation();
+
+    const titleLink = seriesId
+        ? <Link to={DirectSeriesRoute.url({ seriesId })} css={{ textDecoration: "none" }}>
+            {title && title.trim().length > 0 ? title : <i>
+                {t("manage.item-table.no-series-title")}
+            </i>}
+        </Link>
+        : <i css={{ color: COLORS.neutral60 }}>{t("manage.item-table.no-series")}</i>;
 
     return (
         <td css={{
             "&&": { display: "block" },
             fontSize: 14,
             ...ellipsisOverflowCss(3),
-        }}>
-            {title
-                // Todo 1: consider making this a link to the series
-                // Todo 2: improve backend sorting so that videos without series are also grouped
-                ? <>{title}</>
-                : <i>{t("manage.item-table.no-series")}</i>
-            }
-        </td>
+        }}>{titleLink}</td>
     );
 };
 
@@ -151,6 +164,7 @@ const parseVideosColumn = (sortBy: string | null): VideosSortColumn =>
             "title": () => "TITLE" as const,
             "created": () => "CREATED" as const,
             "updated": () => "UPDATED" as const,
+            "series": () => "SERIES" as const,
         }) ?? "CREATED"
         : "CREATED";
 

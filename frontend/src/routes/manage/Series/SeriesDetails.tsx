@@ -22,7 +22,7 @@ import { useNotification } from "../../../ui/NotificationContext";
 
 
 const updateSeriesMetadata = graphql`
-    mutation SeriesDetailsMetadataMutation($id: ID!, $metadata: SeriesMetadata!) {
+    mutation SeriesDetailsMetadataMutation($id: ID!, $metadata: BasicMetadata!) {
         updateSeriesMetadata(id: $id, metadata: $metadata) { id }
     }
 `;

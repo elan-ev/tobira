@@ -76,6 +76,11 @@ input AclInputEntry {
   actions: [String!]!
 }
 
+input BasicMetadata {
+  title: String!
+  description: String
+}
+
 input ChildIndex {
   id: ID!
   index: Int!
@@ -137,11 +142,6 @@ input RealmLineageComponent {
 input RealmSpecifier {
   name: String
   pathSegment: String!
-}
-
-input SeriesMetadata {
-  title: String!
-  description: String
 }
 
 input SeriesSortOrder {
@@ -401,6 +401,11 @@ type Mutation {
   """
   updateEventAcl(id: ID!, acl: [AclInputEntry!]!): AuthorizedEvent!
   """
+    Updates the title and description of an event. A request for this is sent to Opencast,
+    and the event is optimistically updated in Tobira's DB.
+  """
+  updateEventMetadata(id: ID!, metadata: BasicMetadata!): AuthorizedEvent!
+  """
     Deletes the given series by sending a delete request to Opencast.
     The series is marked as "deletion pending" in Tobira and fully removed once Opencast
     finished deleting the series.
@@ -419,12 +424,12 @@ type Mutation {
     Updates the title and description of a series. A request for this is sent to Opencast,
     and the series is preliminarily updated in Tobira's DB.
   """
-  updateSeriesMetadata(id: ID!, metadata: SeriesMetadata!): Series!
+  updateSeriesMetadata(id: ID!, metadata: BasicMetadata!): Series!
   """
     Sends an http request to Opencast to create a new series,
     and stores the series in Tobira's DB.
   """
-  createSeries(metadata: SeriesMetadata!, acl: [AclInputEntry!]!): Series!
+  createSeries(metadata: BasicMetadata!, acl: [AclInputEntry!]!): Series!
   """
     Sets the order of all children of a specific realm.
 

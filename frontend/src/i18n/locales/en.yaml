@@ -323,6 +323,10 @@ metadata-form:
   save: Save changes
   errors:
     field-required: This field is required (cannot be empty).
+  event-workflow-active: >
+      Changing the metadata is not possible at this time, since the video is being processed in the background.
+      <br />
+      Please try again later.
 
 acl:
   unknown-user-note: unknown
@@ -426,6 +430,7 @@ manage:
       updated: Updated
       series: Series
     no-series: None
+    no-series-title: Missing title
     no-entries-found: No entries found.
     missing-date: Unknown
 
@@ -678,7 +683,8 @@ api-remote-errors:
       not-allowed: You are not allowed to perform this event action.
     workflow:
       not-allowed: You are not allowed to inquire about workflow activity of this video.
-      active: $t(manage.access.workflow-active)
+      active-acl: $t(manage.access.workflow-active)
+      active-metadata: $t(metadata-form.event-workflow-active)
   series:
     not-found: "Action failed: series not found."
     not-allowed: You are not allowed to perform this series action.

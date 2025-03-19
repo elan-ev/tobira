@@ -57,7 +57,7 @@ const query = graphql`
 `;
 
 const createSeriesMutation = graphql`
-    mutation CreateSeriesMutation($metadata: SeriesMetadata!, $acl: [AclInputEntry!]!) {
+    mutation CreateSeriesMutation($metadata: BasicMetadata!, $acl: [AclInputEntry!]!) {
         createSeries(metadata: $metadata, acl: $acl) { id }
     }
 `;
