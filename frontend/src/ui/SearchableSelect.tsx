@@ -16,6 +16,7 @@ import {
 import {
     SearchableSelectSeriesQuery,
 } from "./__generated__/SearchableSelectSeriesQuery.graphql";
+import { LuCalendar } from "react-icons/lu";
 
 
 type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],
@@ -132,6 +133,7 @@ export type VideoListOption = {
     readonly opencastId: string;
     readonly title: string;
     readonly description?: string | null;
+    readonly created?: string | null;
 };
 
 export const VideoListSelector: React.FC<VideoListSelectorProps> = ({
@@ -149,6 +151,7 @@ export const VideoListSelector: React.FC<VideoListSelectorProps> = ({
                         opencastId
                         title
                         description
+                        created
                     }
                 }
             }
@@ -206,7 +209,28 @@ export const VideoListSelector: React.FC<VideoListSelectorProps> = ({
 
 const formatVideoListOption = (videoList: VideoListOption, _: TFunction) => (
     <div>
-        <div>{videoList.title}</div>
+        <div css={{ display: "flex", gap: 8 }}>
+            {videoList.title}
+            {videoList.created && <DateWithIcon dateString={videoList.created} />}
+        </div>
         <SmallDescription css={{ margin: 0 }} lines={1} text={videoList.description} />
     </div>
 );
+
+const DateWithIcon: React.FC<{ dateString: string }> = ({ dateString }) => {
+    const { i18n } = useTranslation();
+    const date = new Date(dateString);
+
+    return <div css={{
+        display: "flex",
+        gap: 4,
+        fontSize: 10,
+        color: COLORS.neutral60,
+        alignItems: "center",
+    }}>
+        <LuCalendar />
+        <time dateTime={date.toISOString()}>
+            {date.toLocaleDateString(i18n.language)}
+        </time>
+    </div>;
+};
