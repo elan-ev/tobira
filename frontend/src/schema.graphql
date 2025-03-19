@@ -785,6 +785,7 @@ type SearchSeries implements Node {
   hostRealms: [SearchRealm!]!
   thumbnails: [ThumbnailInfo!]!
   matches: SearchSeriesMatches!
+  created: DateTime
 }
 
 type SearchSeriesMatches {

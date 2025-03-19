@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::{DateTime, Utc};
 use juniper::GraphQLObject;
 use meilisearch_sdk::search::MatchRange;
 
@@ -21,6 +22,7 @@ pub(crate) struct SearchSeries {
     host_realms: Vec<SearchRealm>,
     thumbnails: Vec<ThumbnailInfo>,
     matches: SearchSeriesMatches,
+    created: Option<DateTime<Utc>>,
 }
 
 
@@ -52,6 +54,7 @@ impl SearchSeries {
             opencast_id: src.opencast_id,
             title: src.title,
             description: src.description,
+            created: src.created,
             host_realms: src.host_realms.into_iter()
                 .map(|r| SearchRealm::without_matches(r))
                 .collect(),
