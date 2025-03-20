@@ -17,7 +17,7 @@ import {
 import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
 import {
-    LuColumns, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuAlertCircle, LuInfo,
+    LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
@@ -414,7 +414,7 @@ const LayoutMenu: React.FC = () => {
     const ref = useRef<FloatingHandle>(null);
 
     const icon = match(state.layoutState, {
-        SLIDER: () => <LuColumns />,
+        SLIDER: () => <LuColumns2 />,
         GALLERY: () => <LuLayoutGrid />,
         LIST: () => <LuList />,
         "%future added value": () => unreachable(),
@@ -477,7 +477,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         LayoutTranslationKey,
         IconType
     ][] = [
-        ["SLIDER", "slider", LuColumns],
+        ["SLIDER", "slider", LuColumns2],
         ["GALLERY", "gallery", LuLayoutGrid],
         ["LIST", "list", LuList],
     ];
@@ -913,7 +913,7 @@ const Item: React.FC<ItemProps> = ({
                     + "#2e2e2e, #2e2e2e 30px, #292929 30px, #292929 60px)",
                 color: "#dbdbdb",
             }}>
-                <LuAlertCircle />
+                <LuCircleAlert />
             </BaseThumbnailReplacement>
         </ThumbnailOverlayContainer>
         : <>

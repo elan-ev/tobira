@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { Controller, useController, useForm } from "react-hook-form";
-import { LuCheckCircle, LuUpload, LuInfo } from "react-icons/lu";
+import { LuCircleCheck, LuUpload, LuInfo } from "react-icons/lu";
 import { Spinner, WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
@@ -206,7 +206,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
             marginTop: "max(16px, 10vh - 50px)",
             gap: 32,
         }}>
-            <LuCheckCircle css={{ fontSize: 64, color: COLORS.happy0 }} />
+            <LuCircleCheck css={{ fontSize: 64, color: COLORS.happy0 }} />
             {t("upload.finished")}
         </div>;
     } else {

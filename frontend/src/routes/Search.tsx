@@ -3,7 +3,7 @@ import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "reac
 import {
     LuCalendar,
     LuCalendarRange,
-    LuLayout,
+    LuPanelsTopLeft,
     LuRadio,
     LuVolume2,
     LuX,
@@ -1048,7 +1048,7 @@ const SearchRealm: React.FC<RealmItem> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-        }}><LuLayout /></div>,
+        }}><LuPanelsTopLeft /></div>,
         info: (
             <div css={{
                 padding: "6px 0",
