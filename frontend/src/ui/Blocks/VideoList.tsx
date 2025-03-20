@@ -13,6 +13,7 @@ import type { i18n } from "i18next";
 import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
     useColorScheme, Floating, FloatingHandle, useFloatingItemProps, bug,
+    matchTag,
 } from "@opencast/appkit";
 import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
@@ -123,18 +124,13 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
     const user = useUser();
 
-    const items = listEntries.map(entry => {
-        if (entry.__typename === "AuthorizedEvent") {
-            const out = readInlineData<VideoListEventData$key>(videoListEventFragment, entry);
-            return out;
-        } else if (entry.__typename === "Missing") {
-            return "missing";
-        } else if (entry.__typename === "NotAllowed") {
-            return "unauthorized";
-        } else {
-            return unreachable();
-        }
-    });
+    const items = listEntries.map(entry => matchTag(entry, "__typename", {
+        "AuthorizedEvent": entry =>
+            readInlineData<VideoListEventData$key>(videoListEventFragment, entry),
+        "Missing": () => "missing" as VideoListItem,
+        "NotAllowed": () => "unauthorized" as VideoListItem,
+        "%other": () => unreachable(),
+    }));
 
     const {
         mainItems,
