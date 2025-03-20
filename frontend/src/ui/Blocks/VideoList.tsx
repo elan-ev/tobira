@@ -265,7 +265,7 @@ const orderItems = (
             "OLD_TO_NEW": () => reverseTime ? timeMs(b) - timeMs(a) : timeMs(a) - timeMs(b),
             "AZ": () => collator.compare(a.title, b.title),
             "ZA": () => collator.compare(b.title, a.title),
-        }, unreachable);
+        });
 
 
     mainItems.sort((a, b) => {
