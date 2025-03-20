@@ -282,7 +282,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                 // poll showed that this matches the intuition of almost everyone.
                 "ASCENDING": () => <LuArrowDownNarrowWide />,
                 "DESCENDING": () => <LuArrowUpWideNarrow />,
-            }, () => null)}
+            })}
         </Link>
     </th>;
 };
@@ -504,16 +504,16 @@ const DEFAULT_SORT_DIRECTION: SortDirection = "DESCENDING";
 const queryParamsToVars = (queryParams: URLSearchParams): VariablesOf<VideoManageQuery> => {
     // Sort order
     const sortBy = queryParams.get("sortBy");
-    const column = sortBy !== null && match<string, EventSortColumn>(sortBy, {
-        "title": () => "TITLE",
-        "created": () => "CREATED",
-        "updated": () => "UPDATED",
+    const column = sortBy !== null && match(sortBy, {
+        "title": () => "TITLE" as const,
+        "created": () => "CREATED" as const,
+        "updated": () => "UPDATED" as const,
     });
 
     const sortOrder = queryParams.get("sortOrder");
-    const direction = sortOrder !== null && match<string, SortDirection>(sortOrder, {
-        "desc": () => "DESCENDING",
-        "asc": () => "ASCENDING",
+    const direction = sortOrder !== null && match(sortOrder, {
+        "desc": () => "DESCENDING" as const,
+        "asc": () => "ASCENDING" as const,
     });
 
     const order = !column || !direction
@@ -546,7 +546,7 @@ const varsToQueryParams = (vars: VariablesOf<VideoManageQuery>): URLSearchParams
         searchParams.set("sortOrder", match(vars.order.direction, {
             "ASCENDING": () => "asc",
             "DESCENDING": () => "desc",
-        }, () => ""));
+        }) ?? "");
     }
 
     // Pagination

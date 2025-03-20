@@ -3,7 +3,7 @@ import React, { ReactElement, useState } from "react";
 import { graphql, loadQuery, useMutation } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
-import { LuInfo, LuSettings, LuPlusCircle, LuPenSquare } from "react-icons/lu";
+import { LuInfo, LuSettings, LuCirclePlus, LuSquarePen } from "react-icons/lu";
 import { WithTooltip, screenWidthAtMost } from "@opencast/appkit";
 
 import { environment as relayEnv } from "../relay";
@@ -277,8 +277,8 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     /* eslint-disable react/jsx-key */
     const buttons: [string, string, ReactElement][] = [
         ["/~manage/realm?path=", t("realm.page-settings"), <LuSettings />],
-        ["/~manage/realm/content?path=", t("realm.edit-page-content"), <LuPenSquare />],
-        ["/~manage/realm/add-child?parent=", t("realm.add-sub-page"), <LuPlusCircle />],
+        ["/~manage/realm/content?path=", t("realm.edit-page-content"), <LuSquarePen />],
+        ["/~manage/realm/add-child?parent=", t("realm.add-sub-page"), <LuCirclePlus />],
     ];
     /* eslint-enable react/jsx-key */
 
