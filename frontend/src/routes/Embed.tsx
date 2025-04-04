@@ -1,5 +1,5 @@
 import { ReactNode, Suspense } from "react";
-import { LuFrown, LuAlertTriangle } from "react-icons/lu";
+import { LuFrown, LuTriangleAlert } from "react-icons/lu";
 import { Translation, useTranslation } from "react-i18next";
 import {
     graphql, useFragment, usePreloadedQuery,
@@ -155,7 +155,7 @@ const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
 
     if (event.__typename === "NotAllowed") {
         return <PlayerPlaceholder>
-            <LuAlertTriangle />
+            <LuTriangleAlert />
             <div>{t("api-remote-errors.view.event")}</div>
         </PlayerPlaceholder>;
     }
@@ -190,7 +190,7 @@ export const BlockEmbedRoute = makeRoute({
 
         return {
             render: () => <PlayerPlaceholder>
-                <LuAlertTriangle />
+                <LuTriangleAlert />
                 <div>
                     <Translation>{t => t("embed.not-supported")}</Translation>
                 </div>
@@ -206,7 +206,7 @@ class ErrorBoundary extends GlobalErrorBoundary {
         }
 
         return <PlayerPlaceholder>
-            <LuAlertTriangle />
+            <LuTriangleAlert />
             <div>
                 <Translation>{t => t("errors.embedded")}</Translation>
             </div>

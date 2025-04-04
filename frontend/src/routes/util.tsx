@@ -47,7 +47,7 @@ export const sortRealms = <T extends { readonly name?: string | null }>(
     return match(sortOrder, {
         "ALPHABETIC_ASC": () => [...realms].sort((a, b) => compare(a.name, b.name)),
         "ALPHABETIC_DESC": () => [...realms].sort((a, b) => compare(b.name, a.name)),
-    }, () => realms);
+    }) ?? realms;
 };
 
 
