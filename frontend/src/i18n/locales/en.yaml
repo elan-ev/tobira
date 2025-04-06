@@ -667,29 +667,15 @@ api-remote-errors:
       thus you cannot create your own page. Contact a system administrator for
       further assistance.
   event:
-    delete:
-      not-found: >
-        The video you are trying to delete does not exist.
-        It might have been removed already.
-      not-allowed: You are not allowed to delete this video.
-    acl:
-      not-found: "Access policy update failed: video not found."
-      not-allowed: You are not allowed to update the access policies of this video.
+    update:
+      not-found: "Action failed: event not found."
+      not-allowed: You are not allowed to perform this event action.
     workflow:
       not-allowed: You are not allowed to inquire about workflow activity of this video.
       active: $t(manage.access.workflow-active)
   series:
-    acl:
-      not-found: "Access policy update failed: series not found."
-      not-allowed: You are not allowed to update the access policies of this series.
-    delete:
-      not-found: >
-        The series you are trying to delete does not exist.
-        It might have been removed already.
-      not-allowed: You are not allowed to delete this series.
-    metadata:
-      not-found: "Metadata update failed: series not found."
-      not-allowed: You are not allowed to update the metadata of this series.
+    not-found: "Action failed: series not found."
+    not-allowed: You are not allowed to perform this series action.
 
 embed:
   not-supported: This page can't be embedded.

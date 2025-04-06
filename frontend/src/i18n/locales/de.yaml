@@ -694,25 +694,14 @@ api-remote-errors:
       Daher können Sie sich keine persönliche Seite anlegen.
       Kontaktieren Sie einen Systemadministrator für weitere Unterstützung.
   event:
-    delete:
-      not-found: Das zu löschende Video existiert nicht. Möglicherweise wurde es bereits entfernt.
-      not-allowed: Sie haben nicht die Berechtigung, dieses Video zu löschen.
-    acl:
-      not-found: "Zugriffsrechte konnten nicht geändert werden: Video nicht gefunden."
-      not-allowed: Sie haben nicht die Berechtigung, die Zugriffsreche dieses Videos zu ändern.
+    not-found: "Aktion fehlgeschlagen: Video nicht gefunden."
+    not-allowed: Sie haben nicht die Berechtigung, diese Videoaktion durchzuführen.
     workflow:
       not-allowed: Sie haben nicht die Berechtigung, die Workflowaktivität für dieses Video abzufragen.
       active: $t(manage.access.workflow-active)
   series:
-    acl:
-      not-found: "Zugriffsrechte konnten nicht geändert werden: Serie nicht gefunden."
-      not-allowed: Sie haben nicht die Berechtigung, die Zugriffsreche dieser Serie zu ändern.
-    delete:
-      not-found: Die zu löschende Serie existiert nicht. Möglicherweise wurde sie bereits entfernt.
-      not-allowed: Sie haben nicht die Berechtigung, diese Serie zu löschen.
-    metadata:
-      not-found: "Metadaten konnten nicht geändert werden: Serie nicht gefunden."
-      not-allowed: Sie haben nicht die Berechtigung, die Metadaten dieser Serie zu ändern.
+    not-found: "Aktion fehlgeschlagen: Serie nicht gefunden."
+    not-allowed: Sie haben nicht die Berechtigung, diese Serienaktion durchzuführen.
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.

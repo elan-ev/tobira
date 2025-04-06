@@ -36,7 +36,7 @@ use crate::{
     sync::client::{AclInput, OpencastItem}
 };
 
-use self::{acl::AclInputEntry, err::ApiError};
+use self::acl::AclInputEntry;
 
 use super::{
     playlist::VideoListEntry,
@@ -501,37 +501,21 @@ impl AuthorizedEvent {
         self.series.as_ref().map(|s| s.key)
     }
 
-    async fn load_for_api(
-        id: Id,
-        context: &Context,
-        not_found_error: ApiError,
-        not_authorized_error: ApiError,
-    ) -> ApiResult<AuthorizedEvent> {
+    async fn load_for_api(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_by_id(id, context)
             .await?
-            .ok_or_else(|| not_found_error)?
+            .ok_or_else(||  err::invalid_input!(key = "event.not-found", "event not found"))?
             .into_result()?;
 
         if !context.auth.overlaps_roles(&event.write_roles) {
-            return Err(not_authorized_error);
+            return Err(err::not_authorized!(key = "event.not-allowed", "event action not allowed"));
         }
 
         Ok(event)
     }
 
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
-        let event = Self::load_for_api(
-            id,
-            context,
-            err::invalid_input!(
-                key = "event.delete.not-found",
-                "event not found"
-            ),
-            err::not_authorized!(
-                key = "event.delete.not-allowed",
-                "you are not allowed to delete this event",
-            )
-        ).await?;
+        let event = Self::load_for_api(id, context).await?;
 
         let response = context
             .oc_client
@@ -567,18 +551,7 @@ impl AuthorizedEvent {
         }
 
         info!(event_id = %id, "Requesting ACL update of event");
-        let event = Self::load_for_api(
-            id,
-            context,
-            err::invalid_input!(
-                key = "event.acl.not-found",
-                "event not found",
-            ),
-            err::not_authorized!(
-                key = "event.acl.not-allowed",
-                "you are not allowed to update this event's ACL",
-            )
-        ).await?;
+        let event = Self::load_for_api(id, context).await?;
 
         if Self::has_active_workflows(&event, context).await? {
             return Err(err::opencast_error!(
@@ -611,7 +584,7 @@ impl AuthorizedEvent {
             Self::load_by_id(id, context)
                 .await?
                 .ok_or_else(|| err::invalid_input!(
-                    key = "event.acl.not-found",
+                    key = "event.not-found",
                     "event not found",
                 ))?
                 .into_result()

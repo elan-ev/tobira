@@ -5,7 +5,7 @@ use postgres_types::ToSql;
 
 use crate::{
     api::{
-        err::{self, invalid_input, ApiError, ApiResult}, model::{
+        err::{self, invalid_input, ApiResult}, model::{
             acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
@@ -127,18 +127,13 @@ impl Series {
             .pipe(Ok)
     }
 
-    async fn load_for_api(
-        id: Id,
-        context: &Context,
-        not_found_error: ApiError,
-        not_authorized_error: ApiError,
-    ) -> ApiResult<Series> {
+    async fn load_for_api(id: Id, context: &Context) -> ApiResult<Series> {
         let series = Self::load_by_id(id, context)
             .await?
-            .ok_or_else(|| not_found_error)?;
+            .ok_or_else(|| err::invalid_input!(key = "series.not-found", "series not found"))?;
 
         if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[])) {
-            return Err(not_authorized_error);
+            return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
         }
 
         Ok(series)
@@ -356,18 +351,7 @@ impl Series {
         }
 
         info!(series_id = %id, "Requesting ACL update of series");
-        let series = Self::load_for_api(
-            id,
-            context,
-            err::invalid_input!(
-                key = "series.acl.not-found",
-                "series not found",
-            ),
-            err::not_authorized!(
-                key = "series.acl.not-allowed",
-                "ACL update not allowed",
-            )
-        ).await?;
+        let series = Self::load_for_api(id, context).await?;
 
         let response = context
             .oc_client
@@ -409,18 +393,7 @@ impl Series {
         metadata: SeriesMetadata,
         context: &Context,
     ) -> ApiResult<Series> {
-        let series = Self::load_for_api(
-            id,
-            context,
-            err::invalid_input!(
-                key = "series.metadata.not-found",
-                "series not found",
-            ),
-            err::not_authorized!(
-                key = "series.metadata.not-allowed",
-                "metadata update not allowed",
-            )
-        ).await?;
+        let series = Self::load_for_api(id, context).await?;
 
         info!(series_id = %id, "Requesting metadata update of series");
 
@@ -469,18 +442,7 @@ impl Series {
     }
 
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<Series> {
-        let series = Self::load_for_api(
-            id,
-            context,
-            err::invalid_input!(
-                key = "series.delete.not-found",
-                "series not found",
-            ),
-            err::not_authorized!(
-                key = "series.delete.not-allowed",
-                "deletion not allowed",
-            )
-        ).await?;
+        let series = Self::load_for_api(id, context).await?;
 
         info!(series_id = %id, "Attempting to send request to delete series in Opencast");
 
