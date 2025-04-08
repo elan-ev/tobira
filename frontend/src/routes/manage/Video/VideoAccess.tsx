@@ -15,6 +15,8 @@ import { VideoAccessAclMutation } from "./__generated__/VideoAccessAclMutation.g
 import { NoteWithTooltip } from "../../../ui";
 import { Link } from "../../../router";
 import { ManageSeriesAccessRoute } from "../Series/SeriesAccess";
+import { isSynced } from "../../../util";
+import { NotReadyNote } from "../../util";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -62,7 +64,7 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
     const [commit, inFlight] = useMutation<VideoAccessAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && !!event.series;
     const [editingBlocked, setEditingBlocked] = useState(
-        event.hasActiveWorkflows || aclLockedToSeries,
+        !isSynced(event) || event.hasActiveWorkflows || aclLockedToSeries,
     );
 
     const onSubmit = async ({ selections, saveModalRef, setCommitError }: SubmitAclProps) => {
@@ -85,9 +87,12 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
     };
 
     return <>
-        {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
-            <Trans i18nKey="manage.access.workflow-active" />
-        </Card>}
+        {!isSynced(event)
+            ? <NotReadyNote kind="video" />
+            : event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
+                <Trans i18nKey="manage.access.workflow-active" />
+            </Card>
+        }
         {aclLockedToSeries && (
             <Card kind="info" iconPos="left" css={{ fontSize: 14, marginBottom: 10 }}>
                 <Trans i18nKey="manage.access.locked-to-series">
