@@ -141,8 +141,8 @@ video:
     title: Video not processed yet
     text: >
       This video hasn't been fully processed yet. This should
-      happen automatically soon. Try again in a few minutes.
-    label: unprocessed
+      happen automatically soon. Try again later.
+    label: not processed yet
   thumbnail-for: Thumbnail for “{{video}}”
   live: Live
   upcoming: Upcoming

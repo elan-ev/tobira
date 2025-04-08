@@ -353,7 +353,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ router }) => {
                     type="date"
                     onChange={e => handleChange(e.target.value, "start")}
                 />
-                <span>-</span>
+                <span>{"-"}</span>
                 <input
                     value={endDate ?? ""}
                     css={inputStyle}

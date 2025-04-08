@@ -8,7 +8,7 @@ import { NotAuthorized } from "../../../ui/error";
 import { isRealUser, useUser } from "../../../User";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
-import { translatedConfig } from "../../../util";
+import { Inertable, isSynced, translatedConfig } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
@@ -81,29 +81,31 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
         return <NotAuthorized />;
     }
 
-    return <ButtonSection>
-        {user.canUseEditor && !event.isLive && event.canWrite && (
-            <ExternalLink
-                service="EDITOR"
-                event={event.id}
-                params={{
-                    id: event.opencastId,
-                    callbackUrl: document.location.href,
-                    callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
-                }}
-                fallback="button"
-                css={buttonStyle(config, "normal", isHighContrast)}
-            >
-                {t("manage.video.details.open-in-editor")}
-            </ExternalLink>
-        )}
-        <DeleteButton
-            item={event}
-            kind="video"
-            returnPath="/~manage/videos"
-            commit={commit}
-        />
-    </ButtonSection>;
+    return <Inertable isInert={!isSynced(event) || !!event.hasActiveWorkflows}>
+        <ButtonSection>
+            {user.canUseEditor && !event.isLive && event.canWrite && (
+                <ExternalLink
+                    service="EDITOR"
+                    event={event.id}
+                    params={{
+                        id: event.opencastId,
+                        callbackUrl: document.location.href,
+                        callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
+                    }}
+                    fallback="button"
+                    css={buttonStyle(config, "normal", isHighContrast)}
+                >
+                    {t("manage.video.details.open-in-editor")}
+                </ExternalLink>
+            )}
+            <DeleteButton
+                item={event}
+                kind="video"
+                returnPath="/~manage/videos"
+                commit={commit}
+            />
+        </ButtonSection>
+    </Inertable>;
 };
 
 const VideoMetadataSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
