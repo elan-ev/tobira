@@ -148,8 +148,8 @@ video:
     title: Video noch nicht verarbeitet
     text: >
       Das gewünschte Video ist leider noch nicht vollständig verarbeitet worden. Dies sollte
-      in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal.
-    label: unverarbeitet
+      in Kürze automatisch passieren. Versuchen Sie es später noch einmal.
+    label: noch nicht verarbeitet
   thumbnail-for: Vorschaubild für „{{video}}“
   live: Live
   upcoming: Anstehend

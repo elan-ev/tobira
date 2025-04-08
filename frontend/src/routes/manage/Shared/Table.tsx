@@ -257,7 +257,6 @@ export const descriptionStyle = {
 
 // Used for both `EventRow` and `SeriesRow`.
 export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
-    const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const parsedDate = date && new Date(date);
     const greyColor = { color: isDark ? COLORS.neutral60 : COLORS.neutral50 };
@@ -265,9 +264,7 @@ export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
     return <td css={{ fontSize: 14 }}>
         {parsedDate
             ? <PrettyDate date={parsedDate} />
-            : <i css={greyColor}>
-                {t("manage.table.missing-date")}
-            </i>
+            : <i css={greyColor}>{"—"}</i>
         }
     </td>;
 };

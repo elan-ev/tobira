@@ -13,7 +13,7 @@ import {
 } from "../../../ui/Access";
 import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
 import { AclArray } from "../../Upload";
-import { mapAcl } from "../../util";
+import { aclArrayToMap } from "../../util";
 import { ManageRoute } from "..";
 import CONFIG from "../../../config";
 import { PageTitle } from "../../../layout/header/ui";
@@ -81,7 +81,7 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
 }) => {
     const knownRoles = useFragment(knownRolesFragment, data);
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
-    const acl = mapAcl(rawAcl);
+    const acl = aclArrayToMap(rawAcl);
     const [selections, setSelections] = useState<Acl>(acl);
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
 

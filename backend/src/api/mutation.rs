@@ -36,7 +36,7 @@ use super::{
             UpdateVideoBlock,
             RemovedBlock,
         },
-        event::AuthorizedEvent,
+        event::{AuthorizedEvent, NewEvent},
     },
 };
 
@@ -54,6 +54,13 @@ impl Mutation {
     /// Creates the current users realm. Errors if it already exists.
     async fn create_my_user_realm(context: &Context) -> ApiResult<Realm> {
         Realm::create_user_realm(context).await
+    }
+
+    /// Creates a placeholder event in the DB when a video is uploaded.
+    /// With that, the event can be listed on the "My videos" page before
+    /// its processing in Opencast is finished and the event is synced.
+    async fn create_placeholder_event(event: NewEvent, context: &Context) -> ApiResult<AuthorizedEvent> {
+        AuthorizedEvent::create_placeholder(event, context).await
     }
 
     /// Deletes the given event. Meaning: a deletion request is sent to Opencast, the event
