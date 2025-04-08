@@ -519,6 +519,52 @@ impl AuthorizedEvent {
         Ok(event)
     }
 
+    pub(crate) async fn create_placeholder(event: NewEvent, context: &Context) -> ApiResult<Self> {
+        if !context.auth.can_upload(&context.config.auth) {
+            return Err(err::not_authorized!(
+                key = "upload.not-authorized",
+                "user does not have permission to upload,
+            "));
+        }
+        let query = format!("\
+            insert into all_events ( \
+                opencast_id, title, description, \
+                creators, series, tracks, \
+                read_roles, write_roles, preview_roles, \
+                metadata, is_live, updated, created, state \
+            ) values ( \
+                $1, $2, $3, $4, $5, $6, $7, $8, \
+                '{{}}', '{{}}', false, '-infinity', now(), 'waiting' \
+            ) returning id \
+        ");
+
+        let acl = convert_acl_input(event.acl);
+        let dummy_tracks = vec![EventTrack {
+            uri: "https://example.org/video.mp4".to_string(),
+            flavor: "presenter/preview".to_string(),
+            mimetype: Some("video/mp4".to_string()),
+            resolution: Some([1280, 720]),
+            is_master: Some(true),
+        }];
+
+        context.db.execute(&query, &[
+            &event.opencast_id,
+            &event.title,
+            &event.description,
+            &event.creators,
+            &event.series_id.map(|id| id.key_for(Id::SERIES_KIND)),
+            &dummy_tracks,
+            &acl.read_roles,
+            &acl.write_roles,
+        ]).await?;
+
+        let event = Self::load_by_opencast_id(event.opencast_id, context)
+            .await?
+            .unwrap()
+            .into_result()?;
+        Ok(event)
+    }
+
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_for_mutation(id, context).await?;
 
@@ -797,3 +843,14 @@ define_sort_column_and_order!(
     };
     pub struct VideosSortOrder
 );
+
+
+#[derive(Debug, GraphQLInputObject)]
+pub(crate) struct NewEvent {
+    opencast_id: String,
+    title: String,
+    description: Option<String>,
+    series_id: Option<Id>,
+    creators: Vec<String>,
+    acl: Vec<AclInputEntry>,
+}
