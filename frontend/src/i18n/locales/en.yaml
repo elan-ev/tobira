@@ -142,7 +142,7 @@ video:
     text: >
       This video hasn't been fully processed yet. This should
       happen automatically soon. Try again in a few minutes.
-    label: unprocessed
+    label: not processed yet
   thumbnail-for: Thumbnail for “{{video}}”
   live: Live
   upcoming: Upcoming
@@ -443,7 +443,6 @@ manage:
     no-series: None
     no-series-title: Missing title
     no-entries-found: No entries found.
-    missing-date: Unknown
 
   shared:
     created: Created

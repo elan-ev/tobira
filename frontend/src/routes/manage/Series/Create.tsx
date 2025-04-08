@@ -24,6 +24,7 @@ import { CreateSeriesMutation } from "./__generated__/CreateSeriesMutation.graph
 import { useNotification } from "../../../ui/NotificationContext";
 import { NotAuthorized } from "../../../ui/error";
 import { ManageSeriesDetailsRoute } from "./SeriesDetails";
+import { aclMapToArray } from "../../util";
 
 
 export const CREATE_SERIES_PATH = "/~manage/create-series" as const;
@@ -103,12 +104,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
                     title: data.title,
                     description: data.description,
                 },
-                acl: [...data.acl].map(
-                    ([role, { actions }]) => ({
-                        role,
-                        actions: [...actions],
-                    }),
-                ),
+                acl: aclMapToArray(data.acl),
             },
             onCompleted: response => {
                 const returnPath = ManageSeriesDetailsRoute.url({

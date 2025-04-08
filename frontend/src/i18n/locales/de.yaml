@@ -144,7 +144,7 @@ video:
     text: >
       Das gewünschte Video ist leider noch nicht vollständig verarbeitet worden. Dies sollte
       in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal.
-    label: unverarbeitet
+    label: noch nicht verarbeitet
   thumbnail-for: Vorschaubild für „{{video}}“
   live: Live
   upcoming: Anstehend
@@ -464,7 +464,6 @@ manage:
     no-series: Keine
     no-series-title: Fehlender Titel
     no-entries-found: Keine Einträge gefunden.
-    missing-date: Unbekannt
 
   shared:
     created: Erstellt
