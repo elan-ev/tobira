@@ -138,7 +138,7 @@ video:
     text: >
       This video hasn't been fully processed yet. This should
       happen automatically soon. Try again in a few minutes.
-    label: unprocessed
+    label: not processed yet
   thumbnail-for: Thumbnail for “{{video}}”
   live: Live
   upcoming: Upcoming
@@ -432,7 +432,7 @@ manage:
     no-series: None
     no-series-title: Missing title
     no-entries-found: No entries found.
-    missing-date: Unknown
+    missing-date: —
 
   shared:
     created: Created
@@ -688,6 +688,8 @@ api-remote-errors:
   series:
     not-found: "Action failed: series not found."
     not-allowed: You are not allowed to perform this series action.
+    placeholder:
+      not-found: "Placeholder creation failed: video not found."
 
 embed:
   not-supported: This page can't be embedded.
