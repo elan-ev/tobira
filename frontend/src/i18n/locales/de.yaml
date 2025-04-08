@@ -675,6 +675,8 @@ api-remote-errors:
     workflow:
       not-allowed: Sie haben nicht die Berechtigung, die Workflowaktivität für dieses Video abzufragen.
       active: $t(manage.access.workflow-active)
+    placeholder:
+      not-found: "Nicht gefunden. Die Platzhaltererstellung ist vermutlich fehlgeschlagen."
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.
