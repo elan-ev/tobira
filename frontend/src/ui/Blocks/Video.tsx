@@ -7,7 +7,7 @@ import { Title } from "..";
 import { useTranslation } from "react-i18next";
 import { isSynced, keyOfId } from "../../util";
 import { Link } from "../../router";
-import { LuArrowRightCircle } from "react-icons/lu";
+import { LuCircleArrowRight } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
 import { PreviewPlaceholder, useEventWithAuthData } from "../../routes/Video";
 
@@ -97,7 +97,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
             }}
         >
             {t("video.link")}
-            <LuArrowRightCircle size={18} css={{ marginTop: 1 }} />
+            <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
         </Link>}
     </div>;
 };

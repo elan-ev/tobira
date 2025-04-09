@@ -18,7 +18,7 @@ export function keyOfId(id: string): string {
     return match(id.length, {
         13: () => id.substring(2),
         11: () => id,
-    }, () => bug("argument of `keyOfId` is neither a key nor an ID"));
+    }) ?? bug("argument of `keyOfId` is neither a key nor an ID");
 }
 
 /** Constructs event ID for graphQL by adding the "ev" prefix. */

@@ -1,6 +1,6 @@
 import { PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LuAlertTriangle, LuFilm, LuRadio, LuTrash, LuUserCircle, LuVolume2 } from "react-icons/lu";
+import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuCircleUser, LuVolume2 } from "react-icons/lu";
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
@@ -257,7 +257,7 @@ export const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt 
                 strokeWidth: 1.5,
             },
         }}>
-            <LuAlertTriangle />
+            <LuTriangleAlert />
             {t("general.failed-to-load-thumbnail")}
         </div>
         : <img
@@ -297,7 +297,7 @@ export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
             }}
             {...{ className }}
         >
-            <LuUserCircle css={{
+            <LuCircleUser css={{
                 color: COLORS.neutral60,
                 fontSize: 16,
                 flexShrink: 0,

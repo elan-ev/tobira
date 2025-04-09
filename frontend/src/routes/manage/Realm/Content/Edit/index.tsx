@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { LuPenSquare } from "react-icons/lu";
+import { LuSquarePen } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 
 import type {
@@ -54,7 +54,7 @@ export const EditButtons: React.FC<Props> = ({
         <MoveButtons {...{ realm, index, onCommit, onCompleted }} onError={onMoveError} />
         <WithTooltip tooltip={t("manage.realm.content.edit")}>
             <Button aria-label={t("manage.realm.content.edit")} onClick={onEdit}>
-                <LuPenSquare />
+                <LuSquarePen />
             </Button>
         </WithTooltip>
         <RemoveButton

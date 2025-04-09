@@ -13,11 +13,12 @@ import type { i18n } from "i18next";
 import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
     useColorScheme, Floating, FloatingHandle, useFloatingItemProps, bug,
+    matchTag,
 } from "@opencast/appkit";
 import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
 import {
-    LuColumns, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuAlertCircle, LuInfo,
+    LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
@@ -123,18 +124,13 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
     const user = useUser();
 
-    const items = listEntries.map(entry => {
-        if (entry.__typename === "AuthorizedEvent") {
-            const out = readInlineData<VideoListEventData$key>(videoListEventFragment, entry);
-            return out;
-        } else if (entry.__typename === "Missing") {
-            return "missing";
-        } else if (entry.__typename === "NotAllowed") {
-            return "unauthorized";
-        } else {
-            return unreachable();
-        }
-    });
+    const items = listEntries.map(entry => matchTag(entry, "__typename", {
+        "AuthorizedEvent": entry =>
+            readInlineData<VideoListEventData$key>(videoListEventFragment, entry),
+        "Missing": () => "missing" as VideoListItem,
+        "NotAllowed": () => "unauthorized" as VideoListItem,
+        "%other": () => unreachable(),
+    }));
 
     const {
         mainItems,
@@ -265,7 +261,7 @@ const orderItems = (
             "OLD_TO_NEW": () => reverseTime ? timeMs(b) - timeMs(a) : timeMs(a) - timeMs(b),
             "AZ": () => collator.compare(a.title, b.title),
             "ZA": () => collator.compare(b.title, a.title),
-        }, unreachable);
+        });
 
 
     mainItems.sort((a, b) => {
@@ -414,7 +410,7 @@ const LayoutMenu: React.FC = () => {
     const ref = useRef<FloatingHandle>(null);
 
     const icon = match(state.layoutState, {
-        SLIDER: () => <LuColumns />,
+        SLIDER: () => <LuColumns2 />,
         GALLERY: () => <LuLayoutGrid />,
         LIST: () => <LuList />,
         "%future added value": () => unreachable(),
@@ -477,7 +473,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
         LayoutTranslationKey,
         IconType
     ][] = [
-        ["SLIDER", "slider", LuColumns],
+        ["SLIDER", "slider", LuColumns2],
         ["GALLERY", "gallery", LuLayoutGrid],
         ["LIST", "list", LuList],
     ];
@@ -913,7 +909,7 @@ const Item: React.FC<ItemProps> = ({
                     + "#2e2e2e, #2e2e2e 30px, #292929 30px, #292929 60px)",
                 color: "#dbdbdb",
             }}>
-                <LuAlertCircle />
+                <LuCircleAlert />
             </BaseThumbnailReplacement>
         </ThumbnailOverlayContainer>
         : <>
