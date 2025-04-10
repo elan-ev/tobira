@@ -12,7 +12,7 @@ concurrency:
 jobs:
   main:
     if: github.repository_owner == 'elan-ev'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
