@@ -11,7 +11,7 @@ import {
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
-import { relativeDate } from "../../../ui/time";
+import { RelativeDate, relativeDate } from "../../../ui/time";
 import { IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
 import { SmallDescription } from "../../../ui/metadata";
@@ -253,20 +253,14 @@ export const descriptionStyle = {
 
 // Used for both `EventRow` and `SeriesRow`.
 export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const parsedDate = date && new Date(date);
     const greyColor = { color: isDark ? COLORS.neutral60 : COLORS.neutral50 };
 
     return <td css={{ fontSize: 14 }}>
         {parsedDate
-            ? <>
-                {parsedDate.toLocaleDateString(i18n.language)}
-                <br />
-                <span css={greyColor}>
-                    {parsedDate.toLocaleTimeString(i18n.language)}
-                </span>
-            </>
+            ? <RelativeDate date={parsedDate} />
             : <i css={greyColor}>
                 {t("manage.item-table.missing-date")}
             </i>

@@ -47,7 +47,7 @@ export const relativeDate = (date: Date, moment: number): [number, string] => {
 
 type RelativeDateProps = {
     date: Date;
-    isLive: boolean;
+    isLive?: boolean;
     noTooltip?: boolean;
 };
 
@@ -55,7 +55,11 @@ type RelativeDateProps = {
  * Formats a date as something relative like "3 days ago"
  * or "Started 3 days ago" in case of live events.
  */
-export const RelativeDate: React.FC<RelativeDateProps> = ({ date, isLive, noTooltip = false }) => {
+export const RelativeDate: React.FC<RelativeDateProps> = ({
+    date,
+    isLive = false,
+    noTooltip = false,
+}) => {
     const { t, i18n } = useTranslation();
     const [now, setNow] = useState(Date.now());
     const secsAgo = Math.floor((now - date.getTime()) / 1000);
