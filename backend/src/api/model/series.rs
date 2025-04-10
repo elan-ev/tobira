@@ -329,8 +329,7 @@ impl Series {
             thumbnails: "array(\
                 select search_thumbnail_info_for_event(events.*) \
                 from events \
-                where events.series = series.id \
-                order by events.created asc)",
+                where events.series = series.id)",
         );
         load_writable_for_user(context, order, offset, limit, parts, selection, |row| {
             let mut out = Self::from_row(row, mapping.series);
