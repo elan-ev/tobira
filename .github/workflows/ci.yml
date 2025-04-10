@@ -24,7 +24,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
@@ -32,24 +32,19 @@ jobs:
     - name: Determine build mode
       run: |
         target_dir="target"
-        if (( "$(date +%w)" % 2 == 0 )); then
-          sudo apt install -y musl-dev musl-tools
-          rustup target add x86_64-unknown-linux-musl
-          printf -- "--target=x86_64-unknown-linux-musl " >> .cargo-flags
-          printf "musl" >> .cache-key
-          target_dir="${target_dir}/x86_64-unknown-linux-musl"
-        else
-          printf "gnu" >> .cache-key
-        fi
+        sudo apt install -y musl-dev musl-tools
+        rustup target add x86_64-unknown-linux-musl
+        printf -- "--target=x86_64-unknown-linux-musl " >> .cargo-flags
+        target_dir="${target_dir}/x86_64-unknown-linux-musl"
 
         if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/main" ]; then
           printf -- "--profile=release-ci" >> .cargo-flags
-          printf -- "-release" >> .cache-key
+          printf -- "release" >> .cache-key
           echo "ci_targetdir=${target_dir}/release-ci" >> $GITHUB_ENV
           echo "ci_webpack_flags=production" >> $GITHUB_ENV
         else
           printf -- "--features=embed-in-debug" >> .cargo-flags
-          printf -- "-dev" >> .cache-key
+          printf -- "dev" >> .cache-key
           echo "ci_targetdir=${target_dir}/debug" >> $GITHUB_ENV
           echo "ci_webpack_flags=development" >> $GITHUB_ENV
         fi
@@ -140,7 +135,7 @@ jobs:
   # --------------------------------------------------------------------------
 
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: build
     services:
       postgres:
@@ -178,7 +173,6 @@ jobs:
     - name: Read cache key
       run: echo "cache_key=$(cat .cache-key)" >> $GITHUB_ENV
     - name: Install MUSL dependencies
-      if: startsWith(env.cache_key, 'musl')
       run: |
         sudo apt install -y musl-dev musl-tools
         rustup target add x86_64-unknown-linux-musl
