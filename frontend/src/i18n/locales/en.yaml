@@ -650,6 +650,8 @@ api-remote-errors:
     workflow:
       not-allowed: You are not allowed to inquire about workflow activity of this video.
       active: $t(manage.access.workflow-active)
+    placeholder:
+      not-found: "Placeholder creation failed: video not found."
 
 embed:
   not-supported: This page can't be embedded.

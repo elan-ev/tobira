@@ -5,7 +5,7 @@ use hyper::StatusCode;
 use postgres_types::ToSql;
 use serde::{Serialize, Deserialize};
 use tokio_postgres::Row;
-use juniper::{graphql_object, Executor, GraphQLObject, ScalarValue};
+use juniper::{graphql_object, Executor, GraphQLInputObject, GraphQLObject, ScalarValue};
 use sha1::{Sha1, Digest};
 
 use crate::{
@@ -497,6 +497,50 @@ impl AuthorizedEvent {
             return Err(not_authorized_error);
         }
 
+        Ok(event)
+    }
+
+    pub(crate) async fn create_placeholder(event: NewEvent, context: &Context) -> ApiResult<Self> {
+        let query = format!("\
+            insert into all_events ( \
+                opencast_id, title, description, \
+                creators, series, tracks, \
+                read_roles, write_roles, preview_roles, \
+                metadata, is_live, updated, created, state \
+            ) values ( \
+                $1, $2, $3, $4, $5, $6, $7, $8, \
+                '{{}}', '{{}}', false, '-infinity', now(), 'waiting' \
+            ) returning id \
+        ");
+
+        let acl = convert_acl_input(event.acl);
+        let dummy_tracks = vec![EventTrack {
+            uri: "https://example.org/video.mp4".to_string(),
+            flavor: "presenter/preview".to_string(),
+            mimetype: Some("video/mp4".to_string()),
+            resolution: Some([1280, 720]),
+            is_master: Some(true),
+        }];
+
+        context.db.execute(&query, &[
+            &event.opencast_id,
+            &event.title,
+            &event.description,
+            &event.creators,
+            &event.series.map(|id| id.key_for(Id::SERIES_KIND)),
+            &dummy_tracks,
+            &acl.read_roles,
+            &acl.write_roles,
+        ]).await?;
+
+        let event = Self::load_by_opencast_id(event.opencast_id, context)
+            .await?
+            .ok_or_else(|| err::invalid_input!(
+                // TODO: change to generic key once #1313 is merged
+                key = "event.placeholder.not-found",
+                "event not found",
+            ))?
+            .into_result()?;
         Ok(event)
     }
 
@@ -1029,4 +1073,15 @@ fn convert_acl_input(entries: Vec<AclInputEntry>) -> AclForDB {
         write_roles: write_roles.into_iter().collect(),
         // custom_action_roles,
     }
+}
+
+
+#[derive(Debug, GraphQLInputObject)]
+pub(crate) struct NewEvent {
+    opencast_id: String,
+    title: String,
+    description: Option<String>,
+    series: Option<Id>,
+    creators: Vec<String>,
+    acl: Vec<AclInputEntry>,
 }
