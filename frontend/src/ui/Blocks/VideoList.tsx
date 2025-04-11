@@ -154,13 +154,14 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     );
 
     const eventsNotEmpty = items.length > 0;
+    const hasHiddenItems = missingItems + unauthorizedItems > 0;
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
             {...{ title, description, initialLayout, isPlaylist }}
         >
-            {(mainItems.length === 0 && upcomingLiveEvents.length === 0)
+            {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("videolist-block.no-videos")}</div>
                 : <>
                     {upcomingLiveEvents.length > 1 && (
@@ -171,7 +172,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
                     {renderEvents(mainItems)}
                 </>
             }
-            {missingItems + unauthorizedItems > 0 && <div css={{ marginTop: 16 }}>
+            {hasHiddenItems && <div css={{ marginTop: 16 }}>
                 {missingItems > 0 && <HiddenItemsInfo>
                     {t("videolist-block.hidden-items.missing", { count: missingItems })}
                 </HiddenItemsInfo>}
