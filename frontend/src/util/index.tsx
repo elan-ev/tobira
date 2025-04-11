@@ -1,5 +1,5 @@
 import { i18n } from "i18next";
-import { MutableRefObject, useEffect, useRef, useState } from "react";
+import { MutableRefObject, PropsWithChildren, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bug, match, useColorScheme } from "@opencast/appkit";
 
@@ -136,7 +136,7 @@ export const useRefState = <T, >(
  * This is mainly for accessing refs in event handlers for elements
  * that are guaranteed to be alive as long as the ref itself.
  */
-export const currentRef = <T>(ref: React.RefObject<T>): T => (
+export const currentRef = <T, >(ref: React.RefObject<T>): T => (
     ref.current ?? bug("ref unexpectedly unbound")
 );
 
@@ -285,3 +285,14 @@ export const useLogoConfig = () => {
 
     return { wide, narrow };
 };
+
+
+type InertableProps = PropsWithChildren & { isInert: boolean }
+
+/** Can be used to conditionally disable and grey out control elements. */
+export const Inertable: React.FC<InertableProps> = ({ children, isInert }) => (
+    <div {...isInert && { inert: "true", css: { opacity: 0.7 } }}>
+        {children}
+    </div>
+);
+

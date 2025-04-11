@@ -9,7 +9,7 @@ import { CopyableInput } from "../../../ui/Input";
 import { COLORS } from "../../../color";
 import { ManageRoute } from "..";
 import { ManageVideosRoute } from ".";
-import { ManageVideoDetailsRoute } from "./Details";
+import { ManageVideoDetailsRoute } from "./VideoDetails";
 
 
 export const ManageVideoTechnicalDetailsRoute = makeManageVideoRoute(
