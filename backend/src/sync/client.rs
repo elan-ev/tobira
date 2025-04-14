@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use bytes::Bytes;
-use chrono::{DateTime, Utc, TimeZone};
+use chrono::{DateTime, TimeZone, Utc};
 use form_urlencoded::Serializer;
 use hyper::{
     Response, Request, StatusCode,
@@ -141,8 +141,12 @@ impl OcClient {
         Ok(out)
     }
 
-    pub async fn delete_event(&self, oc_id: &str) -> Result<Response<Incoming>> {
-        let pq = format!("/api/events/{oc_id}");
+    pub async fn delete<T: OpencastItem>(&self, endpoint: &T) -> Result<Response<Incoming>> {
+        let pq = format!(
+            "/api/{endpoint}/{oc_id}",
+            endpoint = endpoint.endpoint_path(),
+            oc_id = endpoint.id(),
+        );
         let req = self.authed_req_builder(&self.external_api_node, &pq)
             .method(http::Method::DELETE)
             .body(RequestBody::empty())
@@ -151,37 +155,19 @@ impl OcClient {
         self.http_client.request(req).await.map_err(Into::into)
     }
 
-    pub async fn update_event_acl(
+    pub async fn update_acl<T: OpencastItem>(
         &self,
-        oc_id: &str,
+        endpoint: &T,
         acl: &[AclInputEntry],
         context: &Context,
     ) -> Result<Response<Incoming>> {
-        let pq = format!("/api/events/{oc_id}/acl");
+        let oc_id = endpoint.id();
+        let pq = format!("/api/{}/{oc_id}/acl", endpoint.endpoint_path());
+        let mut access_policy = Vec::new();
 
         // Temporary solution to add custom and preview roles
         // Todo: remove again once frontend sends these roles.
-        let extra_roles_sql = "\
-            select unnest(preview_roles) as role, 'preview' as action from events where opencast_id = $1
-            union
-            select role, key as action
-            from jsonb_each_text(
-                (select custom_action_roles from events where opencast_id = $1)
-            ) as actions(key, value)
-            cross join lateral jsonb_array_elements_text(value::jsonb) as role(role)
-        ";
-
-        let extra_roles = context.db.query_mapped(&extra_roles_sql, dbargs![&oc_id], |row| {
-            let role: String = row.get("role");
-            let action: String = row.get("action");
-            AclInput {
-                allow: true,
-                action,
-                role,
-            }
-        }).await?;
-
-        let mut access_policy = Vec::new();
+        let extra_roles = endpoint.extra_roles(context, oc_id).await?;
         access_policy.extend(extra_roles);
 
         for entry in acl {
@@ -197,13 +183,27 @@ impl OcClient {
         let params = Serializer::new(String::new())
             .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
             .finish();
-        let req = self.authed_req_builder(&self.external_api_node, &pq)
-            .method(http::Method::PUT)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
 
-        self.http_client.request(req).await.map_err(Into::into)
+        self.send_put_request(&pq, params).await
+    }
+
+   pub async fn update_metadata<T: OpencastItem>(
+        &self,
+        endpoint: &T,
+        metadata: serde_json::Value,
+    ) -> Result<Response<Incoming>> {
+        let pq = format!(
+            "/api/{endpoint}/{id}/metadata?type={flavor}",
+            endpoint = endpoint.endpoint_path(),
+            id = endpoint.id(),
+            flavor = endpoint.metadata_flavor(),
+        );
+
+        let params = Serializer::new(String::new())
+            .append_pair("metadata", &serde_json::to_string(&metadata).expect("Failed to serialize"))
+            .finish();
+
+        self.send_put_request(&pq, params).await
     }
 
     pub async fn start_workflow(&self, oc_id: &str, workflow_id: &str) -> Result<Response<Incoming>> {
@@ -232,6 +232,16 @@ impl OcClient {
 
         let (out, _) = self.deserialize_response::<EventStatus>(response, &uri).await?;
         Ok(out.processing_state == "RUNNING")
+    }
+
+    async fn send_put_request(&self, path_and_query: &str, params: String) -> Result<Response<Incoming>> {
+        let req = self.authed_req_builder(&self.external_api_node, &path_and_query)
+            .method(http::Method::PUT)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        self.http_client.request(req).await.map_err(Into::into)
     }
 
     fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
@@ -298,13 +308,34 @@ pub struct ExternalApiVersions {
 }
 
 #[derive(Debug, Serialize)]
-struct AclInput {
-    allow: bool,
-    action: String,
-    role: String,
+pub(crate) struct AclInput {
+    pub allow: bool,
+    pub action: String,
+    pub role: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct EventStatus {
     pub processing_state: String,
+}
+
+/// Trait for items that can be harvested from Opencast (currently used for events and series,
+/// but can also be used for playlists).
+/// Their api endpoint paths generally shares the same structure (`/api/{endpoint_path}/{id}/...`).
+/// Implementing the below methods helps with making some endpoints like `update_acl` and
+/// `update_metadata` generic by just passing the item instead of multiple props.
+pub(crate) trait OpencastItem {
+    /// Name used in endpoint path.
+    fn endpoint_path(&self) -> &'static str;
+    /// Opencast ID of the item.
+    fn id(&self) -> &str;
+    /// Metadata flavor needed for the `update_metadata` endpoint of the item
+    /// (i.e. `dublincore/series` or `dublincore/episode`).
+    fn metadata_flavor(&self) -> &'static str;
+    /// Preview and custom roles of an item. Only used for the acl endpoint of events.
+    /// Frontend doesn't send these roles yet, so they need to be queried and added manually.
+    /// This technically doesn't belong and maybe shouldn't be here.
+    /// But it's a temporary solution and having this in the trait helps to keep the acl
+    /// code at least *somewhat* lean.
+    async fn extra_roles(&self, context: &Context, oc_id: &str) -> Result<Vec<AclInput>>;
 }

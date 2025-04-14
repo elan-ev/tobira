@@ -1,17 +1,30 @@
-import { ReactNode, forwardRef, useEffect, useRef, useState } from "react";
+import {
+    PropsWithChildren,
+    ReactNode,
+    forwardRef,
+    useEffect,
+    useId,
+    useRef,
+    useState,
+} from "react";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { ProtoButton, useColorScheme } from "@opencast/appkit";
+import { LuCheckCircle } from "react-icons/lu";
+import { boxError, Button, ProtoButton, Spinner, useColorScheme } from "@opencast/appkit";
 
 import { ellipsisOverflowCss, focusStyle } from ".";
 import { COLORS } from "../color";
 import { Creators } from "./Video";
+import { Input, TextArea } from "./Input";
+import { Form } from "./Form";
+import { Inertable } from "../util";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
     const { t } = useTranslation();
     return (
         <label {...{ htmlFor }}>
-            {t("upload.metadata.title")}
+            {t("metadata-form.title")}
             <FieldIsRequiredNote />
         </label>
     );
@@ -22,14 +35,18 @@ export const FieldIsRequiredNote: React.FC = () => {
 
     return <span css={{ fontWeight: "normal" }}>
         {" ("}
-        <em>{t("upload.metadata.required")}</em>
+        <em>{t("metadata-form.required")}</em>
         {")"}
     </span>;
 };
 
+type InputContainerProps = PropsWithChildren & {
+    className?: string;
+};
+
 /** Separates different inputs in the metadata form */
-export const InputContainer: React.FC<{ children: ReactNode }> = ({ children }) => (
-    <div css={{ margin: "16px 0 " }}>{children}</div>
+export const InputContainer: React.FC<InputContainerProps> = ({ children, className }) => (
+    <div {...{ className }} css={{ margin: "16px 0 " }}>{children}</div>
 );
 
 type SmallDescriptionProps = {
@@ -231,4 +248,124 @@ export const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = (
             </div>
         </div>
     );
+};
+
+
+type MetadataFormProps = PropsWithChildren & React.HTMLAttributes<HTMLFormElement> & {
+    hasError?: boolean;
+};
+
+export const MetadataForm: React.FC<MetadataFormProps> = ({
+    hasError = false,
+    children,
+    ...props
+}) => <Inertable isInert={hasError}>
+    <Form
+        noValidate
+        // We only allow submitting the form on clicking a button, so that
+        // pressing 'enter' inside inputs won't submit the form too early.
+        onSubmit={e => e.preventDefault()}
+        css={{
+            margin: "32px 2px",
+            label: { color: "var(--color-neutral90)" },
+        }}
+        {...props}
+    >
+        {children}
+    </Form>
+</Inertable>;
+
+type MetadataFieldsProps = {
+    disabled?: boolean;
+}
+
+export const MetadataFields: React.FC<MetadataFieldsProps> = ({ disabled = false }) => {
+    const { t } = useTranslation();
+    const titleFieldId = useId();
+    const descriptionFieldId = useId();
+    const { register, formState: { errors } } = useFormContext();
+
+
+    return <div style={{ maxWidth: 750 }}>
+        {/* Title */}
+        <InputContainer>
+            <TitleLabel htmlFor={titleFieldId} />
+            <Input
+                id={titleFieldId}
+                required
+                disabled={disabled}
+                error={!!errors.title}
+                css={{ width: 400, maxWidth: "100%" }}
+                {...register("title", {
+                    required: t("metadata-form.errors.field-required") as string,
+                })}
+            />
+            {boxError(errors.title?.message as string)}
+        </InputContainer>
+
+        {/* Description */}
+        <InputContainer>
+            <label htmlFor={descriptionFieldId}>
+                {t("metadata-form.description")}
+            </label>
+            <TextArea
+                id={descriptionFieldId}
+                disabled={disabled}
+                {...register("description")} />
+        </InputContainer>
+    </div>;
+};
+
+type SubmitButtonWithStatusProps = {
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+    inFlight?: boolean;
+    success: boolean;
+    setSuccess: React.Dispatch<React.SetStateAction<boolean>>;
+    timeout?: number;
+};
+
+export const SubmitButtonWithStatus: React.FC<SubmitButtonWithStatusProps> = ({
+    label,
+    onClick,
+    disabled,
+    inFlight,
+    success,
+    setSuccess,
+    timeout = 1000,
+}) => {
+
+    useEffect(() => {
+        if (!success) {
+            return;
+        }
+        const timer = setTimeout(() => setSuccess(false), timeout);
+        return () => clearTimeout(timer);
+    }, [success]);
+
+    return <div css={{ display: "flex", marginTop: 32 }}>
+        <Button kind="call-to-action" disabled={disabled} onClick={onClick}>
+            {label}
+        </Button>
+        <span css={{
+            display: "flex",
+            alignSelf: "center",
+            marginLeft: 12,
+            position: "relative",
+            width: 20,
+            height: 20,
+        }}>
+            <Spinner size={20} css={{
+                position: "absolute",
+                transition: "opacity ease-out 250ms",
+                opacity: inFlight ? 1 : 0,
+            }} />
+            <LuCheckCircle size={20} css={{
+                position: "absolute",
+                transition: "opacity ease-in 300ms",
+                opacity: success ? 1 : 0,
+            }} />
+        </span>
+    </div>;
 };

@@ -1,26 +1,27 @@
 use chrono::{DateTime, Utc};
+use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use postgres_types::ToSql;
 
 use crate::{
     api::{
-        Context, Id, Node, NodeValue,
-        err::{invalid_input, ApiResult},
-        model::{
+        err::{self, invalid_input, ApiResult}, model::{
+            acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
-            acl::{self, Acl},
-            shared::{ToSqlColumn, SortDirection}
-        },
-        util::LazyLoad,
+            shared::{convert_acl_input, SortDirection, ToSqlColumn},
+        }, util::LazyLoad, Context, Id, Node, NodeValue
     },
     db::{
         types::SeriesState as State,
         util::{impl_from_db, select},
     },
-    model::{Key, ExtraMetadata, SeriesThumbnailStack, ThumbnailInfo, SearchThumbnailInfo},
+    model::{ExtraMetadata, Key, SearchThumbnailInfo, SeriesThumbnailStack, ThumbnailInfo},
     prelude::*,
+    sync::client::{AclInput, OpencastItem},
 };
+
+use self::acl::AclInputEntry;
 
 use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
@@ -37,6 +38,7 @@ use super::{
 };
 
 
+#[derive(Clone)]
 pub(crate) struct Series {
     pub(crate) key: Key,
     pub(crate) opencast_id: String,
@@ -49,9 +51,10 @@ pub(crate) struct Series {
     pub(crate) write_roles: Option<Vec<String>>,
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<SeriesThumbnailStack>,
+    pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
-#[derive(GraphQLObject)]
+#[derive(Clone, GraphQLObject)]
 pub(crate) struct SyncedSeriesData {
     description: Option<String>,
 }
@@ -64,6 +67,7 @@ impl_from_db!(
             title, description,
             metadata, created,
             read_roles, write_roles,
+            tobira_deletion_timestamp,
         },
         updated: "case \
             when ${table:series}.updated = '-infinity' then null \
@@ -80,6 +84,7 @@ impl_from_db!(
             metadata: row.metadata(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
+            tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             synced_data: (State::Ready == row.state()).then(
                 || SyncedSeriesData {
                     description: row.description(),
@@ -120,6 +125,18 @@ impl Series {
             .await?
             .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
+    }
+
+    async fn load_for_api(id: Id, context: &Context) -> ApiResult<Series> {
+        let series = Self::load_by_id(id, context)
+            .await?
+            .ok_or_else(|| err::invalid_input!(key = "series.not-found", "series not found"))?;
+
+        if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[])) {
+            return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
+        }
+
+        Ok(series)
     }
 
     async fn load_acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
@@ -302,8 +319,8 @@ impl Series {
         limit: i32,
     ) -> ApiResult<Connection<Series>> {
         let parts = ConnectionQueryParts {
-            table: "series",
-            alias: None,
+            table: "all_series",
+            alias: Some("series"),
             join_clause: "",
         };
         let (selection, mapping) = select!(
@@ -312,8 +329,7 @@ impl Series {
             thumbnails: "array(\
                 select search_thumbnail_info_for_event(events.*) \
                 from events \
-                where events.series = series.id \
-                order by events.created asc)",
+                where events.series = series.id)",
         );
         load_writable_for_user(context, order, offset, limit, parts, selection, |row| {
             let mut out = Self::from_row(row, mapping.series);
@@ -326,6 +342,150 @@ impl Series {
             });
             out
         }).await
+    }
+
+    pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
+        if !context.config.general.allow_acl_edit {
+            return Err(err::not_authorized!("editing ACLs is not allowed"));
+        }
+
+        info!(series_id = %id, "Requesting ACL update of series");
+        let series = Self::load_for_api(id, context).await?;
+
+        let response = context
+            .oc_client
+            .update_acl(&series, &acl, context)
+            .await
+            .map_err(|e| {
+                error!("Failed to send ACL update request: {}", e);
+                err::opencast_unavailable!("Failed to send ACL update request")
+            })?;
+
+        if response.status() == StatusCode::OK {
+            // 200: The updated access control list is returned.
+            let db_acl = convert_acl_input(acl);
+
+            context.db.execute("\
+                update all_series \
+                set read_roles = $2, write_roles = $3 \
+                where id = $1 \
+            ", &[&series.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "series.acl.not-found",
+                    "series not found",
+                ))
+        } else {
+            warn!(
+                series_id = %id,
+                "Failed to update series ACL, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
+
+    pub(crate) async fn update_metadata(
+        id: Id,
+        metadata: SeriesMetadata,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        let series = Self::load_for_api(id, context).await?;
+
+        info!(series_id = %id, "Requesting metadata update of series");
+
+        let metadata_json = serde_json::json!([
+            {
+                "id": "title",
+                "value": metadata.title
+            },
+            {
+                "id": "description",
+                "value": metadata.description
+            },
+        ]);
+
+        let response = context
+            .oc_client
+            .update_metadata(&series, metadata_json)
+            .await
+            .map_err(|e| {
+                error!("Failed to send metadata update request: {}", e);
+                err::opencast_unavailable!("Failed to send metadata update request")
+            })?;
+
+        if response.status() == StatusCode::OK {
+            // 200: The series' metadata has been updated.
+            context.db.execute("\
+                update series \
+                set title = $2, description = $3 \
+                where id = $1 \
+            ", &[&series.key, &metadata.title, &metadata.description]).await?;
+
+            Self::load_by_id(id, context)
+                .await?
+                .ok_or_else(|| err::invalid_input!(
+                    key = "series.metadata.not-found",
+                    "series not found",
+                ))
+        } else {
+            warn!(
+                series_id = %id,
+                "Failed to update series metadata, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
+
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<Series> {
+        let series = Self::load_for_api(id, context).await?;
+
+        info!(series_id = %id, "Attempting to send request to delete series in Opencast");
+
+        context.db.execute("\
+            update all_series \
+            set tobira_deletion_timestamp = current_timestamp \
+            where id = $1 \
+        ", &[&series.key]).await?;
+        // Todo: Consider optimistically updating events as well.
+
+
+        let oc_client = context.oc_client.clone();
+        let series_clone = series.clone();
+
+        // Unfortunately we can't wait for the http response. The Opencast delete endpoint will
+        // automatically start `republish metadata` workflows for all events in the series, which
+        // takes roughly 10 seconds per event, and only returns once all have finished.
+        // This would block the request for a long time.
+        tokio::spawn(async move {
+            let response = match oc_client.delete(&series_clone).await {
+                Ok(response) => response,
+                Err(e) => {
+                    error!("Failed to send delete request: {}", e);
+                    return;
+                }
+            };
+
+            if response.status() == StatusCode::NO_CONTENT {
+                info!(series_id = %id, "Series successfully deleted");
+            } else {
+                // This is kinda pointless. Depending on the number of videos, the request takes
+                // super long to respond and will potentially return with `504 Gateway Timeout`.
+                // This is not necessarily an error in this case as the deletion could still be
+                // in progress.
+                warn!(
+                    series_id = %id,
+                    "Failed to delete series, Opencast returned status: {}",
+                    response.status()
+                );
+            }
+            // Todo: Consider reverting DB changes on error or unexpected response.
+        });
+
+        Ok(series)
     }
 }
 
@@ -370,6 +530,10 @@ impl Series {
 
     async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
         self.load_acl(context).await
+    }
+
+    fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {
+        &self.tobira_deletion_timestamp
     }
 
     async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
@@ -417,6 +581,24 @@ impl Node for Series {
     }
 }
 
+impl OpencastItem for Series {
+    fn endpoint_path(&self) -> &'static str {
+        "series"
+    }
+    fn id(&self) -> &str {
+        &self.opencast_id
+    }
+
+    fn metadata_flavor(&self) -> &'static str {
+        "dublincore/series"
+    }
+
+    async fn extra_roles(&self, _context: &Context, _oc_id: &str) -> Result<Vec<AclInput>> {
+        // Series do not have custom or preview roles.
+        Ok(vec![])
+    }
+}
+
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewSeries {
@@ -452,3 +634,9 @@ define_sort_column_and_order!(
     };
     pub struct SeriesSortOrder
 );
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct SeriesMetadata {
+    pub(crate) title: String,
+    pub(crate) description: Option<String>,
+}

@@ -8,7 +8,7 @@ pub(crate) mod cmd;
 pub(crate) mod harvest;
 pub(crate) mod stats;
 pub(crate) mod text;
-mod client;
+pub(crate) mod client;
 mod status;
 
 pub(crate) use self::client::OcClient;

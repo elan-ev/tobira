@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use juniper::{GraphQLEnum, GraphQLObject};
 use tokio_postgres::Row;
 
@@ -9,6 +10,8 @@ use crate::{
     dbargs,
     HasRoles,
 };
+
+use super::acl::AclInputEntry;
 
 
 /// Generates an enum for custom table sort columns and a sort order struct.
@@ -243,3 +246,54 @@ where
         page_info,
     })
 }
+
+
+#[derive(Debug)]
+pub(crate) struct AclForDB {
+    pub(crate) read_roles: Vec<String>,
+    pub(crate) write_roles: Vec<String>,
+    // todo: add custom and preview roles for events when sent by frontend
+    // preview_roles: Option<Vec<String>>,
+    // custom_action_roles: Option<CustomActions>,
+}
+
+pub(crate) fn convert_acl_input(entries: Vec<AclInputEntry>) -> AclForDB {
+    let mut read_roles = HashSet::new();
+    let mut write_roles = HashSet::new();
+    // let mut preview_roles = HashSet::new();
+    // let mut custom_action_roles = CustomActions::default();
+
+    for entry in entries {
+        let role = entry.role;
+        for action in entry.actions {
+            match action.as_str() {
+                // "preview" => {
+                //     preview_roles.insert(role.clone());
+                // }
+                "read" => {
+                    read_roles.insert(role.clone());
+                }
+                "write" => {
+                    write_roles.insert(role.clone());
+                }
+                _ => {
+                    // custom_action_roles
+                    //     .0
+                    //     .entry(action)
+                    //     .or_insert_with(Vec::new)
+                    //     .push(role.clone());
+                    todo!();
+                }
+            };
+        }
+    }
+
+    AclForDB {
+        read_roles: read_roles.into_iter().collect(),
+        write_roles: write_roles.into_iter().collect(),
+        // todo: add custom and preview roles when sent by frontend
+        // preview_roles: preview_roles.into_iter().collect(),
+        // custom_action_roles,
+    }
+}
+
