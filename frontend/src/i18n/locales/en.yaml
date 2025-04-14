@@ -212,7 +212,7 @@ videolist-block:
   no-videos: No videos
   unauthorized: Missing permissions
   hidden-items:
-    unauthorized_one: One video requires additional permissions to view. 
+    unauthorized_one: One video requires additional permissions to view.
     unauthorized_other: '{{count}} videos require additional permissions to view.'
     missing_one: One video is missing.
     missing_other: '{{count}} videos are missing.'
