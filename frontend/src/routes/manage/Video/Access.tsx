@@ -40,13 +40,12 @@ type AclPageProps = {
 
 const AclPage: React.FC<AclPageProps> = ({ event, data }) => {
     const { t } = useTranslation();
-    const user = useUser();
+    const knownRoles = useFragment(knownRolesFragment, data);
 
+    const user = useUser();
     if (!isRealUser(user)) {
         return <NotAuthorized />;
     }
-
-    const knownRoles = useFragment(knownRolesFragment, data);
 
     const breadcrumbs = [
         { label: t("user.manage-content"), link: ManageRoute.url },
@@ -114,7 +113,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
     const [commit, inFlight] = useMutation<AccessUpdateAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && event.series;
     const [editingBlocked, setEditingBlocked] = useState(
-        event.hasActiveWorkflows || aclLockedToSeries
+        event.hasActiveWorkflows || aclLockedToSeries,
     );
 
     const initialAcl: Acl = mapAcl(event.acl);
@@ -129,7 +128,7 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
                     ([role, { actions }]) => ({
                         role,
                         actions: [...actions],
-                    })
+                    }),
                 ),
             },
             onCompleted: () => currentRef(saveModalRef).done(),
@@ -182,4 +181,3 @@ const AccessUI: React.FC<AccessUIProps> = ({ event, knownRoles }) => {
         </div>
     </>;
 };
-

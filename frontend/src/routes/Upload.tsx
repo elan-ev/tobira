@@ -685,10 +685,8 @@ type MetaDataEditProps = {
 /** Form that lets the user set metadata about the video */
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRoles }) => {
     const { t } = useTranslation();
-    const user = useUser();
-    if (!isRealUser(user)) {
-        return unreachable();
-    }
+    const u = useUser();
+    const user = isRealUser(u) ? u : unreachable();
 
     const titleFieldId = useId();
     const descriptionFieldId = useId();
@@ -702,7 +700,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         const data = await fetchQuery<UploadSeriesAclQuery>(
             environment,
             SeriesAclQuery,
-            { seriesId }
+            { seriesId },
         ).toPromise();
 
         if (!data?.series?.acl) {
@@ -737,7 +735,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     <ErrorDisplay
                         error={e}
                         failedAction={t("upload.errors.failed-fetching-series-acl")}
-                    />
+                    />,
                 );
             } finally {
                 setAclLoading(false);

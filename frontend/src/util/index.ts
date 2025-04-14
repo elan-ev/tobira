@@ -246,8 +246,9 @@ export const getCredentials = (kind: IdKind, id: string): Credentials => {
         return null;
     }
 
-    const parsed = JSON.parse(credentials);
-    if ("user" in parsed && typeof parsed.user === "string"
+    const parsed = JSON.parse(credentials) as unknown;
+    if (parsed && typeof parsed === "object"
+        && "user" in parsed && typeof parsed.user === "string"
         && "password" in parsed && typeof parsed.password === "string") {
         return {
             user: parsed.user,

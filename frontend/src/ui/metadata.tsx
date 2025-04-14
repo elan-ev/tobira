@@ -126,7 +126,7 @@ type CollapsibleDescriptionProps = {
 }
 
 export const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = (
-    { type, description, creators, bottomPadding }
+    { type, description, creators, bottomPadding },
 ) => {
     const { t } = useTranslation();
     const isVideo = type === "video";

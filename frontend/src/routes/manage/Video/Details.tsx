@@ -140,9 +140,9 @@ const DirectLink: React.FC<Props> = ({ event }) => {
     const [timestamp, setTimestamp] = useState(0);
     const [checkboxChecked, setCheckboxChecked] = useState(false);
 
-    let url = new URL(DirectVideoRoute.url({ videoId: event.id }), document.baseURI);
+    const url = new URL(DirectVideoRoute.url({ videoId: event.id }), document.baseURI);
     if (timestamp && checkboxChecked) {
-        url = new URL(url + `?t=${secondsToTimeString(timestamp)}`);
+        url.searchParams.set("t", secondsToTimeString(timestamp));
     }
 
     return (

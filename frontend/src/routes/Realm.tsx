@@ -29,7 +29,6 @@ import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import CONFIG from "../config";
 
 
-// eslint-disable-next-line @typescript-eslint/quotes
 export const ILLEGAL_CHARS = '<>"[\\]^`{|}#%/?';
 export const RESERVED_CHARS = "-+~@_!$&;:.,=*'()";
 

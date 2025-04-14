@@ -48,7 +48,7 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
     // implemented yet and takes a bit of effort. For SEO it helps if we declare
     // this page as noindex. See Google's advice on "soft 404" in SPAs:
     //
-    // eslint-disable-next-line max-len
+
     // https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics#avoid-soft-404s
     useNoindexTag();
 
