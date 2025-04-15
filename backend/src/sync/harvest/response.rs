@@ -2,8 +2,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    db::types::{CustomActions, EventCaption, EventTrack, EventSegment},
+    api::model::block::BlockType,
+    db::types::{CustomActions, EventCaption, EventSegment, EventTrack},
     model::ExtraMetadata,
+    sync::DeletionMode,
+    Config,
 };
 
 
@@ -108,6 +111,13 @@ pub struct Playlist {
     pub updated: DateTime<Utc>,
 }
 
+pub struct DeletedItemProps<'a> {
+    pub table_name: &'static str,
+    pub block_type: BlockType,
+    pub id: &'a str,
+    pub eager: bool,
+}
+
 
 impl HarvestItem {
     pub(crate) fn updated(&self) -> Option<DateTime<Utc>> {
@@ -120,6 +130,38 @@ impl HarvestItem {
             Self::PlaylistDeleted { updated, .. } => Some(*updated),
             Self::Unknown(_) => None,
         }
+    }
+
+    pub fn deleted_props<'a>(&'a self, config: &Config) -> Option<DeletedItemProps<'a>> {
+        config.sync.auto_delete_pages.iter().find_map(|mode| {
+            match (self, mode) {
+                (HarvestItem::SeriesDeleted { id, .. }, DeletionMode::Series { eager }) => Some(
+                    DeletedItemProps {
+                        table_name: "series",
+                        block_type: BlockType::Series,
+                        id,
+                        eager: *eager,
+                    }
+                ),
+                (HarvestItem::EventDeleted { id, .. }, DeletionMode::Events { eager }) => Some(
+                    DeletedItemProps {
+                        table_name: "all_events",
+                        block_type: BlockType::Video,
+                        id,
+                        eager: *eager,
+                    }
+                ),
+                (HarvestItem::PlaylistDeleted { id, .. }, DeletionMode::Playlists { eager }) => Some(
+                    DeletedItemProps {
+                        table_name: "playlists",
+                        block_type: BlockType::Playlist,
+                        id,
+                        eager: *eager,
+                    }
+                ),
+                _ => None,
+            }
+        })
     }
 }
 

@@ -7,7 +7,7 @@ import { Title } from "..";
 import { useTranslation } from "react-i18next";
 import { isSynced, keyOfId } from "../../util";
 import { Link } from "../../router";
-import { LuArrowRightCircle } from "react-icons/lu";
+import { LuCircleArrowRight } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
 import { PreviewPlaceholder, useEventWithAuthData } from "../../routes/Video";
 
@@ -18,9 +18,10 @@ export type AuthorizedBlockEvent = Extract<BlockEvent, { __typename: "Authorized
 type Props = {
     fragRef: VideoBlockData$key;
     basePath: string;
+    edit?: boolean;
 };
 
-export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
+export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
     const { t } = useTranslation();
     const { event: protoEvent, showTitle, showLink } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
@@ -55,8 +56,12 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
     `, fragRef);
     const [event, refetch] = useEventWithAuthData(protoEvent);
 
-    if (event == null) {
+    if (event == null && edit) {
         return <Card kind="error">{t("video.deleted-video-block")}</Card>;
+    }
+
+    if (event == null) {
+        return null;
     }
 
     if (event.__typename === "NotAllowed") {
@@ -92,7 +97,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath }) => {
             }}
         >
             {t("video.link")}
-            <LuArrowRightCircle size={18} css={{ marginTop: 1 }} />
+            <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
         </Link>}
     </div>;
 };

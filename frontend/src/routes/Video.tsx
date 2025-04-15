@@ -12,7 +12,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { fetchQuery, OperationType } from "relay-runtime";
 import {
-    LuCode, LuDownload, LuInfo, LuLink, LuQrCode, LuRss, LuSettings, LuShare2, LuUnlock,
+    LuCode, LuDownload, LuInfo, LuLink, LuQrCode, LuRss, LuSettings, LuShare2, LuLockOpen,
 } from "react-icons/lu";
 import { QRCodeCanvas } from "qrcode.react";
 import {
@@ -301,7 +301,7 @@ export const DirectOpencastVideoRoute = makeRoute({
 
         const query = graphql`
             query VideoPageDirectOpencastLinkQuery(
-                $id: String!, 
+                $id: String!,
                 $listId: ID!,
                 $eventUser: String,
                 $eventPassword: String
@@ -779,7 +779,7 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
                         {...{ onSubmit }}
                         state={authState}
                         error={null}
-                        SubmitIcon={LuUnlock}
+                        SubmitIcon={LuLockOpen}
                         labels={{
                             user: t("label.id"),
                             password: t("label.password"),
@@ -1064,7 +1064,7 @@ const ShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     </div>;
 
     const ShowQRCodeButton: React.FC<{ target: string; label: MenuState }> = (
-        { target, label }
+        { target, label },
     ) => <>
         <Button
             onClick={() => currentRef(qrModalRef).open()}

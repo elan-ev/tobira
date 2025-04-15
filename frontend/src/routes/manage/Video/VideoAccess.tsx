@@ -61,7 +61,7 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
     const [commit, inFlight] = useMutation<VideoAccessAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && !!event.series;
     const [editingBlocked, setEditingBlocked] = useState(
-        event.hasActiveWorkflows || aclLockedToSeries
+        event.hasActiveWorkflows || aclLockedToSeries,
     );
 
     const onSubmit = async ({ selections, saveModalRef, setCommitError }: SubmitAclProps) => {
@@ -72,7 +72,7 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
                     ([role, { actions }]) => ({
                         role,
                         actions: [...actions],
-                    })
+                    }),
                 ),
             },
             onCompleted: () => currentRef(saveModalRef).done(),

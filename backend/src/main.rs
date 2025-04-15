@@ -154,28 +154,27 @@ async fn start_worker(config: Config) -> Result<Never> {
     let db = connect_and_migrate_db(&config).await?;
     let search = config.meili.connect().await.context("failed to connect to MeiliSearch")?;
 
-    let mut search_conn = db.get().await?;
-    let sync_conn = db.get().await?;
-    let text_conn = db.get().await?;
-    let db_maintenance_conn = db.get().await?;
-    let stats_conn = db.get().await?;
     let auth_config = config.auth.clone();
 
     default_enable_backtraces();
     tokio::select! {
-        res = search::update_index_daemon(&search, &mut search_conn) => {
+        res = search::update_index_daemon(&search, &db) => {
             res.context("error updating the search index")
         }
-        res = sync::run(true, sync_conn, &config) => {
+        res = sync::run(true, &db, &config) => {
             res.map(|()| unreachable!("sync task unexpectedly stopped"))
                 .context("error synchronizing with Opencast")
         }
-        res = sync::text::fetch_update(text_conn, &config, true) => {
+        res = sync::text::fetch_update(&db, &config, true) => {
             res.map(|()| unreachable!("sync text task unexpectedly stopped"))
                 .context("error downloading text assets")
         }
-        never = sync::stats::run_daemon(stats_conn, &config) => { never }
-        never = auth::db_maintenance(&db_maintenance_conn, &auth_config) => { never }
+        res = sync::stats::run_daemon(&db, &config) => {
+            res.context("error running stats daemon")
+        }
+        res = auth::db_maintenance(&db, &auth_config) => {
+            res.context("error doing DB maintenance")
+        }
     }
 }
 

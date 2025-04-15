@@ -121,11 +121,11 @@ const EventRow: React.FC<{ item: Event }> = ({ item }) => <TableRow
 
 const parseVideosColumn = (sortBy: string | null): VideosSortColumn =>
     sortBy !== null
-        ? match<string, VideosSortColumn>(sortBy, {
-            "title": () => "TITLE",
-            "created": () => "CREATED",
-            "updated": () => "UPDATED",
-        }, () => "CREATED")
+        ? match(sortBy, {
+            "title": () => "TITLE" as const,
+            "created": () => "CREATED" as const,
+            "updated": () => "UPDATED" as const,
+        }) ?? "CREATED"
         : "CREATED";
 
 const queryParamsToVideosVars = createQueryParamsParser<VideosSortColumn>(parseVideosColumn);

@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { LuCheckCircle } from "react-icons/lu";
+import { LuCircleCheck } from "react-icons/lu";
 import { boxError, Button, ProtoButton, Spinner, useColorScheme } from "@opencast/appkit";
 
 import { ellipsisOverflowCss, focusStyle } from ".";
@@ -143,7 +143,7 @@ type CollapsibleDescriptionProps = {
 }
 
 export const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = (
-    { type, description, creators, bottomPadding }
+    { type, description, creators, bottomPadding },
 ) => {
     const { t } = useTranslation();
     const isVideo = type === "video";
@@ -361,7 +361,7 @@ export const SubmitButtonWithStatus: React.FC<SubmitButtonWithStatusProps> = ({
                 transition: "opacity ease-out 250ms",
                 opacity: inFlight ? 1 : 0,
             }} />
-            <LuCheckCircle size={20} css={{
+            <LuCircleCheck size={20} css={{
                 position: "absolute",
                 transition: "opacity ease-in 300ms",
                 opacity: success ? 1 : 0,

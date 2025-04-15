@@ -1,7 +1,9 @@
 use core::fmt;
-use std::time::Duration;
+use std::{collections::HashMap, str::FromStr, time::Duration};
 
-use crate::{config::Config, db::DbConnection, prelude::*};
+use deadpool_postgres::Pool;
+
+use crate::{config::Config, prelude::*};
 
 
 pub(crate) mod cmd;
@@ -18,10 +20,10 @@ pub(crate) use self::client::OcClient;
 const MIN_REQUIRED_API_VERSION: ApiVersion = ApiVersion::new(1, 0);
 
 
-pub(crate) async fn run(daemon: bool, db: DbConnection, config: &Config) -> Result<()> {
+pub(crate) async fn run(daemon: bool, pool: &Pool, config: &Config) -> Result<()> {
     let client = OcClient::new(config)?;
     check_compatibility(&client).await?;
-    harvest::run(daemon, config, &client, db).await
+    harvest::run(daemon, config, &client, pool).await
 }
 
 pub(crate) async fn check_compatibility(client: &OcClient) -> Result<()> {
@@ -72,6 +74,26 @@ pub(crate) struct SyncConfig {
     /// load on Opencast, increase to speed up download a bit.
     #[config(default = 8)]
     concurrent_download_tasks: u8,
+
+    /// List of deletion modes that determine which, if any, realm pages are to be deleted
+    /// automatically when the corresponding Opencast item (series, event or playlist)
+    /// is deleted.
+    /// If configured, Tobira will delete the corresponding realm page(s) when they meet
+    /// the following conditions:
+    /// - Realm name is derived from the deleted item.
+    /// - Realm has no sub realms.
+    /// - Realm has no other blocks than the deleted item.
+    ///
+    /// The last option can be disabled by adding `:eager` to the deletion mode.
+    ///
+    /// Example:
+    /// ```
+    /// auto_delete_pages = ["series", "events:eager"]
+    /// ```
+    ///
+    /// This would delete series pages in non-eager mode and event pages in eager mode.
+    #[config(default = [], validate = validate_deletion_modes)]
+    pub auto_delete_pages: Vec<DeletionMode>,
 }
 
 /// Version of the Tobira-module API in Opencast.
@@ -121,4 +143,63 @@ impl VersionResponse {
     fn version(&self) -> ApiVersion {
         self.version.parse().expect("invalid version string")
     }
+}
+
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(try_from = "String")]
+pub enum DeletionMode {
+    Series { eager: bool },
+    Events { eager: bool },
+    Playlists { eager: bool },
+}
+
+impl FromStr for DeletionMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "series" => Ok(Self::Series { eager: false }),
+            "series:eager" => Ok(Self::Series { eager: true }),
+
+            "events" => Ok(Self::Events { eager: false }),
+            "events:eager" => Ok(Self::Events { eager: true }),
+
+            "playlists" => Ok(Self::Playlists { eager: false }),
+            "playlists:eager" => Ok(Self::Playlists { eager: true }),
+
+            other => Err(format!("Invalid auto_delete_pages value: {}", other)),
+        }
+    }
+}
+
+impl TryFrom<String> for DeletionMode {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        DeletionMode::from_str(&value)
+    }
+}
+
+fn validate_deletion_modes(modes: &Vec<DeletionMode>) -> Result<(), String> {
+    let mut entries = HashMap::new();
+
+    for (i, mode) in modes.iter().enumerate() {
+        let kind = match mode {
+            DeletionMode::Series { .. } => "series",
+            DeletionMode::Events { .. } => "events",
+            DeletionMode::Playlists { .. } => "playlists",
+        };
+
+        if let Some(prev_index) = entries.insert(kind, i) {
+            return Err(format!(
+                "Cannot configure a mode for '{kind}' more than once. \
+                    There are conflicting entries at positions {} and {}.",
+                prev_index + 1,
+                i + 1,
+            ));
+        }
+    }
+
+    Ok(())
 }

@@ -92,9 +92,11 @@ impl Query {
         }
     }
 
-    /// Returns a new JWT that can be used to authenticate against Opencast for using the given service
-    fn jwt(service: JwtService, context: &Context) -> ApiResult<String> {
-        jwt(service, context)
+    /// Returns a new JWT that can be used to authenticate against Opencast for
+    /// using the given service. For `service = Editor`, `event` has to be
+    /// specified.
+    async fn jwt(service: JwtService, event: Option<Id>, context: &Context) -> ApiResult<String> {
+        jwt(service, event, context).await
     }
 
     /// Retrieve a node by globally unique ID. Mostly useful for relay.

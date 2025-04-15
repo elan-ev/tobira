@@ -70,20 +70,41 @@ impl JwtContext {
     }
 
     /// Creates a new JWT.
-    pub(crate) fn new_token(&self, user: &User) -> String {
+    pub(crate) fn new_token(&self, user: Option<&User>, auth_claims: impl Serialize) -> String {
+        #[derive(Serialize)]
+        struct UserInfo<'a> {
+            sub: &'a str,
+            // TODO: this is just for backwards compatibility and should be
+            // removed in the future.
+            username: &'a str,
+            name: &'a str,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            email: Option<&'a str>,
+        }
+
+        #[derive(Serialize)]
+        struct Payload<'a, A: Serialize> {
+            exp: i64,
+            #[serde(flatten, skip_serializing_if = "Option::is_none")]
+            user: Option<UserInfo<'a>>,
+            #[serde(flatten)]
+            auth_claims: A,
+        }
+
         let exp = chrono::offset::Utc::now()
             + chrono::Duration::from_std(self.config.expiration_time)
                 .expect("failed to convert from std Duration to chrono::Duration");
 
-        let mut payload = json!({
-            "name": user.display_name,
-            "username": user.username,
-            "exp": exp.timestamp(),
-        });
-        if let Some(email) = &user.email {
-            payload.as_object_mut().unwrap().insert("email".into(), email.clone().into());
-        }
-
+        let payload = Payload {
+            exp: exp.timestamp(),
+            user: user.map(|user| UserInfo {
+                sub: &user.username,
+                username: &user.username,
+                name: &user.display_name,
+                email: user.email.as_deref(),
+            }),
+            auth_claims,
+        };
 
         self.encode(&payload)
     }

@@ -86,7 +86,7 @@ async fn update(meili: &Client, config: &Config, daemon: bool) -> Result<()> {
     meili.prepare_and_rebuild_if_necessary(&mut db).await?;
 
     if daemon {
-        super::update_index_daemon(meili, &mut db).await.map(|_| ())
+        super::update_index_daemon(meili, &pool).await.map(|_| ())
     } else {
         super::update_index(meili, &mut db).await?;
         info!("Done updating the search index (no more items queued)");

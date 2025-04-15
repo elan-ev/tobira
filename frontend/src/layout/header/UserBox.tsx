@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    LuAlertTriangle, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
+    LuTriangleAlert, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
@@ -48,7 +48,7 @@ export const UserBox: React.FC = () => {
         boxContent = <Spinner css={iconCss} />;
     } else if (user === "error") {
         // TODO: tooltip
-        boxContent = <LuAlertTriangle css={iconCss} />;
+        boxContent = <LuTriangleAlert css={iconCss} />;
     } else if (user === "none") {
         boxContent = <LoggedOut />;
     } else {
@@ -256,7 +256,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             icon: match(logoutState, {
                 "idle": () => <LuLogOut />,
                 "pending": () => <Spinner />,
-                "error": () => <LuAlertTriangle />,
+                "error": () => <LuTriangleAlert />,
             }),
             children: t("user.logout"),
             css: {

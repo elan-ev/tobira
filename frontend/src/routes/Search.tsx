@@ -3,7 +3,7 @@ import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "reac
 import {
     LuCalendar,
     LuCalendarRange,
-    LuLayout,
+    LuPanelsTopLeft,
     LuVolume2,
     LuX,
 } from "react-icons/lu";
@@ -27,6 +27,7 @@ import {
     Spinner,
     WithTooltip,
     match,
+    matchTag,
     screenWidthAtMost,
     unreachable,
     useColorScheme,
@@ -229,20 +230,16 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
     });
 
 
-    let body;
-    if (outcome.__typename === "EmptyQuery") {
-        body = <CenteredNote>{t("search.too-few-characters")}</CenteredNote>;
-    } else if (outcome.__typename === "SearchUnavailable") {
-        body = <div css={{ textAlign: "center" }}>
+    const body = matchTag(outcome, "__typename", {
+        "EmptyQuery": () => <CenteredNote>{t("search.too-few-characters")}</CenteredNote>,
+        "SearchUnavailable": () => <div css={{ textAlign: "center" }}>
             <Card kind="error" css={{ margin: 32 }}>{t("search.unavailable")}</Card>
-        </div>;
-    } else if (outcome.__typename === "SearchResults") {
-        body = outcome.items.length === 0
+        </div>,
+        "SearchResults": outcome => outcome.items.length === 0
             ? <CenteredNote>{t("search.no-results")}</CenteredNote>
-            : <SearchResults items={outcome.items} />;
-    } else {
-        return unreachable("unknown search outcome");
-    }
+            : <SearchResults items={outcome.items} />,
+        "%other": () => unreachable("unknown search outcome"),
+    });
 
     const hits = outcome.__typename === "SearchResults" ? outcome.totalHits : 0;
     const timingInfo = isExperimentalFlagSet() && outcome.__typename === "SearchResults"
@@ -473,19 +470,16 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => {
                 ? COLORS.neutral25
                 : COLORS.neutral20,
         }}>
-            {items.map(item => {
-                if (item.__typename === "SearchEvent") {
-                    return <SearchEvent key={item.id} {...item} />;
-                } else if (item.__typename === "SearchSeries") {
-                    return <SearchSeries key={item.id} {...item} />;
-                } else if (item.__typename === "SearchRealm") {
-                    return <SearchRealm key={item.id} {...item} />;
-                } else {
+            {items.map(item => matchTag(item, "__typename", {
+                "SearchEvent": item => <SearchEvent key={item.id} {...item} />,
+                "SearchSeries": item => <SearchSeries key={item.id} {...item} />,
+                "SearchRealm": item => <SearchRealm key={item.id} {...item} />,
+                "%other": () => {
                     // eslint-disable-next-line no-console
                     console.warn("Unknown search item type: ", item.__typename);
                     return null;
-                }
-            })}
+                },
+            }))}
         </ul>
     );
 };
@@ -909,7 +903,7 @@ const SearchRealm: React.FC<RealmItem> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-        }}><LuLayout /></div>,
+        }}><LuPanelsTopLeft /></div>,
         info: (
             <div css={{
                 padding: "6px 0",

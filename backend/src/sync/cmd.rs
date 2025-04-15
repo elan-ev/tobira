@@ -105,13 +105,13 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
         SyncCommand::Run { daemon } => {
             info!("Starting Tobira <-> Opencast synchronization ...");
             let before = Instant::now();
-            super::run(daemon, conn, config).await?;
+            super::run(daemon, &db, config).await?;
             info!("Finished harvest in {:.2?}", before.elapsed());
             Ok(())
         }
         SyncCommand::Reset { yes_absolutely_reset: yes } => reset(conn, yes).await,
         SyncCommand::Texts { cmd: TextsCommand::Fetch { daemon } } => {
-            super::text::fetch_update(conn, config, daemon).await
+            super::text::fetch_update(&db, config, daemon).await
         }
         SyncCommand::Texts { cmd: TextsCommand::Status } => text_status(conn).await,
         SyncCommand::Texts { cmd: TextsCommand::Queue { all, missing, ref events } } => {

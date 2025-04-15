@@ -444,7 +444,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                 // poll showed that this matches the intuition of almost everyone.
                 "ASCENDING": () => <LuArrowDownNarrowWide />,
                 "DESCENDING": () => <LuArrowUpWideNarrow />,
-            }, () => null)}
+            })}
         </Link>
     </th>;
 };
@@ -560,10 +560,10 @@ export const parsePaginationAndDirection = (
     const sortColumn = sortParams[0] ?? DEFAULT_SORT_COLUMN;
     const sortOrder = sortParams[1] ?? null;
     const direction = sortOrder !== null
-        ? match<string, SortDirection>(sortOrder, {
-            desc: () => "DESCENDING",
-            asc: () => "ASCENDING",
-        }, () => defaultDirection)
+        ? match(sortOrder, {
+            desc: () => "DESCENDING" as const,
+            asc: () => "ASCENDING" as const,
+        }) ?? defaultDirection
         : defaultDirection;
 
     return { page, direction, sortColumn };

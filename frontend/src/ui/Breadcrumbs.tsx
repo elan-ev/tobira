@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { LuHome, LuChevronRight } from "react-icons/lu";
+import { LuHouse, LuChevronRight } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
 import { BreadcrumbList, WithContext } from "schema-dts";
 
@@ -43,7 +43,7 @@ export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
                         ...focusStyle({ inset: true }),
                         borderRadius: 4,
                     }}>
-                        <LuHome aria-label={t("general.home")} />
+                        <LuHouse aria-label={t("general.home")} />
                     </Link>
                 </li>
                 {path.map((segment, i) => (

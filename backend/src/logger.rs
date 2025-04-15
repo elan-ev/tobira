@@ -46,7 +46,7 @@ pub(crate) struct LogConfig {
     /// If this is set, log messages are also written to this file. The string
     /// `${cmd}` in this value is replaced by the subcommand name of the Tobira
     /// process, e.g. `serve`, `worker` or `other` (for less important
-    /// commands). Example: "/var/log/tobira-${job}.log".
+    /// commands). Example: "/var/log/tobira-${cmd}.log".
     pub(crate) file: Option<PathBuf>,
 
     /// If this is set to `false`, log messages are not written to stdout.

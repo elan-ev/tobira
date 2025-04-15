@@ -3,7 +3,7 @@ import React, { ReactElement, useState } from "react";
 import { graphql, loadQuery, useMutation } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
-import { LuSunrise, LuInfo, LuSettings, LuPlusCircle, LuPenSquare } from "react-icons/lu";
+import { LuInfo, LuSettings, LuCirclePlus, LuSquarePen } from "react-icons/lu";
 import { WithTooltip, screenWidthAtMost } from "@opencast/appkit";
 
 import { environment as relayEnv } from "../relay";
@@ -29,7 +29,6 @@ import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import CONFIG from "../config";
 
 
-// eslint-disable-next-line @typescript-eslint/quotes
 export const ILLEGAL_CHARS = '<>"[\\]^`{|}#%/?';
 export const RESERVED_CHARS = "-+~@_!$&;:.,=*'()";
 
@@ -120,17 +119,13 @@ const query = graphql`
         ... UserData
         currentUser { username canCreateUserRealm }
         realm: realmByPath(path: $path) {
-            id
             name
             path
             isMainRoot
             isUserRealm
             ownerDisplayName
-            children { id }
-            blocks { id }
             canCurrentUserModerate
             ancestors { name path ownerDisplayName }
-            parent { id }
             ... BlocksData
             ... NavigationData
         }
@@ -175,37 +170,8 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
                 width: 1,
             }}>{siteTitle}</h1>
         )}
-        {realm.blocks.length === 0 && realm.isMainRoot
-            ? <WelcomeMessage />
-            : <Blocks realm={realm} />}
+        <Blocks realm={realm} />
     </>;
-};
-
-const WelcomeMessage: React.FC = () => {
-    const { t } = useTranslation();
-
-    return (
-        <div css={{
-            maxWidth: 500,
-            marginTop: 32,
-            display: "inline-flex",
-            flexDirection: "column",
-            borderRadius: 4,
-            padding: "8px 16px",
-            gap: 16,
-            alignItems: "center",
-            backgroundColor: COLORS.neutral10,
-            border: `2px dashed ${COLORS.happy0}`,
-        }}>
-            <LuSunrise css={{ marginTop: 8, fontSize: 32, minWidth: 32 }} />
-            <div>
-                <h2 css={{ textAlign: "center", fontSize: 20, marginBottom: 16 }}>
-                    {t("welcome.title")}
-                </h2>
-                <p>{t("welcome.body")}</p>
-            </div>
-        </div>
-    );
 };
 
 const UserRealmNote: React.FC<Props> = ({ realm }) => {
@@ -310,8 +276,8 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     /* eslint-disable react/jsx-key */
     const buttons: [string, string, ReactElement][] = [
         ["/~manage/realm?path=", t("realm.page-settings"), <LuSettings />],
-        ["/~manage/realm/content?path=", t("realm.edit-page-content"), <LuPenSquare />],
-        ["/~manage/realm/add-child?parent=", t("realm.add-sub-page"), <LuPlusCircle />],
+        ["/~manage/realm/content?path=", t("realm.edit-page-content"), <LuSquarePen />],
+        ["/~manage/realm/add-child?parent=", t("realm.add-sub-page"), <LuCirclePlus />],
     ];
     /* eslint-enable react/jsx-key */
 

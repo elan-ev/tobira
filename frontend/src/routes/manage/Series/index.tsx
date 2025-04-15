@@ -121,12 +121,12 @@ const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
 
 const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
     sortBy !== null
-        ? match<string, SeriesSortColumn>(sortBy, {
-            "title": () => "TITLE",
-            "created": () => "CREATED",
-            "updated": () => "UPDATED",
-            "event_count": () => "EVENT_COUNT",
-        }, () => "CREATED")
+        ? match(sortBy, {
+            "title": () => "TITLE" as const,
+            "created": () => "CREATED" as const,
+            "updated": () => "UPDATED" as const,
+            "event_count": () => "EVENT_COUNT" as const,
+        }) ?? "CREATED"
         : "CREATED";
 
 const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);

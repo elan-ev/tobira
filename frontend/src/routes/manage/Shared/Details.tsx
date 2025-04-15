@@ -118,9 +118,10 @@ export const DirectLink: React.FC<UrlProps> = ({ url, withTimestamp }) => {
     const [timestamp, setTimestamp] = useState(0);
     const [checkboxChecked, setCheckboxChecked] = useState(false);
 
-    const linkUrl = (withTimestamp && timestamp && checkboxChecked)
-        ? new URL(url + `?t=${secondsToTimeString(timestamp)}`)
-        : url;
+    const linkUrl = url;
+    if (withTimestamp && timestamp && checkboxChecked) {
+        linkUrl.searchParams.set("t", secondsToTimeString(timestamp));
+    }
 
     return <div css={{ marginBottom: 40, maxWidth: 750 }}>
         <div css={{ marginBottom: 4 }}>

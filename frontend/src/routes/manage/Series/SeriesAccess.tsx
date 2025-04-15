@@ -64,7 +64,7 @@ const SeriesAclEditor: React.FC<SeriesAclPageProps> = ({ series, data }) => {
                     ([role, { actions }]) => ({
                         role,
                         actions: [...actions],
-                    })
+                    }),
                 ),
             },
             onCompleted: () => currentRef(saveModalRef).done(),

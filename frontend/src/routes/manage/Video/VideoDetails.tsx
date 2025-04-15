@@ -52,7 +52,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
                 )}/>
             </div>,
         ]}
-    />
+    />,
 );
 
 const deleteVideoMutation = graphql`
@@ -76,6 +76,7 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
         {user.canUseEditor && !event.isLive && event.canWrite && (
             <ExternalLink
                 service="EDITOR"
+                event={event.id}
                 params={{
                     id: event.opencastId,
                     callbackUrl: document.location.href,

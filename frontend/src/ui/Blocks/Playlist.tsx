@@ -48,14 +48,15 @@ const playlistFragment = graphql`
 
 type FromBlockProps = SharedProps & {
     fragRef: PlaylistBlockData$key;
+    edit?: boolean;
 }
 
 export const PlaylistBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...rest }) => {
     const { t } = useTranslation();
     const { playlist, ...block } = useFragment(blockFragment, fragRef);
-    return playlist == null
+    return playlist == null && rest.edit
         ? <Card kind="error">{t("playlist.deleted-playlist-block")}</Card>
-        : <PlaylistBlockFromPlaylist fragRef={playlist} {...rest} {...block} />;
+        : playlist != null && <PlaylistBlockFromPlaylist fragRef={playlist} {...rest} {...block} />;
 };
 
 type BlockProps = Partial<Omit<Fields<PlaylistBlockData$data>, "playlist">>;

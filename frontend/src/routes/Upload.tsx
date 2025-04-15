@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { Controller, FormProvider, useController, useForm } from "react-hook-form";
-import { LuCheckCircle, LuUpload, LuInfo } from "react-icons/lu";
+import { LuCircleCheck, LuUpload, LuInfo } from "react-icons/lu";
 import {
     Spinner, WithTooltip, assertNever, bug,
     unreachable, Button, boxError, ErrorBox, Card,
@@ -211,7 +211,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
             marginTop: "max(16px, 10vh - 50px)",
             gap: 32,
         }}>
-            <LuCheckCircle css={{ fontSize: 64, color: COLORS.happy0 }} />
+            <LuCircleCheck css={{ fontSize: 64, color: COLORS.happy0 }} />
             {t("upload.finished")}
         </div>;
     } else {
@@ -690,10 +690,8 @@ type MetaDataEditProps = {
 /** Form that lets the user set metadata about the video */
 const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRoles }) => {
     const { t } = useTranslation();
-    const user = useUser();
-    if (!isRealUser(user)) {
-        return unreachable();
-    }
+    const u = useUser();
+    const user = isRealUser(u) ? u : unreachable();
 
     const seriesFieldId = useId();
     const [lockedAcl, setLockedAcl] = useState<Acl | null>(null);
@@ -705,7 +703,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         const data = await fetchQuery<UploadSeriesAclQuery>(
             environment,
             SeriesAclQuery,
-            { seriesId }
+            { seriesId },
         ).toPromise();
 
         if (!data?.series?.acl) {
@@ -720,6 +718,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
 
         if (!data?.opencastId) {
             setLockedAcl(null);
+            seriesField.onChange(undefined);
             return;
         }
 
@@ -739,7 +738,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     <ErrorDisplay
                         error={e}
                         failedAction={t("upload.errors.failed-fetching-series-acl")}
-                    />
+                    />,
                 );
             } finally {
                 setAclLoading(false);
@@ -1076,7 +1075,7 @@ const finishUpload = async (
         }
 
         // Add ACL
-        if (!CONFIG.lockAclToSeries) {
+        if (!CONFIG.lockAclToSeries || !metadata.series) {
             const acl = constructAcl(metadata.acl);
             const body = new FormData();
             body.append("flavor", "security/xacml+episode");

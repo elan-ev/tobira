@@ -1,6 +1,6 @@
 import { PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LuAlertTriangle, LuFilm, LuRadio, LuTrash, LuUserCircle, LuVolume2 } from "react-icons/lu";
+import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuCircleUser, LuVolume2 } from "react-icons/lu";
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
@@ -100,7 +100,7 @@ type ThumbnailReplacementProps = {
     deletionIsPending?: boolean;
 }
 export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
-    { audioOnly, isDark, isUpcoming, deletionIsPending }
+    { audioOnly, isDark, isUpcoming, deletionIsPending },
 ) => {
     // We have no thumbnail. If the resolution is `null` as well, we are
     // dealing with an audio-only event and show an appropriate icon.
@@ -258,7 +258,7 @@ export const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt 
                 strokeWidth: 1.5,
             },
         }}>
-            <LuAlertTriangle />
+            <LuTriangleAlert />
             {t("general.failed-to-load-thumbnail")}
         </div>
         : <img
@@ -298,7 +298,7 @@ export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
             }}
             {...{ className }}
         >
-            <LuUserCircle css={{
+            <LuCircleUser css={{
                 color: COLORS.neutral60,
                 fontSize: 16,
                 flexShrink: 0,

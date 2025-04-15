@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { LuPenSquare } from "react-icons/lu";
+import { LuSquarePen } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 
 import type {
@@ -54,7 +54,7 @@ export const EditButtons: React.FC<Props> = ({
         <MoveButtons {...{ realm, index, onCommit, onCompleted }} onError={onMoveError} />
         <WithTooltip tooltip={t("manage.realm.content.edit")}>
             <Button aria-label={t("manage.realm.content.edit")} onClick={onEdit}>
-                <LuPenSquare />
+                <LuSquarePen />
             </Button>
         </WithTooltip>
         <RemoveButton
@@ -82,7 +82,6 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = props => (
 
 // For use in block mutations that might have an effect on the realm name.
 // Only used to be included in queries in order to update the store
-// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 const _frag = graphql`
     fragment EditBlockUpdateRealmNameData on Block {
         realm {

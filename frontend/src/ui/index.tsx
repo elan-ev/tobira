@@ -1,5 +1,5 @@
 import { match, WithTooltip, screenWidthAbove, useColorScheme } from "@opencast/appkit";
-import { LuAlertTriangle, LuInfo } from "react-icons/lu";
+import { LuTriangleAlert, LuInfo } from "react-icons/lu";
 import { ReactNode } from "react";
 import { CSSObject } from "@emotion/react";
 
@@ -205,7 +205,7 @@ export const IconWithTooltip: React.FC<IconWithTooltipProps> = ({ tooltip, mode 
         tooltipCss={{ width: "min(85vw, 460px)" }}
     >
         <span css={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
-            {mode === "info" ? <LuInfo /> : <LuAlertTriangle css={{ color: COLORS.danger0 }}/>}
+            {mode === "info" ? <LuInfo /> : <LuTriangleAlert css={{ color: COLORS.danger0 }}/>}
         </span>
     </WithTooltip>
 );

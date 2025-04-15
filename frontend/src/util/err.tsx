@@ -158,7 +158,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ failedAction, ...pro
             {failedAction && failedAction + " "}
             {causes.length === 1
                 ? <>{causes[0]}{" "}</>
-                : <ul>{causes.map(cause => <li key={cause?.toString()}>{cause}</li>)}</ul>
+                : <ul>{causes.map((cause, i) => <li key={i}>{cause}</li>)}</ul>
             }
             {info.potentiallyInternetProblem && t("errors.are-you-connected-to-internet")}
         </p>
@@ -193,6 +193,10 @@ export class GlobalErrorBoundary
         if (!error) {
             return this.props.children;
         }
+
+        // TODO: we might want to improve that, as it can result in garbage in some cases, maybe.
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        const errorMsg = error.toString();
 
         // We are using English here instead of translated strings in order to
         // have fewer possibilities this component will error itself. If this
@@ -229,7 +233,7 @@ export class GlobalErrorBoundary
                         <h2 css={{ fontSize: 22 }}>Information for developers</h2>
                         <pre>
                             <code css={{ whiteSpace: "pre-wrap" }}>
-                                {String(error)}
+                                {errorMsg}
                             </code>
                         </pre>
                     </div>
