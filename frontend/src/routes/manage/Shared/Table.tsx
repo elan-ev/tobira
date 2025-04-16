@@ -1,5 +1,5 @@
 import { Card, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
-import { useState, useRef, useEffect, ReactNode, ComponentType } from "react";
+import { useState, useRef, useEffect, ReactNode, ComponentType, PropsWithChildren } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -33,7 +33,7 @@ type ItemVars = {
     page: number;
 };
 
-type SharedProps<T> = {
+export type SharedManageProps<T> = {
     connection: {
         items: readonly T[];
         totalCount: number;
@@ -45,12 +45,12 @@ type SharedProps<T> = {
     vars: ItemVars;
 };
 
-type SharedTableProps<T> = SharedProps<T> & {
+type SharedTableProps<T> = SharedManageProps<T> & {
     RenderRow: ComponentType<{ item: T }>;
     additionalColumns?: ColumnProps<T>[];
 }
 
-type ManageItemProps<T> = SharedTableProps<T> & {
+type ManageItemProps<T> = PropsWithChildren & SharedTableProps<T> & {
     titleKey: ParseKeys;
 }
 
@@ -61,6 +61,7 @@ export const ManageItems = <T extends Item>({
     vars,
     titleKey,
     additionalColumns,
+    children,
     RenderRow,
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
@@ -70,7 +71,7 @@ export const ManageItems = <T extends Item>({
     if (connection.items.length === 0) {
         inner = <div css={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <Notification />
-            <Card kind="info" css={{ width: "fit-content" }}>
+            <Card kind="info" css={{ width: "fit-content", marginTop: 16 }}>
                 {t("manage.item-table.no-entries-found")}
             </Card>
         </div>;
@@ -105,8 +106,9 @@ export const ManageItems = <T extends Item>({
             <Breadcrumbs tail={title} path={[{
                 label: t("user.manage-content"),
                 link: ManageRoute.url,
-            }]}/>
-            <PageTitle title={title} css={{ marginBottom: 32 }}/>
+            }]} />
+            <PageTitle title={title} css={{ marginBottom: 32 }} />
+            {children}
             {inner}
         </div>
     );
@@ -449,7 +451,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
     </th>;
 };
 
-const PageNavigation = <T, >({ connection, vars }: SharedProps<T>) => {
+const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
     const { t } = useTranslation();
     const pageInfo = connection.pageInfo;
     const total = connection.totalCount;
