@@ -284,13 +284,10 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesRef, realmRef, basePath }
     return <div css={{ display: "flex", flexDirection: "column" }}>
         <Breadcrumbs path={breadcrumbs} tail={tail} />
         <PageTitle title={series.title} />
-        <p css={{ maxWidth: "90ch" }}>{series.syncedData.description}</p>
-        <div css={{ marginTop: 12 }}>
-            <SeriesBlockFromSeries
-                title={t("videolist-block.videos.heading")}
-                basePath={basePath}
-                fragRef={series}
-            />
-        </div>
+        <SeriesBlockFromSeries
+            showMetadata
+            basePath={basePath}
+            fragRef={series}
+        />
     </div>;
 };
