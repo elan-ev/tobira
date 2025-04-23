@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Card } from "@opencast/appkit";
 import { graphql, useFragment } from "react-relay";
 
-import { isSynced } from "../../util";
+import { isSynced, keyOfId } from "../../util";
 import type { Fields } from "../../relay";
 import {
     SeriesBlockData$data, SeriesBlockData$key,
@@ -36,6 +36,7 @@ const blockFragment = graphql`
 
 const seriesFragment = graphql`
     fragment SeriesBlockSeriesData on Series {
+        id
         title
         created
         # description is only queried to get the sync status
@@ -106,6 +107,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         }
     })();
 
+    const seriesKey = keyOfId(series.id);
     return <VideoListBlock
         initialLayout={props.layout}
         initialOrder={
@@ -119,5 +121,11 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         activeEventId={props.activeEventId}
         realmPath={props.realmPath}
         listEntries={series.entries}
+        shareInfo={{
+            shareUrl: props.realmPath == null
+                ? `/!s/${seriesKey}`
+                : `${props.realmPath.replace(/\/$/u, "")}/s/${seriesKey}`,
+            rssUrl: `/~rss/series/${seriesKey}`,
+        }}
     />;
 };

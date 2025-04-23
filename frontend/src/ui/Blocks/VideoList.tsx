@@ -19,6 +19,7 @@ import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
 import {
     LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
+    LuRss, LuLink,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
@@ -42,6 +43,8 @@ import { COLORS } from "../../color";
 import { FloatingBaseMenu } from "../FloatingBaseMenu";
 import { isRealUser, useUser } from "../../User";
 import { LoginLink } from "../../routes/util";
+import { QrCodeButton, ShareButton } from "../ShareButton";
+import { CopyableInput } from "../Input";
 
 
 
@@ -106,6 +109,7 @@ export type VideoListBlockProps = {
     description?: string;
     timestamp?: string;
     creators?: string[];
+    shareInfo: VideoListShareButtonProps,
     isPlaylist?: boolean;
     listEntries: Entries;
 }
@@ -121,6 +125,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     description,
     timestamp,
     creators,
+    shareInfo,
     isPlaylist = false,
     listEntries,
 }) => {
@@ -164,7 +169,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
-            {...{ title, description, timestamp, creators, initialLayout, isPlaylist }}
+            {...{ title, description, timestamp, creators, shareInfo, initialLayout, isPlaylist }}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("videolist-block.no-videos")}</div>
@@ -304,6 +309,7 @@ type VideoListBlockContainerProps = {
     description?: string | null;
     timestamp?: string;
     creators?: string[];
+    shareInfo?: VideoListShareButtonProps,
     children: ReactNode;
     showViewOptions: boolean;
     initialLayout?: VideoListLayout;
@@ -321,7 +327,8 @@ const LayoutContext = createContext<LayoutContext>({
 });
 
 export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = ({
-    title, description, timestamp, creators, children, showViewOptions, initialLayout = "GALLERY",
+    title, description, timestamp, creators, shareInfo, children,
+    showViewOptions, initialLayout = "GALLERY",
 }) => {
     const [layoutState, setLayoutState] = useState<VideoListLayout>(initialLayout);
     const isDark = useColorScheme().scheme === "dark";
@@ -380,7 +387,7 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                                 {...{ description }}
                             />}
                         </div>
-                        {showViewOptions && <div css={{
+                        <div css={{
                             display: "flex",
                             alignItems: "center",
                             alignSelf: description ? "flex-end" : "flex-start",
@@ -389,9 +396,12 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                             gap: 16,
                             padding: 5,
                         }}>
-                            <OrderMenu />
-                            <LayoutMenu />
-                        </div>}
+                            {shareInfo && <VideoListShareButton {...shareInfo} />}
+                            {showViewOptions && <>
+                                <OrderMenu />
+                                <LayoutMenu />
+                            </>}
+                        </div>
                     </div>
                 </div>
                 {hasMetadata && <hr css={{ margin: "12px 6px 20px 6px" }} />}
@@ -401,6 +411,39 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
     </LayoutContext.Provider>;
 };
 
+type VideoListShareButtonProps = {
+    shareUrl: string;
+    rssUrl: string;
+};
+
+const VideoListShareButton: React.FC<VideoListShareButtonProps> = props => {
+    const { t } = useTranslation();
+    const shareUrl = document.location.origin + props.shareUrl;
+    const rssUrl = document.location.origin + props.rssUrl;
+    const tabs = {
+        "main": {
+            label: t("share.link"),
+            Icon: LuLink,
+            Component: () => <>
+                <CopyableInput label={t("share.copy-link")} value={shareUrl} />
+                <QrCodeButton target={shareUrl} label={t("share.link")} />
+            </>,
+        },
+        "rss": {
+            label: t("share.rss"),
+            Icon: LuRss,
+            Component: () => <>
+                <CopyableInput label={t("share.copy-rss")} value={rssUrl} />
+                <QrCodeButton target={rssUrl} label={t("share.rss")} />
+            </>,
+        },
+    };
+    return <ShareButton height={180} {...{ tabs }} css={{
+        padding: 12,
+        height: 31,
+        borderRadius: 4,
+    }} />;
+};
 
 
 // ==============================================================================================

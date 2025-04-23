@@ -981,7 +981,7 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const series = event.series;
     const tabs = {
         "main": {
-            label: t("video.share.main"),
+            label: t("share.link"),
             Icon: LuLink,
             Component: () => {
                 let url = window.location.href.replace(timeStringPattern, "");
@@ -1005,12 +1005,12 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                             />}
                         />}
                     </div>
-                    <QrCodeButton target={url} label={t("video.share.main")} />
+                    <QrCodeButton target={url} label={t("share.link")} />
                 </>;
             },
         },
         "embed": {
-            label: t("video.share.embed"),
+            label: t("share.embed"),
             Icon: LuCode,
             Component: () => {
                 const ar = event.authorizedData == null
@@ -1037,7 +1037,7 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 return <>
                     <div>
                         <CopyableInput
-                            label={t("video.embed.copy-embed-code-to-clipboard")}
+                            label={t("share.copy-embed-code")}
                             value={embedCode}
                             multiline
                             css={{ height: 75 }}
@@ -1052,25 +1052,20 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                             />}
                         />}
                     </div>
-                    <QrCodeButton target={embedCode} label={t("video.share.embed")} />
+                    <QrCodeButton target={embedCode} label={t("share.embed")} />
                 </>;
             },
         },
         ...series && {
             "rss": {
-                label: t("video.share.rss"),
+                label: t("share.rss"),
                 Icon: LuRss,
                 Component: () => {
                     const rssUrl = window.location.origin
                         + `/~rss/series/${keyOfId(series.id)}`;
                     return <>
-                        <div>
-                            <CopyableInput
-                                label={t("video.rss.copy-link-to-clipboard")}
-                                value={rssUrl}
-                            />
-                        </div>
-                        <QrCodeButton target={rssUrl} label={t("video.share.rss")} />
+                        <CopyableInput label={t("share.copy-rss")} value={rssUrl} />
+                        <QrCodeButton target={rssUrl} label={t("share.rss")} />
                     </>;
                 },
             },
@@ -1085,7 +1080,7 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         }
     };
 
-    return <ShareButton {...{ tabs, onOpen }} />;
+    return <ShareButton {...{ tabs, onOpen }} height={250} />;
 };
 
 

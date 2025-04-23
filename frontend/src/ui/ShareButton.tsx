@@ -18,10 +18,12 @@ export type ShareButtonProps = {
         Icon: React.ComponentType;
         Component: React.ComponentType;
     }>;
-    onOpen: () => void;
+    onOpen?: () => void;
+    height: number;
+    className?: string;
 };
 
-export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen }) => {
+export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen, height, className }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<string | null>(null);
     const isDark = useColorScheme().scheme === "dark";
@@ -106,10 +108,10 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen }) => {
         >
             {/* Share Button */}
             <FloatingTrigger>
-                <Button onClick={() => {
+                <Button {...{ className }} onClick={() => {
                     setActiveTab(state => state === null ? Object.keys(tabs)[0] : null);
                     if (activeTab == null) {
-                        onOpen();
+                        onOpen?.();
                     }
                 }}>
                     <LuShare2 size={16} />
@@ -122,7 +124,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen }) => {
                 padding={0}
                 backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
                 css={{
-                    height: 240,
+                    height,
                     display: "flex",
                     flexDirection: "column",
                 }}
@@ -157,7 +159,7 @@ export const QrCodeButton: React.FC<QrCodeButtonProps> = ({ target, label }) => 
             css={{ width: "max-content" }}
         >
             <LuQrCode />
-            {t("video.share.show-qr-code")}
+            {t("share.show-qr-code")}
         </Button>
         <Modal
             ref={qrModalRef}

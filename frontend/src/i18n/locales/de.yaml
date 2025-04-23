@@ -157,10 +157,6 @@ video:
   description:
     show-more: ...mehr anzeigen
     show-less: Weniger anzeigen
-  embed:
-    copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren
-  rss:
-    copy-link-to-clipboard: RSS Link in Zwischenablage kopieren
   caption: Untertitel
   download:
     title: Download
@@ -173,13 +169,6 @@ video:
   start: Anfang
   end: Ende
   ends: Endet
-  share:
-    share-video: Video teilen
-    direct-link: Direktlink
-    main: Link
-    embed: Einbetten
-    rss: RSS
-    show-qr-code: QR Code anzeigen
   password:
     heading: Geschütztes Video
     sub-heading: Zugriff zu diesem Video ist beschränkt.
@@ -191,6 +180,17 @@ video:
       password: Passwort
       submit: Freischalten
     invalid-credentials: Ungültige Zugangsdaten.
+
+share:
+  share-video: Video teilen
+  direct-link: Direktlink
+  main: Link
+  embed: Einbetten
+  rss: RSS
+  show-qr-code: QR Code anzeigen
+  copy-link: Link in Zwischenablage kopieren
+  copy-rss: RSS Link in Zwischenablage kopieren
+  copy-embed-code: Einbettungscode in Zwischenablage kopieren
 
 playlist:
   deleted-playlist-block: Die hier referenzierte Playlist wurde gelöscht.

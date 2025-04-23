@@ -11,6 +11,7 @@ import {
     PlaylistBlockPlaylistData$key,
 } from "./__generated__/PlaylistBlockPlaylistData.graphql";
 import { Card, unreachable } from "@opencast/appkit";
+import { keyOfId } from "../../util";
 
 
 type SharedProps = {
@@ -105,6 +106,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
             : playlist.title)
         : undefined;
 
+    const playlistKey = keyOfId(playlist.id);
     return <VideoListBlock
         initialLayout={props.layout}
         initialOrder={
@@ -119,5 +121,13 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         isPlaylist
         listId={playlist.id}
         listEntries={playlist.entries}
+        shareInfo={{
+            // TODO: once we have the `/path/to/realm/p/<id>` route
+            // shareUrl: props.realmPath == null
+            //     ? `/!p/${playlistKey}`
+            //     : `${props.realmPath}p/${playlistKey}`,
+            shareUrl: `/!p/${playlistKey}`,
+            rssUrl: `/~rss/playlist/${playlistKey}`,
+        }}
     />;
 };
