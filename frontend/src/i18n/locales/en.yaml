@@ -586,7 +586,7 @@ manage:
 
       show-title: Show title
       show-link: Show link to video page
-      show-description: Show description
+      show-description: Show description and metadata
       display-options: Display options
 
       cancel: Discard

@@ -36,6 +36,7 @@ const playlistFragment = graphql`
             id
             title
             description
+            creator
             entries {
                 __typename
                 ... on AuthorizedEvent { id, ...VideoListEventData }
@@ -112,6 +113,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         allowOriginalOrder
         {...{ title }}
         description={(props.showMetadata && playlist.description) || undefined}
+        creators={props.showMetadata ? [playlist.creator] : undefined}
         activeEventId={props.activeEventId}
         basePath={props.basePath}
         isPlaylist

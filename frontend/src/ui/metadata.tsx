@@ -46,7 +46,7 @@ export const DateAndCreators: React.FC<DateAndCreatorsProps> = ({
     timestamp, isLive, creators, className,
 }) => (
     <div {...{ className }} css={{
-        display: "flex",
+        display: "inline-flex",
         color: COLORS.neutral80,
         fontSize: 12,
         gap: 24,

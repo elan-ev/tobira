@@ -152,7 +152,7 @@ video:
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
   started: Gestartet
   started-when: Gestartet {{duration}}
-  starts: Startet 
+  starts: Startet
   starts-in: Startet {{duration}}
   description:
     show-more: ...mehr anzeigen
@@ -167,7 +167,7 @@ video:
     presenter: Video (Sprecher:in)
     slides: Video (Präsentation)
     info: >
-      Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen 
+      Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen
       (Rechtsklick - Speichern unter).
   manage: Verwalten
   start: Anfang
@@ -214,7 +214,7 @@ videolist-block:
   no-videos: Keine Videos
   unauthorized: Fehlende Berechtigung
   hidden-items:
-    unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte. 
+    unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte.
     unauthorized_other: 'Für {{count}} Videos fehlen Ihnen die Zugriffsrechte.'
     missing_one: Ein Video wurde nicht gefunden.
     missing_other: '{{count}} Videos wurden nicht gefunden.'
@@ -613,7 +613,7 @@ manage:
 
       show-title: Titel anzeigen
       show-link: Link zur Videoseite anzeigen
-      show-description: Beschreibung anzeigen
+      show-description: Beschreibung und Metadaten anzeigen
       display-options: Anzeigeoptionen
 
       cancel: Verwerfen

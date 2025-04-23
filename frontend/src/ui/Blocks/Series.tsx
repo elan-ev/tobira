@@ -37,8 +37,10 @@ const blockFragment = graphql`
 const seriesFragment = graphql`
     fragment SeriesBlockSeriesData on Series {
         title
+        created
         # description is only queried to get the sync status
         syncedData { description }
+        metadata
         entries {
             __typename
             ...on AuthorizedEvent { id, ...VideoListEventData }
@@ -92,6 +94,17 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
             {t("series.not-ready.text")}
         </VideoListBlockContainer>;
     }
+    const creators = (() => {
+        const raw = series.metadata?.dcterms?.creator;
+
+        if (raw && Array.isArray(raw) && raw.length > 0 && typeof raw[0] === "string") {
+            return raw;
+        } else if (raw && typeof raw === "string") {
+            return [raw];
+        } else {
+            return undefined;
+        }
+    })();
 
     return <VideoListBlock
         initialLayout={props.layout}
@@ -101,6 +114,8 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         allowOriginalOrder={false}
         title={props.title ?? (props.showTitle ? series.title : undefined)}
         description={(props.showMetadata && series.syncedData.description) || undefined}
+        timestamp={props.showMetadata ? series.created ?? undefined : undefined}
+        creators={props.showMetadata ? creators : undefined}
         activeEventId={props.activeEventId}
         basePath={props.basePath}
         listEntries={series.entries}
