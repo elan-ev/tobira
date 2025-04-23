@@ -82,7 +82,7 @@ import { RelativeDate } from "../ui/time";
 import { Modal, ModalHandle } from "../ui/Modal";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 import { CollapsibleDescription } from "../ui/metadata";
-import { DirectSeriesRoute } from "./Series";
+import { DirectSeriesRoute, SeriesRoute } from "./Series";
 import { EmbedVideoRoute } from "./Embed";
 import { ManageVideoDetailsRoute } from "./manage/Video/Details";
 import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
@@ -158,7 +158,7 @@ export const VideoRoute = makeRoute({
                         eventRef={event}
                         realmRef={realm}
                         playlistRef={playlist ?? null}
-                        basePath={realmPath.replace(/\/$/u, "") + "/v"}
+                        realmPath={realmPath}
                     />;
                 }}
             />,
@@ -226,7 +226,7 @@ export const OpencastVideoRoute = makeRoute({
                         eventRef={event}
                         realmRef={realm}
                         playlistRef={playlist ?? null}
-                        basePath={realmPath.replace(/\/$/u, "") + "/v"}
+                        realmPath={realmPath}
                     />;
                 }}
             />,
@@ -389,7 +389,7 @@ const matchedDirectRoute = (
             eventRef={event}
             realmRef={realm ?? unreachable("root realm doesn't exist")}
             playlistRef={playlist ?? null}
-            basePath="/!v"
+            realmPath={null}
         />}
     />,
     dispose: () => queryRef.dispose(),
@@ -525,10 +525,10 @@ type Props = {
     eventRef: NonNullable<VideoPageEventData$key> | null | undefined;
     realmRef: NonNullable<VideoPageRealmData$key>;
     playlistRef: PlaylistBlockPlaylistData$key | null;
-    basePath: string;
+    realmPath: string | null;
 };
 
-const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath }) => {
+const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath }) => {
     const { t } = useTranslation();
     const rerender = useForceRerender();
     const realm = useFragment(realmFragment, realmRef);
@@ -573,6 +573,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
         // but it's not clear what for.
     };
 
+    const basePath = realmPath == null ? "/!v" : `${realmPath}/v`;
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
@@ -585,7 +586,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, basePath 
                 />
                 : <PreviewPlaceholder {...{ event, refetch }}/>
             }
-            <Metadata id={event.id} event={event} />
+            <Metadata {...{ event, realmPath }} />
         </PlayerContextProvider>
 
         <div css={{ height: 80 }} />
@@ -856,11 +857,11 @@ type SyncedEvent = SyncedOpencastEntity<Event> & {
 };
 
 type MetadataProps = {
-    id: string;
     event: SyncedEvent;
+    realmPath: string | null;
 };
 
-const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
+const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
     const { t } = useTranslation();
     const user = useUser();
 
@@ -892,7 +893,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 "> button": { ...shrinkOnMobile },
             }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
-                    <LinkButton to={ManageVideoDetailsRoute.url({ videoId: id })} css={{
+                    <LinkButton to={ManageVideoDetailsRoute.url({ videoId: event.id })} css={{
                         "&:not([disabled])": { color: COLORS.primary0 },
                         ...shrinkOnMobile,
                     }}>
@@ -925,7 +926,7 @@ const Metadata: React.FC<MetadataProps> = ({ id, event }) => {
                 bottomPadding={40}
             />
             <div css={{ flex: "1 200px", alignSelf: "flex-start", padding: "20px 22px" }}>
-                <MetadataTable {...{ event }} />
+                <MetadataTable {...{ event, realmPath }} />
             </div>
         </div>
     </>;
@@ -1334,17 +1335,24 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
 
 type MetadataTableProps = {
     event: Event;
+    realmPath: string | null;
 };
 
-const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({ event }, ref) => {
+const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({
+    event, realmPath,
+}, ref) => {
     const { t, i18n } = useTranslation();
     const pairs: [string, ReactNode][] = [];
 
     if (event.series) {
+        const seriesId = event.series.id;
+        const target = realmPath == null
+            ? DirectSeriesRoute.url({ seriesId })
+            : SeriesRoute.url({ seriesId, realmPath });
         pairs.push([
             t("video.part-of-series"),
             // eslint-disable-next-line react/jsx-key
-            <Link to={DirectSeriesRoute.url({ seriesId: event.series.id })}>
+            <Link to={target}>
                 {event.series.title}
             </Link>,
         ]);
