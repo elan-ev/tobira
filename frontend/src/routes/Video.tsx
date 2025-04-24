@@ -570,7 +570,6 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
         // but it's not clear what for.
     };
 
-    const basePath = realmPath == null ? "/!v" : `${realmPath}/v`;
     return <>
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
@@ -591,12 +590,12 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
         {playlistRef
             ? <PlaylistBlockFromPlaylist
                 moreOfTitle
-                basePath={basePath}
+                realmPath={realmPath}
                 fragRef={playlistRef}
                 activeEventId={event.id}
             />
             : event.series && <SeriesBlockFromSeries
-                basePath={basePath}
+                realmPath={realmPath}
                 fragRef={event.series}
                 title={t("video.more-from-series", { series: event.series.title })}
                 activeEventId={event.id}

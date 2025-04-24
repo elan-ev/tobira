@@ -19,7 +19,7 @@ import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
 // ==============================================================================================
 
 type SharedProps = {
-    basePath: string;
+    realmPath: string | null;
 };
 
 const blockFragment = graphql`
@@ -117,7 +117,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         timestamp={props.showMetadata ? series.created ?? undefined : undefined}
         creators={props.showMetadata ? creators : undefined}
         activeEventId={props.activeEventId}
-        basePath={props.basePath}
+        realmPath={props.realmPath}
         listEntries={series.entries}
     />;
 };

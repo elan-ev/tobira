@@ -97,7 +97,7 @@ type Entries = Extract<
 
 export type VideoListBlockProps = {
     listId?: string;
-    basePath: string;
+    realmPath: string | null;
     activeEventId?: string;
     allowOriginalOrder: boolean;
     initialOrder: Order;
@@ -112,7 +112,7 @@ export type VideoListBlockProps = {
 
 export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     listId,
-    basePath,
+    realmPath,
     activeEventId,
     allowOriginalOrder,
     initialOrder,
@@ -143,6 +143,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         unauthorizedItems,
     } = orderItems(items, eventOrder, i18n);
 
+    const basePath = realmPath == null ? "/!v" : `${realmPath.replace(/\/$/u, "")}/v`;
     const renderEvents = (events: readonly VideoListItem[]) => (
         <Items
             basePath={basePath}

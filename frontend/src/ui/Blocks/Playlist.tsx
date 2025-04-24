@@ -14,7 +14,7 @@ import { Card, unreachable } from "@opencast/appkit";
 
 
 type SharedProps = {
-    basePath: string;
+    realmPath: string | null;
     moreOfTitle?: boolean;
 };
 
@@ -115,7 +115,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         description={(props.showMetadata && playlist.description) || undefined}
         creators={props.showMetadata ? [playlist.creator] : undefined}
         activeEventId={props.activeEventId}
-        basePath={props.basePath}
+        realmPath={props.realmPath}
         isPlaylist
         listId={playlist.id}
         listEntries={playlist.entries}
