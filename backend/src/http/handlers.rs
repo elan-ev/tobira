@@ -153,23 +153,26 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
                 .make_noindex(noindex)
         }
     };
-    
+
     let response_time = time_incoming.elapsed();
     ctx.metrics.observe_response_time(category, response_time);
     response
 }
 
 async fn handle_rss_request(path: &str, ctx: &Arc<Context>) -> Result<Response, Response> {
-    let Some(series_id) = path.strip_prefix("/~rss/series/") else {
+    let rss_content = if let Some(series_id) = path.strip_prefix("/~rss/series/") {
+        rss::generate_series_feed(&ctx, series_id).await?
+    } else if let Some(playlist_id) = path.strip_prefix("/~rss/playlist/") {
+        rss::generate_playlist_feed(&ctx, playlist_id).await?
+    } else {
         return Ok(response::not_found());
     };
 
-    rss::generate_feed(&ctx, series_id).await.map(|rss_content| {
-        Response::builder()
-            .header("Content-Type", "application/rss+xml")
-            .body(ByteBody::from(rss_content))
-            .unwrap()
-    })
+    Response::builder()
+        .header("Content-Type", "application/rss+xml")
+        .body(ByteBody::from(rss_content))
+        .unwrap()
+        .pipe(Ok)
 }
 
 /// Handles a request to `/graphql`. Method has to be POST.
