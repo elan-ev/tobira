@@ -80,7 +80,8 @@ const query = graphql`
                     created
                     updated
                     tobiraDeletionTimestamp
-                    syncedData { description }
+                    description
+                    state
                     numVideos
                     thumbnailStack { thumbnails { url live audioOnly }}
                 }
@@ -126,7 +127,7 @@ const seriesColumns: ColumnProps<SingleSeries>[] = [
 
 const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
     itemType="series"
-    item={{ ...item, description: item.syncedData?.description }}
+    item={item}
     thumbnail={deletionIsPending => <SeriesThumbnail series={item} {...{ deletionIsPending }} />}
     link={`${PATH}/${keyOfId(item.id)}`}
     customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}

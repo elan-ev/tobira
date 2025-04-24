@@ -31,7 +31,7 @@ use crate::{
         types::{Credentials, EventCaption, EventSegment, EventState, EventTrack},
         util::impl_from_db,
     },
-    model::{ExtraMetadata, Key},
+    model::{ExtraMetadata, Key, SeriesState},
     prelude::*,
     sync::client::{AclInput, OpencastItem}
 };
@@ -347,7 +347,8 @@ impl AuthorizedEvent {
                     key: series.key,
                     opencast_id: series.opencast_id.clone(),
                     title: series.title.clone(),
-                    synced_data: None,
+                    description: None,
+                    state: SeriesState::Ready,
                     created: None,
                     updated: None,
                     metadata: None,

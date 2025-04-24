@@ -34,6 +34,12 @@ enum SeriesSortColumn {
   EVENT_COUNT
 }
 
+"Represents the different states a series can be in during its lifecycle"
+enum SeriesState {
+  READY
+  WAITING
+}
+
 enum SortDirection {
   ASCENDING
   DESCENDING
@@ -845,7 +851,8 @@ type Series implements Node {
   created: DateTime
   updated: DateTime
   metadata: ExtraMetadata
-  syncedData: SyncedSeriesData
+  description: String
+  state: SeriesState!
   numVideos: Int!
   thumbnailStack: SeriesThumbnailStack!
   acl: [AclItem!]
@@ -896,10 +903,6 @@ type SyncedEventData {
   duration: Float!
   thumbnail: String
   audioOnly: Boolean!
-}
-
-type SyncedSeriesData {
-  description: String
 }
 
 "A block just showing some text."

@@ -38,7 +38,7 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
     "",
     series => <DetailsPage
         pageTitle="manage.my-series.details.title"
-        item={{ ...series, description: series.syncedData?.description }}
+        item={series}
         breadcrumb={{
             label: i18n.t("manage.my-series.title"),
             link: ManageSeriesRoute.url,
@@ -89,7 +89,7 @@ const SeriesMetadataSection: React.FC<{ series: Series }> = ({ series }) => {
     const [commit, inFlight] = useMutation<SeriesDetailsMetadataMutation>(updateSeriesMetadata);
 
     return <MetadataSection
-        item={{ ...series, description: series.syncedData?.description }}
+        item={series}
         {...{ commit, inFlight }}
     />;
 };

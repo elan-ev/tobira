@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
-use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject, GraphQLObject};
+use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
 use postgres_types::ToSql;
 
 use crate::{
@@ -12,11 +12,15 @@ use crate::{
             shared::{convert_acl_input, SortDirection, ToSqlColumn},
         }, util::LazyLoad, Context, Id, Node, NodeValue
     },
-    db::{
-        types::SeriesState as State,
-        util::{impl_from_db, select},
+    db::util::{impl_from_db, select},
+    model::{
+        ExtraMetadata,
+        Key,
+        SearchThumbnailInfo,
+        SeriesThumbnailStack,
+        SeriesState,
+        ThumbnailInfo,
     },
-    model::{ExtraMetadata, Key, SearchThumbnailInfo, SeriesThumbnailStack, ThumbnailInfo},
     prelude::*,
     sync::client::{AclInput, OpencastItem},
 };
@@ -43,7 +47,8 @@ use super::{
 pub(crate) struct Series {
     pub(crate) key: Key,
     pub(crate) opencast_id: String,
-    pub(crate) synced_data: Option<SyncedSeriesData>,
+    pub(crate) state: SeriesState,
+    pub(crate) description: Option<String>,
     pub(crate) title: String,
     pub(crate) created: Option<DateTime<Utc>>,
     pub(crate) updated: Option<DateTime<Utc>>,
@@ -53,11 +58,6 @@ pub(crate) struct Series {
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<SeriesThumbnailStack>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
-}
-
-#[derive(Clone, GraphQLObject)]
-pub(crate) struct SyncedSeriesData {
-    description: Option<String>,
 }
 
 impl_from_db!(
@@ -79,6 +79,7 @@ impl_from_db!(
         Series {
             key: row.id(),
             opencast_id: row.opencast_id(),
+            state: row.state(),
             title: row.title(),
             created: row.created(),
             updated: row.updated(),
@@ -86,11 +87,7 @@ impl_from_db!(
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
-            synced_data: (State::Ready == row.state()).then(
-                || SyncedSeriesData {
-                    description: row.description(),
-                },
-            ),
+            description: row.description(),
             num_videos: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
         }
@@ -573,8 +570,12 @@ impl Series {
         &self.metadata
     }
 
-    fn synced_data(&self) -> &Option<SyncedSeriesData> {
-        &self.synced_data
+    fn description(&self) -> &Option<String> {
+        &self.description
+    }
+
+    fn state(&self) -> SeriesState {
+        self.state
     }
 
     fn num_videos(&self) -> i32 {

@@ -24,6 +24,7 @@ import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphq
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
 import { OcEntity } from "../../../util";
+import { isSynced } from "../../../util";
 
 
 type ItemVars = {
@@ -272,11 +273,14 @@ export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
 };
 
 type TableRowItem = {
-    syncedData?: Record<string, unknown> | null;
     tobiraDeletionTimestamp?: string | null;
     title: string;
     description?: string | null;
-}
+} & ({
+    syncedData: Record<string, unknown> | null | undefined;
+} | {
+    state: "WAITING" | "READY" | "%future added value";
+});
 
 type TableRowProps<T extends TableRowItem> = {
     itemType: OcEntity;
@@ -336,7 +340,7 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
                         : <Link to={props.link} css={{ ...titleLinkStyle }}>{item.title}</Link>
                     }
                 </div>
-                {!item.syncedData && (
+                {!isSynced(item) && (
                     <span css={{
                         padding: "0 8px",
                         fontSize: "small",
