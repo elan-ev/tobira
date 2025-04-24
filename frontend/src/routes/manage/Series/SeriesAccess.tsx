@@ -1,6 +1,5 @@
 import { currentRef } from "@opencast/appkit";
 import { graphql, useMutation } from "react-relay";
-import { useTranslation } from "react-i18next";
 
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import { makeManageSeriesRoute, Series } from "./Shared";
@@ -11,14 +10,14 @@ import { AccessEditor, AclPage, SubmitAclProps } from "../Shared/Access";
 import i18n from "../../../i18n";
 import { SeriesAccessAclMutation } from "./__generated__/SeriesAccessAclMutation.graphql";
 import { isSynced } from "../../../util";
-import { NoteWithTooltip } from "../../../ui";
+import { NotReadyNote } from "../../util";
 
 
 export const ManageSeriesAccessRoute = makeManageSeriesRoute(
     "acl",
     "/access",
     (series, data) => (
-        <AclPage note={!isSynced(series) && <NotSyncedNote />} breadcrumbTails={[
+        <AclPage note={!isSynced(series) && <NotReadyNote kind="series" />} breadcrumbTails={[
             { label: i18n.t("manage.my-series.title"), link: ManageSeriesRoute.url },
             { label: series.title, link: ManageSeriesDetailsRoute.url({ seriesId: series.id }) },
         ]}>
@@ -26,16 +25,6 @@ export const ManageSeriesAccessRoute = makeManageSeriesRoute(
         </AclPage>
     ),
 );
-
-const NotSyncedNote: React.FC = () => {
-    const { t } = useTranslation();
-
-    return <NoteWithTooltip
-        note={t("series.not-ready.title")}
-        tooltip={t("series.not-ready.text")}
-    />;
-};
-
 
 const updateSeriesAcl = graphql`
     mutation SeriesAccessAclMutation($id: ID!, $acl: [AclInputEntry!]!) {

@@ -14,12 +14,13 @@ import { NotAuthorized } from "../../../ui/error";
 import { CopyableInput, InputWithCheckbox, TimeInput } from "../../../ui/Input";
 import { MetadataFields, MetadataForm, SubmitButtonWithStatus } from "../../../ui/metadata";
 import { useUser, isRealUser } from "../../../User";
-import { OcEntity, secondsToTimeString } from "../../../util";
+import { OcEntity, Inertable, isSynced, OpencastEntity, secondsToTimeString } from "../../../util";
 import { PAGE_WIDTH } from "./Nav";
 import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 import { Link, useRouter } from "../../../router";
 import { useNotification } from "../../../ui/NotificationContext";
+import { NotReadyNote } from "../../util";
 
 
 type UrlProps = {
@@ -27,8 +28,15 @@ type UrlProps = {
     withTimestamp?: boolean;
 };
 
+type Item = OpencastEntity & {
+    id: string;
+    title: string;
+    description?: string | null;
+}
+
 type PageProps<T> = {
     item: T;
+    kind: "video" | "series";
     pageTitle: ParseKeys;
     breadcrumb: {
         label: string;
@@ -37,8 +45,9 @@ type PageProps<T> = {
     sections: (item: T) => ReactNode[];
 };
 
-export const DetailsPage = <T extends { title: string }>({
+export const DetailsPage = <T extends Item>({
     item,
+    kind,
     pageTitle,
     breadcrumb,
     sections,
@@ -57,6 +66,7 @@ export const DetailsPage = <T extends { title: string }>({
     return <>
         <Breadcrumbs path={breadcrumbs} tail={item.title} />
         <PageTitle title={t(pageTitle)} />
+        {!isSynced(item) && <NotReadyNote {...{ kind }} />}
         {sections(item).map((section, i) => <DetailsSection key={i}>{section}</DetailsSection>)}
     </>;
 };
@@ -152,9 +162,7 @@ type MetadataMutationParams = MutationParameters & {
 }
 
 type MetadataSectionProps<TMutation extends MetadataMutationParams> = {
-    item: MetadataInput & {
-        id: string;
-    };
+    item: Item;
     commit?: (config: UseMutationConfig<TMutation>) => Disposable;
     inFlight?: boolean;
 }
@@ -192,7 +200,7 @@ export const MetadataSection = <TMutation extends MetadataMutationParams>({
         });
     });
 
-    return <>
+    return <Inertable isInert={!isSynced(item)}>
         <FormProvider {...formMethods}>
             <MetadataForm hasError={!!commitError}>
                 {/* Title & Description */}
@@ -207,7 +215,7 @@ export const MetadataSection = <TMutation extends MetadataMutationParams>({
             </MetadataForm>
         </FormProvider>
         {boxError(commitError)}
-    </>;
+    </Inertable>;
 };
 
 
@@ -220,17 +228,15 @@ export const ButtonSection: React.FC<PropsWithChildren> = ({ children }) => (
 
 type DeleteMutationParams = MutationParameters & { variables: { id: string } }
 type DeleteButtonProps<TMutation extends DeleteMutationParams> = PropsWithChildren<{
-    itemId: string;
-    itemTitle: string;
-    itemType: OcEntity;
+    item: Item
+    kind: OcEntity;
     commit: (config: UseMutationConfig<TMutation>) => Disposable;
     returnPath: string;
 }>;
 
 export const DeleteButton = <TMutation extends DeleteMutationParams>({
-    itemId,
-    itemTitle,
-    itemType,
+    item,
+    kind,
     commit,
     returnPath,
     children,
@@ -240,44 +246,46 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
     const modalRef = useRef<ConfirmationModalHandle>(null);
     const router = useRouter();
 
-    const item = t(`manage.shared.item.${itemType}`);
+    const i18nKey = t(`manage.shared.item.${kind}`);
 
     const onSubmit = () => {
         commit({
-            variables: { id: itemId },
+            variables: { id: item.id },
             updater: store => store.invalidateStore(),
             onCompleted: () => {
                 currentRef(modalRef).done();
                 setNotification({
                     kind: "info",
-                    message: i18n => i18n.t("manage.shared.delete.in-progress", { itemTitle }),
+                    message: i18n => i18n.t(
+                        "manage.shared.delete.in-progress", { itemTitle: item.title },
+                    ),
                     scope: returnPath,
                 });
                 router.goto(returnPath);
             },
             onError: error => {
-                const failedAction = t("manage.shared.delete.failed", { item: itemType });
+                const failedAction = t("manage.shared.delete.failed", { item: kind });
                 currentRef(modalRef).reportError(displayCommitError(error, failedAction));
             },
         });
     };
 
-    return <>
+    return <Inertable isInert={!isSynced(item)}>
         <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
             <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
-                {t("manage.shared.delete.title", { item })}
+                {t("manage.shared.delete.title", { item: i18nKey })}
             </span>
         </Button>
         <ConfirmationModal
-            title={t("manage.shared.delete.confirm", { item })}
-            buttonContent={t("manage.shared.delete.title", { item })}
+            title={t("manage.shared.delete.confirm", { item: i18nKey })}
+            buttonContent={t("manage.shared.delete.title", { item: i18nKey })}
             onSubmit={onSubmit}
             ref={modalRef}
         >
             <p><Trans i18nKey="manage.shared.delete.cannot-be-undone" /></p>
             {children}
         </ConfirmationModal>
-    </>;
+    </Inertable>;
 };
 
 type HostRealmsProps = {

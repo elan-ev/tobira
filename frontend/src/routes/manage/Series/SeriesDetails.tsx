@@ -37,6 +37,7 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
     "details",
     "",
     series => <DetailsPage
+        kind="series"
         pageTitle="manage.my-series.details.title"
         item={series}
         breadcrumb={{
@@ -73,9 +74,8 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
 
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <DeleteButton
-            itemId={series.id}
-            itemTitle={series.title}
-            itemType="series"
+            item={series}
+            kind="series"
             returnPath="/~manage/series"
             commit={commit}
         >
