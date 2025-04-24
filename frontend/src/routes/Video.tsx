@@ -994,7 +994,6 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                     <div>
                         <CopyableInput
                             label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
-                            css={{ fontSize: 14, width: 400, marginBottom: 6 }}
                             value={url}
                         />
                         {!event.isLive && <InputWithCheckbox
@@ -1042,7 +1041,7 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                             label={t("video.embed.copy-embed-code-to-clipboard")}
                             value={embedCode}
                             multiline
-                            css={{ fontSize: 14, width: 400, height: 75, marginBottom: 6 }}
+                            css={{ height: 75 }}
                         />
                         {!event.isLive && <InputWithCheckbox
                             checkboxChecked={addEmbedTimestamp}
@@ -1069,7 +1068,6 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                         <div>
                             <CopyableInput
                                 label={t("video.rss.copy-link-to-clipboard")}
-                                css={{ fontSize: 14, width: 400, marginBottom: 6 }}
                                 value={rssUrl}
                             />
                         </div>

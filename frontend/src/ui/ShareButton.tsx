@@ -134,6 +134,8 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen }) => {
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
+                    fontSize: 14,
+                    width: 400,
                 }}>{TabComponent && <TabComponent />}</div>
             </Floating>
         </FloatingContainer>
