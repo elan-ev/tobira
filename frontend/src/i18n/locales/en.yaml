@@ -171,7 +171,6 @@ video:
   end: End
   ends: Ends
   share:
-    title: $t(video.share.{{title}})
     share-video: Share video
     direct-link: Direct link
     main: Link
