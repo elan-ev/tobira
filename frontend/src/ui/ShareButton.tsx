@@ -10,6 +10,7 @@ import { currentRef } from "../util";
 import { focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { Modal, ModalHandle } from "../ui/Modal";
+import { Interpolation, Theme } from "@emotion/react";
 
 
 export type ShareButtonProps = {
@@ -37,24 +38,20 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen, height, 
         paddingBottom: 4,
         cursor: "pointer",
         alignItems: "center",
-        borderRight: `1px solid ${COLORS.neutral40}`,
+        border: `1px solid ${COLORS.neutral40}`,
         borderTop: "none",
-        borderBottom: `1px solid ${COLORS.neutral40}`,
-        ":is(:first-child)": { borderTopLeftRadius: 4 },
+        ":is(:first-child)": {
+            borderLeft: "none",
+            borderTopLeftRadius: 4,
+        },
         ":is(:last-child)": {
             borderRight: "none",
             borderTopRightRadius: 4,
         },
-        "& > svg": {
-            width: 32,
-            height: 32,
-            color: COLORS.primary1,
-            padding: "8px 4px 4px",
-        },
         "&[disabled]": {
             cursor: "default",
             backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral05,
-            borderBottom: "none",
+            borderColor: "transparent",
             svg: { color: COLORS.primary0 },
         },
         ":not([disabled])": {
@@ -62,23 +59,27 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen, height, 
         },
         ...focusStyle({ inset: true }),
 
-        // By using the `has()` selector, these styles only get applied
-        // to non-firefox browsers. Once firefox supports that selector,
-        // this border radius stuff should get refactored.
-        ":has(svg)": {
-            "&[disabled]": {
-                borderRight: "none",
-                "+ button": {
-                    borderLeft: `1px solid ${COLORS.neutral40}`,
-                    borderBottomLeftRadius: 4,
-                },
-            },
-            ":not([disabled]):has(+ button[disabled])": {
-                borderBottomRightRadius: 4,
-                borderLeft: "none",
-            },
+        // Get rid of double border between to non-active tabs by always
+        // hiding the left border of the right tab.
+        ":not([disabled]) + :not([disabled])": {
+            borderLeftColor: "transparent",
         },
-    } as const;
+        // Add radius to tab left of active tab.
+        ":not([disabled]):has(+ button[disabled])": {
+            borderBottomRightRadius: 4,
+        },
+        // Add radius to tab right of active tab.
+        "&[disabled] + :not([disabled])": {
+            borderBottomLeftRadius: 4,
+        },
+
+        "& > svg": {
+            width: 32,
+            height: 32,
+            color: COLORS.primary1,
+            padding: "8px 4px 4px",
+        },
+    } as const satisfies Interpolation<Theme>;
 
     const header = <div css={{ display: "flex" }}>
         {Object.entries(tabs).map(([id, { label, Icon }]) => (
