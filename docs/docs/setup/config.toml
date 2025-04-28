@@ -143,6 +143,14 @@
 # Default value: false
 #lock_acl_to_series = false
 
+# Value of the `itunes:explicit` flag of RSS feeds for series and playlists.
+#
+# Should only be set to false if you are absolutely sure that all
+# content in your Tobira is safe for all audiences.
+#
+# Default value: true
+#explicit_rss_content = true
+
 
 [db]
 # The username of the database user.

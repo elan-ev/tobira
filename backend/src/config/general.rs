@@ -128,6 +128,13 @@ pub(crate) struct GeneralConfig {
     /// For the uploader, this means that the ACL of the series will be used.
     #[config(default = false)]
     pub lock_acl_to_series: bool,
+
+    /// Value of the `itunes:explicit` flag of RSS feeds for series and playlists.
+    ///
+    /// Should only be set to false if you are absolutely sure that all
+    /// content in your Tobira is safe for all audiences.
+    #[config(default = true)]
+    pub explicit_rss_content: bool,
 }
 
 const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];

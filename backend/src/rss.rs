@@ -153,7 +153,7 @@ async fn generate_feed(
                 <description>{info.description}</description>
                 <language>"und"</language>
                 <itunes:category text="Education" />
-                <itunes:explicit>"true"</itunes:explicit>
+                <itunes:explicit>{&context.config.general.explicit_rss_content}</itunes:explicit>
                 <itunes:image href={format!("{tobira_url}/~assets/logo-small.svg")} />
                 <atom:link href={rss_link} rel="self" type="application/rss+xml" />
                 {|buf| {
@@ -204,6 +204,7 @@ async fn video_items(
         let tobira_event_id = event.id.to_base64(&mut buf);
         let event_link = format!("{tobira_url}/!v/{tobira_event_id}");
         let thumbnail = &event.thumbnail_url.unwrap_or_default();
+        let creators = event.creators.join(", ");
         let (enclosure_track, track_groups) = preferred_tracks(event.tracks);
 
         xml!(doc,
@@ -211,11 +212,12 @@ async fn video_items(
                 <title>{event.title}</title>
                 <link>{event_link}</link>
                 <description>{event.description.unwrap_or_default()}</description>
-                <dc:creator>{event.creators.join(", ")}</dc:creator>
+                <dc:creator>{creators}</dc:creator>
                 <pubDate>{event.created.to_rfc2822()}</pubDate>
                 <guid>{event_link}</guid>
                 <media:thumbnail url={thumbnail} />
                 <itunes:image href={thumbnail} />
+                <itunes:author>{creators}</itunes:author>
                 <enclosure
                     url={&enclosure_track.uri}
                     type={&enclosure_track.mimetype.unwrap_or_default()}
