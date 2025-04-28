@@ -153,7 +153,7 @@ async fn generate_feed(
                 <description>{info.description}</description>
                 <language>"und"</language>
                 <itunes:category text="Education" />
-                <itunes:explicit>"true"</itunes:explicit>
+                <itunes:explicit>{&context.config.general.explicit_rss_content}</itunes:explicit>
                 <itunes:image href={format!("{tobira_url}/~assets/logo-small.svg")} />
                 <atom:link href={rss_link} rel="self" type="application/rss+xml" />
                 {|buf| {
