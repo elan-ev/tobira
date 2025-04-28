@@ -155,10 +155,6 @@ video:
   description:
     show-more: ...show more
     show-less: Show less
-  embed:
-    copy-embed-code-to-clipboard: Copy embed code to clipboard
-  rss:
-    copy-link-to-clipboard: Copy RSS link to clipboard
   caption: Caption
   download:
     title: Download
@@ -170,14 +166,6 @@ video:
   start: Start
   end: End
   ends: Ends
-  share:
-    title: $t(video.share.{{title}})
-    share-video: Share video
-    direct-link: Direct link
-    main: Link
-    embed: Embed
-    rss: RSS
-    show-qr-code: Show QR code
   password:
     heading: Protected Video
     sub-heading: Access to this video is restricted.
@@ -190,6 +178,17 @@ video:
       password: Password
       submit: Verify
     invalid-credentials: Invalid credentials.
+
+share:
+  share-video: Share video
+  direct-link: Direct link
+  link: Link
+  embed: Embed
+  rss: RSS
+  show-qr-code: Show QR code
+  copy-link: Copy link to clipboard
+  copy-rss: Copy RSS link to clipboard
+  copy-embed-code: Copy embed code to clipboard
 
 playlist:
   deleted-playlist-block: The playlist referenced here was deleted.
@@ -586,7 +585,7 @@ manage:
 
       show-title: Show title
       show-link: Show link to video page
-      show-description: Show description
+      show-description: Show description and metadata
       display-options: Display options
 
       cancel: Discard

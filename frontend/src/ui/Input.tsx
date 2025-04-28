@@ -268,6 +268,7 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
             position: "relative",
             height: multiline ? 95 : 34,
             maxWidth: "100%",
+            marginBottom: 6,
         }} {...rest}>
             <div css={{ position: "absolute", top: 0, right: 0, zIndex: 10 }}>
                 <WithTooltip tooltip={label} css={{ fontFamily: "var(--main-font), sans-serif" }}>
@@ -326,4 +327,3 @@ export function DisplayOptionGroup<TFieldValues extends FieldValues>(
         }
     </div>;
 }
-

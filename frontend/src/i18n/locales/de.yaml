@@ -152,35 +152,23 @@ video:
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
   started: Gestartet
   started-when: Gestartet {{duration}}
-  starts: Startet 
+  starts: Startet
   starts-in: Startet {{duration}}
   description:
     show-more: ...mehr anzeigen
     show-less: Weniger anzeigen
-  embed:
-    copy-embed-code-to-clipboard: Einbettungscode in Zwischenablage kopieren
-  rss:
-    copy-link-to-clipboard: RSS Link in Zwischenablage kopieren
   caption: Untertitel
   download:
     title: Download
     presenter: Video (Sprecher:in)
     slides: Video (Präsentation)
     info: >
-      Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen 
+      Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen
       (Rechtsklick - Speichern unter).
   manage: Verwalten
   start: Anfang
   end: Ende
   ends: Endet
-  share:
-    title: $t(video.share.{{title}})
-    share-video: Video teilen
-    direct-link: Direktlink
-    main: Link
-    embed: Einbetten
-    rss: RSS
-    show-qr-code: QR Code anzeigen
   password:
     heading: Geschütztes Video
     sub-heading: Zugriff zu diesem Video ist beschränkt.
@@ -192,6 +180,17 @@ video:
       password: Passwort
       submit: Freischalten
     invalid-credentials: Ungültige Zugangsdaten.
+
+share:
+  share-video: Video teilen
+  direct-link: Direktlink
+  main: Link
+  embed: Einbetten
+  rss: RSS
+  show-qr-code: QR Code anzeigen
+  copy-link: Link in Zwischenablage kopieren
+  copy-rss: RSS Link in Zwischenablage kopieren
+  copy-embed-code: Einbettungscode in Zwischenablage kopieren
 
 playlist:
   deleted-playlist-block: Die hier referenzierte Playlist wurde gelöscht.
@@ -214,7 +213,7 @@ videolist-block:
   no-videos: Keine Videos
   unauthorized: Fehlende Berechtigung
   hidden-items:
-    unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte. 
+    unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte.
     unauthorized_other: 'Für {{count}} Videos fehlen Ihnen die Zugriffsrechte.'
     missing_one: Ein Video wurde nicht gefunden.
     missing_other: '{{count}} Videos wurden nicht gefunden.'
@@ -613,7 +612,7 @@ manage:
 
       show-title: Titel anzeigen
       show-link: Link zur Videoseite anzeigen
-      show-description: Beschreibung anzeigen
+      show-description: Beschreibung und Metadaten anzeigen
       display-options: Anzeigeoptionen
 
       cancel: Verwerfen

@@ -153,7 +153,7 @@ const DirectLink: React.FC<Props> = ({ event }) => {
             <CopyableInput
                 label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
                 value={url.href}
-                css={{ width: "100%", fontSize: 14, marginBottom: 6 }}
+                css={{ fontSize: 14 }}
             />
             <InputWithCheckbox
                 {...{ checkboxChecked, setCheckboxChecked }}

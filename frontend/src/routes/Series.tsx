@@ -67,7 +67,7 @@ export const SeriesRoute = makeRoute({
                     return <SeriesPage
                         seriesRef={series}
                         realmRef={realm}
-                        basePath={params.realmPath.replace(/\/$/u, "") + "/v"}
+                        realmPath={params.realmPath}
                     />;
                 }}
             />,
@@ -118,7 +118,7 @@ export const OpencastSeriesRoute = makeRoute({
                     return <SeriesPage
                         seriesRef={series}
                         realmRef={realm}
-                        basePath={params.realmPath.replace(/\/$/u, "") + "/v"}
+                        realmPath={params.realmPath}
                     />;
                 }}
             />,
@@ -187,7 +187,7 @@ export const DirectSeriesOCRoute = makeRoute({
                 render={result => <SeriesPage
                     seriesRef={result.series}
                     realmRef={result.rootRealm}
-                    basePath="/!v"
+                    realmPath={null}
                 />}
             />,
             dispose: () => queryRef.dispose(),
@@ -225,7 +225,7 @@ export const DirectSeriesRoute = makeRoute({
                 render={result => <SeriesPage
                     seriesRef={result.series}
                     realmRef={result.rootRealm}
-                    basePath="/!v"
+                    realmPath={null}
                 />}
             />,
             dispose: () => queryRef.dispose(),
@@ -255,10 +255,10 @@ const fragment = graphql`
 type SeriesPageProps = {
     seriesRef?: SeriesRouteData$key | null;
     realmRef: NonNullable<SeriesPageRealmData$key>;
-    basePath: string;
+    realmPath: string | null;
 };
 
-const SeriesPage: React.FC<SeriesPageProps> = ({ seriesRef, realmRef, basePath }) => {
+const SeriesPage: React.FC<SeriesPageProps> = ({ seriesRef, realmRef, realmPath }) => {
     const { t } = useTranslation();
     const series = useFragment(fragment, seriesRef ?? null);
     const realm = useFragment(realmFragment, realmRef);
@@ -284,13 +284,10 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesRef, realmRef, basePath }
     return <div css={{ display: "flex", flexDirection: "column" }}>
         <Breadcrumbs path={breadcrumbs} tail={tail} />
         <PageTitle title={series.title} />
-        <p css={{ maxWidth: "90ch" }}>{series.syncedData.description}</p>
-        <div css={{ marginTop: 12 }}>
-            <SeriesBlockFromSeries
-                title={t("videolist-block.videos.heading")}
-                basePath={basePath}
-                fragRef={series}
-            />
-        </div>
+        <SeriesBlockFromSeries
+            showMetadata
+            realmPath={realmPath}
+            fragRef={series}
+        />
     </div>;
 };

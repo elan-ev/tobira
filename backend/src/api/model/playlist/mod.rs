@@ -25,6 +25,7 @@ pub(crate) struct AuthorizedPlaylist {
     opencast_id: String,
     title: String,
     description: Option<String>,
+    creator: String,
 
     read_roles: Vec<String>,
     #[allow(dead_code)] // TODO
@@ -48,7 +49,7 @@ crate::api::util::impl_object_with_dummy_field!(Missing);
 impl_from_db!(
     AuthorizedPlaylist,
     select: {
-        playlists.{ id, opencast_id, title, description, read_roles, write_roles },
+        playlists.{ id, opencast_id, title, description, creator, read_roles, write_roles },
     },
     |row| {
         Self {
@@ -56,6 +57,7 @@ impl_from_db!(
             opencast_id: row.opencast_id(),
             title: row.title(),
             description: row.description(),
+            creator: row.creator(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
         }
@@ -118,6 +120,10 @@ impl AuthorizedPlaylist {
 
     fn description(&self) -> Option<&str> {
         self.description.as_deref()
+    }
+
+    fn creator(&self) -> &str {
+        &self.creator
     }
 
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {

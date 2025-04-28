@@ -1,16 +1,17 @@
 use std::{sync::Arc, future, collections::HashMap};
 use chrono::{DateTime, Utc};
-use deadpool_postgres::{GenericClient, Client};
+use deadpool_postgres::GenericClient;
 use anyhow::{Error, Result};
 use futures::TryStreamExt;
 use ogrim::xml;
+use tokio_postgres::{Client, Row, RowStream};
 
 use crate::{
-    db::{types::EventTrack, self, util::{impl_from_db, FromDb, dbargs}},
-    http::{Context, response::{bad_request, self, not_found}, Response},
-    model::Key,
     config::HttpHost,
-    prelude::*,
+    db::{self, types::EventTrack, util::{dbargs, impl_from_db, select, FromDb}},
+    http::{response::{self, bad_request, internal_server_error, not_found}, Context, Response},
+    model::Key,
+    prelude::*
 };
 
 #[derive(Debug)]
@@ -20,7 +21,7 @@ struct Event {
     description: Option<String>,
     created: DateTime<Utc>,
     creators: Vec<String>,
-    thumbnail_url: Option<String>, 
+    thumbnail_url: Option<String>,
     tracks: Vec<EventTrack>,
 }
 
@@ -42,34 +43,92 @@ impl_from_db!(
     }
 );
 
-/// Generates the xml for an RSS feed of a series in Tobira.
-pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<String, Response> {
-    let db_pool = &context.db_pool;
-    let tobira_url = &context.config.general.tobira_url;
-    let series_link = format!("{tobira_url}/!s/{id}");
-    let rss_link = format!("{tobira_url}/~rss/series/{id}");
-
+/// Generates the XML for an RSS feed of a series in Tobira.
+pub(crate) async fn generate_series_feed(
+    context: &Arc<Context>,
+    id: &str,
+) -> Result<String, Response> {
     let Some(series_id) = Key::from_base64(id) else {
         return Err(bad_request("invalid series ID"));
     };
+    let db = db::get_conn_or_service_unavailable(&context.db_pool).await?;
 
-    let db = db::get_conn_or_service_unavailable(db_pool).await?;
-
-    let query = "select opencast_id, title, description from series where id = $1";
-    let series_data = match db.query_opt(query, &[&series_id]).await {
-        Ok(Some(data)) => data,
-        Ok(None) => return Err(not_found()),
-        Err(e) => {
-            error!("DB error querying series data for RSS: {e}");
-            return Err(bad_request("DB error querying series data"));
-        }
+    // Load series data
+    let (selection, mapping) = select!(title, description);
+    let query = format!("select {selection} from series where id = $1");
+    let row = load_item(&db, &query, series_id).await?;
+    let info = FeedInfo {
+        title: mapping.title.of(&row),
+        description: mapping.description.of::<Option<String>>(&row).unwrap_or_default(),
+        link: format!("{}/!s/{id}", context.config.general.tobira_url),
     };
 
-    let series_oc_id = series_data.get::<_, String>("opencast_id");
-    let series_title = series_data.get::<_, String>("title");
-    let series_description = series_data
-        .get::<_, Option<String>>("description")
-        .unwrap_or_default();
+    // Load event data
+    let selection = Event::select();
+    let query = format!("select {selection} from events where series = $1");
+    let events = db.query_raw(&query, dbargs![&series_id]).await.map_err(Into::into);
+
+    generate_feed(context, format!("~rss/series/{id}"), info, events).await
+}
+
+/// Generates the XML for an RSS feed of a playlist in Tobira.
+pub(crate) async fn generate_playlist_feed(
+    context: &Arc<Context>,
+    id: &str,
+) -> Result<String, Response> {
+    let Some(playlist_id) = Key::from_base64(id) else {
+        return Err(bad_request("invalid playlist ID"));
+    };
+    let db = db::get_conn_or_service_unavailable(&context.db_pool).await?;
+
+    // Load playlist data
+    let (selection, mapping) = select!(title, description);
+    let query = format!("select {selection} from playlists where id = $1");
+    let row = load_item(&db, &query, playlist_id).await?;
+    let info = FeedInfo {
+        title: mapping.title.of(&row),
+        description: mapping.description.of::<Option<String>>(&row).unwrap_or_default(),
+        link: format!("{}/!p/{id}", context.config.general.tobira_url),
+    };
+
+    // Load event data
+    let selection = Event::select();
+    let query = format!("select {selection} from events \
+        where opencast_id = any(event_entry_ids((\
+            select entries from playlists where id = $1\
+        )))",
+    );
+    let events = db.query_raw(&query, dbargs![&playlist_id]).await.map_err(Into::into);
+
+    generate_feed(context, format!("~rss/playlist/{id}"), info, events).await
+}
+
+async fn load_item(db: &Client, query: &str, key: Key) -> Result<Row, Response> {
+    match db.query_opt(query, &[&key]).await {
+        Ok(Some(row)) => Ok(row),
+        Ok(None) => Err(not_found()),
+        Err(e) => {
+            error!("DB error querying data for RSS: {e}");
+            Err(internal_server_error())
+        }
+    }
+}
+
+
+struct FeedInfo {
+    title: String,
+    link: String,
+    description: String,
+}
+
+async fn generate_feed(
+    context: &Arc<Context>,
+    rss_path: String,
+    info: FeedInfo,
+    event_rows: Result<RowStream, Error>,
+) -> Result<String, Response> {
+    let tobira_url = &context.config.general.tobira_url;
+    let rss_link = format!("{tobira_url}/{rss_path}");
 
     let format = if cfg!(debug_assertions) {
         ogrim::Format::Pretty { indentation: "  " }
@@ -89,16 +148,16 @@ pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<St
             xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
         >
             <channel>
-                <title>{series_title}</title>
-                <link>{series_link}</link>
-                <description>{series_description}</description>
+                <title>{info.title}</title>
+                <link>{info.link}</link>
+                <description>{info.description}</description>
                 <language>"und"</language>
                 <itunes:category text="Education" />
                 <itunes:explicit>"true"</itunes:explicit>
                 <itunes:image href={format!("{tobira_url}/~assets/logo-small.svg")} />
                 <atom:link href={rss_link} rel="self" type="application/rss+xml" />
                 {|buf| {
-                    video_items(buf, &db, &series_oc_id, &series_title, &rss_link, &tobira_url)
+                    video_items(buf, event_rows, &info.title, &rss_link, &tobira_url)
                         .await
                         .map_err(|e| {
                             error!("Could not retrieve videos for RSS: {e}");
@@ -112,18 +171,15 @@ pub(crate) async fn generate_feed(context: &Arc<Context>, id: &str) -> Result<St
     Ok(buf.into_string())
 }
 
+
 /// Generates the single video items of a series in Tobira for inclusion in an RSS feed.
 async fn video_items(
     doc: &mut ogrim::Document,
-    db: &Client,
-    series_oc_id: &str,
-    series_title: &str,
+    event_rows: Result<RowStream, Error>,
+    source_title: &str,
     rss_link: &str,
     tobira_url: &HttpHost,
 ) -> Result<(), Error> {
-    let selection = Event::select();
-    let query = format!("select {selection} from events where part_of = $1");
-    let rows = db.query_raw(&query, dbargs![&series_oc_id]).await?;
 
     fn map_tracks(tracks: &[EventTrack], doc: &mut ogrim::Document) {
         xml!(doc,
@@ -141,9 +197,9 @@ async fn video_items(
         )
     }
 
-    rows.try_for_each(|row| {
+    event_rows?.try_for_each(|row| {
         let event = Event::from_row_start(&row);
-        
+
         let mut buf = [0; 11];
         let tobira_event_id = event.id.to_base64(&mut buf);
         let event_link = format!("{tobira_url}/!v/{tobira_event_id}");
@@ -165,7 +221,7 @@ async fn video_items(
                     type={&enclosure_track.mimetype.unwrap_or_default()}
                     length="0"
                 />
-                <source url={rss_link}>{series_title}</source>
+                <source url={rss_link}>{source_title}</source>
                 {|doc| for (_, tracks) in &track_groups {
                     map_tracks(tracks, doc)
                 }}
@@ -213,4 +269,3 @@ fn preferred_tracks(tracks: Vec<EventTrack>) -> (EventTrack, HashMap<String, Vec
 
     (enclosure_track.clone(), track_groups)
 }
-

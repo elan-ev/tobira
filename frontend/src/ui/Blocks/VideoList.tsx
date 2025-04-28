@@ -19,6 +19,7 @@ import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
 import {
     LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
+    LuRss, LuLink,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
@@ -36,12 +37,14 @@ import {
     ThumbnailOverlayContainer,
 } from "../Video";
 import { RelativeDate } from "../time";
-import { CollapsibleDescription, SmallDescription } from "../metadata";
+import { CollapsibleDescription, DateAndCreators, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { COLORS } from "../../color";
 import { FloatingBaseMenu } from "../FloatingBaseMenu";
 import { isRealUser, useUser } from "../../User";
 import { LoginLink } from "../../routes/util";
+import { QrCodeButton, ShareButton } from "../ShareButton";
+import { CopyableInput } from "../Input";
 
 
 
@@ -97,26 +100,32 @@ type Entries = Extract<
 
 export type VideoListBlockProps = {
     listId?: string;
-    basePath: string;
+    realmPath: string | null;
     activeEventId?: string;
     allowOriginalOrder: boolean;
     initialOrder: Order;
     initialLayout?: VideoListLayout;
     title?: string;
     description?: string;
+    timestamp?: string;
+    creators?: string[];
+    shareInfo: VideoListShareButtonProps,
     isPlaylist?: boolean;
     listEntries: Entries;
 }
 
 export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     listId,
-    basePath,
+    realmPath,
     activeEventId,
     allowOriginalOrder,
     initialOrder,
     initialLayout = "GALLERY",
     title,
     description,
+    timestamp,
+    creators,
+    shareInfo,
     isPlaylist = false,
     listEntries,
 }) => {
@@ -139,6 +148,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         unauthorizedItems,
     } = orderItems(items, eventOrder, i18n);
 
+    const basePath = realmPath == null ? "/!v" : `${realmPath.replace(/\/$/u, "")}/v`;
     const renderEvents = (events: readonly VideoListItem[]) => (
         <Items
             basePath={basePath}
@@ -159,7 +169,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
-            {...{ title, description, initialLayout, isPlaylist }}
+            {...{ title, description, timestamp, creators, shareInfo, initialLayout, isPlaylist }}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("videolist-block.no-videos")}</div>
@@ -297,6 +307,9 @@ const orderItems = (
 type VideoListBlockContainerProps = {
     title?: string;
     description?: string | null;
+    timestamp?: string;
+    creators?: string[];
+    shareInfo?: VideoListShareButtonProps,
     children: ReactNode;
     showViewOptions: boolean;
     initialLayout?: VideoListLayout;
@@ -313,11 +326,13 @@ const LayoutContext = createContext<LayoutContext>({
     setLayoutState: () => {},
 });
 
-export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
-    { title, description, children, showViewOptions, initialLayout = "GALLERY" },
-) => {
+export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = ({
+    title, description, timestamp, creators, shareInfo, children,
+    showViewOptions, initialLayout = "GALLERY",
+}) => {
     const [layoutState, setLayoutState] = useState<VideoListLayout>(initialLayout);
     const isDark = useColorScheme().scheme === "dark";
+    const hasMetadata = description || timestamp || (creators && creators.length > 0);
 
     return <LayoutContext.Provider value={{ layoutState, setLayoutState }}>
         <div css={{
@@ -331,7 +346,7 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                 <div css={{
                     display: "flex",
                     justifyContent: "space-between",
-                    ...title && description && { flexDirection: "column" },
+                    ...title && hasMetadata && { flexDirection: "column" },
                     [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
                         flexWrap: "wrap",
                     },
@@ -351,12 +366,28 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                             flexWrap: "wrap",
                         },
                     }}>
-                        {description && <CollapsibleDescription
-                            type="series"
-                            bottomPadding={32}
-                            {...{ description }}
-                        />}
-                        {showViewOptions && <div css={{
+                        <div>
+                            {(timestamp || (creators && creators.length > 0)) && <DateAndCreators
+                                timestamp={timestamp}
+                                isLive={false}
+                                creators={creators}
+                                css={{
+                                    margin: "0px 12px",
+                                    gap: 16,
+                                    "> *": {
+                                        padding: "4px 6px",
+                                        borderRadius: 4,
+                                        background: COLORS.neutral15,
+                                    },
+                                }}
+                            />}
+                            {description && <CollapsibleDescription
+                                type="series"
+                                bottomPadding={32}
+                                {...{ description }}
+                            />}
+                        </div>
+                        <div css={{
                             display: "flex",
                             alignItems: "center",
                             alignSelf: description ? "flex-end" : "flex-start",
@@ -365,18 +396,54 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                             gap: 16,
                             padding: 5,
                         }}>
-                            <OrderMenu />
-                            <LayoutMenu />
-                        </div>}
+                            {shareInfo && <VideoListShareButton {...shareInfo} />}
+                            {showViewOptions && <>
+                                <OrderMenu />
+                                <LayoutMenu />
+                            </>}
+                        </div>
                     </div>
                 </div>
-                {description && <hr css={{ margin: "12px 6px 20px 6px" }} />}
+                {hasMetadata && <hr css={{ margin: "12px 6px 20px 6px" }} />}
             </>
             {children}
         </div>
     </LayoutContext.Provider>;
 };
 
+type VideoListShareButtonProps = {
+    shareUrl: string;
+    rssUrl: string;
+};
+
+const VideoListShareButton: React.FC<VideoListShareButtonProps> = props => {
+    const { t } = useTranslation();
+    const shareUrl = document.location.origin + props.shareUrl;
+    const rssUrl = document.location.origin + props.rssUrl;
+    const tabs = {
+        "main": {
+            label: t("share.link"),
+            Icon: LuLink,
+            Component: () => <>
+                <CopyableInput label={t("share.copy-link")} value={shareUrl} />
+                <QrCodeButton target={shareUrl} label={t("share.link")} />
+            </>,
+        },
+        "rss": {
+            label: t("share.rss"),
+            Icon: LuRss,
+            Component: () => <>
+                <CopyableInput label={t("share.copy-rss")} value={rssUrl} />
+                <QrCodeButton target={rssUrl} label={t("share.rss")} />
+            </>,
+        },
+    };
+    return <ShareButton height={180} {...{ tabs }} css={{
+        padding: 12,
+        height: 31,
+        borderRadius: 4,
+    }} />;
+};
 
 
 // ==============================================================================================
