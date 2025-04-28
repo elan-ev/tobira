@@ -25,17 +25,27 @@ pub(super) async fn lazy_set_special_attributes(
     index_name: &str,
     fields: FieldAbilities<'_>,
 ) -> Result<()> {
+    /// Set comparison between attributes
+    fn set_equal(actual: Vec<String>, expected: &[&str]) -> bool {
+        use std::collections::HashSet;
+
+        let actual = actual.iter().map(|s| s.as_str()).collect::<HashSet<_>>();
+        let expected = expected.iter().map(|s| *s).collect::<HashSet<_>>();
+
+        actual == expected
+    }
+
     if index.get_searchable_attributes().await? != fields.searchable {
         debug!("Updating `searchable_attributes` of {index_name} index");
         index.set_searchable_attributes(fields.searchable).await?;
     }
 
-    if index.get_filterable_attributes().await? != fields.filterable {
+    if !set_equal(index.get_filterable_attributes().await?, fields.filterable) {
         debug!("Updating `filterable_attributes` of {index_name} index");
         index.set_filterable_attributes(fields.filterable).await?;
     }
 
-    if index.get_sortable_attributes().await? != fields.sortable {
+    if !set_equal(index.get_sortable_attributes().await?, fields.sortable) {
         debug!("Updating `sortable_attributes` of {index_name} index");
         index.set_sortable_attributes(fields.sortable).await?;
     }

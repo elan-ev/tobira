@@ -42,7 +42,7 @@ pub(crate) use self::{
 
 /// The version of search index schema. Increase whenever there is a change that
 /// requires an index rebuild.
-const VERSION: u32 = 8;
+const VERSION: u32 = 7;
 
 
 // ===== Configuration ============================================================================
@@ -426,5 +426,8 @@ pub(crate) async fn rebuild(
 ) -> Result<Vec<TaskInfo>> {
     clear(meili).await.context("failed to clear index")?;
     prepare_indexes(meili).await.context("failed to prepare search indexes")?;
-    index_all_data(meili, tx).await.context("failed to index all data")
+    let out = index_all_data(meili, tx).await.context("failed to index all data")?;
+    meili.meta_index.add_or_replace(&[meta::Meta::current_clean()], None).await
+        .context("failed to update index version document (clean)")?;
+    Ok(out)
 }
