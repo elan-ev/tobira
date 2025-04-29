@@ -19,12 +19,14 @@ use super::block::BlockValue;
 
 
 mod mutations;
+mod nav;
 
 pub(crate) use mutations::{
     ChildIndex, NewRealm, RemovedRealm, UpdateRealm, UpdatedPermissions,
     UpdatedRealmName, RealmSpecifier, RealmLineageComponent, CreateRealmLineageOutcome,
     RemoveMountedSeriesOutcome,
 };
+pub(crate) use nav::RealmNav;
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
@@ -286,6 +288,11 @@ impl Realm {
     /// `null` is returned.
     fn owner_display_name(&self) -> Option<&str> {
         self.owner_display_name.as_deref()
+    }
+
+    /// Info about the navigation UI for this realm.
+    async fn nav(&self, context: &Context) -> ApiResult<RealmNav> {
+        RealmNav::load_for(self, context).await
     }
 
     /// Returns the acl of this realm, combining moderator and admin roles and assigns
