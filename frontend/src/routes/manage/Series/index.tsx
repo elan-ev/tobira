@@ -25,6 +25,7 @@ import { keyOfId } from "../../../util";
 import { SeriesThumbnail } from "./Shared";
 import { CREATE_SERIES_PATH } from "./Create";
 import { LinkButton } from "../../../ui/LinkButton";
+import { isRealUser, useUser } from "../../../User";
 
 
 export const PATH = "/~manage/series" as const;
@@ -92,10 +93,14 @@ const query = graphql`
 
 const CreateSeriesLink: React.FC = () => {
     const { t } = useTranslation();
-    return <LinkButton to={CREATE_SERIES_PATH} css={{ width: "fit-content" }}>
-        {t("manage.my-series.create.title")}
-        <LuCirclePlus />
-    </LinkButton>;
+    const user = useUser();
+
+    return (!isRealUser(user) || !user.canCreateSeries)
+        ? null
+        : <LinkButton to={CREATE_SERIES_PATH} css={{ width: "fit-content" }}>
+            {t("manage.my-series.create.title")}
+            <LuCirclePlus />
+        </LinkButton>;
 };
 
 

@@ -103,14 +103,14 @@ const DUMMY_USERS: Record<string, DummyUserInfo> = {
         displayName: "Sabine Rudolfs",
         userRole: "ROLE_USER_SABINE",
         roles: ["ROLE_INSTRUCTOR", "ROLE_STAFF", "ROLE_TOBIRA_CAN_FIND_UNLISTED",
-            "ROLE_TOBIRA_UPLOAD", "ROLE_TOBIRA_STUDIO"],
+            "ROLE_TOBIRA_UPLOAD", "ROLE_TOBIRA_STUDIO", "ROLE_TOBIRA_CAN_CREATE_SERIES"],
         email: "sabine@example.org",
     },
     "björk": {
         displayName: "Prof. Björk Guðmundsdóttir",
         userRole: "ROLE_USER_BJOERK",
         roles: ["ROLE_EXTERNAL", "ROLE_TOBIRA_CAN_FIND_UNLISTED",
-            "ROLE_TOBIRA_UPLOAD", "ROLE_TOBIRA_STUDIO"],
+            "ROLE_TOBIRA_UPLOAD", "ROLE_TOBIRA_STUDIO", "ROLE_TOBIRA_CAN_CREATE_SERIES"],
         email: "bjoerk@example.org",
     },
     "morgan": {

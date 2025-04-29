@@ -92,7 +92,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
         defaultValues: { acl: isRealUser(user) ? defaultAclMap(user) : [] },
     });
 
-    if (!isRealUser(user)) {
+    if (!isRealUser(user) || !user.canCreateSeries) {
         return <NotAuthorized />;
     }
 

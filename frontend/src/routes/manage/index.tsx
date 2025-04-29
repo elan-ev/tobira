@@ -110,7 +110,10 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     }
 
     entries.push([ManageSeriesRoute.url, t("manage.my-series.title"), <SeriesIcon />]);
-    entries.push([CreateSeriesRoute.url, t("manage.my-series.create.title"), <LuCirclePlus />]);
+
+    if (isRealUser(user) && user.canCreateSeries) {
+        entries.push([CreateSeriesRoute.url, t("manage.my-series.create.title"), <LuCirclePlus />]);
+    }
     /* eslint-enable react/jsx-key */
 
     const items = entries.map(([path, label, icon]) => path === "STUDIO" ? (

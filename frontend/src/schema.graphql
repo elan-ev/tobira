@@ -975,11 +975,13 @@ type User {
   canUpload: Boolean!
   "`True` if the user has the permission to use Opencast Studio."
   canUseStudio: Boolean!
-  "`True` if the user has the permission to use Opencast Studio."
+  "`True` if the user has the permission to use Opencast Editor."
   canUseEditor: Boolean!
   canCreateUserRealm: Boolean!
   "`True` if the user is allowed to find unlisted items when editing page content."
   canFindUnlisted: Boolean!
+  "`True` if the user has the permission to create new series."
+  canCreateSeries: Boolean!
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page. This also returns events that have been marked

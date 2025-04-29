@@ -251,12 +251,12 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             children: t("manage.my-series.title"),
             css: indent,
         },
-        {
+        ...user.canCreateSeries ? [{
             icon: <LuCirclePlus />,
             wrapper: <Link to={CreateSeriesRoute.url} />,
             children: t("manage.my-series.create.title"),
             css: indent,
-        },
+        }] : [],
 
         // Logout button
         {

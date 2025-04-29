@@ -55,7 +55,7 @@ impl User {
         HasRoles::can_use_studio(self, &context.config.auth)
     }
 
-    /// `True` if the user has the permission to use Opencast Studio.
+    /// `True` if the user has the permission to use Opencast Editor.
     fn can_use_editor(&self, context: &Context) -> bool {
         HasRoles::can_use_editor(self, &context.config.auth)
     }
@@ -67,6 +67,11 @@ impl User {
     /// `True` if the user is allowed to find unlisted items when editing page content.
     fn can_find_unlisted(&self, context: &Context) -> bool {
         context.auth.can_find_unlisted_items(&context.config.auth)
+    }
+
+    /// `True` if the user has the permission to create new series.
+    fn can_create_series(&self, context: &Context) -> bool {
+        HasRoles::can_create_series(self, &context.config.auth)
     }
 
     /// Returns all events that somehow "belong" to the user, i.e. that appear
