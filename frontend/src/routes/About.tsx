@@ -3,7 +3,7 @@ import { useTranslation, Trans } from "react-i18next";
 import { graphql } from "react-relay";
 
 import CONFIG from "../config";
-import { Nav } from "../layout/Navigation";
+import { RealmNav } from "../layout/Navigation";
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
 import { AboutQuery } from "./__generated__/AboutQuery.graphql";
@@ -25,7 +25,7 @@ export const AboutRoute = makeRoute({
         return {
             render: () => <RootLoader
                 {...{ query, queryRef }}
-                nav={data => <Nav fragRef={data.realm} />}
+                nav={data => <RealmNav fragRef={data.realm} />}
                 render={() => <About />}
             />,
             dispose: () => queryRef.dispose(),
