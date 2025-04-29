@@ -5,7 +5,7 @@ import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { InitialLoading, RootLoader } from "../layout/Root";
-import { Nav } from "../layout/Navigation";
+import { RealmNav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
 import { WaitingPage } from "../ui/Waiting";
 import { isSynced, keyOfId, seriesId } from "../util";
@@ -58,7 +58,7 @@ export const SeriesRoute = makeRoute({
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
-                nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+                nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
                 render={({ series, realm }) => {
                     if (!realm || series?.isReferencedByRealm === false) {
                         return <ForwardToDirectRoute seriesId={params.seriesId} />;
@@ -109,7 +109,7 @@ export const OpencastSeriesRoute = makeRoute({
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
-                nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+                nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
                 render={({ series, realm }) => {
                     if (!realm || series?.isReferencedByRealm === false) {
                         return <ForwardToDirectRoute seriesId={params.seriesId} />;
@@ -183,7 +183,7 @@ export const DirectSeriesOCRoute = makeRoute({
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
-                nav={data => <Nav fragRef={data.rootRealm} />}
+                nav={data => <RealmNav fragRef={data.rootRealm} />}
                 render={result => <SeriesPage
                     seriesRef={result.series}
                     realmRef={result.rootRealm}
@@ -221,7 +221,7 @@ export const DirectSeriesRoute = makeRoute({
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
-                nav={data => <Nav fragRef={data.rootRealm} />}
+                nav={data => <RealmNav fragRef={data.rootRealm} />}
                 render={result => <SeriesPage
                     seriesRef={result.series}
                     realmRef={result.rootRealm}

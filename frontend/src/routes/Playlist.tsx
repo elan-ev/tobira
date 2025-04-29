@@ -5,7 +5,7 @@ import { unreachable } from "@opencast/appkit";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
 import { RootLoader } from "../layout/Root";
-import { Nav } from "../layout/Navigation";
+import { RealmNav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
 import { keyOfId, playlistId } from "../util";
 import { NotFound } from "./NotFound";
@@ -44,7 +44,7 @@ export const DirectPlaylistOCRoute = makeRoute({
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
-                nav={data => <Nav fragRef={data.rootRealm} />}
+                nav={data => <RealmNav fragRef={data.rootRealm} />}
                 render={result => <PlaylistPage realmPath={null} playlistFrag={result.playlist} />}
             />,
             dispose: () => queryRef.dispose(),
@@ -78,7 +78,7 @@ export const DirectPlaylistRoute = makeRoute({
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
-                nav={data => <Nav fragRef={data.rootRealm} />}
+                nav={data => <RealmNav fragRef={data.rootRealm} />}
                 render={result => <PlaylistPage realmPath={null} playlistFrag={result.playlist} />}
             />,
             dispose: () => queryRef.dispose(),
