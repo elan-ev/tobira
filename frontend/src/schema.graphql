@@ -305,6 +305,7 @@ type AuthorizedPlaylist implements Node {
   opencastId: String!
   title: String!
   description: String
+  creator: String!
   entries: [VideoListEntry!]!
 }
 

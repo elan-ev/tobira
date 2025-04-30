@@ -1,7 +1,6 @@
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import {
-    LuCalendar,
     LuCalendarRange,
     LuPanelsTopLeft,
     LuVolume2,
@@ -43,8 +42,8 @@ import {
 import { RouterControl, makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link, useRouter } from "../router";
-import { Creators, Thumbnail, formatDuration } from "../ui/Video";
-import { SmallDescription } from "../ui/metadata";
+import { Thumbnail, formatDuration } from "../ui/Video";
+import { DateAndCreators, SmallDescription } from "../ui/metadata";
 import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
 import { ellipsisOverflowCss, focusStyle } from "../ui";
@@ -60,7 +59,6 @@ import { DirectVideoRoute, VideoRoute } from "./Video";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
 import { PartOfSeriesLink } from "../ui/Blocks/VideoList";
 import { SearchSlidePreviewQuery } from "./__generated__/SearchSlidePreviewQuery.graphql";
-import { RelativeDate } from "../ui/time";
 import { ThumbnailStack } from "../ui/ThumbnailStack";
 
 
@@ -549,35 +547,12 @@ const SearchEvent: React.FC<EventItem> = ({
                     ...ellipsisOverflowCss(2),
                     mark: highlightCss(COLORS.primary2),
                 }}>{highlightText(title, matches.title)}</h3>
-                <div css={{
-                    display: "flex",
-                    color: COLORS.neutral80,
-                    fontSize: 12,
-                    gap: 24,
-                    whiteSpace: "nowrap",
-                }}>
-                    <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
-                        <RelativeDate date={new Date(startTime ?? created)} isLive={isLive} />
-                    </div>
-                    <Creators creators={highlightedCreators} css={{
-                        minWidth: 0,
-                        fontSize: 12,
-                        svg: {
-                            fontSize: 15,
-                        },
-                        ul: {
-                            display: "inline-block",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                        },
-                        li: {
-                            display: "inline",
-                        },
-                        mark: highlightCss(COLORS.neutral90),
-                    }} />
-                </div>
+                <DateAndCreators
+                    timestamp={startTime ?? created}
+                    isLive={isLive}
+                    creators={highlightedCreators}
+                    css={{ mark: highlightCss(COLORS.neutral90) }}
+                />
 
                 <div css={{ flexGrow: 1, maxHeight: 20 }} />
 

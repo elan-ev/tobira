@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Card } from "@opencast/appkit";
 import { graphql, useFragment } from "react-relay";
 
-import { isSynced } from "../../util";
+import { isSynced, keyOfId } from "../../util";
 import type { Fields } from "../../relay";
 import {
     SeriesBlockData$data, SeriesBlockData$key,
@@ -19,7 +19,7 @@ import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
 // ==============================================================================================
 
 type SharedProps = {
-    basePath: string;
+    realmPath: string | null;
 };
 
 const blockFragment = graphql`
@@ -36,9 +36,12 @@ const blockFragment = graphql`
 
 const seriesFragment = graphql`
     fragment SeriesBlockSeriesData on Series {
+        id
         title
+        created
         # description is only queried to get the sync status
         syncedData { description }
+        metadata
         entries {
             __typename
             ...on AuthorizedEvent { id, ...VideoListEventData }
@@ -92,7 +95,19 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
             {t("series.not-ready.text")}
         </VideoListBlockContainer>;
     }
+    const creators = (() => {
+        const raw = series.metadata?.dcterms?.creator;
 
+        if (raw && Array.isArray(raw) && raw.length > 0 && typeof raw[0] === "string") {
+            return raw;
+        } else if (raw && typeof raw === "string") {
+            return [raw];
+        } else {
+            return undefined;
+        }
+    })();
+
+    const seriesKey = keyOfId(series.id);
     return <VideoListBlock
         initialLayout={props.layout}
         initialOrder={
@@ -101,8 +116,16 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         allowOriginalOrder={false}
         title={props.title ?? (props.showTitle ? series.title : undefined)}
         description={(props.showMetadata && series.syncedData.description) || undefined}
+        timestamp={props.showMetadata ? series.created ?? undefined : undefined}
+        creators={props.showMetadata ? creators : undefined}
         activeEventId={props.activeEventId}
-        basePath={props.basePath}
+        realmPath={props.realmPath}
         listEntries={series.entries}
+        shareInfo={{
+            shareUrl: props.realmPath == null
+                ? `/!s/${seriesKey}`
+                : `${props.realmPath.replace(/\/$/u, "")}/s/${seriesKey}`,
+            rssUrl: `/~rss/series/${seriesKey}`,
+        }}
     />;
 };

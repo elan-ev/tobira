@@ -18,6 +18,8 @@ import { Creators } from "./Video";
 import { Input, TextArea } from "./Input";
 import { Form } from "./Form";
 import { Inertable } from "../util";
+import { LuCalendar } from "react-icons/lu";
+import { RelativeDate } from "./time";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -47,6 +49,47 @@ type InputContainerProps = PropsWithChildren & {
 /** Separates different inputs in the metadata form */
 export const InputContainer: React.FC<InputContainerProps> = ({ children, className }) => (
     <div {...{ className }} css={{ margin: "16px 0 " }}>{children}</div>
+);
+
+export type DateAndCreatorsProps = {
+    timestamp?: string;
+    isLive: boolean;
+    creators?: (string | JSX.Element)[];
+    className?: string;
+};
+
+/** Shows a datetime and creators in one line, each with an icon in front. */
+export const DateAndCreators: React.FC<DateAndCreatorsProps> = ({
+    timestamp, isLive, creators, className,
+}) => (
+    <div {...{ className }} css={{
+        display: "inline-flex",
+        color: COLORS.neutral80,
+        fontSize: 12,
+        gap: 24,
+        whiteSpace: "nowrap",
+    }}>
+        {timestamp && <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
+            <RelativeDate date={new Date(timestamp)} isLive={isLive} />
+        </div>}
+        <Creators creators={creators ?? null} css={{
+            minWidth: 0,
+            fontSize: 12,
+            svg: {
+                fontSize: 15,
+            },
+            ul: {
+                display: "inline-block",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+            },
+            li: {
+                display: "inline",
+            },
+        }} />
+    </div>
 );
 
 type SmallDescriptionProps = {

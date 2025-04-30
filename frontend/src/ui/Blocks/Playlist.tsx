@@ -11,10 +11,11 @@ import {
     PlaylistBlockPlaylistData$key,
 } from "./__generated__/PlaylistBlockPlaylistData.graphql";
 import { Card, unreachable } from "@opencast/appkit";
+import { keyOfId } from "../../util";
 
 
 type SharedProps = {
-    basePath: string;
+    realmPath: string | null;
     moreOfTitle?: boolean;
 };
 
@@ -36,6 +37,7 @@ const playlistFragment = graphql`
             id
             title
             description
+            creator
             entries {
                 __typename
                 ... on AuthorizedEvent { id, ...VideoListEventData }
@@ -104,6 +106,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
             : playlist.title)
         : undefined;
 
+    const playlistKey = keyOfId(playlist.id);
     return <VideoListBlock
         initialLayout={props.layout}
         initialOrder={
@@ -112,10 +115,19 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         allowOriginalOrder
         {...{ title }}
         description={(props.showMetadata && playlist.description) || undefined}
+        creators={props.showMetadata ? [playlist.creator] : undefined}
         activeEventId={props.activeEventId}
-        basePath={props.basePath}
+        realmPath={props.realmPath}
         isPlaylist
         listId={playlist.id}
         listEntries={playlist.entries}
+        shareInfo={{
+            // TODO: once we have the `/path/to/realm/p/<id>` route
+            // shareUrl: props.realmPath == null
+            //     ? `/!p/${playlistKey}`
+            //     : `${props.realmPath}p/${playlistKey}`,
+            shareUrl: `/!p/${playlistKey}`,
+            rssUrl: `/~rss/playlist/${playlistKey}`,
+        }}
     />;
 };

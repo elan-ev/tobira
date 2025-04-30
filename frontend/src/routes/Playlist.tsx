@@ -45,7 +45,7 @@ export const DirectPlaylistOCRoute = makeRoute({
                 {...{ query, queryRef }}
                 noindex
                 nav={data => <Nav fragRef={data.rootRealm} />}
-                render={result => <PlaylistPage playlistFrag={result.playlist} />}
+                render={result => <PlaylistPage realmPath={null} playlistFrag={result.playlist} />}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -79,7 +79,7 @@ export const DirectPlaylistRoute = makeRoute({
                 {...{ query, queryRef }}
                 noindex
                 nav={data => <Nav fragRef={data.rootRealm} />}
-                render={result => <PlaylistPage playlistFrag={result.playlist} />}
+                render={result => <PlaylistPage realmPath={null} playlistFrag={result.playlist} />}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -107,9 +107,10 @@ const fragment = graphql`
 
 type PlaylistPageProps = {
     playlistFrag?: PlaylistRouteData$key | null;
+    realmPath: string | null;
 };
 
-const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag }) => {
+const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag, realmPath }) => {
     const { t } = useTranslation();
     const playlist = useFragment(fragment, playlistFrag ?? null);
 
@@ -136,7 +137,7 @@ const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag }) => {
         <div css={{ marginTop: 12 }}>
             <PlaylistBlockFromPlaylist
                 title={t("videolist-block.videos.heading")}
-                basePath="/!v"
+                realmPath={realmPath}
                 fragRef={playlist}
             />
         </div>

@@ -31,7 +31,7 @@ test("Video page", async ({ page, standardData, browserName }) => {
     });
 
     await test.step("Share button", async () => {
-        const shareButton = page.getByRole("button", { name: "Share" });
+        const shareButton = page.getByRole("button", { name: "Share" }).first();
 
         await test.step("Button is present", async () => {
             await expect(shareButton).toBeVisible();

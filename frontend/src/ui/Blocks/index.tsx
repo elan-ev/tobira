@@ -82,11 +82,17 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm, edit }) =>
         {match(__typename, {
             "TitleBlock": () => <TitleBlock fragRef={block} />,
             "TextBlock": () => <TextBlockByQuery fragRef={block} />,
-            "SeriesBlock": () => <SeriesBlockFromBlock fragRef={block} {...{ basePath, edit }} />,
+            "SeriesBlock": () => <SeriesBlockFromBlock
+                fragRef={block}
+                realmPath={path}
+                {...{ edit }}
+            />,
             "VideoBlock": () => <VideoBlock fragRef={block} {...{ basePath, edit }} />,
-            "PlaylistBlock": () => (
-                <PlaylistBlockFromBlock fragRef={block} {...{ basePath, edit }} />
-            ),
+            "PlaylistBlock": () => <PlaylistBlockFromBlock
+                fragRef={block}
+                realmPath={path}
+                {...{ edit }}
+            />,
         })}
     </div>;
 };

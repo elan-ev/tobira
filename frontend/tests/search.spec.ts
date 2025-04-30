@@ -36,6 +36,8 @@ test("Search", async ({ page, browserName, standardData, activeSearchIndex }) =>
             await expect(page).toHaveURL(new RegExp("/!v/[0-9a-zA-Z_\\-]{11}$"));
             await expect(page.getByRole("heading", { level: 1, name: videoTitle })).toBeVisible();
             await page.goBack();
+            await expect(page).toHaveURL(`~search?q=${query}`);
+            await expect(page.getByText("Search results for cat (6 hits)")).toBeVisible();
         });
     }
 
@@ -53,6 +55,7 @@ test("Search", async ({ page, browserName, standardData, activeSearchIndex }) =>
         await expect(realm).toBeVisible();
         await realm.click({ force: true });
         await expect(page).toHaveURL("/animals/cats");
+        await expect(page.getByRole("heading", { level: 1, name: "Cats" })).toBeVisible();
         await page.goBack();
     });
 
@@ -61,6 +64,7 @@ test("Search", async ({ page, browserName, standardData, activeSearchIndex }) =>
         await expect(realm).toBeVisible();
         await realm.click({ force: true });
         await expect(page).toHaveURL("/love");
+        await expect(page.getByRole("heading", { level: 1, name: "Fabulous Cats" })).toBeVisible();
         await page.goBack();
     });
 });

@@ -130,7 +130,7 @@ export const DirectLink: React.FC<UrlProps> = ({ url, withTimestamp }) => {
         <CopyableInput
             label={t("manage.shared.details.copy-direct-link-to-clipboard")}
             value={linkUrl.href}
-            css={{ width: "100%", fontSize: 14, marginBottom: 6 }}
+            css={{ fontSize: 14 }}
         />
         {withTimestamp && <InputWithCheckbox
             {...{ checkboxChecked, setCheckboxChecked }}
