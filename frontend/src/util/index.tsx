@@ -142,13 +142,30 @@ export const currentRef = <T, >(ref: React.RefObject<T>): T => (
 
 
 // Some utilities to handle the different lifecycle stages of events and series
-type OpencastEntity = { syncedData: unknown };
-export type SyncedOpencastEntity<T extends OpencastEntity> = T & {
-    syncedData: NonNullable<T["syncedData"]>;
+export type OpencastEntity = {
+    syncedData: unknown
+} | {
+    state: "WAITING" | "READY" | "%future added value"
 };
-export const isSynced = <T extends OpencastEntity>(e: T): e is SyncedOpencastEntity<T> => (
-    Boolean(e.syncedData)
-);
+
+export type SyncedOpencastEntity<T extends OpencastEntity> = "syncedData" extends keyof T
+    ? (T & { syncedData: NonNullable<T["syncedData"]> })
+    : ("state" extends keyof T
+        ? (T & { state: Extract<T["state"], "READY"> })
+        : never
+    );
+
+export const isSynced = <T extends OpencastEntity>(
+    e: T,
+): e is SyncedOpencastEntity<T> => {
+    if ("syncedData" in e) {
+        return Boolean(e.syncedData);
+    }
+    if ("state" in e) {
+        return e.state === "READY";
+    }
+    return false;
+};
 
 /**
  * Adds `<meta name="robots" content="noindex">` to the document `<head>` and
@@ -297,3 +314,4 @@ export const Inertable: React.FC<InertableProps> = ({ children, isInert }) => (
     </div>
 );
 
+export type OcEntity = "series" | "video";

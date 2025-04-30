@@ -368,27 +368,32 @@ manage:
       actions:
         title: Berechtigung
         read: Lesen
-        read-description_one: Kann das Video anschauen und Metadaten sehen.
-        read-description_other: Können das Video anschauen und Metadaten sehen.
         write: Lesen und schreiben
-        write-description_one: >
-          Kann außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
-        write-description_other: >
-          Können außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
         moderate: Moderation
-        moderate-description_one: >
+        unknown: Unbekanntes Berechtigungsschema
+        admin: Seitenadmin
+        unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
+        video-read-description_one: Kann das Video anschauen und Metadaten sehen.
+        video-read-description_other: Können das Video anschauen und Metadaten sehen.
+        video-write-description_one: >
+          Kann außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
+        video-write-description_other: >
+          Können außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
+        series-read-description: Nutzbar als Vorlage für Videos dieser Serie.
+        series-write-description_one: >
+          Kann Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
+        series-write-description_other: >
+          Können Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
+        realm-moderate-description_one: >
           Kann Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
           der Unterseiten bearbeiten.
-        moderate-description_other: >
+        realm-moderate-description_other: >
           Können Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
           der Unterseiten bearbeiten.
-        admin: Seitenadmin
-        admin-description_one: >
+        realm-admin-description_one: >
           Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
-        admin-description_other: >
+        realm-admin-description_other: >
           Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
-        unknown: Unbekanntes Berechtigungsschema
-        unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
         write-access: Schreibzugriff
         moderate-access: Moderationsrechte
         admin-access: Adminrechte
@@ -479,9 +484,12 @@ manage:
       title: Seriendetails
       referencing-pages-explanation: 'Diese Serie wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Diese Serie wird von keiner Seite referenziert.
+      created-note: Serie wurde erstellt.
     delete-note: >
       In der Serie enthaltene Videos werden nicht gelöscht und können einer anderen Serie
       zugeordnet werden.
+    create:
+      title: Serie erstellen
 
   my-videos:
     title: Meine Videos

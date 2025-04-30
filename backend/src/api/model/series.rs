@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
-use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject, GraphQLObject};
+use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
 use postgres_types::ToSql;
 
 use crate::{
@@ -12,11 +12,15 @@ use crate::{
             shared::{convert_acl_input, SortDirection, ToSqlColumn},
         }, util::LazyLoad, Context, Id, Node, NodeValue
     },
-    db::{
-        types::SeriesState as State,
-        util::{impl_from_db, select},
+    db::util::{impl_from_db, select},
+    model::{
+        ExtraMetadata,
+        Key,
+        SearchThumbnailInfo,
+        SeriesThumbnailStack,
+        SeriesState,
+        ThumbnailInfo,
     },
-    model::{ExtraMetadata, Key, SearchThumbnailInfo, SeriesThumbnailStack, ThumbnailInfo},
     prelude::*,
     sync::client::{AclInput, OpencastItem},
 };
@@ -30,6 +34,7 @@ use super::{
     shared::{
         define_sort_column_and_order,
         load_writable_for_user,
+        AclForDB,
         Connection,
         ConnectionQueryParts,
         PageInfo,
@@ -42,7 +47,8 @@ use super::{
 pub(crate) struct Series {
     pub(crate) key: Key,
     pub(crate) opencast_id: String,
-    pub(crate) synced_data: Option<SyncedSeriesData>,
+    pub(crate) state: SeriesState,
+    pub(crate) description: Option<String>,
     pub(crate) title: String,
     pub(crate) created: Option<DateTime<Utc>>,
     pub(crate) updated: Option<DateTime<Utc>>,
@@ -52,11 +58,6 @@ pub(crate) struct Series {
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<SeriesThumbnailStack>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
-}
-
-#[derive(Clone, GraphQLObject)]
-pub(crate) struct SyncedSeriesData {
-    description: Option<String>,
 }
 
 impl_from_db!(
@@ -78,6 +79,7 @@ impl_from_db!(
         Series {
             key: row.id(),
             opencast_id: row.opencast_id(),
+            state: row.state(),
             title: row.title(),
             created: row.created(),
             updated: row.updated(),
@@ -85,11 +87,7 @@ impl_from_db!(
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
-            synced_data: (State::Ready == row.state()).then(
-                || SyncedSeriesData {
-                    description: row.description(),
-                },
-            ),
+            description: row.description(),
             num_videos: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
         }
@@ -156,23 +154,79 @@ impl Series {
         }
     }
 
-    pub(crate) async fn create(series: NewSeries, context: &Context) -> ApiResult<Self> {
-        let selection = Self::select();
+    pub(crate) async fn create(
+        series: NewSeries,
+        acl: Option<AclForDB>,
+        context: &Context,
+    ) -> ApiResult<Self> {
+        let (read_roles, write_roles) = match &acl {
+            Some(roles) => (Some(&roles.read_roles), Some(&roles.write_roles)),
+            None => (None, None),
+        };
+
+        let selection = Self::select().with_renamed_table("series", "all_series");
         let query = format!(
-            "insert into series (opencast_id, title, state, updated) \
-                values ($1, $2, 'waiting', '-infinity') \
-                returning {selection}",
+            "insert into all_series ( \
+                opencast_id, title, description, state, updated, read_roles, write_roles \
+            ) \
+            values ($1, $2, $3, 'waiting', '-infinity', $4, $5) \
+            returning {selection}",
         );
-        context.db(context.require_tobira_admin()?)
-            .query_one(&query, &[&series.opencast_id, &series.title])
-            .await?
-            .pipe(|row| Self::from_row_start(&row))
-            .pipe(Ok)
+
+        if context.auth.can_create_series(&context.config.auth) {
+            context.db
+                .query_one(&query, &[
+                    &series.opencast_id,
+                    &series.title,
+                    &series.description,
+                    &read_roles,
+                    &write_roles,
+                ]).await?
+                .pipe(|row| Self::from_row_start(&row))
+                .pipe(Ok)
+        } else {
+            Err(err::not_authorized!(key = "series.not-allowed", "not allowed to create series"))
+        }
+    }
+
+    pub(crate) async fn create_in_oc(
+        metadata: SeriesMetadata,
+        acl: Vec<AclInputEntry>,
+        context: &Context,
+    ) -> ApiResult<Self> {
+        if !context.auth.can_create_series(&context.config.auth) {
+            return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
+        }
+        let response = context
+            .oc_client
+            .create_series(&acl, &metadata.title, metadata.description.as_deref())
+            .await
+            .map_err(|e| {
+                error!("Failed to create series in Opencast: {}", e);
+                err::opencast_unavailable!("Failed to create series")
+            })?;
+
+        let db_acl = Some(convert_acl_input(acl));
+
+        // If the request returned an Opencast identifier, the series was created successfully.
+        // The series is created in the database, so the user doesn't have to wait for sync to see
+        // the new series in the "My series" overview.
+        let series = Self::create(
+            NewSeries {
+                opencast_id: response.identifier,
+                title: metadata.title,
+                description: metadata.description,
+            },
+            db_acl,
+            context,
+        ).await?;
+
+        Ok(series)
     }
 
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
         context.auth.required_trusted_external()?;
-        Self::create(series, context).await
+        Self::create(series, None, context).await
     }
 
     pub(crate) async fn add_mount_point(
@@ -290,7 +344,7 @@ impl Series {
         }
 
         // Create series
-        let series = Series::create(series, context).await?;
+        let series = Series::create(series, None, context).await?;
 
         // Create realms
         let target_realm = {
@@ -516,8 +570,12 @@ impl Series {
         &self.metadata
     }
 
-    fn synced_data(&self) -> &Option<SyncedSeriesData> {
-        &self.synced_data
+    fn description(&self) -> &Option<String> {
+        &self.description
+    }
+
+    fn state(&self) -> SeriesState {
+        self.state
     }
 
     fn num_videos(&self) -> i32 {
@@ -604,6 +662,7 @@ impl OpencastItem for Series {
 pub(crate) struct NewSeries {
     pub(crate) opencast_id: String,
     title: String,
+    description: Option<String>,
     // TODO In the future this `struct` can be extended with additional
     // (potentially optional) fields. For now we only need these.
     // Since `mountSeries` feels even more like a private API

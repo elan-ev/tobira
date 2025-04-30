@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { LuCircleCheck } from "react-icons/lu";
+import { LuCircleCheck, LuCalendar } from "react-icons/lu";
 import { boxError, Button, ProtoButton, Spinner, useColorScheme } from "@opencast/appkit";
 
 import { ellipsisOverflowCss, focusStyle } from ".";
@@ -17,8 +17,7 @@ import { COLORS } from "../color";
 import { Creators } from "./Video";
 import { Input, TextArea } from "./Input";
 import { Form } from "./Form";
-import { Inertable } from "../util";
-import { LuCalendar } from "react-icons/lu";
+import { Inertable, OcEntity } from "../util";
 import { RelativeDate } from "./time";
 
 
@@ -179,7 +178,7 @@ export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
 );
 
 type CollapsibleDescriptionProps = {
-    type: "series" | "video";
+    type: OcEntity;
     description?: string | null;
     creators?: readonly string[];
     bottomPadding: number;

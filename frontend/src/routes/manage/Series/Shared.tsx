@@ -80,7 +80,8 @@ const query = graphql`
             created
             updated
             acl { role actions info { label implies large } }
-            syncedData { description }
+            description
+            state
             entries {
                 __typename
                 ...on AuthorizedEvent {

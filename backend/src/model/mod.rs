@@ -17,6 +17,6 @@ pub(crate) use self::{
     extra_metadata::ExtraMetadata,
     key::Key,
     event::{SearchThumbnailInfo, ThumbnailInfo},
-    series::SeriesThumbnailStack,
+    series::{SeriesThumbnailStack, SeriesState},
     translated_string::{LangKey, TranslatedString},
 };

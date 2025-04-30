@@ -32,6 +32,7 @@ import { DirectPlaylistOCRoute, DirectPlaylistRoute } from "./routes/Playlist";
 import { ManageSeriesRoute } from "./routes/manage/Series";
 import { ManageSeriesDetailsRoute } from "./routes/manage/Series/SeriesDetails";
 import { ManageSeriesAccessRoute } from "./routes/manage/Series/SeriesAccess";
+import { CreateSeriesRoute } from "./routes/manage/Series/Create";
 
 
 
@@ -72,6 +73,7 @@ const {
         ManageSeriesRoute,
         ManageSeriesDetailsRoute,
         UploadRoute,
+        CreateSeriesRoute,
         AddChildRoute,
         ManageRealmContentRoute,
         EmbedVideoRoute,

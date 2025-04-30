@@ -39,8 +39,8 @@ const seriesFragment = graphql`
         id
         title
         created
-        # description is only queried to get the sync status
-        syncedData { description }
+        description
+        state
         metadata
         entries {
             __typename
@@ -115,7 +115,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         }
         allowOriginalOrder={false}
         title={props.title ?? (props.showTitle ? series.title : undefined)}
-        description={(props.showMetadata && series.syncedData.description) || undefined}
+        description={(props.showMetadata && series.description) || undefined}
         timestamp={props.showMetadata ? series.created ?? undefined : undefined}
         creators={props.showMetadata ? creators : undefined}
         activeEventId={props.activeEventId}

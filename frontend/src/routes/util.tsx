@@ -8,6 +8,7 @@ import CONFIG from "../config";
 import { LoginRoute, REDIRECT_STORAGE_KEY } from "./Login";
 import { AclArray } from "./Upload";
 import { RealmOrder } from "../layout/__generated__/NavigationData.graphql";
+import { NoteWithTooltip } from "../ui";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -104,3 +105,12 @@ export const mapAcl = (acl?: AclArray) => new Map(
         info: item.info,
     }]),
 );
+
+export const NotReadyNote: React.FC<{ kind: "series" | "video"}> = ({ kind }) => {
+    const { t } = useTranslation();
+
+    return <NoteWithTooltip
+        note={t(`${kind}.not-ready.title`)}
+        tooltip={t(`${kind}.not-ready.text`)}
+    />;
+};

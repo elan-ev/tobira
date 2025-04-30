@@ -1,7 +1,7 @@
 import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineFire } from "react-icons/hi";
-import { LuFilm, LuLayoutTemplate, LuUpload, LuVideo } from "react-icons/lu";
+import { LuFilm, LuLayoutTemplate, LuCirclePlus, LuUpload, LuVideo } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
 
@@ -21,11 +21,11 @@ import { COLORS } from "../../color";
 import { useMenu } from "../../layout/MenuState";
 import CONFIG from "../../config";
 import { translatedConfig } from "../../util";
-import i18n from "../../i18n";
 import { UploadRoute } from "../Upload";
 import { ManageVideosRoute } from "./Video";
 import SeriesIcon from "../../icons/series.svg";
 import { ManageSeriesRoute } from "./Series";
+import { CreateSeriesRoute } from "./Series/Create";
 
 
 const PATH = "/~manage" as const;
@@ -79,32 +79,66 @@ type ManageNavProps = {
         | typeof ManageVideosRoute.url
         | typeof UploadRoute.url
         | typeof ManageSeriesRoute.url
-        | `/@${string}`;
+        | typeof CreateSeriesRoute.url
+        | `/@${string}`
+        | "STUDIO";
 };
 
 export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const user = useUser();
     const menu = useMenu();
     const isDark = useColorScheme().scheme === "dark";
 
+    const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [];
+
     /* eslint-disable react/jsx-key */
-    const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [
-        [PATH, t("manage.dashboard.title"), <LuLayoutTemplate />],
-        [ManageVideosRoute.url, t("manage.my-videos.title"), <LuFilm />],
-        [ManageSeriesRoute.url, t("manage.my-series.title"), <SeriesIcon />],
-    ];
+    entries.push([PATH, t("manage.dashboard.title"), <LuLayoutTemplate />]);
+
     if (isRealUser(user) && user.canCreateUserRealm) {
-        entries.splice(
-            1, 0, [`/@${user.username}`, t("realm.user-realm.my-page"), <HiOutlineFire />],
-        );
+        entries.push([`/@${user.username}`, t("realm.user-realm.my-page"), <HiOutlineFire />]);
     }
+
+    entries.push([ManageVideosRoute.url, t("manage.my-videos.title"), <LuFilm />]);
+
     if (isRealUser(user) && user.canUpload) {
         entries.push([UploadRoute.url, t("upload.title"), <LuUpload />]);
     }
+
+    if (isRealUser(user) && user.canUseStudio) {
+        entries.push(["STUDIO", t("manage.dashboard.studio-tile-title"), <LuVideo />]);
+    }
+
+    entries.push([ManageSeriesRoute.url, t("manage.my-series.title"), <SeriesIcon />]);
+
+    if (isRealUser(user) && user.canCreateSeries) {
+        entries.push([CreateSeriesRoute.url, t("manage.my-series.create.title"), <LuCirclePlus />]);
+    }
     /* eslint-enable react/jsx-key */
 
-    const items = entries.map(([path, label, icon]) => (
+    const items = entries.map(([path, label, icon]) => path === "STUDIO" ? (
+        <ExternalLink
+            key={path}
+            service="STUDIO"
+            params={{
+                "return.target": document.location.href,
+                "return.label": translatedConfig(CONFIG.siteTitle, i18n),
+            }}
+            fallback="link"
+            css={{
+                backgroundColor: "inherit",
+                border: "none",
+                color: COLORS.primary0,
+                cursor: "pointer",
+                width: "100%",
+                ...linkWithIconStyle(isDark, "left"),
+                ":hover, :focus-visible": { color: isDark ? COLORS.primary2 : COLORS.primary1 },
+            }}
+        >
+            {icon}
+            {label}
+        </ExternalLink>
+    ) : (
         <LinkWithIcon
             key={path}
             to={path}
@@ -116,31 +150,6 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
             {label}
         </LinkWithIcon>
     ));
-
-    if (isRealUser(user) && user.canUseStudio) {
-        items.push(
-            <ExternalLink
-                service="STUDIO"
-                params={{
-                    "return.target": document.location.href,
-                    "return.label": translatedConfig(CONFIG.siteTitle, i18n),
-                }}
-                fallback="link"
-                css={{
-                    backgroundColor: "inherit",
-                    border: "none",
-                    color: COLORS.primary0,
-                    cursor: "pointer",
-                    width: "100%",
-                    ...linkWithIconStyle(isDark, "left"),
-                    ":hover, :focus-visible": { color: isDark ? COLORS.primary2 : COLORS.primary1 },
-                }}
-            >
-                <LuVideo />
-                {t("manage.dashboard.studio-tile-title")}
-            </ExternalLink>,
-        );
-    }
 
     return <LinkList items={items} />;
 };

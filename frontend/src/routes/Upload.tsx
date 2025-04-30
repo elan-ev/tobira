@@ -823,6 +823,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                         name="acl"
                         control={control}
                         render={({ field }) => <AclSelector
+                            itemType="video"
                             userIsRequired
                             onChange={field.onChange}
                             acl={lockedAcl ?? field.value}

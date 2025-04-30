@@ -365,15 +365,17 @@ manage:
       actions:
         title: Actions
         read: Read
-        read-description: Can watch the video and view metadata.
         write: Read and write
-        write-description: Can also edit and delete the video, metadata and other details.
         moderate: Moderator
-        moderate-description: Can edit content, add subpages and change the name and subpage order.
         admin: Page admin
-        admin-description: Can moderate, delete pages and edit permissions.
         unknown: Unknown permission
         unknown-description: This permission isn't known.
+        video-read-description: Can watch the video and view metadata.
+        video-write-description: Can also edit and delete the video, metadata and other details.
+        series-read-description: Usable as template for videos in this series.
+        series-write-description: Can delete the series, change metadata and add or remove videos.
+        realm-moderate-description: Can edit content, add subpages and change the name and subpage order.
+        realm-admin-description: Can moderate, delete pages and edit permissions.
         write-access: write-access
         moderate-access: moderating-rights
         admin-access: page admin-rights
@@ -459,9 +461,12 @@ manage:
       title: Series details
       referencing-pages-explanation: 'This series is referenced on the following pages:'
       no-referencing-pages: No pages reference this series.
+      created-note: Series has been created.
     delete-note: >
       Videos in this series will not be deleted.
       They will remain in the system and can be added to another series.
+    create:
+      title: Create series
 
   my-videos:
     title: My videos

@@ -28,6 +28,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
     "details",
     "",
     authEvent => <DetailsPage
+        kind="video"
         pageTitle="manage.my-videos.details.title"
         item={{ ...authEvent, updated: authEvent.syncedData?.updated }}
         breadcrumb={{
@@ -89,9 +90,8 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
             </ExternalLink>
         )}
         <DeleteButton
-            itemId={event.id}
-            itemTitle={event.title}
-            itemType="video"
+            item={event}
+            kind="video"
             returnPath="/~manage/videos"
             commit={commit}
         />

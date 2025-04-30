@@ -18,6 +18,7 @@ import { SeriesDetailsDeleteMutation } from "./__generated__/SeriesDetailsDelete
 import {
     SeriesDetailsMetadataMutation,
 } from "./__generated__/SeriesDetailsMetadataMutation.graphql";
+import { useNotification } from "../../../ui/NotificationContext";
 
 
 const updateSeriesMetadata = graphql`
@@ -36,13 +37,15 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
     "details",
     "",
     series => <DetailsPage
+        kind="series"
         pageTitle="manage.my-series.details.title"
-        item={{ ...series, description: series.syncedData?.description }}
+        item={series}
         breadcrumb={{
             label: i18n.t("manage.my-series.title"),
             link: ManageSeriesRoute.url,
         }}
         sections={series => [
+            <NotificationSection key="notification" />,
             <UpdatedCreatedInfo key="date-info" item={series} />,
             <SeriesButtonSection key="button-section" {...{ series }} />,
             <DirectLink key="direct-link" url={
@@ -60,15 +63,19 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
     />,
 );
 
+const NotificationSection: React.FC = () => {
+    const { Notification } = useNotification();
+    return <Notification />;
+};
+
 const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
     const { t } = useTranslation();
     const [commit] = useMutation<SeriesDetailsDeleteMutation>(deleteSeriesMutation);
 
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <DeleteButton
-            itemId={series.id}
-            itemTitle={series.title}
-            itemType="series"
+            item={series}
+            kind="series"
             returnPath="/~manage/series"
             commit={commit}
         >
@@ -82,7 +89,7 @@ const SeriesMetadataSection: React.FC<{ series: Series }> = ({ series }) => {
     const [commit, inFlight] = useMutation<SeriesDetailsMetadataMutation>(updateSeriesMetadata);
 
     return <MetadataSection
-        item={{ ...series, description: series.syncedData?.description }}
+        item={series}
         {...{ commit, inFlight }}
     />;
 };

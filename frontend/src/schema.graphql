@@ -34,6 +34,12 @@ enum SeriesSortColumn {
   EVENT_COUNT
 }
 
+"Represents the different states a series can be in during its lifecycle"
+enum SeriesState {
+  READY
+  WAITING
+}
+
 enum SortDirection {
   ASCENDING
   DESCENDING
@@ -98,6 +104,7 @@ input NewRealm {
 input NewSeries {
   opencastId: String!
   title: String!
+  description: String
 }
 
 input NewSeriesBlock {
@@ -413,6 +420,11 @@ type Mutation {
     and the series is preliminarily updated in Tobira's DB.
   """
   updateSeriesMetadata(id: ID!, metadata: SeriesMetadata!): Series!
+  """
+    Sends an http request to Opencast to create a new series,
+    and stores the series in Tobira's DB.
+  """
+  createSeries(metadata: SeriesMetadata!, acl: [AclInputEntry!]!): Series!
   """
     Sets the order of all children of a specific realm.
 
@@ -839,7 +851,8 @@ type Series implements Node {
   created: DateTime
   updated: DateTime
   metadata: ExtraMetadata
-  syncedData: SyncedSeriesData
+  description: String
+  state: SeriesState!
   numVideos: Int!
   thumbnailStack: SeriesThumbnailStack!
   acl: [AclItem!]
@@ -890,10 +903,6 @@ type SyncedEventData {
   duration: Float!
   thumbnail: String
   audioOnly: Boolean!
-}
-
-type SyncedSeriesData {
-  description: String
 }
 
 "A block just showing some text."
@@ -966,11 +975,13 @@ type User {
   canUpload: Boolean!
   "`True` if the user has the permission to use Opencast Studio."
   canUseStudio: Boolean!
-  "`True` if the user has the permission to use Opencast Studio."
+  "`True` if the user has the permission to use Opencast Editor."
   canUseEditor: Boolean!
   canCreateUserRealm: Boolean!
   "`True` if the user is allowed to find unlisted items when editing page content."
   canFindUnlisted: Boolean!
+  "`True` if the user has the permission to create new series."
+  canCreateSeries: Boolean!
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page. This also returns events that have been marked

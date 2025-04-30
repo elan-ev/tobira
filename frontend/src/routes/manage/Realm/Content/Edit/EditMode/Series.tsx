@@ -41,10 +41,8 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
                 id
                 opencastId
                 title
-                syncedData {
-                    # only queried to see whether syncedData is null
-                    description
-                }
+                state
+                description
             }
             showTitle
             showMetadata
@@ -94,10 +92,7 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
         </div>}
         <VideoListSelector
             type="series"
-            defaultValue={series == null ? undefined : {
-                ...series,
-                description: series.syncedData?.description ?? null,
-            }}
+            defaultValue={series == null ? undefined : series}
             onChange={data => seriesField.onChange(data?.id)}
             onBlur={seriesField.onBlur}
             autoFocus

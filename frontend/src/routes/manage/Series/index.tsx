@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
+import { LuCirclePlus } from "react-icons/lu";
 import { graphql } from "react-relay";
-import i18n from "../../../i18n";
 import { match } from "@opencast/appkit";
 
+import i18n from "../../../i18n";
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
@@ -21,9 +23,12 @@ import {
 } from "./__generated__/SeriesManageQuery.graphql";
 import { keyOfId } from "../../../util";
 import { SeriesThumbnail } from "./Shared";
+import { CREATE_SERIES_PATH } from "./Create";
+import { LinkButton } from "../../../ui/LinkButton";
+import { isRealUser, useUser } from "../../../User";
 
 
-const PATH = "/~manage/series" as const;
+export const PATH = "/~manage/series" as const;
 
 export const ManageSeriesRoute = makeRoute({
     url: PATH,
@@ -48,7 +53,9 @@ export const ManageSeriesRoute = makeRoute({
                         titleKey="manage.my-series.title"
                         additionalColumns={seriesColumns}
                         RenderRow={SeriesRow}
-                    />
+                    >
+                        <CreateSeriesLink />
+                    </ManageItems>
                 }
             />,
             dispose: () => queryRef.dispose(),
@@ -74,7 +81,8 @@ const query = graphql`
                     created
                     updated
                     tobiraDeletionTimestamp
-                    syncedData { description }
+                    description
+                    state
                     numVideos
                     thumbnailStack { thumbnails { url live audioOnly }}
                 }
@@ -82,6 +90,19 @@ const query = graphql`
         }
     }
 `;
+
+const CreateSeriesLink: React.FC = () => {
+    const { t } = useTranslation();
+    const user = useUser();
+
+    return (!isRealUser(user) || !user.canCreateSeries)
+        ? null
+        : <LinkButton to={CREATE_SERIES_PATH} css={{ width: "fit-content" }}>
+            {t("manage.my-series.create.title")}
+            <LuCirclePlus />
+        </LinkButton>;
+};
+
 
 export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]>["mySeries"];
 export type Series = SeriesConnection["items"];
@@ -111,7 +132,7 @@ const seriesColumns: ColumnProps<SingleSeries>[] = [
 
 const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
     itemType="series"
-    item={{ ...item, description: item.syncedData?.description }}
+    item={item}
     thumbnail={deletionIsPending => <SeriesThumbnail series={item} {...{ deletionIsPending }} />}
     link={`${PATH}/${keyOfId(item.id)}`}
     customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
