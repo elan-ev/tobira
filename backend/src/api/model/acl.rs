@@ -20,9 +20,11 @@ pub(crate) struct AclItem {
     /// `annotate`). This is a set, i.e. no duplicate elements.
     pub actions: Vec<String>,
 
-    /// Additional info we have about the role. Is `null` if the role is unknown
-    /// or is `ROLE_ANONYMOUS`, `ROLE_ADMIN` or `ROLE_USER`, as those are
-    /// handled in a special way in the frontend.
+    /// Additional info we have about the role. Is `null` if the role is
+    /// unknown. For the built-in roles `ROLE_ANONYMOUS`, `ROLE_ADMIN` and
+    /// `ROLE_USER`, this might be `null` as well (in which case there is
+    /// special handling in the frontend), but might be non-null if custom info
+    /// is configured.
     pub info: Option<RoleInfo>,
 }
 

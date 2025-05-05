@@ -47,6 +47,9 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
     "ROLE_STAFF": { "label": { "en": "Staff", "de": "Angestellte" }, "implies": [], "large": true },
     "ROLE_LECTURER": { "label": { "en": "Lecturers", "de": "Vortragende" }, "implies": ["ROLE_STAFF"], "large": true },
     "ROLE_TOBIRA_MODERATOR": { "label": { "en": "Moderators", "de": "Moderierende" }, "implies": ["ROLE_STAFF"], "large": false }
+
+    // You can also overwrite the label of built-in groups, if you so desire
+    // "ROLE_USER": { "label": { "en": "...", "de": "..." }, "implies": [], "large": true },
 }
 ```
 

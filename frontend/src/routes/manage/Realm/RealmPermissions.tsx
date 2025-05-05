@@ -86,7 +86,7 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
         <AclSelector
             acl={selections}
             onChange={setSelections}
-            addAnonymous={false}
+            disallowAnonymous
             {...{ knownRoles, inheritedAcl, ownerDisplayName }}
             permissionLevels={MODERATE_ADMIN_ACTIONS}
         />
@@ -107,4 +107,3 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
         {boxError(commitError)}
     </>;
 };
-
