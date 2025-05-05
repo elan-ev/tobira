@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UseMutationConfig } from "react-relay";
 import { MutationParameters, Disposable } from "relay-runtime";
-import { LuCalendar, LuCircleUser, LuListPlus, LuListX } from "react-icons/lu";
+import { LuCalendar, LuCircleUser, LuListPlus, LuListX, LuUndo2, LuUpload } from "react-icons/lu";
 import {
     boxError,
     Button,
@@ -20,6 +20,7 @@ import { Series } from "../Series/Shared";
 import { COLORS } from "../../../color";
 import { SubmitButtonWithStatus } from "../../../ui/metadata";
 import { displayCommitError } from "../Realm/util";
+import { EventSelector } from "../../../ui/EventSelector";
 import { currentRef, Inertable, keyOfId } from "../../../util";
 import { ellipsisOverflowCss, focusStyle } from "../../../ui";
 import { Thumbnail } from "../../../ui/Video";
@@ -27,7 +28,8 @@ import { Link } from "../../../router";
 import { DirectVideoRoute } from "../../Video";
 import { thumbnailLinkStyle, titleLinkStyle } from "./Table";
 import { useNavBlocker } from "../../util";
-import { EventSelector } from "../../../ui/EventSelector";
+import { UploadRoute } from "../../Upload";
+import { LinkButton } from "../../../ui/LinkButton";
 
 
 type Entry = Series["entries"][number];
@@ -100,6 +102,11 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         </p>}
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
             <AddVideoMenu {...{ setEvents, events }} />
+            {/* // Todo: Omit upload button when adding this route for playlists */}
+            <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
+                <LuUpload />
+                {t("manage.video-list.edit.upload")}
+            </LinkButton>
         </div>
         {events.length > 0 && <>
             <div css={{
@@ -345,6 +352,7 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                                 ({t("manage.video-list.edit.to-be-removed")})
                             </i>
                             <Button css={buttonStyle} onClick={onChange}>
+                                <LuUndo2 size={16} />
                                 {t("manage.video-list.edit.undo")}
                             </Button>
                         </>}
@@ -353,6 +361,7 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                                 ({t("manage.video-list.edit.to-be-added")})
                             </i>
                             <Button css={buttonStyle} onClick={onChange}>
+                                <LuUndo2 size={16} />
                                 {t("manage.video-list.edit.undo")}
                             </Button>
                         </>}

@@ -227,7 +227,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
         },
         ...user.canUpload ? [{
             icon: <LuUpload />,
-            wrapper: <Link to={UploadRoute.url} />,
+            wrapper: <Link to={UploadRoute.url()} />,
             children: t("upload.title"),
             css: indent,
         }] : [],

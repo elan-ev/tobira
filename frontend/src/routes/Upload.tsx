@@ -11,14 +11,14 @@ import {
 
 import { RootLoader } from "../layout/Root";
 import { environment, loadQuery } from "../relay";
-import { UploadQuery } from "./__generated__/UploadQuery.graphql";
+import { UploadQuery, UploadQuery$data } from "./__generated__/UploadQuery.graphql";
 import { makeRoute } from "../rauta";
 import { ErrorDisplay, errorDisplayInfo } from "../util/err";
 import { mapAcl, useNavBlocker } from "./util";
 import CONFIG from "../config";
 import { LinkButton } from "../ui/LinkButton";
 import { isRealUser, User, useUser } from "../User";
-import { currentRef, Inertable, useRefState } from "../util/index";
+import { currentRef, Inertable, seriesId, useRefState } from "../util/index";
 import {
     FieldIsRequiredNote,
     InputContainer,
@@ -45,21 +45,25 @@ import {
 } from "./__generated__/UploadSeriesAclQuery.graphql";
 
 
-const PATH = "/~manage/upload" as const;
+export const PATH = "/~manage/upload" as const;
 export const UploadRoute = makeRoute({
-    url: PATH,
+    url: ({ seriesId }: { seriesId?: string | null } = {}): `${typeof PATH}${string | null}` =>
+        seriesId ? `${PATH}?${new URLSearchParams({ series: seriesId })}` : PATH,
     match: url => {
         if (url.pathname !== PATH) {
             return null;
         }
 
-        const queryRef = loadQuery<UploadQuery>(query, {});
+        const seriesParam = url.searchParams.get("series");
+        const preselectedSeries = seriesParam && seriesId(seriesParam);
+
+        const queryRef = loadQuery<UploadQuery>(query, { seriesId: preselectedSeries ?? "" });
         return {
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
                 nav={() => <ManageNav active={PATH} />}
-                render={data => <Upload knownRolesRef={data} />}
+                render={data => <Upload uploadQueryData={data} />}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -67,9 +71,17 @@ export const UploadRoute = makeRoute({
 });
 
 const query = graphql`
-    query UploadQuery {
+    query UploadQuery($seriesId: ID!) {
         ... UserData
         ... AccessKnownRolesData
+        series: seriesById(id: $seriesId) {
+            id
+            opencastId
+            title
+            description
+            created
+            acl { role actions info { label implies large } }
+        }
     }
 `;
 
@@ -85,12 +97,13 @@ type Metadata = {
 };
 
 type Props = {
-    knownRolesRef: AccessKnownRolesData$key;
+    uploadQueryData: UploadQuery$data;
 };
 
-const Upload: React.FC<Props> = ({ knownRolesRef }) => {
+const Upload: React.FC<Props> = ({ uploadQueryData }) => {
     const { t } = useTranslation();
-    const knownRoles = useFragment(knownRolesFragment, knownRolesRef);
+    const knownRoles = useFragment<AccessKnownRolesData$key>(knownRolesFragment, uploadQueryData);
+    const preselectedSeries = uploadQueryData.series;
 
     return (
         <div css={{
@@ -103,7 +116,7 @@ const Upload: React.FC<Props> = ({ knownRolesRef }) => {
                 tail={t("upload.title")}
             />
             <PageTitle title={t("upload.title")} />
-            <UploadMain {...{ knownRoles }} />
+            <UploadMain {...{ knownRoles, preselectedSeries }} />
         </div>
     );
 };
@@ -133,9 +146,10 @@ const CancelButton: React.FC<CancelButtonProps> = ({ abortController }) => {
 
 type UploadMainProps = {
     knownRoles: AccessKnownRolesData$data;
+    preselectedSeries?: UploadQuery$data["series"];
 };
 
-const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
+const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }) => {
     // TODO: on first mount, send an `ocRequest` to `info/me.json` and make sure
     // that connection works. That way we can show an error very early, before
     // the user selected a file.
@@ -238,7 +252,10 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
                 width: "100%",
                 maxWidth: 900,
             }}>
-                <UploadState state={uploadState.current} />
+                <UploadState
+                    state={uploadState.current}
+                    seriesId={preselectedSeries?.id}
+                />
                 <div>
                     {/* TODO: Show something after saving metadata.
                         - Just saying "saved" is kind of misleading because the data is only local.
@@ -250,7 +267,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
                             ? <MetaDataEdit
                                 onSave={onMetadataSave}
                                 disabled={hasUploadError}
-                                knownRoles={knownRoles}
+                                {...{ knownRoles, preselectedSeries }}
                             />
                             : !hasUploadError && (
                                 <div css={{ margin: "0 auto", maxWidth: 500 }}>
@@ -500,9 +517,13 @@ type UploadState =
 
 /** State of an upload that is not yet finished */
 type NonFinishedUploadState = Exclude<UploadState, { state: "done" }>;
+type UploadStateProps = {
+    state: NonFinishedUploadState;
+    seriesId?: string | null;
+};
 
 /** Shows the current state of the upload */
-const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => {
+const UploadState: React.FC<UploadStateProps> = ({ state, seriesId }) => {
     const { t, i18n } = useTranslation();
 
     if (state.state === "starting") {
@@ -569,11 +590,11 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
             "& > :first-child": { marginBottom: "2rem" },
         }}>
             <span>{t("upload.upload-cancelled")}</span>
-            <div>
-                <LinkButton kind="call-to-action" to={UploadRoute.url}>
-                    {t("upload.reselect")}
-                </LinkButton>
-            </div>
+            <LinkButton kind="call-to-action" to={UploadRoute.url({
+                seriesId: seriesId ?? null,
+            })}>
+                {t("upload.reselect")}
+            </LinkButton>
         </div>;
     } else if (state.state === "error") {
         return <UploadErrorBox error={state.error} />;
@@ -685,19 +706,27 @@ type MetaDataEditProps = {
     onSave: (metadata: Metadata) => void;
     disabled: boolean;
     knownRoles: AccessKnownRolesData$data;
+    preselectedSeries?: UploadQuery$data["series"];
 };
 
 /** Form that lets the user set metadata about the video */
-const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRoles }) => {
+const MetaDataEdit: React.FC<MetaDataEditProps> = ({
+    onSave,
+    disabled,
+    knownRoles,
+    preselectedSeries,
+}) => {
     const { t } = useTranslation();
     const u = useUser();
     const user = isRealUser(u) ? u : unreachable();
 
     const seriesFieldId = useId();
-    const [lockedAcl, setLockedAcl] = useState<Acl | null>(null);
+    const [lockedAcl, setLockedAcl] = useState<Acl | null>(
+        preselectedSeries ? mapAcl(preselectedSeries.acl) : null,
+    );
     const [aclError, setAclError] = useState<ReactNode>(null);
     const [aclLoading, setAclLoading] = useState(false);
-    const aclEditingLocked = !!lockedAcl || aclLoading || !!aclError;
+    const aclEditingLocked = (lockedAcl && CONFIG.lockAclToSeries) || aclLoading || !!aclError;
 
     const fetchSeriesAcl = async (seriesId: string): Promise<Acl | null> => {
         const data = await fetchQuery<UploadSeriesAclQuery>(
@@ -755,6 +784,12 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
     const { field: seriesField } = useController({
         name: "series",
         control,
+        ...preselectedSeries && {
+            defaultValue: {
+                id: preselectedSeries.opencastId,
+                acl: preselectedSeries.acl,
+            },
+        },
         rules: {
             required: CONFIG.upload.requireSeries
                 ? t("metadata-form.errors.field-required")
@@ -788,15 +823,18 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                         <span><LuInfo tabIndex={0} /></span>
                     </WithTooltip>
                 </label>
-                <VideoListSelector
-                    type="series"
-                    inputId={seriesFieldId}
-                    writableOnly
-                    menuPlacement="top"
-                    onChange={data => onSeriesChange({ opencastId: data?.opencastId })}
-                    onBlur={seriesField.onBlur}
-                    required={CONFIG.upload.requireSeries}
-                />
+                <Inertable isInert={!!preselectedSeries} >
+                    <VideoListSelector
+                        type="series"
+                        inputId={seriesFieldId}
+                        writableOnly
+                        menuPlacement="top"
+                        onChange={data => onSeriesChange({ opencastId: data?.opencastId })}
+                        onBlur={seriesField.onBlur}
+                        required={CONFIG.upload.requireSeries}
+                        defaultValue={preselectedSeries ?? undefined}
+                    />
+                </Inertable>
                 {boxError(errors.series?.message)}
             </InputContainer>
 
@@ -809,7 +847,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                 }}>{t("manage.shared.acl.title")}</h2>
                 {boxError(aclError)}
                 {aclLoading && <Spinner size={20} />}
-                {lockedAcl && (
+                {lockedAcl && CONFIG.lockAclToSeries && (
                     <Card kind="info" iconPos="left" css={{
                         maxWidth: 700,
                         fontSize: 14,

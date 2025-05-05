@@ -468,6 +468,7 @@ manage:
     edit:
       add-video: Add video
       to-be-added: will be added
+      upload: Upload video
       remove: Remove
       to-be-removed: will be removed
       cannot-be-removed: "Can't be removed: Missing write access"
