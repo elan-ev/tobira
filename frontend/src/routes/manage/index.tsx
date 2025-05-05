@@ -77,7 +77,7 @@ const Manage: React.FC = () => {
 type ManageNavProps = {
     active?: typeof PATH
         | typeof ManageVideosRoute.url
-        | typeof UploadRoute.url
+        | ReturnType<typeof UploadRoute.url>
         | typeof ManageSeriesRoute.url
         | typeof CreateSeriesRoute.url
         | `/@${string}`
@@ -102,7 +102,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     entries.push([ManageVideosRoute.url, t("manage.my-videos.title"), <LuFilm />]);
 
     if (isRealUser(user) && user.canUpload) {
-        entries.push([UploadRoute.url, t("upload.title"), <LuUpload />]);
+        entries.push([UploadRoute.url(), t("upload.title"), <LuUpload />]);
     }
 
     if (isRealUser(user) && user.canUseStudio) {

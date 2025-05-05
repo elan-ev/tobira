@@ -489,6 +489,7 @@ manage:
     no-of-videos_other: '{{count}} Videos'
     edit:
       add-video: Video hinzufügen
+      upload: Video hochladen
       to-be-added: wird hinzugefügt
       remove: Entfernen
       to-be-removed: wird entfernt

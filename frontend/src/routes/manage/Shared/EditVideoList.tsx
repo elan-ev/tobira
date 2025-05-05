@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UseMutationConfig } from "react-relay";
 import { MutationParameters, Disposable } from "relay-runtime";
-import { LuCalendar, LuCircleUser, LuListPlus, LuListX } from "react-icons/lu";
+import { LuCalendar, LuCircleUser, LuListPlus, LuListX, LuUndo2, LuUpload } from "react-icons/lu";
 import {
     boxError,
     Button,
@@ -28,6 +28,8 @@ import { Link } from "../../../router";
 import { DirectVideoRoute } from "../../Video";
 import { thumbnailLinkStyle, titleLinkStyle } from "./Table";
 import { useNavBlocker } from "../../util";
+import { UploadRoute } from "../../Upload";
+import { LinkButton } from "../../../ui/LinkButton";
 
 
 type Entry = Series["entries"][number];
@@ -91,8 +93,13 @@ export const ManageVideoListContent = <TMutation extends MutationParameters>({
         {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
             {description}
         </p>}
-        <div css={{ margin: "24px auto 16px", display: "flex", gap: 8 }}>
+        <div css={{ margin: "24px auto 16px", display: "flex", gap: 12 }}>
             <AddVideoMenu {...{ setEvents, events, floatingRef }} />
+            {/* // Todo: Omit upload button when adding this route for playlists */}
+            <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} css={{ gap: 10 }}>
+                <LuUpload />
+                {t("manage.video-list.edit.upload")}
+            </LinkButton>
         </div>
         {events.length > 0 && <>
             <div css={{
@@ -140,6 +147,7 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, floating
         >
             <FloatingTrigger>
                 <Button onClick={() => setButtonIsActive(prev => !prev)} css={{
+                    gap: 10,
                     ...buttonIsActive && { "&&": {
                         borderColor: COLORS.neutral60,
                         backgroundColor: COLORS.neutral15,
@@ -330,6 +338,7 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, events, setEvents }) => 
                                 ({t("manage.video-list.edit.to-be-removed")})
                             </i>
                             <Button css={buttonStyle} onClick={() => setAction("none")}>
+                                <LuUndo2 size={16} />
                                 {t("manage.video-list.edit.undo")}
                             </Button>
                         </>}
@@ -340,6 +349,7 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, events, setEvents }) => 
                             <Button css={buttonStyle} onClick={() =>
                                 setEvents(events.filter(e => e.id !== event.id))
                             }>
+                                <LuUndo2 size={16} />
                                 {t("manage.video-list.edit.undo")}
                             </Button>
                         </>}
