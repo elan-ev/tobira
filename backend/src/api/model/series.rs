@@ -5,12 +5,18 @@ use postgres_types::ToSql;
 
 use crate::{
     api::{
-        err::{self, invalid_input, ApiResult}, model::{
+        err::{self, invalid_input, ApiResult},
+        model::{
             acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
             shared::{convert_acl_input, SortDirection, ToSqlColumn},
-        }, util::LazyLoad, Context, Id, Node, NodeValue
+        },
+        util::LazyLoad,
+        Context,
+        Id,
+        Node,
+        NodeValue,
     },
     db::util::{impl_from_db, select},
     model::{
@@ -34,6 +40,7 @@ use super::{
     shared::{
         define_sort_column_and_order,
         load_writable_for_user,
+        BasicMetadata,
         AclForDB,
         Connection,
         ConnectionQueryParts,
@@ -125,7 +132,7 @@ impl Series {
             .pipe(Ok)
     }
 
-    async fn load_for_api(id: Id, context: &Context) -> ApiResult<Series> {
+    async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<Series> {
         let series = Self::load_by_id(id, context)
             .await?
             .ok_or_else(|| err::invalid_input!(key = "series.not-found", "series not found"))?;
@@ -190,7 +197,7 @@ impl Series {
     }
 
     pub(crate) async fn create_in_oc(
-        metadata: SeriesMetadata,
+        metadata: BasicMetadata,
         acl: Vec<AclInputEntry>,
         context: &Context,
     ) -> ApiResult<Self> {
@@ -404,7 +411,7 @@ impl Series {
         }
 
         info!(series_id = %id, "Requesting ACL update of series");
-        let series = Self::load_for_api(id, context).await?;
+        let series = Self::load_for_mutation(id, context).await?;
 
         let response = context
             .oc_client
@@ -425,12 +432,7 @@ impl Series {
                 where id = $1 \
             ", &[&series.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
 
-            Self::load_by_id(id, context)
-                .await?
-                .ok_or_else(|| err::invalid_input!(
-                    key = "series.acl.not-found",
-                    "series not found",
-                ))
+            Self::load_for_mutation(id, context).await
         } else {
             warn!(
                 series_id = %id,
@@ -443,10 +445,10 @@ impl Series {
 
     pub(crate) async fn update_metadata(
         id: Id,
-        metadata: SeriesMetadata,
+        metadata: BasicMetadata,
         context: &Context,
     ) -> ApiResult<Series> {
-        let series = Self::load_for_api(id, context).await?;
+        let series = Self::load_for_mutation(id, context).await?;
 
         info!(series_id = %id, "Requesting metadata update of series");
 
@@ -478,12 +480,7 @@ impl Series {
                 where id = $1 \
             ", &[&series.key, &metadata.title, &metadata.description]).await?;
 
-            Self::load_by_id(id, context)
-                .await?
-                .ok_or_else(|| err::invalid_input!(
-                    key = "series.metadata.not-found",
-                    "series not found",
-                ))
+            Self::load_for_mutation(id, context).await
         } else {
             warn!(
                 series_id = %id,
@@ -495,7 +492,7 @@ impl Series {
     }
 
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<Series> {
-        let series = Self::load_for_api(id, context).await?;
+        let series = Self::load_for_mutation(id, context).await?;
 
         info!(series_id = %id, "Attempting to send request to delete series in Opencast");
 
@@ -694,8 +691,3 @@ define_sort_column_and_order!(
     pub struct SeriesSortOrder
 );
 
-#[derive(GraphQLInputObject)]
-pub(crate) struct SeriesMetadata {
-    pub(crate) title: String,
-    pub(crate) description: Option<String>,
-}

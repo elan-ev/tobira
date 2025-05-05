@@ -20,6 +20,11 @@ import {
     ManageItems,
     TableRow,
 } from "../Shared/Table";
+import { useTranslation } from "react-i18next";
+import { ellipsisOverflowCss } from "../../../ui";
+import { Link } from "../../../router";
+import { DirectSeriesRoute } from "../../Series";
+import { COLORS } from "../../../color";
 
 
 const PATH = "/~manage/videos" as const;
@@ -74,7 +79,7 @@ const query = graphql`
                     description
                     isLive
                     tobiraDeletionTimestamp
-                    series { id }
+                    series { id title }
                     syncedData {
                         duration
                         thumbnail
@@ -99,6 +104,15 @@ export type Event = Events[number];
 // Todo: add series column
 const videoColumns: ColumnProps<Event>[] = [
     {
+        key: "SERIES",
+        label: "manage.item-table.columns.series",
+        headerWidth: 175,
+        column: ({ item }) => <SeriesColumn
+            title={item.series?.title}
+            seriesId={item.series?.id}
+        />,
+    },
+    {
         key: "UPDATED",
         label: "manage.item-table.columns.updated",
         column: ({ item }) => <DateColumn date={item.syncedData?.updated} />,
@@ -109,6 +123,31 @@ const videoColumns: ColumnProps<Event>[] = [
         column: ({ item }) => <DateColumn date={item.created} />,
     },
 ];
+
+type SeriesColumnProps = {
+    seriesId?: string;
+    title?: string;
+};
+
+const SeriesColumn: React.FC<SeriesColumnProps> = ({ title, seriesId }) => {
+    const { t } = useTranslation();
+
+    const titleLink = seriesId
+        ? <Link to={DirectSeriesRoute.url({ seriesId })} css={{ textDecoration: "none" }}>
+            {title && title.trim().length > 0 ? title : <i>
+                {t("manage.item-table.no-series-title")}
+            </i>}
+        </Link>
+        : <i css={{ color: COLORS.neutral60 }}>{t("manage.item-table.no-series")}</i>;
+
+    return (
+        <td css={{
+            "&&": { display: "block" },
+            fontSize: 14,
+            ...ellipsisOverflowCss(3),
+        }}>{titleLink}</td>
+    );
+};
 
 const EventRow: React.FC<{ item: Event }> = ({ item }) => <TableRow
     itemType="video"
@@ -125,6 +164,7 @@ const parseVideosColumn = (sortBy: string | null): VideosSortColumn =>
             "title": () => "TITLE" as const,
             "created": () => "CREATED" as const,
             "updated": () => "UPDATED" as const,
+            "series": () => "SERIES" as const,
         }) ?? "CREATED"
         : "CREATED";
 

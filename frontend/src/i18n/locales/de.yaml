@@ -325,7 +325,10 @@ metadata-form:
   save: Änderungen speichern
   errors:
     field-required: Dieses Feld darf nicht leer sein.
-
+  event-workflow-active: >
+    Änderung der Metadaten ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
+    <br />
+    Bitte versuchen Sie es später nochmal.
 acl:
   unknown-user-note: unbekannt
   no-entries: Keine Einträge
@@ -445,6 +448,9 @@ manage:
       title: Titel
       created: Erstellt
       updated: Aktualisiert
+      series: Serie
+    no-series: Keine
+    no-series-title: Fehlender Titel
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt
 
@@ -705,7 +711,8 @@ api-remote-errors:
     not-allowed: Sie haben nicht die Berechtigung, diese Videoaktion durchzuführen.
     workflow:
       not-allowed: Sie haben nicht die Berechtigung, die Workflowaktivität für dieses Video abzufragen.
-      active: $t(manage.access.workflow-active)
+      active-acl: $t(manage.access.workflow-active)
+      active-metadata: $t(metadata-form.event-workflow-active)
   series:
     not-found: "Aktion fehlgeschlagen: Serie nicht gefunden."
     not-allowed: Sie haben nicht die Berechtigung, diese Serienaktion durchzuführen.

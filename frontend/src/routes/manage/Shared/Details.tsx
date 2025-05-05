@@ -163,14 +163,16 @@ type MetadataMutationParams = MutationParameters & {
 
 type MetadataSectionProps<TMutation extends MetadataMutationParams> = {
     item: Item;
-    commit?: (config: UseMutationConfig<TMutation>) => Disposable;
+    commit: (config: UseMutationConfig<TMutation>) => Disposable;
     inFlight?: boolean;
+    disabled?: boolean;
 }
 
 export const MetadataSection = <TMutation extends MetadataMutationParams>({
     item,
     commit,
     inFlight,
+    disabled = false,
 }: MetadataSectionProps<TMutation>) => {
     const { t } = useTranslation();
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
@@ -185,7 +187,7 @@ export const MetadataSection = <TMutation extends MetadataMutationParams>({
 
     const { handleSubmit, reset, formState: { isValid, isDirty } } = formMethods;
 
-    const onSubmit = commit && handleSubmit(({ title, description }) => {
+    const onSubmit = handleSubmit(({ title, description }) => {
         commit({
             variables: {
                 id: item.id,
@@ -200,18 +202,20 @@ export const MetadataSection = <TMutation extends MetadataMutationParams>({
         });
     });
 
-    return <Inertable isInert={!isSynced(item)}>
+    return <Inertable isInert={disabled || !isSynced(item)}>
         <FormProvider {...formMethods}>
             <MetadataForm hasError={!!commitError}>
                 {/* Title & Description */}
-                <MetadataFields disabled={!commit} />
+                <MetadataFields />
                 {/* Submit */}
-                {onSubmit && <SubmitButtonWithStatus
+                <SubmitButtonWithStatus
                     label={t("metadata-form.save")}
                     onClick={onSubmit}
                     disabled={!!commitError || !isValid || !isDirty || inFlight}
-                    {...{ inFlight, success, setSuccess }}
-                />}
+                    success={success && !isDirty}
+                    timeout={10000}
+                    {...{ inFlight, setSuccess }}
+                />
             </MetadataForm>
         </FormProvider>
         {boxError(commitError)}

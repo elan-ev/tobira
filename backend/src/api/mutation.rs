@@ -6,7 +6,8 @@ use super::{
     id::Id,
     model::{
         acl::AclInputEntry,
-        series::{Series, NewSeries, SeriesMetadata},
+        series::{Series, NewSeries},
+        shared::BasicMetadata,
         realm::{
             ChildIndex,
             NewRealm,
@@ -78,6 +79,16 @@ impl Mutation {
         AuthorizedEvent::update_acl(id, acl, context).await
     }
 
+    /// Updates the title and description of an event. A request for this is sent to Opencast,
+    /// and the event is optimistically updated in Tobira's DB.
+    async fn update_event_metadata(
+        id: Id,
+        metadata: BasicMetadata,
+        context: &Context,
+    ) -> ApiResult<AuthorizedEvent> {
+        AuthorizedEvent::update_metadata(id, metadata, context).await
+    }
+
     /// Deletes the given series by sending a delete request to Opencast.
     /// The series is marked as "deletion pending" in Tobira and fully removed once Opencast
     /// finished deleting the series.
@@ -99,7 +110,7 @@ impl Mutation {
     /// and the series is preliminarily updated in Tobira's DB.
     async fn update_series_metadata(
         id: Id,
-        metadata: SeriesMetadata,
+        metadata: BasicMetadata,
         context: &Context,
     ) -> ApiResult<Series> {
         Series::update_metadata(id, metadata, context).await
@@ -108,7 +119,7 @@ impl Mutation {
     /// Sends an http request to Opencast to create a new series,
     /// and stores the series in Tobira's DB.
     async fn create_series(
-        metadata:SeriesMetadata,
+        metadata: BasicMetadata,
         acl: Vec<AclInputEntry>,
         context: &Context,
     ) -> ApiResult<Series> {
