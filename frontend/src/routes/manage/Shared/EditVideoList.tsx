@@ -28,6 +28,8 @@ import { Link } from "../../../router";
 import { DirectVideoRoute } from "../../Video";
 import { thumbnailLinkStyle, titleLinkStyle } from "./Table";
 import { useNavBlocker } from "../../util";
+import { UploadRoute } from "../../Upload";
+import { LinkButton } from "../../../ui/LinkButton";
 
 
 
@@ -92,6 +94,10 @@ export const ManageVideoListContent = <TMutation extends MutationParameters>({
         {description && <p css={{ marginBottom: 8, maxWidth: 750 }}>{description}</p>}
         <div css={{ marginBottom: 12, display: "flex", gap: 8 }}>
             <AddVideoMenu {...{ setEvents, events, floatingRef }} />
+            {/* // Todo: Omit upload button when adding this route for playlists */}
+            <LinkButton to={UploadRoute.urlWithSeries({ seriesId: listId })}>
+                {t("manage.video-list.edit.upload")}
+            </LinkButton>
         </div>
         {events.length > 0 && <>
             <div css={{

@@ -493,6 +493,7 @@ manage:
         Hier entfernte Videos werden nicht gelöscht, sondern können anschließend
         in diese oder andere Serien eingebunden werden.
       add-video: Video hinzufügen
+      upload: Video hochladen
       to-be-added: wird hinzugefügt
       remove: Entfernen
       to-be-removed: wird entfernt
