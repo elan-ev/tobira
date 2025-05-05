@@ -202,9 +202,13 @@ impl Assets {
             builder = builder.header("content-type", mime.to_string())
         }
 
-        // Caching header if the filename contains a content hash. We can unwrap
-        // the `lookup` call as we know from above that the path is valid.
-        if asset.is_filename_hashed() {
+        // Conditionally add caching header. It is save to add it if there is a
+        // content hash in the filename. For most assets, that hash is added by
+        // `reinda`, but for the JS bundles, it is added by webpack.
+        let has_webpack_hash = EMBEDS["bundle.*.js"].files()
+            .chain(EMBEDS["bundle.*.js.map"].files())
+            .any(|f| f.path() == path);
+        if asset.is_filename_hashed() || has_webpack_hash {
             // This is one year in seconds.
             builder = builder.header("cache-control", "public, max-age=31536000, immutable");
         }
