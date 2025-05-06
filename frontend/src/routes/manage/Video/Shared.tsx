@@ -167,6 +167,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         backgroundColor: "black",
         borderRadius: 8,
     };
+
     const thumbnail = <>
         <LuPlay />
         <Thumbnail event={event} />

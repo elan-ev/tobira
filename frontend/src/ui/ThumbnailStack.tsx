@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next";
-import { LuRadio, LuTrash } from "react-icons/lu";
+import { LuRadio } from "react-icons/lu";
 import { useColorScheme } from "@opencast/appkit";
 
 import {
-    BaseThumbnailReplacement,
     ThumbnailImg,
+    ThumbnailItemStatus,
     ThumbnailOverlay,
     ThumbnailOverlayContainer,
     ThumbnailReplacement,
@@ -15,13 +15,19 @@ import { COLORS } from "../color";
 type ThumbnailStackProps = {
     title: string;
     thumbnails: readonly ThumbnailInfo[];
+    seriesStatus: ThumbnailItemStatus;
 }
 
-export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => {
+export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
+    thumbnails,
+    title,
+    seriesStatus,
+}) => {
     const isDarkScheme = useColorScheme().scheme === "dark";
 
     return (
         <div css={{
+            position: "relative",
             zIndex: 0,
             margin: "0 auto",
             width: "70%",
@@ -61,13 +67,13 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, titl
             },
         }}>
             {thumbnails.slice(0, 3).map((info, idx) => <div key={idx}>
-                <SeriesThumbnail {...{ info, title }} />
+                <SeriesThumbnail {...{ info, title, seriesStatus }} />
             </div>)}
             {/* Add fake thumbnails to always have 3. The visual image of 3 things behind each other
                 is more important than actually showing the correct number of thumbnails. */}
             {[...Array(Math.max(0, 3 - thumbnails.length))].map((_, idx) => (
                 <div key={"dummy" + idx}>
-                    <DummySeriesStackThumbnail isDark={isDarkScheme} />
+                    <DummySeriesStackThumbnail {...{ isDarkScheme }} />
                 </div>
             ))}
         </div>
@@ -75,57 +81,41 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, titl
 };
 
 
-type DummySeriesStackThumbnailProps = {
-    isDark: boolean;
-    deletionIsPending?: boolean;
-};
+const DummySeriesStackThumbnail: React.FC<{ isDarkScheme: boolean }> = ({
+    isDarkScheme,
+}) => <ThumbnailOverlayContainer css={{
+    // Pattern from https://css-pattern.com/overlapping-cubes/,
+    // MIT licensed: https://github.com/Afif13/CSS-Pattern
+    "--s": "40px",
+    ...isDarkScheme ? {
+        "--c1": "#2c2c2c",
+        "--c2": "#292929",
+        "--c3": "#262626",
+    } : {
+        "--c1": "#e8e8e8",
+        "--c2": "#e3e3e3",
+        "--c3": "#dddddd",
+    },
 
-const DummySeriesStackThumbnail: React.FC<DummySeriesStackThumbnailProps> = ({
-    isDark,
-    deletionIsPending = false,
-}) => (
-    <ThumbnailOverlayContainer css={{
-        // Pattern from https://css-pattern.com/overlapping-cubes/,
-        // MIT licensed: https://github.com/Afif13/CSS-Pattern
-        "--s": "40px",
-        ...isDark ? {
-            "--c1": "#2c2c2c",
-            "--c2": "#292929",
-            "--c3": "#262626",
-        } : {
-            "--c1": "#e8e8e8",
-            "--c2": "#e3e3e3",
-            "--c3": "#dddddd",
-        },
-
-        "--_g": "0 120deg,#0000 0",
-        ...!deletionIsPending && { background: `
-            conic-gradient(             at calc(250%/3) calc(100%/3),
-                var(--c3) var(--_g)),
-            conic-gradient(from -120deg at calc( 50%/3) calc(100%/3),
-                var(--c2) var(--_g)),
-            conic-gradient(from  120deg at calc(100%/3) calc(250%/3),
-                var(--c1) var(--_g)),
-            conic-gradient(from  120deg at calc(200%/3) calc(250%/3),
-                var(--c1) var(--_g)),
-            conic-gradient(from -180deg at calc(100%/3) 50%,
-                var(--c2)  60deg,var(--c1) var(--_g)),
-            conic-gradient(from   60deg at calc(200%/3) 50%,
-                var(--c1)  60deg,var(--c3) var(--_g)),
-            conic-gradient(from  -60deg at 50% calc(100%/3),
-                var(--c1) 120deg,var(--c2) 0 240deg,var(--c3) 0)
-        ` },
-        backgroundSize: "calc(var(--s)*sqrt(3)) var(--s)",
-        ...deletionIsPending && {
-            backgroundColor: COLORS.neutral50,
-            color: "#dbdbdb",
-        },
-    }}>
-        {deletionIsPending && <BaseThumbnailReplacement>
-            <LuTrash />
-        </BaseThumbnailReplacement>}
-    </ThumbnailOverlayContainer>
-);
+    "--_g": "0 120deg,#0000 0",
+    background: `
+        conic-gradient(             at calc(250%/3) calc(100%/3),
+            var(--c3) var(--_g)),
+        conic-gradient(from -120deg at calc( 50%/3) calc(100%/3),
+            var(--c2) var(--_g)),
+        conic-gradient(from  120deg at calc(100%/3) calc(250%/3),
+            var(--c1) var(--_g)),
+        conic-gradient(from  120deg at calc(200%/3) calc(250%/3),
+            var(--c1) var(--_g)),
+        conic-gradient(from -180deg at calc(100%/3) 50%,
+            var(--c2)  60deg,var(--c1) var(--_g)),
+        conic-gradient(from   60deg at calc(200%/3) 50%,
+            var(--c1)  60deg,var(--c3) var(--_g)),
+        conic-gradient(from  -60deg at 50% calc(100%/3),
+            var(--c1) 120deg,var(--c2) 0 240deg,var(--c3) 0)
+    `,
+    backgroundSize: "calc(var(--s)*sqrt(3)) var(--s)",
+}} />;
 
 type ThumbnailInfo = {
     readonly audioOnly: boolean;
@@ -134,11 +124,12 @@ type ThumbnailInfo = {
 }
 
 type SeriesThumbnailProps = {
+    seriesStatus: ThumbnailItemStatus;
     info: ThumbnailInfo;
     title: string;
 }
 
-const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
+const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title, seriesStatus }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
 
@@ -150,7 +141,11 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
             alt={t("series.entry-of-series-thumbnail", { series: title })}
         />;
     } else {
-        inner = <ThumbnailReplacement audioOnly={info.audioOnly} {...{ isDark }} />;
+        inner = <ThumbnailReplacement
+            audioOnly={info.audioOnly}
+            videoStatus={null}
+            {...{ isDark }}
+        />;
     }
 
     const overlay = <ThumbnailOverlay backgroundColor="rgba(200, 0, 0, 0.9)">
@@ -161,5 +156,11 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
     return <ThumbnailOverlayContainer>
         {inner}
         {info.live && overlay}
+        {seriesStatus === "deleted" && <span css={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 10,
+            backdropFilter: "blur(1px)",
+        }} />}
     </ThumbnailOverlayContainer>;
 };
