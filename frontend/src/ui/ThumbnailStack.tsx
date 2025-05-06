@@ -5,19 +5,22 @@ import { useColorScheme } from "@opencast/appkit";
 import {
     BaseThumbnailReplacement,
     ThumbnailImg,
+    ThumbnailItemStatus,
     ThumbnailOverlay,
     ThumbnailOverlayContainer,
     ThumbnailReplacement,
 } from "./Video";
 import { COLORS } from "../color";
+import { MovingTruck } from "./Waiting";
 
 
 type ThumbnailStackProps = {
     title: string;
     thumbnails: readonly ThumbnailInfo[];
+    status?: ThumbnailItemStatus;
 }
 
-export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title }) => {
+export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, title, status }) => {
     const isDarkScheme = useColorScheme().scheme === "dark";
 
     return (
@@ -67,7 +70,7 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, titl
                 is more important than actually showing the correct number of thumbnails. */}
             {[...Array(Math.max(0, 3 - thumbnails.length))].map((_, idx) => (
                 <div key={"dummy" + idx}>
-                    <DummySeriesStackThumbnail isDark={isDarkScheme} />
+                    <DummySeriesStackThumbnail {...{ isDarkScheme, status }} />
                 </div>
             ))}
         </div>
@@ -76,19 +79,20 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({ thumbnails, titl
 
 
 type DummySeriesStackThumbnailProps = {
-    isDark: boolean;
-    deletionIsPending?: boolean;
+    isDarkScheme: boolean;
+    status?: ThumbnailItemStatus;
 };
 
 const DummySeriesStackThumbnail: React.FC<DummySeriesStackThumbnailProps> = ({
-    isDark,
-    deletionIsPending = false,
-}) => (
-    <ThumbnailOverlayContainer css={{
+    isDarkScheme,
+    status,
+}) => {
+    const deletionIsPending = status === "deleted";
+    return <ThumbnailOverlayContainer css={{
         // Pattern from https://css-pattern.com/overlapping-cubes/,
         // MIT licensed: https://github.com/Afif13/CSS-Pattern
         "--s": "40px",
-        ...isDark ? {
+        ...isDarkScheme ? {
             "--c1": "#2c2c2c",
             "--c2": "#292929",
             "--c3": "#262626",
@@ -120,12 +124,15 @@ const DummySeriesStackThumbnail: React.FC<DummySeriesStackThumbnailProps> = ({
             backgroundColor: COLORS.neutral50,
             color: "#dbdbdb",
         },
+        ...status === "waiting" && {
+            color: COLORS.neutral50,
+        },
     }}>
-        {deletionIsPending && <BaseThumbnailReplacement>
-            <LuTrash />
+        {status !== "ready" && <BaseThumbnailReplacement>
+            {deletionIsPending ? <LuTrash /> : <MovingTruck />}
         </BaseThumbnailReplacement>}
-    </ThumbnailOverlayContainer>
-);
+    </ThumbnailOverlayContainer>;
+};
 
 type ThumbnailInfo = {
     readonly audioOnly: boolean;
