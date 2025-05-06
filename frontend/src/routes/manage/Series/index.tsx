@@ -133,7 +133,7 @@ const seriesColumns: ColumnProps<SingleSeries>[] = [
 const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
     itemType="series"
     item={item}
-    thumbnail={deletionIsPending => <SeriesThumbnail series={item} {...{ deletionIsPending }} />}
+    thumbnail={status => <SeriesThumbnail series={item} seriesStatus={status} />}
     link={`${PATH}/${keyOfId(item.id)}`}
     customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
 />;
