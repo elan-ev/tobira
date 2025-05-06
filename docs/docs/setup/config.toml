@@ -647,12 +647,22 @@
 [matomo]
 # URL of your Matomo server. Example: "https://matomo.myuni.edu/matomo/".
 #
-# Note: Adding `matomo.js` to the URL configured here should result in a
-# URL to a publicly accessible JS file.
+# Note: Adding the filename of the Matomo script to the URL configured here should result in
+# a URL to a publicly accessible JS file.
 #server =
 
 # Matomo site ID, e.g. `side_id = "1"`
 #site_id =
+
+# Filename for the Matomo JS script.
+#
+# Default value: "matomo.js"
+#tracker_url_js = "matomo.js"
+
+# Filename for the Matomo PHP endpoint.
+#
+# Default value: "matomo.php"
+#tracker_url_php = "matomo.php"
 
 
 [player]
