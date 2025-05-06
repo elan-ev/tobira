@@ -94,7 +94,8 @@ type AclSelectorProps = {
     knownRoles: AccessKnownRolesData$data;
     ownerDisplayName?: string | null;
     permissionLevels: PermissionLevels;
-    addAnonymous?: boolean;
+    /** If `true`, ROLE_ANONYMOUS won't be offered as option. */
+    disallowAnonymous?: boolean;
 }
 
 export const AclSelector: React.FC<AclSelectorProps> = (
@@ -106,13 +107,15 @@ export const AclSelector: React.FC<AclSelectorProps> = (
         knownRoles,
         ownerDisplayName = "",
         permissionLevels,
-        addAnonymous = true,
+        disallowAnonymous = false,
     },
 ) => {
     const { i18n } = useTranslation();
-    const knownGroups = [...knownRoles.knownGroups];
-    [acl, inheritedAcl].forEach(list =>
-        insertBuiltinRoleInfo(list, knownGroups, i18n, addAnonymous));
+    let knownGroups = [...knownRoles.knownGroups];
+    [acl, inheritedAcl].forEach(list => insertBuiltinRoleInfo(list, knownGroups, i18n));
+    if (disallowAnonymous) {
+        knownGroups = knownGroups.filter(g => g.role !== COMMON_ROLES.ANONYMOUS);
+    }
     const [groupAcl, userAcl] = splitAcl(acl);
     const [inheritedGroupAcl, inheritedUserAcl] = splitAcl(inheritedAcl);
 
@@ -923,7 +926,6 @@ const insertBuiltinRoleInfo = (
     acl: Acl,
     knownGroups: AccessKnownRolesData$data["knownGroups"][number][],
     i18n: i18n,
-    addAnonymous: boolean,
 ) => {
     const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => ({
         default: i18n.t(key, { lng: "en" }),
@@ -934,30 +936,37 @@ const insertBuiltinRoleInfo = (
         ),
     });
 
-    const anonymousInfo = {
-        implies: [],
-        label: keyToTranslatedString("acl.groups.everyone"),
-        large: true,
-    };
-    const userInfo = {
-        implies: [COMMON_ROLES.ANONYMOUS],
-        label: keyToTranslatedString("acl.groups.logged-in-users"),
-        large: true,
-    };
+    let anonymousInfo = knownGroups.find(g => g.role === COMMON_ROLES.ANONYMOUS);
+    if (!anonymousInfo) {
+        anonymousInfo = {
+            role: COMMON_ROLES.ANONYMOUS,
+            implies: [],
+            label: keyToTranslatedString("acl.groups.everyone"),
+            large: true,
+        };
+        knownGroups.push(anonymousInfo);
+    }
+    let userInfo = knownGroups.find(g => g.role === COMMON_ROLES.USER);
+    if (!userInfo) {
+        userInfo = {
+            role: COMMON_ROLES.USER,
+            implies: [COMMON_ROLES.ANONYMOUS],
+            label: keyToTranslatedString("acl.groups.logged-in-users"),
+            large: true,
+        };
+        knownGroups.push(userInfo);
+    }
 
     const anonymous = acl.get(COMMON_ROLES.ANONYMOUS);
-    if (anonymous) {
-        anonymous.info = anonymousInfo;
+    if (anonymous && !anonymous.info) {
+        const { role, ...info } = anonymousInfo;
+        anonymous.info = info;
     }
     const user = acl.get(COMMON_ROLES.USER);
-    if (user) {
-        user.info = userInfo;
+    if (user && !user.info) {
+        const { role, ...info } = userInfo;
+        user.info = info;
     }
-
-    if (addAnonymous) {
-        knownGroups.push({ role: COMMON_ROLES.ANONYMOUS, ...anonymousInfo });
-    }
-    knownGroups.push({ role: COMMON_ROLES.USER, ...userInfo });
 };
 
 
