@@ -50,7 +50,7 @@ const updateVideoAcl = graphql`
         updateEventAcl(id: $id, acl: $acl) {
             ...on AuthorizedEvent {
                 acl { role actions info { label implies large } }
-                hasActiveWorkflows
+                workflowStatus
             }
         }
     }
@@ -65,8 +65,9 @@ type EventAclPageProps = {
 const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
     const [commit, inFlight] = useMutation<VideoAccessAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && !!event.series;
+    const workflowStatus = event.workflowStatus;
     const [editingBlocked, setEditingBlocked] = useState(
-        !isSynced(event) || event.hasActiveWorkflows || aclLockedToSeries,
+        !isSynced(event) || workflowStatus !== "IDLE" || aclLockedToSeries,
     );
 
     const onSubmit = async ({ selections, saveModalRef, setCommitError }: SubmitAclProps) => {
@@ -83,11 +84,13 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
         });
     };
 
-    return <Inertable isInert={event.hasActiveWorkflows || aclLockedToSeries || editingBlocked}>
+    return <Inertable isInert={workflowStatus !== "IDLE" || aclLockedToSeries || editingBlocked}>
         {!isSynced(event)
             ? <NotReadyNote kind="video" />
-            : event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
-                <Trans i18nKey="acl.workflow-active" />
+            : workflowStatus !== "IDLE" && <Card kind="info" css={{ marginBottom: 20 }}>
+                <Trans i18nKey={`manage.video.workflow-status.${
+                    workflowStatus === "BUSY" ? "active" : "unknown"
+                }`} />
             </Card>
         }
         {aclLockedToSeries && (

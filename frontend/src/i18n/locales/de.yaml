@@ -335,10 +335,6 @@ acl:
   authorized-groups: Autorisierte Gruppen
   authorized-users: Autorisierte Personen
   editing-disabled: Bearbeitung der Zugangsberechtigungen ist deaktiviert.
-  workflow-active: >
-    Änderung der Berechtigungen ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
-    <br />
-    Bitte versuchen Sie es später nochmal.
   locked-to-series: >
     Die Berechtigungen dieses Videos werden durch seine <1>Serie</1> bestimmt und können daher nicht bearbeitet werden.
   users-no-options:
@@ -447,6 +443,12 @@ manage:
       synced: Synchronisiert?
       part-of: 'Teil von:'
       is-live: Live?
+    workflow-status:
+      active: Das Video wird momentan noch verarbeitet. Bitte versuchen Sie es später nochmal.
+      unknown: >
+        Der Status dieses Videos in Opencast ist unbekannt, daher kann es nicht bearbeitet werden.
+        <br />
+        Bitte versuchen Sie es später nochmal.
 
   series:
     created-note: Serie wurde erstellt.
@@ -491,10 +493,6 @@ manage:
     save: Metadaten speichern
     errors:
       field-required: Dieses Feld darf nicht leer sein.
-    event-workflow-active: >
-      Änderung der Metadaten ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
-      <br />
-      Bitte versuchen Sie es später nochmal.
 
   table:
     page-showing-ids: '{{start}}–{{end}} von {{total}}'
@@ -682,10 +680,10 @@ api-remote-errors:
   event:
     not-found: "Aktion fehlgeschlagen: Video nicht gefunden."
     not-allowed: Sie haben nicht die Berechtigung, diese Videoaktion durchzuführen.
-    workflow:
+    workflow-status:
       not-allowed: Sie haben nicht die Berechtigung, die Workflowaktivität für dieses Video abzufragen.
-      active-acl: $t(acl.workflow-active)
-      active-metadata: $t(metadata-form.event-workflow-active)
+      active: $t(manage.video.workflow-status.active)
+      unknown:  $t(manage.video.workflow-status.unknown)
   series:
     not-found: "Aktion fehlgeschlagen: Serie nicht gefunden."
     not-allowed: Sie haben nicht die Berechtigung, diese Serienaktion durchzuführen.
