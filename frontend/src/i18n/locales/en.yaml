@@ -322,10 +322,6 @@ acl:
   authorized-groups: Authorized groups
   authorized-users: Authorized users
   editing-disabled: Access policy editing is disabled.
-  workflow-active: >
-    Changing the access policy is not possible at this time, since the video is being processed in the background.
-    <br />
-    Please try again later.
   locked-to-series: The access policy of this video is determined by its <1>series</1> and can't be edited.
   users-no-options:
     initial-searchable: Type to search for users by name (or enter exact email/username)
@@ -415,6 +411,12 @@ manage:
       synced: Synchronized?
       part-of: 'Part of:'
       is-live: Live?
+    workflow-status:
+      active: The video is currently being processed in the background. Please try again later.
+      unknown: >
+        The status of this video in Opencast is unknown, therefore it can't be edited.
+        <br />
+        Please try again later.
 
   series:
     created-note: Series has been created.
@@ -460,10 +462,6 @@ manage:
     save: Save metadata
     errors:
       field-required: This field is required (cannot be empty).
-    event-workflow-active: >
-      Changing the metadata is not possible at this time, since the video is being processed in the background.
-      <br />
-      Please try again later.
 
   table:
     page-showing-ids: '{{start}}–{{end}} of {{total}}'
@@ -639,10 +637,10 @@ api-remote-errors:
   event:
     not-found: "Action failed: Video not found."
     not-allowed: You are not allowed to perform this video action.
-    workflow:
+    workflow-status:
       not-allowed: You are not allowed to inquire about workflow activity of this video.
-      active-acl: $t(manage.acl.workflow-active)
-      active-metadata: $t(metadata-form.event-workflow-active)
+      active: $t(manage.video.workflow-status.active)
+      unknown:  $t(manage.video.workflow-status.unknown)
   series:
     not-found: "Action failed: series not found."
     not-allowed: You are not allowed to perform this series action.

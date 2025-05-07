@@ -94,7 +94,7 @@ const query = graphql`
                 created
                 canWrite
                 isLive
-                hasActiveWorkflows @include(if: $fetchWorkflowState)
+                workflowStatus @include(if: $fetchWorkflowState)
                 acl { role actions info { label implies large } }
                 syncedData {
                     duration

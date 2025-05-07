@@ -310,7 +310,7 @@ impl AuthorizedEvent {
     }
 
     /// Whether the event has active workflows.
-    async fn has_active_workflows(&self, context: &Context) -> ApiResult<bool> {
+    async fn workflow_status(&self, context: &Context) -> ApiResult<WorkflowStatus> {
         if !context.auth.overlaps_roles(&self.write_roles) {
             return Err(err::not_authorized!(
                 key = "event.workflow.not-allowed",
@@ -318,16 +318,16 @@ impl AuthorizedEvent {
             ));
         }
 
-        let response = context
-            .oc_client
-            .has_active_workflows(&self.opencast_id)
-            .await
-            .map_err(|e| {
+        let status = match context.oc_client.has_active_workflows(&self.opencast_id).await {
+            Ok(true) => WorkflowStatus::Busy,
+            Ok(false) => WorkflowStatus::Idle,
+            Err(e) => {
                 error!("Failed to get workflow activity: {}", e);
-                err::opencast_error!("API returned unexpected response, event might be unknown")
-            })?;
+                WorkflowStatus::Unobtainable
+            }
+        };
 
-        Ok(response)
+        Ok(status)
     }
 
     async fn series<S: ScalarValue>(
@@ -519,6 +519,23 @@ impl AuthorizedEvent {
         Ok(event)
     }
 
+    /// Checks the current workflow status for this event. If a workflow is active or
+    /// the status cannot be determined, returns a localized error blocking the operation.
+    /// Used to guard mutation operations that also start workflows.
+    pub(crate) async fn require_idle(&self, context: &Context) -> ApiResult<()> {
+        match Self::workflow_status(self, context).await? {
+            WorkflowStatus::Idle => Ok(()),
+            WorkflowStatus::Busy => Err(err::opencast_error!(
+                key = "event.workflow.active",
+                "Cannot perform operation: another workflow is still active"
+            )),
+            WorkflowStatus::Unobtainable => Err(err::opencast_error!(
+                key = "event.workflow.unknown-status",
+                "Cannot perform operation: workflow status could not be determined"
+            )),
+        }
+    }
+
     pub(crate) async fn create_placeholder(event: NewEvent, context: &Context) -> ApiResult<Self> {
         if !context.auth.can_upload(&context.config.auth) {
             return Err(err::not_authorized!(
@@ -601,15 +618,10 @@ impl AuthorizedEvent {
             return Err(err::not_authorized!("editing ACLs is not allowed"));
         }
 
-        info!(event_id = %id, "Requesting ACL update of event");
         let event = Self::load_for_mutation(id, context).await?;
+        event.require_idle(context).await?;
 
-        if Self::has_active_workflows(&event, context).await? {
-            return Err(err::opencast_error!(
-                key = "event.workflow.active-acl",
-                "ACL change blocked by another workflow",
-            ));
-        }
+        info!(event_id = %id, "Requesting ACL update of event");
 
         let response = context
             .oc_client
@@ -649,15 +661,7 @@ impl AuthorizedEvent {
         context: &Context,
     ) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_for_mutation(id, context).await?;
-
-        if Self::has_active_workflows(&event, context).await? {
-            return Err(err::opencast_error!(
-                key = "event.workflow.active-metadata",
-                "Metadata change blocked by another workflow",
-            ));
-        }
-
-        info!(event_id = %id, "Requesting metadata update of event");
+        event.require_idle(context).await?;
 
         let metadata_json = serde_json::json!([
             {
@@ -669,6 +673,8 @@ impl AuthorizedEvent {
                 "value": metadata.description
             },
         ]);
+
+        info!(event_id = %id, "Requesting metadata update of event");
 
         let response = context
             .oc_client
@@ -853,4 +859,11 @@ pub(crate) struct NewEvent {
     series_id: Option<Id>,
     creators: Vec<String>,
     acl: Vec<AclInputEntry>,
+}
+
+#[derive(GraphQLEnum, PartialEq)]
+pub(crate) enum WorkflowStatus {
+    Busy,
+    Idle,
+    Unobtainable,
 }

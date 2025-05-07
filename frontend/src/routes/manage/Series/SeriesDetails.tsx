@@ -21,6 +21,8 @@ import {
 import { useNotification } from "../../../ui/NotificationContext";
 import { ManageVideoListContent } from "../Shared/EditVideoList";
 import { SeriesDetailsContentMutation } from "./__generated__/SeriesDetailsContentMutation.graphql";
+import { isSynced } from "../../../util";
+import { NotReadyNote } from "../../util";
 
 
 const updateSeriesMetadata = graphql`
@@ -59,7 +61,6 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
     "details",
     "",
     series => <DetailsPage
-        kind="series"
         pageTitle="manage.series.details.title"
         item={series}
         breadcrumb={{
@@ -68,6 +69,7 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
         }}
         sections={series => [
             <NotificationSection key="notification" />,
+            <SeriesNoteSection key="series-note" {...{ series }} />,
             <UpdatedCreatedInfo key="date-info" item={series} />,
             <SeriesButtonSection key="button-section" {...{ series }} />,
             <DirectLink key="direct-link" url={
@@ -90,6 +92,9 @@ const NotificationSection: React.FC = () => {
     const { Notification } = useNotification();
     return <Notification />;
 };
+
+const SeriesNoteSection: React.FC<{ series: Series }> = ({ series }) =>
+    !isSynced(series) && <NotReadyNote kind="series" />;
 
 const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
     const { t } = useTranslation();
