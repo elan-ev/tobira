@@ -1,22 +1,21 @@
 use chrono::{DateTime, Utc};
+use futures:: StreamExt;
 use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
 use postgres_types::ToSql;
+use serde_json::json;
 
 use crate::{
     api::{
-        err::{self, invalid_input, ApiResult},
+        Context, Id, Node, NodeValue,
+        err::{self, invalid_input, ApiError, ApiResult},
         model::{
             acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
-            shared::{convert_acl_input, SortDirection, ToSqlColumn},
+            shared::{SortDirection, ToSqlColumn, convert_acl_input},
         },
         util::LazyLoad,
-        Context,
-        Id,
-        Node,
-        NodeValue,
     },
     db::util::{impl_from_db, select},
     model::{
@@ -466,7 +465,7 @@ impl Series {
 
         let response = context
             .oc_client
-            .update_metadata(&series, metadata_json)
+            .update_metadata(&series, &metadata_json)
             .await
             .map_err(|e| {
                 error!("Failed to send metadata update request: {}", e);
@@ -490,6 +489,107 @@ impl Series {
             );
             Err(err::opencast_error!("Opencast API error: {}", response.status()))
         }
+    }
+
+    pub(crate) async fn update_content(
+        id: Id,
+        added_events: Vec<Id>,
+        removed_events: Vec<Id>,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        let series = Self::load_for_mutation(id, context).await?;
+
+        info!(series_id = %id, "Starting content update of series");
+
+        let metadata = |value: Option<String>| json!([{ "id": "isPartOf", "value": value }]);
+
+        // Map added events to series id and removed events to `None`.
+        let modified_events = added_events
+            .into_iter()
+            .map(|id| (id, Some(series.opencast_id.clone())))
+            .chain(removed_events.into_iter().map(|id| (id, None)));
+
+        // Load modified events in parallel to get their Opencast id.
+        // Todo: maybe just pass opencast ids of events. Then this wouldn't need to do all this extra loading.
+        let changes = futures::stream::iter(modified_events)
+            .map(|(id, oc_id_option)| async move {
+                let event = AuthorizedEvent::load_for_mutation(id, context).await?;
+
+                Ok::<_, ApiError>((event, metadata(oc_id_option)))
+            })
+            .buffer_unordered(8)
+            .try_collect::<Vec<_>>()
+            .await?;
+
+        let mut removed_events = Vec::new();
+        let mut added_events = Vec::new();
+
+        for (event, metadata) in changes {
+            let response = context
+                .oc_client
+                .update_metadata(&event, &metadata)
+                .await
+                .map_err(|e| {
+                    error!("Failed to send metadata update request: {}", e);
+                    err::opencast_unavailable!("Failed to send metadata update request")
+                })?;
+
+            if response.status() == StatusCode::NO_CONTENT {
+                //204: The metadata of the given namespace (i.e. "isPartOf") has been updated.
+                info!(event_id = %OpencastItem::id(&event), "Event updated, attempting metadata republish");
+
+                if let Err(e) = AuthorizedEvent::start_workflow(
+                    &event.opencast_id,
+                    "republish-metadata",
+                    context,
+                ).await {
+                    warn!(
+                        event_id = %OpencastItem::id(&event),
+                        error = %e.msg,
+                        "Failed to republish metadata for event"
+                    );
+                    continue;
+                }
+
+                if metadata[0]["value"].is_null() {
+                    removed_events.push(event.key);
+                } else {
+                    added_events.push(event.key);
+                }
+            } else {
+                warn!(
+                    event_id = %OpencastItem::id(&event),
+                    "Failed to update event, OC returned status: {}",
+                    response.status(),
+                );
+            }
+        }
+
+        // Update events in Tobira
+        if !removed_events.is_empty() || !added_events.is_empty() {
+            let query = "\
+                update events \
+                set \
+                    series = case \
+                        when id = any($1) then $3 \
+                        when id = any($2) then null \
+                        else series \
+                    end, \
+                    part_of = case \
+                        when id = any($1) then $4 \
+                        when id = any($2) then null \
+                        else part_of \
+                    end, \
+                    updated = current_timestamp \
+                where id = any($1) or id = any($2) \
+            ";
+
+            context.db
+                .execute(query, &[&added_events, &removed_events, &series.key, &series.opencast_id])
+                .await?;
+        }
+
+        Self::load_for_mutation(id, context).await
     }
 
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<Series> {

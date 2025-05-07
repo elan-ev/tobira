@@ -156,13 +156,15 @@ pub(super) async fn prepare_index(index: &Index) -> Result<()> {
             "caption_texts.texts",
         ],
         filterable: &[
+            "id",
             "listed",
             "preview_roles",
             "read_roles",
             "write_roles",
             "is_live",
             "end_time_timestamp",
-            "created_timestamp"
+            "created_timestamp",
+            "series_id",
         ],
         sortable: &["updated_timestamp"],
     }).await
