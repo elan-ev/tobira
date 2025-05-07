@@ -63,8 +63,9 @@ type EventAclPageProps = {
 const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
     const [commit, inFlight] = useMutation<VideoAccessAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && !!event.series;
+    const workflowStatus = event.workflowStatus?.status;
     const [editingBlocked, setEditingBlocked] = useState(
-        !isSynced(event) || event.hasActiveWorkflows || aclLockedToSeries,
+        !isSynced(event) || workflowStatus !== "IDLE" || aclLockedToSeries,
     );
 
     const onSubmit = async ({ selections, saveModalRef, setCommitError }: SubmitAclProps) => {
@@ -89,8 +90,10 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
     return <>
         {!isSynced(event)
             ? <NotReadyNote kind="video" />
-            : event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
-                <Trans i18nKey="manage.access.workflow-active" />
+            : workflowStatus !== "IDLE" && <Card kind="info" css={{ marginBottom: 20 }}>
+                <Trans i18nKey={`manage.my-videos.workflow-status.${
+                    workflowStatus === "BUSY" ? "active" : "unknown"
+                }`} />
             </Card>
         }
         {aclLockedToSeries && (
