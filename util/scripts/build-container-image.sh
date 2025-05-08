@@ -5,8 +5,8 @@ set -e
 basedir=$(dirname "$0")
 cd "$basedir"/../..
 
-NODE_VERSION=19.3
-RUST_VERSION=1.66
+NODE_VERSION=22.15
+RUST_VERSION=1.86
 
 CONTAINER_PLATFORM="${CONTAINER_PLATFORM:-linux/amd64}"
 RUST_TARGET="${RUST_TARGET:-x86_64-unknown-linux-musl}"
@@ -16,6 +16,7 @@ GIT_COMMIT_HASH="$(git rev-parse --short HEAD || echo "unknown")"
 VERSION="$(sed -n -E 's/^version = "([^"]+)"$/\1/p' backend/Cargo.toml)"
 
 docker buildx build \
+  --network "host" \
   --platform "${CONTAINER_PLATFORM}" \
   --build-arg "NODE_VERSION=${NODE_VERSION}" \
   --build-arg "RUST_VERSION=${RUST_VERSION}" \

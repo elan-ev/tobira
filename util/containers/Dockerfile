@@ -35,7 +35,6 @@ COPY backend/Cargo.toml backend/Cargo.lock /build/backend/
 COPY <<EOF /build/backend/src/main.rs
 fn main() {}
 EOF
-RUN cargo build --target "${RUST_TARGET}" --release
 
 COPY --from=frontend-build /build/build /build/frontend/build
 COPY backend .
