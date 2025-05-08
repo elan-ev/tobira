@@ -1,5 +1,5 @@
 import React, { MutableRefObject, ReactNode, useEffect, useId, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
 import { Controller, FormProvider, useController, useForm } from "react-hook-form";
@@ -815,7 +815,9 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                         fontSize: 14,
                         marginBottom: 10,
                     }}>
-                        {t("manage.access.locked-to-series")}
+                        <Trans i18nKey="manage.access.locked-to-series">
+                            <>series</>
+                        </Trans>
                     </Card>
                 )}
                 <Inertable isInert={aclEditingLocked}>
