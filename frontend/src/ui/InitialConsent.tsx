@@ -1,10 +1,12 @@
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { Button, notNullish } from "@opencast/appkit";
+
 import CONFIG from "../config";
 import { currentRef, getTranslatedString, translatedConfig } from "../util";
 import { Modal, ModalHandle } from "./Modal";
 import { TextBlock } from "./Blocks/Text";
-import { useTranslation } from "react-i18next";
-import { Button, notNullish } from "@opencast/appkit";
+
 
 const LOCAL_STORAGE_KEY = "tobiraUserConsent";
 
@@ -15,8 +17,9 @@ type Props = {
 export const InitialConsent: React.FC<Props> = ({ consentGiven: initialConsentGiven }) => {
     const { i18n } = useTranslation();
     const modalRef = useRef<ModalHandle>(null);
+    const isEmbedRoute = window.location.pathname.startsWith("/~embed");
 
-    if (initialConsentGiven !== false || !CONFIG.initialConsent) {
+    if (initialConsentGiven !== false || isEmbedRoute || !CONFIG.initialConsent) {
         return null;
     }
 
