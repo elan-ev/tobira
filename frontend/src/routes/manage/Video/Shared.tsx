@@ -28,12 +28,12 @@ type ManageVideoSubPageType = "details" | "technical-details" | "acl";
 /** Helper around `makeRoute` for manage single video subpages. */
 export const makeManageVideoRoute = (
     page: ManageSubPageType,
-    path: string,
+    path: `/${string}` | "",
     render: (event: AuthorizedEvent, data: QueryResponse) => JSX.Element,
     options?: { fetchWorkflowState?: boolean },
 ): Route & { url: (args: { videoId: string }) => string } => (
     makeRoute({
-        url: ({ videoId }: { videoId: string }) => `/~manage/videos/${keyOfId(videoId)}/${path}`,
+        url: ({ videoId }: { videoId: string }) => `/~manage/videos/${keyOfId(videoId)}${path}`,
         match: url => {
             const regex = new RegExp(`^/~manage/videos/(${b64regex}+)${path}/?$`, "u");
             const params = regex.exec(url.pathname);
