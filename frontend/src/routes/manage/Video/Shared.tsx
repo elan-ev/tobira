@@ -33,7 +33,7 @@ export const makeManageVideoRoute = (
     options?: { fetchWorkflowState?: boolean },
 ): Route & { url: (args: { videoId: string }) => string } => (
     makeRoute({
-        url: ({ videoId }: { videoId: string }) => `/~manage/videos/${keyOfId(videoId)}/${path}`,
+        url: ({ videoId }: { videoId: string }) => `/~manage/videos/${keyOfId(videoId)}${path}`,
         match: url => {
             const regex = new RegExp(`^/~manage/videos/(${b64regex}+)${path}/?$`, "u");
             const params = regex.exec(url.pathname);
