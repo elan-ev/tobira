@@ -679,7 +679,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
             }}
             list={
                 <Floating
-                    backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
+                    backgroundColor={isDark ? COLORS.neutral10 : COLORS.neutral05}
                     hideArrowTip
                     padding={0}
                     borderWidth={isDark ? 1 : 0}
@@ -730,7 +730,7 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
             ":last-child button": {
                 borderRadius: "0 0 8px 8px",
             },
-            ...disabled && { backgroundColor: COLORS.neutral10 },
+            ...disabled && { backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral10 },
         }}>
             <ProtoButton
                 {...{ ref, disabled }}
@@ -746,7 +746,7 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
                     gap: 8,
                     svg: { fontSize: 16 },
                     ":hover:enabled, :focus:enabled ": {
-                        backgroundColor: isDark ? COLORS.neutral10 : COLORS.neutral15,
+                        backgroundColor: isDark ? COLORS.neutral20 : COLORS.neutral15,
                     },
                     ...focusStyle({ inset: true }),
                     "&[disabled]": {
