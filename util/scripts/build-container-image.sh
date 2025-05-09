@@ -16,7 +16,6 @@ GIT_COMMIT_HASH="$(git rev-parse --short HEAD || echo "unknown")"
 VERSION="$(sed -n -E 's/^version = "([^"]+)"$/\1/p' backend/Cargo.toml)"
 
 docker buildx build \
-  --network "host" \
   --platform "${CONTAINER_PLATFORM}" \
   --build-arg "NODE_VERSION=${NODE_VERSION}" \
   --build-arg "RUST_VERSION=${RUST_VERSION}" \
