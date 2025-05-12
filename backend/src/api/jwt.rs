@@ -14,6 +14,7 @@ use super::{err::ApiResult, Context, Id};
 pub(crate) async fn jwt(
     service: JwtService,
     event: Option<Id>,
+    opencast_id: Option<String>,
     context: &Context,
 ) -> ApiResult<String> {
     let AuthContext::User(user) = &context.auth else {
@@ -35,9 +36,25 @@ pub(crate) async fn jwt(
             if !user.can_upload(&context.config.auth) {
                 deny!("upload");
             }
-            Ok(context.jwt.new_token(Some(&user), json!({
-                "roles": ["ROLE_STUDIO"],
-            })))
+            let payload = if let Some(opencast_id) = opencast_id {
+                let key = format!("e:{opencast_id}");
+
+                // TODO: remove once OC18 is released
+                let read_role = format!("ROLE_EPISODE_{}_READ", opencast_id);
+                let write_role = format!("ROLE_EPISODE_{}_WRITE", opencast_id);
+
+                json!({
+                    "oc": {
+                        key: ["read", "write"],
+                    },
+                    // TODO: remove redundant roles once OC18 is released
+                    "roles": ["ROLE_STUDIO", read_role, write_role],
+                })
+            } else {
+                json!({ "roles": ["ROLE_STUDIO"] })
+            };
+
+            Ok(context.jwt.new_token(Some(&user), payload))
         }
 
         JwtService::Studio => {
