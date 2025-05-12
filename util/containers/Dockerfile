@@ -32,9 +32,11 @@ ARG RUST_TARGET
 RUN rustup target add "${RUST_TARGET}"
 
 COPY backend/Cargo.toml backend/Cargo.lock /build/backend/
+COPY backend/vendor /build/backend/vendor
 COPY <<EOF /build/backend/src/main.rs
 fn main() {}
 EOF
+RUN cargo build --target "${RUST_TARGET}" --release
 
 COPY --from=frontend-build /build/build /build/frontend/build
 COPY backend .
