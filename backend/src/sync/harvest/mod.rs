@@ -99,22 +99,29 @@ pub(crate) async fn run(
         // Decide how to proceed (immediately continue, sleep or exit).
         drop(db);
         if harvest_data.has_more {
-            let last_updated = last_updated
-                .ok_or(anyhow!("Unexpected Opencast response: no items, but `hasMore = true`"))?;
-
-            // This only happens if the Opencast side applies the `TIME_BUFFER_SIZE`
-            // (see its docs for more information). This being the case just means that
-            // we weren't able to harvest all items that changed in the last
-            // `TIME_BUFFER_SIZE` in one go. Immediately requesting the API again would
-            // not make sense as we would just run into the same buffer, only making
-            // progress as actual time progresses. So we sleep for poll period.
-            if last_updated > harvest_data.includes_items_until {
-                debug!(
-                    "Detected `includesItemsUntil` being capped at `now() - buffer`: waiting {:?} \
-                        before starting next harvest.",
-                    config.sync.poll_period,
-                );
-                tokio::time::sleep(config.sync.poll_period).await;
+            if let Some(last_updated) = last_updated {
+                // The following only happens if the Opencast side applies the `TIME_BUFFER_SIZE`
+                // (see its docs for more information). This being the case just means that
+                // we weren't able to harvest all items that changed in the last
+                // `TIME_BUFFER_SIZE` in one go. Immediately requesting the API again would
+                // not make sense as we would just run into the same buffer, only making
+                // progress as actual time progresses. So we sleep for poll period.
+                if last_updated > harvest_data.includes_items_until {
+                    debug!(
+                        "Detected `includesItemsUntil` being capped at `now() - buffer`: waiting {:?} \
+                            before starting next harvest.",
+                        config.sync.poll_period,
+                    );
+                    tokio::time::sleep(config.sync.poll_period).await;
+                }
+            } else {
+                // This branch (no items but `hasMore = true`) is only taken when there are indeed
+                // more items, but all items in the current batch could not be read. This is
+                // pretty rare. In that case we can continue, but want to wait a tiny bit in
+                // case we are currently running into the `TIME_BUFFER_SIZE` (see above).
+                warn!("hasMore = true, but no items: whole batch in OC could not be read, \
+                    ignoring and sleeping for 3s");
+                tokio::time::sleep(Duration::from_secs(3)).await;
             }
         } else {
             if daemon {
