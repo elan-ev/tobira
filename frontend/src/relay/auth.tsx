@@ -74,7 +74,7 @@ export const ExternalLink = React.forwardRef<HTMLButtonElement, ExternalLinkProp
     const onSubmit = async (event: FormEvent) => {
         event.preventDefault();
         const form = event.target as HTMLFormElement & { jwt: HTMLInputElement };
-        form.jwt.value = await getJwt(service, "event" in rest ? rest.event : undefined);
+        form.jwt.value = await getJwt(service, "event" in rest ? { event: rest.event } : undefined);
         form.submit();
     };
 
@@ -97,19 +97,22 @@ export const ExternalLink = React.forwardRef<HTMLButtonElement, ExternalLinkProp
  * with using Relay observables. Errors (as opposed to rejects) when the query returns
  * more or less than one result(s).
  */
-export const getJwt = (service: JwtService, event?: string): Promise<string> => (
+export const getJwt = (
+    service: JwtService,
+    payload?: { event?: string; opencastId?: string },
+): Promise<string> => (
     new Promise((resolve, reject) => {
         let gotResult = false;
         let out: authJwtQuery["response"];
         const query = graphql`
-            query authJwtQuery($service: JwtService!, $event: ID) {
-                jwt(service: $service, event: $event)
+            query authJwtQuery($service: JwtService!, $event: ID, $ocId: String) {
+                jwt(service: $service, event: $event, opencastId: $ocId)
             }
         `;
         fetchQuery<authJwtQuery>(
             environment,
             query,
-            { service, event },
+            { service, event: payload?.event, ocId: payload?.opencastId },
             // Use "network-only" as we always want a fresh JWTs. `fetchQuery` should already
             // never write any values into the cache, but better make sure.
             { fetchPolicy: "network-only" },

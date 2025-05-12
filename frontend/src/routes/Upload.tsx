@@ -935,8 +935,9 @@ export class JwtInvalid extends Error {
 const ocRequest = async (
     path: string,
     options: RequestInit = {},
+    id?: string,
 ): Promise<string> => {
-    const jwt = await getJwt("UPLOAD");
+    const jwt = await getJwt("UPLOAD", { opencastId: id });
 
     const url = ocUrl(path);
     const response = await fetch(url, {
@@ -1102,6 +1103,11 @@ const finishUpload = async (
 ) => {
     try {
         setUploadState({ state: "finishing" });
+        const mp = new DOMParser()
+            .parseFromString(mediaPackage, "application/xml")
+            .querySelector("mediapackage");
+
+        const id = mp?.getAttribute("id") ?? "";
 
         // Add metadata in DC-Catalog
         {
@@ -1114,6 +1120,7 @@ const finishUpload = async (
             mediaPackage = await ocRequest(
                 "/ingest/addDCCatalog",
                 { method: "post", body },
+                id,
             );
         }
 
@@ -1128,6 +1135,7 @@ const finishUpload = async (
             mediaPackage = await ocRequest(
                 "/ingest/addAttachment",
                 { method: "post", body },
+                id,
             );
         }
 
@@ -1138,7 +1146,7 @@ const finishUpload = async (
             if (CONFIG.upload.workflow) {
                 body.append("workflowDefinitionId", CONFIG.upload.workflow);
             }
-            await ocRequest("/ingest/ingest", { method: "post", body: body });
+            await ocRequest("/ingest/ingest", { method: "post", body: body }, id);
         }
 
         setUploadState({ state: "done" });

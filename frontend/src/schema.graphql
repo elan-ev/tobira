@@ -552,7 +552,7 @@ type Query {
     using the given service. For `service = Editor`, `event` has to be
     specified.
   """
-  jwt(service: JwtService!, event: ID): String!
+  jwt(service: JwtService!, event: ID, opencastId: String): String!
   "Retrieve a node by globally unique ID. Mostly useful for relay."
   node(id: ID!): Node
   "Returns `null` if the query is too short."
