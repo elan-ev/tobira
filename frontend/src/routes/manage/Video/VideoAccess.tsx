@@ -13,6 +13,8 @@ import { AccessEditor, AclPage, SubmitAclProps } from "../Shared/Access";
 import i18n from "../../../i18n";
 import { VideoAccessAclMutation } from "./__generated__/VideoAccessAclMutation.graphql";
 import { NoteWithTooltip } from "../../../ui";
+import { Link } from "../../../router";
+import { ManageSeriesAccessRoute } from "../Series/SeriesAccess";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -57,7 +59,6 @@ type EventAclPageProps = {
 };
 
 const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
-    const { t } = useTranslation();
     const [commit, inFlight] = useMutation<VideoAccessAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && !!event.series;
     const [editingBlocked, setEditingBlocked] = useState(
@@ -89,7 +90,10 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
         </Card>}
         {aclLockedToSeries && (
             <Card kind="info" iconPos="left" css={{ fontSize: 14, marginBottom: 10 }}>
-                {t("manage.access.locked-to-series")}
+                <Trans i18nKey="manage.access.locked-to-series">
+                    series
+                    <Link to={ManageSeriesAccessRoute.url({ seriesId: event.series.id })} />
+                </Trans>
             </Card>
         )}
         <AccessEditor itemType="video" rawAcl={event.acl} {...{

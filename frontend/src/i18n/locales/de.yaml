@@ -349,7 +349,7 @@ manage:
       <br />
       Bitte versuchen Sie es später nochmal.
     locked-to-series: >
-      Die Berechtigungen dieses Videos werden durch seine Serie bestimmt und können daher nicht bearbeitet werden.
+      Die Berechtigungen dieses Videos werden durch seine <1>Serie</1> bestimmt und können daher nicht bearbeitet werden.
     users-no-options:
       initial-searchable: Nach Name suchen oder exakten Nutzernamen/exakte E-Mail angeben
       none-found-searchable: Keine Personen gefunden

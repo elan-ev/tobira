@@ -27,11 +27,11 @@ type ManageSeriesSubPageType = "details" | "acl";
 /** Helper around `makeRoute` for manage single series subpages. */
 export const makeManageSeriesRoute = (
     page: ManageSeriesSubPageType,
-    path: string,
+    path: `/${string}` | "",
     render: (series: Series, data: QueryResponse) => JSX.Element,
 ): Route & { url: (args: { seriesId: string }) => string } => (
     makeRoute({
-        url: ({ seriesId }: { seriesId: string }) => `/~manage/series/${keyOfId(seriesId)}/${path}`,
+        url: ({ seriesId }: { seriesId: string }) => `/~manage/series/${keyOfId(seriesId)}${path}`,
         match: url => {
             const regex = new RegExp(`^/~manage/series/(${b64regex}+)${path}/?$`, "u");
             const params = regex.exec(url.pathname);

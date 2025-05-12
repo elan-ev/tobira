@@ -348,7 +348,7 @@ manage:
       <br />
       Please try again later.
     locked-to-series: >
-      The access policy of this video is determined by its series and can't be edited.
+      The access policy of this video is determined by its <1>series</1> and can't be edited.
     users-no-options:
       initial-searchable: Type to search for users by name (or enter exact email/username)
       none-found-searchable: No user found
