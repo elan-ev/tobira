@@ -164,6 +164,7 @@ video:
     info: >
       Here you can download the video(s) in different formats/qualities (Right click - Save as).
   manage: Manage
+  manage-buttons: Video management
   start: Start
   end: End
   ends: Ends
@@ -424,7 +425,7 @@ manage:
     details:
       title: Video details
       share-direct-link: Share via direct link
-      set-time: 'Start at: '
+      set-time: 'Start video at (h/m/s): '
       copy-direct-link-to-clipboard: Copy video link to clipboard
       open-in-editor: Open in video editor
       referencing-pages: Referencing pages

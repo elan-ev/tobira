@@ -882,7 +882,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                 <VideoDate {...{ event }} />
             </div>
             {/* Buttons */}
-            <div css={{
+            <section aria-label={t("video.manage-buttons")} css={{
                 display: "flex",
                 gap: 8,
                 flexWrap: "wrap",
@@ -901,7 +901,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                     <DownloadButton event={event} />
                 )}
                 <VideoShareButton {...{ event }} />
-            </div>
+            </section>
         </div>
         <div css={{
             display: "flex",

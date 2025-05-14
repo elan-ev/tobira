@@ -167,6 +167,7 @@ video:
       Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen
       (Rechtsklick - Speichern unter).
   manage: Verwalten
+  manage-buttons: Videoverwaltung
   start: Anfang
   end: Ende
   ends: Endet
@@ -443,7 +444,7 @@ manage:
     details:
       title: Videodetails
       share-direct-link: Via Direktlink teilen
-      set-time: 'Starten bei: '
+      set-time: 'Video starten bei (h/m/s): '
       copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
       open-in-editor: Im Videoeditor öffnen
       referencing-pages: Referenzierende Seiten
