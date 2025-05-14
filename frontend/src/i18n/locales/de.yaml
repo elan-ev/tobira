@@ -125,6 +125,7 @@ login-page:
 video:
   video: Video
   video-page: 'Video Seite: „{{video}}“'
+  video-player: Videoplayer
   created: Erstellt
   updated: Zuletzt verändert
   duration: Abspielzeit

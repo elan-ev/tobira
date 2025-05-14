@@ -123,6 +123,7 @@ login-page:
 video:
   video: Video
   video-page: 'Video page: “{{video}}”'
+  video-player: Video player
   created: Created
   updated: Last updated
   duration: Duration
