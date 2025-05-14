@@ -6,6 +6,7 @@ import { bug, match, useColorScheme } from "@opencast/appkit";
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
+import { css } from "@emotion/react";
 
 
 /**
@@ -286,3 +287,12 @@ export const useLogoConfig = () => {
 
     return { wide, narrow };
 };
+
+export const visuallyHiddenStyle = css({
+    clipPath: "inset(50%)",
+    height: 1,
+    overflow: "hidden",
+    position: "absolute",
+    whiteSpace: "nowrap",
+    width: 1,
+});

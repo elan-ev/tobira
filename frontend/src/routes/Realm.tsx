@@ -13,7 +13,7 @@ import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { Nav } from "../layout/Navigation";
 import { LinkList, LinkWithIcon } from "../ui";
-import { characterClass, useTitle, useTranslatedConfig } from "../util";
+import { characterClass, useTitle, useTranslatedConfig, visuallyHiddenStyle } from "../util";
 import { makeRoute } from "../rauta";
 import { MissingRealmName } from "./util";
 import { realmBreadcrumbs } from "../util/realm";
@@ -161,14 +161,7 @@ const RealmPage: React.FC<Props> = ({ realm }) => {
             </div>
         ) : (
             // If there is no heading, this visually hidden <h1> is added for screen readers.
-            realm.isMainRoot && <h1 css={{
-                clipPath: "inset(50%)",
-                height: 1,
-                overflow: "hidden",
-                position: "absolute",
-                whiteSpace: "nowrap",
-                width: 1,
-            }}>{siteTitle}</h1>
+            realm.isMainRoot && <h1 css={visuallyHiddenStyle}>{siteTitle}</h1>
         )}
         <Blocks realm={realm} />
     </>;

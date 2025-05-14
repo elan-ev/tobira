@@ -28,6 +28,9 @@ general:
     select:
       no-options: Keine Optionen
       select-option: Option auswählen
+  seconds: Sekunden
+  minutes: Minuten
+  hours: Stunden
 
 welcome:
   title: Willkommen zu Tobira!
@@ -167,6 +170,7 @@ video:
       Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen
       (Rechtsklick - Speichern unter).
   manage: Verwalten
+  extra-buttons: Weitere Videoaktionen
   start: Anfang
   end: Ende
   ends: Endet
@@ -185,6 +189,7 @@ video:
 share:
   share-video: Video teilen
   direct-link: Direktlink
+  share-direct-link: Via Direktlink teilen
   main: Link
   embed: Einbetten
   rss: RSS
@@ -192,6 +197,11 @@ share:
   copy-link: Link in Zwischenablage kopieren
   copy-rss: RSS Link in Zwischenablage kopieren
   copy-embed-code: Einbettungscode in Zwischenablage kopieren
+  copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
+  set-time: 'Starten bei: '
+  set-time-label: 'Videostartzeit einstellen. Aktuell: {{time}}.'
+  set-time-unit: '{{unit}} einstellen'
+  no-time: Keine
 
 playlist:
   deleted-playlist-block: Die hier referenzierte Playlist wurde gelöscht.
@@ -299,9 +309,6 @@ upload:
     a-few-seconds: wenige Sekunden
     a-minute: eine Minute
     an-hour: eine Stunde
-    seconds: Sekunden
-    minutes: Minuten
-    hours: Stunden
     time-left: '{{time}} verbleibend'
   finished: >
     Ihr Video wurde erfolgreich hochgeladen und wird nun verarbeitet. Es kann wie gewohnt
@@ -442,9 +449,6 @@ manage:
     no-videos-found: Keine Videos gefunden.
     details:
       title: Videodetails
-      share-direct-link: Via Direktlink teilen
-      set-time: 'Starten bei: '
-      copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
       open-in-editor: Im Videoeditor öffnen
       referencing-pages: Referenzierende Seiten
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'

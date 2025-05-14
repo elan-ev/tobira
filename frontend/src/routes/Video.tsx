@@ -52,7 +52,7 @@ import { Link, useRouter } from "../router";
 import { isRealUser, useUser } from "../User";
 import { b64regex } from "./util";
 import { ErrorPage } from "../ui/error";
-import { CopyableInput, InputWithCheckbox, TimeInput } from "../ui/Input";
+import { CopyableInput, TimeInputWithCheckbox } from "../ui/Input";
 import { VideoPageInRealmQuery } from "./__generated__/VideoPageInRealmQuery.graphql";
 import {
     VideoPageEventData$data,
@@ -882,7 +882,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                 <VideoDate {...{ event }} />
             </div>
             {/* Buttons */}
-            <div css={{
+            <section aria-label={t("video.extra-buttons")} css={{
                 display: "flex",
                 gap: 8,
                 flexWrap: "wrap",
@@ -901,7 +901,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                     <DownloadButton event={event} />
                 )}
                 <VideoShareButton {...{ event }} />
-            </div>
+            </section>
         </div>
         <div css={{
             display: "flex",
@@ -992,17 +992,13 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 return <>
                     <div>
                         <CopyableInput
-                            label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
+                            label={t("share.copy-direct-link-to-clipboard")}
                             value={url}
                         />
-                        {!event.isLive && <InputWithCheckbox
+                        {!event.isLive && <TimeInputWithCheckbox
                             checkboxChecked={addLinkTimestamp}
                             setCheckboxChecked={setAddLinkTimestamp}
-                            label={t("manage.my-videos.details.set-time")}
-                            input={<TimeInput
-                                {...{ timestamp, setTimestamp }}
-                                disabled={!addLinkTimestamp}
-                            />}
+                            {...{ timestamp, setTimestamp }}
                         />}
                     </div>
                     <QrCodeButton target={url} label={t("share.link")} />
@@ -1042,14 +1038,10 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                             multiline
                             css={{ height: 75 }}
                         />
-                        {!event.isLive && <InputWithCheckbox
+                        {!event.isLive && <TimeInputWithCheckbox
                             checkboxChecked={addEmbedTimestamp}
                             setCheckboxChecked={setAddEmbedTimestamp}
-                            label={t("manage.my-videos.details.set-time")}
-                            input={<TimeInput
-                                {...{ timestamp, setTimestamp }}
-                                disabled={!addEmbedTimestamp}
-                            />}
+                            {...{ timestamp, setTimestamp }}
                         />}
                     </div>
                     <QrCodeButton target={embedCode} label={t("share.embed")} />

@@ -1,12 +1,13 @@
-import React, { Fragment, ReactNode, useId, useImperativeHandle, useRef, useState } from "react";
+import React, { ReactNode, useId, useImperativeHandle, useRef, useState } from "react";
 import { LuCheck, LuCopy } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 
 import { Button } from "@opencast/appkit";
 import { COLORS } from "../color";
-import { timeStringToSeconds } from "../util";
+import { secondsToTimeString, timeStringToSeconds, visuallyHiddenStyle } from "../util";
 import { focusStyle } from ".";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 
 const style = (error: boolean) => ({
@@ -79,9 +80,9 @@ type InputWithCheckboxProps = {
 }
 
 /** Checkbox with a label to enable/disable an adjacent input */
-export const InputWithCheckbox: React.FC<InputWithCheckboxProps> = (
-    { checkboxChecked, setCheckboxChecked, label, input },
-) => {
+export const InputWithCheckbox: React.FC<InputWithCheckboxProps> = ({
+    checkboxChecked, setCheckboxChecked, label, input,
+}) => {
     const id = useId();
     return (
         <div css={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
@@ -104,16 +105,53 @@ export const InputWithCheckbox: React.FC<InputWithCheckboxProps> = (
     );
 };
 
+type TimeInputWithCheckboxProps =
+    Pick<InputWithCheckboxProps, "checkboxChecked" | "setCheckboxChecked">
+        & Omit<TimeInputProps, "disabled">;
+
+export const TimeInputWithCheckbox: React.FC<TimeInputWithCheckboxProps> = ({
+    checkboxChecked,
+    setCheckboxChecked,
+    timestamp,
+    setTimestamp,
+}) => {
+    const { t } = useTranslation();
+
+    return (
+        <div aria-label={t("share.set-time-label", {
+            time: timestamp > 0
+                ? secondsToTimeString(timestamp)
+                : t("share.no-time"),
+        })}>
+            <InputWithCheckbox
+                {...{ checkboxChecked, setCheckboxChecked }}
+                label={t("share.set-time")}
+                input={<TimeInput
+                    {...{ timestamp, setTimestamp }}
+                    disabled={!checkboxChecked}
+                />}
+            />
+        </div>
+    );
+};
+
 type TimeInputProps = {
     timestamp: number;
     setTimestamp: (newTime: number) => void;
     disabled: boolean;
 }
 
-export type TimeUnit = "h" | "m" | "s";
+type TimeFields = {
+    hours: { unit: "h"; label: "hours" };
+    minutes: { unit: "m"; label: "minutes" };
+    seconds: { unit: "s"; label: "seconds" };
+};
+
+export type TimeUnit = TimeFields[keyof TimeFields]["unit"];
 
 /** A custom three-part input for time inputs split into hours, minutes and seconds */
 export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, disabled }) => {
+    const { t } = useTranslation();
     const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
     const hours = Math.floor(timestamp / 3600);
@@ -157,15 +195,16 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
         }
     };
 
-    const entries: [number, TimeUnit][] = [
-        [hours, "h"],
-        [minutes, "m"],
-        [seconds, "s"],
+    const entries: [number, TimeUnit, keyof TimeFields][] = [
+        [hours, "h", "hours"],
+        [minutes, "m", "minutes"],
+        [seconds, "s", "seconds"],
     ];
 
     return (
         <div css={{
             color: disabled ? COLORS.neutral70 : COLORS.neutral90,
+            display: "inherit",
             fontSize: 14,
             borderRadius: 4,
             padding: "0 2px",
@@ -176,7 +215,10 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
                 outline: `1px solid ${COLORS.neutral20}`,
             },
         }}>
-            {entries.map(([time, unit], index) => <Fragment key={`${unit}-input`}>
+            {entries.map(([time, unit, label], index) => <div
+                key={`${unit}-input`}
+                aria-label={t("share.set-time-unit", { unit: t(`general.${label}`) })}
+            >
                 <input
                     {...{ disabled }}
                     ref={ref => (inputRefs.current[index] = ref)}
@@ -199,7 +241,10 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
                     }}
                 />
                 <span css={{ marginRight: 1 }}>{unit}</span>
-            </Fragment>)}
+            </div>)}
+            <div aria-live="polite" aria-atomic="true" css={visuallyHiddenStyle}>
+                {secondsToTimeString(timestamp)}
+            </div>
         </div>
     );
 };

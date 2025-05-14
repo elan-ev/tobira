@@ -4,7 +4,7 @@ import { useId, useRef, useState } from "react";
 import { Link, useRouter } from "../../../router";
 import { NotAuthorized } from "../../../ui/error";
 import { Form } from "../../../ui/Form";
-import { CopyableInput, Input, InputWithCheckbox, TextArea, TimeInput } from "../../../ui/Input";
+import { CopyableInput, Input, TextArea, TimeInputWithCheckbox } from "../../../ui/Input";
 import { InputContainer, TitleLabel } from "../../../ui/metadata";
 import { isRealUser, useUser } from "../../../User";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
@@ -148,18 +148,16 @@ const DirectLink: React.FC<Props> = ({ event }) => {
     return (
         <div css={{ marginBottom: 40 }}>
             <div css={{ marginBottom: 4 }}>
-                {t("manage.my-videos.details.share-direct-link") + ":"}
+                {t("share.share-direct-link") + ":"}
             </div>
             <CopyableInput
-                label={t("manage.my-videos.details.copy-direct-link-to-clipboard")}
+                label={t("share.copy-direct-link-to-clipboard")}
                 value={url.href}
                 css={{ fontSize: 14 }}
             />
-            <InputWithCheckbox
-                {...{ checkboxChecked, setCheckboxChecked }}
-                label={t("manage.my-videos.details.set-time")}
-                input={<TimeInput {...{ timestamp, setTimestamp }} disabled={!checkboxChecked} />}
-            />
+            {!event.isLive && <TimeInputWithCheckbox {...{
+                timestamp, setTimestamp, checkboxChecked, setCheckboxChecked,
+            }} />}
         </div>
     );
 };
