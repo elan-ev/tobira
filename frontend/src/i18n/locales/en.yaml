@@ -126,7 +126,7 @@ video:
   created: Created
   updated: Last updated
   duration: Duration
-  link: Go to video page
+  link: Video details
   part-of-series: Part of series
   more-from-series: More from “{{series}}”
   more-from-playlist: More from “{{playlist}}”

@@ -103,7 +103,7 @@ for (const realmType of realmTypes) {
                 await test.step("Video blocks", async () => {
                     const editButton = page
                         .locator("div")
-                        .filter({ hasText: "Go to video" })
+                        .filter({ hasText: "Video details" })
                         .filter({ hasNotText: "Fabulous Cats" })
                         .first()
                         .getByLabel("Edit block");
@@ -135,7 +135,7 @@ for (const realmType of realmTypes) {
                         await page.getByLabel("Show link to video page").setChecked(false);
                         await saveButton.click();
 
-                        await expect(page.getByRole("link", { name: "Go to video page" }))
+                        await expect(page.getByRole("link", { name: "Video details" }))
                             .toBeHidden();
                     });
                 });
