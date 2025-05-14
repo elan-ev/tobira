@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
     const { t, i18n } = useTranslation();
 
     return (
-        <footer css={{
+        <footer role="contentinfo" css={{
             backgroundColor: COLORS.neutral10,
             padding: 16,
             fontSize: 14,

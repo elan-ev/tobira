@@ -125,10 +125,11 @@ login-page:
 video:
   video: Video
   video-page: 'Video Seite: „{{video}}“'
+  video-player: Videoplayer
   created: Erstellt
   updated: Zuletzt verändert
   duration: Abspielzeit
-  link: Zur Videoseite
+  link: Videodetails
   part-of-series: Teil der Serie
   more-from-series: Mehr von „{{series}}“
   more-from-playlist: Mehr von „{{playlist}}”
@@ -166,6 +167,7 @@ video:
       Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen
       (Rechtsklick - Speichern unter).
   manage: Verwalten
+  manage-buttons: Videoverwaltung
   start: Anfang
   end: Ende
   ends: Endet
@@ -268,6 +270,7 @@ search:
   no-results: Keine Ergebnisse
   too-few-characters: Tippen Sie weitere Zeichen, um die Suche zu starten.
   unavailable: Die Suchfunktion ist zurzeit nicht verfügbar. Versuchen Sie es später erneut.
+  clear: Suchbegriff löschen
   filter:
     all: Alle
     event: Videos
@@ -441,7 +444,7 @@ manage:
     details:
       title: Videodetails
       share-direct-link: Via Direktlink teilen
-      set-time: 'Starten bei: '
+      set-time: 'Video starten bei (h/m/s): '
       copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
       open-in-editor: Im Videoeditor öffnen
       referencing-pages: Referenzierende Seiten
