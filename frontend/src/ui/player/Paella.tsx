@@ -347,6 +347,14 @@ const PAELLA_CONFIG = {
 
     videoContainer: {
         restoreVolume: true,
+        restoreLastTime: {
+            enabled: true,
+            remainingSeconds: 5,
+        },
+        restoreVideoLayout: {
+            enabled: true,
+            global: false,
+        },
     },
 
     buttonGroups: [
