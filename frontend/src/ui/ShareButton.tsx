@@ -17,7 +17,7 @@ export type ShareButtonProps = {
     tabs: Record<string, {
         label: string;
         Icon: React.ComponentType;
-        Component: React.ComponentType;
+        render: () => React.ReactNode;
     }>;
     onOpen?: () => void;
     height: number;
@@ -95,8 +95,6 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen, height, 
         ))}
     </div>;
 
-    const TabComponent = activeTab && tabs[activeTab].Component;
-
     return (
         <FloatingContainer
             ref={ref}
@@ -139,7 +137,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen, height, 
                     justifyContent: "space-between",
                     fontSize: 14,
                     width: 400,
-                }}>{TabComponent && <TabComponent />}</div>
+                }}>{activeTab && tabs[activeTab].render()}</div>
             </Floating>
         </FloatingContainer>
     );

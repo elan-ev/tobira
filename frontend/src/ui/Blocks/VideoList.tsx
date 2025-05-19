@@ -424,7 +424,7 @@ const VideoListShareButton: React.FC<VideoListShareButtonProps> = props => {
         "main": {
             label: t("share.link"),
             Icon: LuLink,
-            Component: () => <>
+            render: () => <>
                 <CopyableInput label={t("share.copy-link")} value={shareUrl} />
                 <QrCodeButton target={shareUrl} label={t("share.link")} />
             </>,
@@ -432,7 +432,7 @@ const VideoListShareButton: React.FC<VideoListShareButtonProps> = props => {
         "rss": {
             label: t("share.rss"),
             Icon: LuRss,
-            Component: () => <>
+            render: () => <>
                 <CopyableInput label={t("share.copy-rss")} value={rssUrl} />
                 <QrCodeButton target={rssUrl} label={t("share.rss")} />
             </>,

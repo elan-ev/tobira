@@ -983,7 +983,7 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         "main": {
             label: t("share.link"),
             Icon: LuLink,
-            Component: () => {
+            render: () => {
                 let url = window.location.href.replace(timeStringPattern, "");
                 url += addLinkTimestamp && timestamp
                     ? `?t=${secondsToTimeString(timestamp)}`
@@ -1012,7 +1012,7 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         "embed": {
             label: t("share.embed"),
             Icon: LuCode,
-            Component: () => {
+            render: () => {
                 const ar = event.authorizedData == null
                     ? [16, 9]
                     : getPlayerAspectRatio(event.authorizedData.tracks);
@@ -1060,7 +1060,7 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             "rss": {
                 label: t("share.rss"),
                 Icon: LuRss,
-                Component: () => {
+                render: () => {
                     const rssUrl = window.location.origin
                         + `/~rss/series/${keyOfId(series.id)}`;
                     return <>
