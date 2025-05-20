@@ -520,16 +520,16 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
         } else if (secondsLeft < 4) {
             prettyTime = t("upload.time-estimate.a-few-seconds");
         } else if (secondsLeft < 45) {
-            prettyTime = `${secondsLeft} ${t("upload.time-estimate.seconds")}`;
+            prettyTime = `${secondsLeft} ${t("general.seconds")}`;
         } else if (secondsLeft < 90) {
             prettyTime = t("upload.time-estimate.a-minute");
         } else if (secondsLeft < 45 * 60) {
-            prettyTime = `${Math.round(secondsLeft / 60)} ${t("upload.time-estimate.minutes")}`;
+            prettyTime = `${Math.round(secondsLeft / 60)} ${t("general.minutes")}`;
         } else if (secondsLeft < 90 * 60) {
             prettyTime = t("upload.time-estimate.an-hour");
         } else if (secondsLeft < 24 * 60 * 60) {
             const hours = Math.round(secondsLeft / (60 * 60));
-            prettyTime = `${hours} ${t("upload.time-estimate.hours")}`;
+            prettyTime = `${hours} ${t("general.hours")}`;
         } else {
             prettyTime = null;
         }

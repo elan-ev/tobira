@@ -27,6 +27,9 @@ general:
     select:
       no-options: No options
       select-option: Select option
+  seconds: seconds
+  minutes: minutes
+  hours: hours
 
 welcome:
   title: Welcome to Tobira!
@@ -123,10 +126,11 @@ login-page:
 video:
   video: Video
   video-page: 'Video page: “{{video}}”'
+  video-player: Video player
   created: Created
   updated: Last updated
   duration: Duration
-  link: Go to video page
+  link: Video details
   part-of-series: Part of series
   more-from-series: More from “{{series}}”
   more-from-playlist: More from “{{playlist}}”
@@ -163,6 +167,7 @@ video:
     info: >
       Here you can download the video(s) in different formats/qualities (Right click - Save as).
   manage: Manage
+  extra-buttons: Additional video actions
   start: Start
   end: End
   ends: Ends
@@ -182,6 +187,7 @@ video:
 share:
   share-video: Share video
   direct-link: Direct link
+  share-direct-link: Share via direct link
   link: Link
   embed: Embed
   rss: RSS
@@ -189,6 +195,11 @@ share:
   copy-link: Copy link to clipboard
   copy-rss: Copy RSS link to clipboard
   copy-embed-code: Copy embed code to clipboard
+  copy-direct-link-to-clipboard: Copy video link to clipboard
+  set-time: 'Start at: '
+  set-time-label: 'Set video start time. Current time: {{time}}.'
+  set-time-unit: Set {{unit}}
+  no-time: None
 
 playlist:
   deleted-playlist-block: The playlist referenced here was deleted.
@@ -267,6 +278,7 @@ search:
   no-results: No results
   too-few-characters: Please type more characters to start the search.
   unavailable: The search is currently unavailable. Try again later.
+  clear: Clear search input
   filter:
     all: All
     event: Videos
@@ -295,9 +307,6 @@ upload:
     a-few-seconds: a few seconds
     a-minute: a minute
     an-hour: an hour
-    seconds: seconds
-    minutes: minutes
-    hours: hours
     time-left: '{{time}} left'
   finished: >
     Your video was uploaded successfully and is now being processed. It can be
@@ -421,9 +430,6 @@ manage:
     no-videos-found: No videos found.
     details:
       title: Video details
-      share-direct-link: Share via direct link
-      set-time: 'Start at: '
-      copy-direct-link-to-clipboard: Copy video link to clipboard
       open-in-editor: Open in video editor
       referencing-pages: Referencing pages
       referencing-pages-explanation: 'This video is referenced on the following pages:'

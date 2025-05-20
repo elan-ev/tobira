@@ -164,6 +164,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                 </label>
             </form>
             <ProtoButton
+                aria-label={t("search.clear")}
                 // Just clear the search input
                 onClick={() => {
                     const input = currentRef(ref);
