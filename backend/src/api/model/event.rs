@@ -77,9 +77,9 @@ pub(crate) struct AuthorizedEvent {
 
 #[derive(Debug)]
 pub(crate) struct PreloadedSeries {
-    key: Key,
-    opencast_id: String,
-    title: String,
+    pub(crate) key: Key,
+    pub(crate) opencast_id: String,
+    pub(crate) title: String,
 }
 
 #[derive(Debug)]
@@ -503,7 +503,10 @@ impl AuthorizedEvent {
         self.series.as_ref().map(|s| s.key)
     }
 
-    async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
+    pub (crate) async fn load_for_mutation(
+        id: Id,
+        context: &Context,
+    ) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_by_id(id, context)
             .await?
             .ok_or_else(||  err::invalid_input!(key = "event.not-found", "event not found"))?
@@ -623,7 +626,7 @@ impl AuthorizedEvent {
 
         let response = context
             .oc_client
-            .update_metadata(&event, metadata_json)
+            .update_metadata(&event, &metadata_json)
             .await
             .map_err(|e| {
                 error!("Failed to send metadata update request: {}", e);
@@ -652,7 +655,11 @@ impl AuthorizedEvent {
     }
 
     /// Starts a workflow on the event.
-    async fn start_workflow(oc_id: &str, workflow_id: &str, context: &Context) -> ApiResult<StatusCode> {
+    pub(crate) async fn start_workflow(
+        oc_id: &str,
+        workflow_id: &str,
+        context: &Context,
+    ) -> ApiResult<StatusCode> {
         let response = context
             .oc_client
             .start_workflow(&oc_id, workflow_id)
