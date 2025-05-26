@@ -21,7 +21,7 @@ import { COLORS } from "../../../color";
 import { SubmitButtonWithStatus } from "../../../ui/metadata";
 import { displayCommitError } from "../Realm/util";
 import { EventSelector } from "../../../ui/EventSelector";
-import { currentRef, Inertable, keyOfId } from "../../../util";
+import { currentRef, floatingMenuProps, Inertable, keyOfId } from "../../../util";
 import { ellipsisOverflowCss, focusStyle } from "../../../ui";
 import { Thumbnail } from "../../../ui/Video";
 import { Link } from "../../../router";
@@ -177,9 +177,7 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
                 </Button>
             </FloatingTrigger>
             <Floating
-                padding={0}
-                borderWidth={isDark ? 1 : 0}
-                backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
+                {...floatingMenuProps(isDark)}
                 shadowBlur={12}
                 shadowColor="rgba(0, 0, 0, 30%)"
                 css={{

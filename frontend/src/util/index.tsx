@@ -6,6 +6,7 @@ import { bug, match, useColorScheme } from "@opencast/appkit";
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
+import { COLORS } from "../color";
 
 
 /**
@@ -318,3 +319,9 @@ export const Inertable: React.FC<InertableProps> = ({ children, isInert, classNa
 );
 
 export type OcEntity = "series" | "video";
+
+export const floatingMenuProps = (isDark: boolean) => ({
+    padding: 0,
+    borderWidth: isDark ? 1 : 0,
+    backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral05,
+}) as const;

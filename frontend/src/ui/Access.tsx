@@ -41,7 +41,7 @@ import { environment } from "../relay";
 import { AccessUserSearchQuery } from "./__generated__/AccessUserSearchQuery.graphql";
 import { ErrorDisplay } from "../util/err";
 import { useNavBlocker } from "../routes/util";
-import { currentRef, OcEntity } from "../util";
+import { currentRef, floatingMenuProps, OcEntity } from "../util";
 import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
 import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 
@@ -688,10 +688,8 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
             }}
             list={
                 <Floating
-                    backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
+                    {...floatingMenuProps(isDark)}
                     hideArrowTip
-                    padding={0}
-                    borderWidth={isDark ? 1 : 0}
                     css={{ minWidth: 125, lineHeight: 1.4 }}
                 >
                     <ul css={{

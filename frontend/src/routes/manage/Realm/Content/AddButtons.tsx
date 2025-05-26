@@ -12,6 +12,7 @@ import { AddButtonsRealmData$key } from "./__generated__/AddButtonsRealmData.gra
 import { IconType } from "react-icons";
 import { focusStyle } from "../../../../ui";
 import { COLORS } from "../../../../color";
+import { floatingMenuProps } from "../../../../util";
 
 
 type Props = {
@@ -134,9 +135,7 @@ const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}>
 
     return (
         <Floating
-            padding={0}
-            borderWidth={isDark ? 1 : 0}
-            backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
+            {...floatingMenuProps(isDark)}
             shadowBlur={12}
             shadowColor="rgba(0, 0, 0, 30%)"
             css={{ width: 200 }}
