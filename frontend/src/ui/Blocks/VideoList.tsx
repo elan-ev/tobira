@@ -112,6 +112,7 @@ export type VideoListBlockProps = {
     shareInfo: VideoListShareButtonProps,
     isPlaylist?: boolean;
     listEntries: Entries;
+    editMode: boolean;
 }
 
 export const VideoListBlock: React.FC<VideoListBlockProps> = ({
@@ -128,6 +129,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     shareInfo,
     isPlaylist = false,
     listEntries,
+    editMode,
 }) => {
     const { t, i18n } = useTranslation();
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
@@ -183,7 +185,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
                 </>
             }
             {hasHiddenItems && <div css={{ marginTop: 16 }}>
-                {missingItems > 0 && <HiddenItemsInfo>
+                {missingItems > 0 && editMode && <HiddenItemsInfo>
                     {t("videolist-block.hidden-items.missing", { count: missingItems })}
                 </HiddenItemsInfo>}
                 {unauthorizedItems > 0 && <HiddenItemsInfo>

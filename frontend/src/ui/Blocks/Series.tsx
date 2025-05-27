@@ -20,6 +20,7 @@ import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
 
 type SharedProps = {
     realmPath: string | null;
+    editMode?: boolean;
 };
 
 const blockFragment = graphql`
@@ -52,14 +53,13 @@ const seriesFragment = graphql`
 
 type FromBlockProps = SharedProps & {
     fragRef: SeriesBlockData$key;
-    edit?: boolean;
 };
 
 export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...rest }) => {
     const { t } = useTranslation();
     const { series, ...block } = useFragment(blockFragment, fragRef);
 
-    return series == null && rest.edit
+    return series == null && rest.editMode
         ? <Card kind="error">{t("series.deleted-series-block")}</Card>
         : series != null && <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };
@@ -121,6 +121,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         activeEventId={props.activeEventId}
         realmPath={props.realmPath}
         listEntries={series.entries}
+        editMode={props.editMode ?? false}
         shareInfo={{
             shareUrl: props.realmPath == null
                 ? `/!s/${seriesKey}`
