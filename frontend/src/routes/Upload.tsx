@@ -18,7 +18,7 @@ import { mapAcl, useNavBlocker } from "./util";
 import CONFIG from "../config";
 import { LinkButton } from "../ui/LinkButton";
 import { isRealUser, User, useUser } from "../User";
-import { currentRef, Inertable, seriesId, useRefState } from "../util/index";
+import { currentRef, Inertable, keyOfId, seriesId, useRefState } from "../util/index";
 import {
     FieldIsRequiredNote,
     InputContainer,
@@ -597,7 +597,7 @@ const UploadState: React.FC<UploadStateProps> = ({ state, seriesId }) => {
         }}>
             <span>{t("upload.upload-cancelled")}</span>
             <LinkButton kind="call-to-action" to={UploadRoute.url({
-                seriesId: seriesId ?? null,
+                seriesId: seriesId ? keyOfId(seriesId) : null,
             })}>
                 {t("upload.reselect")}
             </LinkButton>
