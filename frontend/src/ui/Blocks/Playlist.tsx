@@ -17,6 +17,7 @@ import { keyOfId } from "../../util";
 type SharedProps = {
     realmPath: string | null;
     moreOfTitle?: boolean;
+    editMode?: boolean;
 };
 
 const blockFragment = graphql`
@@ -50,13 +51,12 @@ const playlistFragment = graphql`
 
 type FromBlockProps = SharedProps & {
     fragRef: PlaylistBlockData$key;
-    edit?: boolean;
 }
 
 export const PlaylistBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...rest }) => {
     const { t } = useTranslation();
     const { playlist, ...block } = useFragment(blockFragment, fragRef);
-    return playlist == null && rest.edit
+    return playlist == null && rest.editMode
         ? <Card kind="error">{t("playlist.deleted-playlist-block")}</Card>
         : playlist != null && <PlaylistBlockFromPlaylist fragRef={playlist} {...rest} {...block} />;
 };
@@ -121,6 +121,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         isPlaylist
         listId={playlist.id}
         listEntries={playlist.entries}
+        editMode={props.editMode ?? false}
         shareInfo={{
             // TODO: once we have the `/path/to/realm/p/<id>` route
             // shareUrl: props.realmPath == null

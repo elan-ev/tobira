@@ -1,39 +1,55 @@
-use std::collections::HashSet;
-
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
 use postgres_types::ToSql;
-use serde::{Serialize, Deserialize};
-use tokio_postgres::Row;
-use juniper::{graphql_object, Executor, GraphQLObject, ScalarValue};
+use juniper::{
+    graphql_object,
+    GraphQLInputObject,
+    Executor,
+    GraphQLEnum,
+    GraphQLObject,
+    ScalarValue,
+};
 use sha1::{Sha1, Digest};
 
 use crate::{
     api::{
-        Context,
-        Cursor,
-        Id,
-        Node,
-        NodeValue,
         common::NotAllowed,
-        err::{self, invalid_input, ApiResult},
+        err::{self, ApiResult},
         model::{
             acl::{self, Acl},
             realm::Realm,
             series::Series,
+            shared::{ToSqlColumn, SortDirection, convert_acl_input}
         },
+        Context,
+        Id,
+        Node,
+        NodeValue,
+        util::LazyLoad,
     },
     db::{
-        types::{EventCaption, EventSegment, EventState, EventTrack, Credentials},
-        util::{impl_from_db, select},
+        types::{Credentials, EventCaption, EventSegment, EventState, EventTrack},
+        util::impl_from_db,
     },
-    model::{Key, ExtraMetadata},
+    model::{ExtraMetadata, Key, SeriesState},
     prelude::*,
+    sync::client::{AclInput, OpencastItem}
 };
 
-use self::{acl::AclInputEntry, err::ApiError};
+use self::acl::AclInputEntry;
 
-use super::playlist::VideoListEntry;
+use super::{
+    playlist::VideoListEntry,
+    shared::{
+        define_sort_column_and_order,
+        load_writable_for_user,
+        BasicMetadata,
+        Connection,
+        ConnectionQueryParts,
+        PageInfo,
+        SortOrder,
+    },
+};
 
 
 #[derive(Debug)]
@@ -61,9 +77,9 @@ pub(crate) struct AuthorizedEvent {
 
 #[derive(Debug)]
 pub(crate) struct PreloadedSeries {
-    key: Key,
-    opencast_id: String,
-    title: String,
+    pub(crate) key: Key,
+    pub(crate) opencast_id: String,
+    pub(crate) title: String,
 }
 
 #[derive(Debug)]
@@ -332,11 +348,16 @@ impl AuthorizedEvent {
                     key: series.key,
                     opencast_id: series.opencast_id.clone(),
                     title: series.title.clone(),
-                    synced_data: None,
+                    description: None,
+                    state: SeriesState::Ready,
                     created: None,
+                    updated: None,
                     metadata: None,
                     read_roles: None,
                     write_roles: None,
+                    num_videos: LazyLoad::NotLoaded,
+                    thumbnail_stack: LazyLoad::NotLoaded,
+                    tobira_deletion_timestamp: None,
                 }))
             } else {
                 // We need to load the series as fields were requested that were not preloaded.
@@ -482,41 +503,28 @@ impl AuthorizedEvent {
         self.series.as_ref().map(|s| s.key)
     }
 
-    async fn load_for_api(
+    pub (crate) async fn load_for_mutation(
         id: Id,
         context: &Context,
-        not_found_error: ApiError,
-        not_authorized_error: ApiError,
     ) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_by_id(id, context)
             .await?
-            .ok_or_else(|| not_found_error)?
+            .ok_or_else(||  err::invalid_input!(key = "event.not-found", "event not found"))?
             .into_result()?;
 
         if !context.auth.overlaps_roles(&event.write_roles) {
-            return Err(not_authorized_error);
+            return Err(err::not_authorized!(key = "event.not-allowed", "event action not allowed"));
         }
 
         Ok(event)
     }
 
-    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
-        let event = Self::load_for_api(
-            id,
-            context,
-            err::invalid_input!(
-                key = "event.delete.not-found",
-                "event not found"
-            ),
-            err::not_authorized!(
-                key = "event.delete.not-allowed",
-                "you are not allowed to delete this event",
-            )
-        ).await?;
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
+        let event = Self::load_for_mutation(id, context).await?;
 
         let response = context
             .oc_client
-            .delete_event(&event.opencast_id)
+            .delete(&event)
             .await
             .map_err(|e| {
                 error!("Failed to send delete request: {}", e);
@@ -531,7 +539,7 @@ impl AuthorizedEvent {
                 set tobira_deletion_timestamp = current_timestamp \
                 where id = $1 \
             ", &[&event.key]).await?;
-            Ok(RemovedEvent { id })
+            Ok(event)
         } else {
             warn!(
                 event_id = %id,
@@ -548,33 +556,22 @@ impl AuthorizedEvent {
         }
 
         info!(event_id = %id, "Requesting ACL update of event");
-        let event = Self::load_for_api(
-            id,
-            context,
-            err::invalid_input!(
-                key = "event.acl.not-found",
-                "event not found",
-            ),
-            err::not_authorized!(
-                key = "event.acl.not-allowed",
-                "you are not allowed to update this event's acl",
-            )
-        ).await?;
+        let event = Self::load_for_mutation(id, context).await?;
 
         if Self::has_active_workflows(&event, context).await? {
             return Err(err::opencast_error!(
-                key = "event.workflow.active",
-                "acl change blocked by another workflow",
+                key = "event.workflow.active-acl",
+                "ACL change blocked by another workflow",
             ));
         }
 
         let response = context
             .oc_client
-            .update_event_acl(&event.opencast_id, &acl, context)
+            .update_acl(&event, &acl, context)
             .await
             .map_err(|e| {
-                error!("Failed to send acl update request: {}", e);
-                err::opencast_unavailable!("Failed to send acl update request")
+                error!("Failed to send ACL update request: {}", e);
+                err::opencast_unavailable!("Failed to send ACL update request")
             })?;
 
         if response.status() == StatusCode::NO_CONTENT {
@@ -589,17 +586,68 @@ impl AuthorizedEvent {
                 where id = $1 \
             ", &[&event.key, &db_acl.read_roles, &db_acl.write_roles]).await?;
 
-            Self::load_by_id(id, context)
-                .await?
-                .ok_or_else(|| err::invalid_input!(
-                    key = "event.acl.not-found",
-                    "event not found",
-                ))?
-                .into_result()
+            Self::load_for_mutation(id, context).await
         } else {
             warn!(
                 event_id = %id,
-                "Failed to update event acl, OC returned status: {}",
+                "Failed to update event ACL, OC returned status: {}",
+                response.status(),
+            );
+            Err(err::opencast_error!("Opencast API error: {}", response.status()))
+        }
+    }
+
+    pub(crate) async fn update_metadata(
+        id: Id,
+        metadata: BasicMetadata,
+        context: &Context,
+    ) -> ApiResult<AuthorizedEvent> {
+        let event = Self::load_for_mutation(id, context).await?;
+
+        if Self::has_active_workflows(&event, context).await? {
+            return Err(err::opencast_error!(
+                key = "event.workflow.active-metadata",
+                "Metadata change blocked by another workflow",
+            ));
+        }
+
+        info!(event_id = %id, "Requesting metadata update of event");
+
+        let metadata_json = serde_json::json!([
+            {
+                "id": "title",
+                "value": metadata.title
+            },
+            {
+                "id": "description",
+                "value": metadata.description
+            },
+        ]);
+
+        let response = context
+            .oc_client
+            .update_metadata(&event, &metadata_json)
+            .await
+            .map_err(|e| {
+                error!("Failed to send metadata update request: {}", e);
+                err::opencast_unavailable!("Failed to send metadata update request")
+            })?;
+
+        if response.status() == StatusCode::NO_CONTENT {
+            // 204: The metadata of the given namespace has been updated.
+            Self::start_workflow(&event.opencast_id, "republish-metadata", &context).await?;
+
+            context.db.execute("\
+                update all_events \
+                set title = $2, description = $3 \
+                where id = $1 \
+            ", &[&event.key, &metadata.title, &metadata.description]).await?;
+
+            Self::load_for_mutation(id, context).await
+        } else {
+            warn!(
+                event_id = %id,
+                "Failed to update event metadata, OC returned status: {}",
                 response.status(),
             );
             Err(err::opencast_error!("Opencast API error: {}", response.status()))
@@ -607,7 +655,11 @@ impl AuthorizedEvent {
     }
 
     /// Starts a workflow on the event.
-    async fn start_workflow(oc_id: &str, workflow_id: &str, context: &Context) -> ApiResult<StatusCode> {
+    pub(crate) async fn start_workflow(
+        oc_id: &str,
+        workflow_id: &str,
+        context: &Context,
+    ) -> ApiResult<StatusCode> {
         let response = context
             .oc_client
             .start_workflow(&oc_id, workflow_id)
@@ -638,179 +690,57 @@ impl AuthorizedEvent {
 
     pub(crate) async fn load_writable_for_user(
         context: &Context,
-        order: EventSortOrder,
-        first: Option<i32>,
-        after: Option<Cursor>,
-        last: Option<i32>,
-        before: Option<Cursor>,
-    ) -> ApiResult<EventConnection> {
-        const MAX_COUNT: i32 = 100;
-
-        // Argument validation
-        let after = after.map(|c| c.deserialize::<EventCursor>()).transpose()?;
-        let before = before.map(|c| c.deserialize::<EventCursor>()).transpose()?;
-        if first.map_or(false, |first| first <= 0) {
-            return Err(invalid_input!("argument 'first' has to be > 0, but is {:?}", first));
-        }
-        if last.map_or(false, |last| last <= 0) {
-            return Err(invalid_input!("argument 'last' has to be > 0, but is {:?}", last));
-        }
-
-        // Make sure only one of `first` and `last` is set and figure out the
-        // limit and SQL sort order. If `last` is set, we reverse the order in
-        // the SQL query in order to use `limit` effectively. We reverse it
-        // again in Rust further below.
-        let (limit, sql_sort_order) = match (first, last) {
-            (Some(first), None) => (first, order.direction),
-            (None, Some(last)) => (last, order.direction.reversed()),
-            _ => return Err(invalid_input!("exactly one of 'first' and 'last' must be given")),
-        };
-        let limit = std::cmp::min(limit, MAX_COUNT);
-
-
-        // Assemble argument list and the "where" part of the query. This
-        // depends on `after` and `before`.
-        let mut args = vec![];
-        let col = order.column.to_sql();
-        let op_after = if order.direction.is_ascending() { '>' } else { '<' };
-        let op_before = if order.direction.is_ascending() { '<' } else { '>' };
-        let filter = match (&after, &before) {
-            (None, None) => String::new(),
-            (Some(after), None) => {
-                args.extend_from_slice(&[after.to_sql_arg(&order)?, &after.key]);
-                format!("where (events.{}, events.id) {} ($1, $2)", col, op_after)
-            }
-            (None, Some(before)) => {
-                args.extend_from_slice(&[before.to_sql_arg(&order)?, &before.key]);
-                format!("where (events.{}, events.id) {} ($1, $2)", col, op_before)
-            }
-            (Some(after), Some(before)) => {
-                args.extend_from_slice(&[
-                    after.to_sql_arg(&order)?,
-                    &after.key,
-                    before.to_sql_arg(&order)?,
-                    &before.key,
-                ]);
-                format!(
-                    "where (events.{}, events.id) {} ($1, $2) and (events.{}, events.id) {} ($3, $4)",
-                    col, op_after, col, op_before,
-                )
-            },
+        order: SortOrder<VideosSortColumn>,
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<Connection<AuthorizedEvent>> {
+        let parts = ConnectionQueryParts {
+            table: "all_events",
+            alias: Some("events"),
+            join_clause: "left join series on series.id = events.series",
         };
 
-        // Assemble full query. This query is a bit involved but allows us to
-        // retrieve the total count, the absolute offsets of our window and all
-        // the event data in one go. The "over(...)" things are window
-        // functions.
-        let arg_user_roles = &context.auth.roles_vec() as &(dyn ToSql + Sync);
-        let acl_filter = if context.auth.is_admin() {
-            String::new()
-        } else {
-            args.push(arg_user_roles);
-            let arg_index = args.len();
+        load_writable_for_user(
+            context, order, offset, limit, parts,
+            AuthorizedEvent::select(),
+            AuthorizedEvent::from_row_start,
+        ).await
+    }
+}
 
-            format!("where write_roles && ${arg_index} and read_roles && ${arg_index}")
-        };
-        let (selection, mapping) = select!(
-            event: AuthorizedEvent,
-            row_num,
-            total_count,
-        );
-        let query = format!(
-            "select {selection} \
-                from (\
-                    select events.*, \
-                        row_number() over(order by ({sort_col}, id) {sort_order}) as row_num, \
-                        count(*) over() as total_count \
-                    from all_events as events \
-                    {acl_filter} \
-                ) as events \
-                left join series on series.id = events.series \
-                {filter} \
-                order by (events.{sort_col}, events.id) {sort_order} \
-                limit {limit}",
-            sort_col = order.column.to_sql(),
-            sort_order = sql_sort_order.to_sql(),
-            limit = limit,
-            acl_filter = acl_filter,
-            filter = filter,
-        );
 
-        // `first_num` and `last_num` are 1-based!
-        let mut total_count = None;
-        let mut first_num = None;
-        let mut last_num = None;
+impl OpencastItem for AuthorizedEvent {
+    fn endpoint_path(&self) -> &'static str {
+        "events"
+    }
+    fn id(&self) -> &str {
+        &self.opencast_id
+    }
 
-        // Execute query
-        let mut events = context.db.query_mapped(&query, args, |row: Row| {
-            // Retrieve total count once
-            if total_count.is_none() {
-                total_count = Some(mapping.total_count.of(&row));
+    fn metadata_flavor(&self) -> &'static str {
+        "dublincore/episode"
+    }
+
+    async fn extra_roles(&self, context: &Context, oc_id: &str) -> Result<Vec<AclInput>> {
+        let query = "\
+            select unnest(preview_roles) as role, 'preview' as action from events where opencast_id = $1
+            union
+            select role, key as action
+            from jsonb_each_text(
+                (select custom_action_roles from events where opencast_id = $1)
+            ) as actions(key, value)
+            cross join lateral jsonb_array_elements_text(value::jsonb) as role(role)
+        ";
+
+        context.db.query_mapped(&query, dbargs![&oc_id], |row| {
+            let role: String = row.get("role");
+            let action: String = row.get("action");
+            AclInput {
+                allow: true,
+                action,
+                role,
             }
-
-            // Handle row numbers
-            let row_num = mapping.row_num.of(&row);
-            last_num = Some(row_num);
-            if first_num.is_none() {
-                first_num = Some(row_num);
-            }
-
-            // Retrieve actual event data
-            Self::from_row(&row, mapping.event)
-        }).await?;
-
-        // If total count is `None`, there are no events. We really do want to
-        // know the total count, so we do another query.
-        let total_count = match total_count {
-            Some(c) => c,
-            None => {
-                let query = format!("select count(*) from all_events {}", acl_filter);
-                context.db
-                    .query_one(&query, &[&context.auth.roles_vec()])
-                    .await?
-                    .get::<_, i64>(0)
-            }
-        };
-
-        // If `last` was given, we had to query in reverse order to make `limit`
-        // work. So now we need to reverse the result here. We also need to
-        // adjust the last and first "num".
-        if sql_sort_order != order.direction {
-            events.reverse();
-            let tmp = first_num;
-            first_num = last_num.map(|n| total_count - n + 1);
-            last_num = tmp.map(|n| total_count - n + 1);
-        }
-
-        // Figure out whether there is a next and/or previous page.
-        let (has_next_page, has_previous_page) = match Option::zip(first_num, last_num) {
-            Some((first, last)) => (last < total_count, first > 1),
-            None => {
-                // The DB returned 0 events. That means there are either actually 0 writable
-                // events for that user, or all of them were filtered by `after` or `before`.
-                if total_count == 0 {
-                    (false, false)
-                } else if after.is_some() {
-                    (false, true)
-                } else {
-                    (true, false)
-                }
-            }
-        };
-
-        let cast_i32 = |x: i64| x.try_into().expect("more then 2^31 events");
-        Ok(EventConnection {
-            total_count: cast_i32(total_count),
-            page_info: EventPageInfo {
-                has_next_page,
-                has_previous_page,
-                start_cursor: events.first().map(|e| Cursor::new(EventCursor::new(e, &order))),
-                end_cursor: events.last().map(|e| Cursor::new(EventCursor::new(e, &order))),
-                start_index: first_num.map(cast_i32),
-                end_index: last_num.map(cast_i32),
-            },
-            items: events,
-        })
+        }).await.map_err(Into::into)
     }
 }
 
@@ -844,189 +774,26 @@ impl From<EventSegment> for Segment {
     }
 }
 
-/// Defines the sort order for events.
-#[derive(Debug, Clone, Copy, juniper::GraphQLInputObject)]
-pub(crate) struct EventSortOrder {
-    column: EventSortColumn,
-    direction: SortDirection,
-}
-
-#[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
-enum EventSortColumn {
-    Title,
-    Created,
-    Updated,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, juniper::GraphQLEnum)]
-enum SortDirection {
-    Ascending,
-    Descending,
-}
-
-impl Default for EventSortOrder {
-    fn default() -> Self {
-        Self {
-            column: EventSortColumn::Created,
-            direction: SortDirection::Descending,
-        }
+#[graphql_object(name = "EventConnection", context = Context)]
+impl Connection<AuthorizedEvent> {
+    fn page_info(&self) -> &PageInfo {
+        &self.page_info
+    }
+    fn items(&self) -> &[AuthorizedEvent] {
+        &self.items
+    }
+    fn total_count(&self) -> i32 {
+        self.total_count
     }
 }
 
-impl EventSortColumn {
-    fn to_sql(self) -> &'static str {
-        match self {
-            EventSortColumn::Title => "title",
-            EventSortColumn::Created => "created",
-            EventSortColumn::Updated => "updated",
-        }
-    }
-}
-
-impl SortDirection {
-    fn to_sql(self) -> &'static str {
-        match self {
-            SortDirection::Ascending => "asc",
-            SortDirection::Descending => "desc",
-        }
-    }
-
-    fn is_ascending(&self) -> bool {
-        matches!(self, Self::Ascending)
-    }
-
-    fn reversed(self) -> Self {
-        match self {
-            SortDirection::Ascending => SortDirection::Descending,
-            SortDirection::Descending => SortDirection::Ascending,
-        }
-    }
-}
-
-
-#[derive(Debug, juniper::GraphQLObject)]
-#[graphql(Context = Context)]
-pub(crate) struct EventConnection {
-    page_info: EventPageInfo,
-    items: Vec<AuthorizedEvent>,
-    total_count: i32,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct EventCursor {
-    key: Key,
-    sort_filter: CursorSortFilter,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-enum CursorSortFilter {
-    Title(String),
-    Duration(Option<i64>),
-    Created(DateTime<Utc>),
-    Updated(Option<DateTime<Utc>>),
-}
-
-impl EventCursor {
-    fn new(event: &AuthorizedEvent, order: &EventSortOrder) -> Self {
-        let sort_filter = match order.column {
-            EventSortColumn::Title => CursorSortFilter::Title(event.title.clone()),
-            EventSortColumn::Created => CursorSortFilter::Created(event.created),
-            EventSortColumn::Updated => CursorSortFilter::Updated(
-                event.synced_data.as_ref().map(|s| s.updated)
-            ),
-        };
-
-        Self {
-            sort_filter,
-            key: event.key,
-        }
-    }
-
-    /// Returns the actual filter value as trait object if `self.sort_filter`
-    /// matches `order.column` (both about the same column). Returns an error
-    /// otherwise.
-    fn to_sql_arg(&self, order: &EventSortOrder) -> ApiResult<&(dyn ToSql + Sync + '_)> {
-        match (&self.sort_filter, order.column) {
-            (CursorSortFilter::Title(title), EventSortColumn::Title) => Ok(title),
-            (CursorSortFilter::Created(created), EventSortColumn::Created) => Ok(created),
-            (CursorSortFilter::Updated(updated), EventSortColumn::Updated) => {
-                match updated {
-                    Some(updated) => Ok(updated),
-                    None => Ok(&postgres_types::Timestamp::<DateTime<Utc>>::NegInfinity),
-                }
-            },
-            _ => Err(invalid_input!("sort order does not match 'before'/'after' argument")),
-        }
-    }
-}
-
-// TODO: when we add more `PageInfo` structs it might make sense to extract the
-// common fields somehow.
-#[derive(Debug, Clone, juniper::GraphQLObject)]
-pub(crate) struct EventPageInfo {
-    pub(crate) has_next_page: bool,
-    pub(crate) has_previous_page: bool,
-
-    pub(crate) start_cursor: Option<Cursor>,
-    pub(crate) end_cursor: Option<Cursor>,
-
-    /// The index of the first returned event.
-    pub(crate) start_index: Option<i32>,
-    /// The index of the last returned event.
-    pub(crate) end_index: Option<i32>,
-}
-
-#[derive(juniper::GraphQLObject)]
-#[graphql(Context = Context)]
-pub(crate) struct RemovedEvent {
-    id: Id,
-}
-
-#[derive(Debug)]
-struct AclForDB {
-    // todo: add custom and preview roles when sent by frontend
-    // preview_roles: Vec<String>,
-    read_roles: Vec<String>,
-    write_roles: Vec<String>,
-    // custom_action_roles: CustomActions,
-}
-
-fn convert_acl_input(entries: Vec<AclInputEntry>) -> AclForDB {
-    // let mut preview_roles = HashSet::new();
-    let mut read_roles = HashSet::new();
-    let mut write_roles = HashSet::new();
-    // let mut custom_action_roles = CustomActions::default();
-
-    for entry in entries {
-        let role = entry.role;
-        for action in entry.actions {
-            match action.as_str() {
-                // "preview" => {
-                //     preview_roles.insert(role.clone());
-                // }
-                "read" => {
-                    read_roles.insert(role.clone());
-                }
-                "write" => {
-                    write_roles.insert(role.clone());
-                }
-                _ => {
-                    // custom_action_roles
-                    //     .0
-                    //     .entry(action)
-                    //     .or_insert_with(Vec::new)
-                    //     .push(role.clone());
-                    todo!();
-                }
-            };
-        }
-    }
-
-    AclForDB {
-        // todo: add custom and preview roles when sent by frontend
-        // preview_roles: preview_roles.into_iter().collect(),
-        read_roles: read_roles.into_iter().collect(),
-        write_roles: write_roles.into_iter().collect(),
-        // custom_action_roles,
-    }
-}
+define_sort_column_and_order!(
+    pub enum VideosSortColumn {
+        Title    => "events.title",
+        #[default]
+        Created  => "created",
+        Updated  => "updated",
+        Series   => "series.title",
+    };
+    pub struct VideosSortOrder
+);

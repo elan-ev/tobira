@@ -1,13 +1,12 @@
 use std::sync::Arc;
 
 use crate::{
-    api::err::{ApiError, ApiErrorKind, ApiResult},
-    auth::{AuthToken, JwtContext, AuthContext},
+    api::err::{ApiError, ApiErrorKind},
+    auth::{JwtContext, AuthContext},
     config::Config,
     db::Transaction,
     search,
     sync::OcClient,
-    prelude::*,
 };
 
 
@@ -24,21 +23,6 @@ pub(crate) struct Context {
 impl juniper::Context for Context {}
 
 impl Context {
-    /// Returns a connection to the DB. Requires an auth token to prove the
-    /// endpoint somehow handled authorization.
-    pub(crate) fn db(&self, _: AuthToken) -> &Transaction {
-        &self.db
-    }
-
-    pub(crate) fn require_tobira_admin(&self) -> ApiResult<AuthToken> {
-        self.auth.require_tobira_admin(&self.config.auth).ok_or_else(|| {
-            self.access_error(
-                "mutation.not-a-tobira-admin",
-                |user| format!("Tobira admin required, but '{user}' is not"),
-            )
-        })
-    }
-
     pub(crate) fn access_error(
         &self,
         translation_key: &'static str,

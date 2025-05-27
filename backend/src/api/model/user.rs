@@ -1,12 +1,17 @@
 use crate::{
     api::{
         Context,
-        common::Cursor,
         err::ApiResult,
-        model::event::{AuthorizedEvent, EventConnection, EventSortOrder},
+        model::event::AuthorizedEvent,
     },
     auth::User,
     prelude::*,
+};
+
+use super::{
+    event::VideosSortOrder,
+    series::{Series, SeriesSortOrder},
+    shared::Connection,
 };
 
 
@@ -50,7 +55,7 @@ impl User {
         HasRoles::can_use_studio(self, &context.config.auth)
     }
 
-    /// `True` if the user has the permission to use Opencast Studio.
+    /// `True` if the user has the permission to use Opencast Editor.
     fn can_use_editor(&self, context: &Context) -> bool {
         HasRoles::can_use_editor(self, &context.config.auth)
     }
@@ -64,22 +69,36 @@ impl User {
         context.auth.can_find_unlisted_items(&context.config.auth)
     }
 
+    /// `True` if the user has the permission to create new series.
+    fn can_create_series(&self, context: &Context) -> bool {
+        HasRoles::can_create_series(self, &context.config.auth)
+    }
+
     /// Returns all events that somehow "belong" to the user, i.e. that appear
     /// on the "my videos" page. This also returns events that have been marked
     /// as deleted (meaning their deletion in Opencast has been requested but they
     /// are not yet removed from Tobira's database).
-    ///
-    /// Exactly one of `first` and `last` must be set!
     async fn my_videos(
         &self,
-        #[graphql(default)]
-        order: EventSortOrder,
-        first: Option<i32>,
-        after: Option<Cursor>,
-        last: Option<i32>,
-        before: Option<Cursor>,
         context: &Context,
-    ) -> ApiResult<EventConnection> {
-        AuthorizedEvent::load_writable_for_user(context, order, first, after, last, before).await
+        #[graphql(default)]
+        order: VideosSortOrder,
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<Connection<AuthorizedEvent>> {
+        AuthorizedEvent::load_writable_for_user(context, order.into(), offset, limit).await
+    }
+
+    /// Returns all series that somehow "belong" to the user, i.e. that appear
+    /// on the "my series" page.
+    async fn my_series(
+        &self,
+        context: &Context,
+        #[graphql(default)]
+        order: SeriesSortOrder,
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<Connection<Series>> {
+        Series::load_writable_for_user(context, order.into(), offset, limit).await
     }
 }

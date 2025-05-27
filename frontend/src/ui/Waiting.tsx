@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next";
-
-import { Card } from "@opencast/appkit";
 import { LuTruck } from "react-icons/lu";
 import { keyframes } from "@emotion/react";
+import { Card } from "@opencast/appkit";
 
-export const WaitingPage: React.FC<{ type: "video" | "series" }> = ({ type }) => {
+import { OcEntity } from "../util";
+
+
+export const WaitingPage: React.FC<{ type: OcEntity }> = ({ type }) => {
     const { t } = useTranslation();
 
     return (

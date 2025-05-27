@@ -21,7 +21,7 @@ mod subscription;
 pub(crate) use self::{
     id::Id,
     context::Context,
-    common::{Cursor, Node, NodeValue},
+    common::{Node, NodeValue},
 };
 
 

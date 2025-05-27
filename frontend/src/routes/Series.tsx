@@ -245,9 +245,8 @@ const realmFragment = graphql`
 const fragment = graphql`
     fragment SeriesRouteData on Series {
         title
-        syncedData {
-            description
-        }
+        description
+        state
         ... SeriesBlockSeriesData
     }
 `;

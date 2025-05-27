@@ -85,13 +85,13 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm, edit }) =>
             "SeriesBlock": () => <SeriesBlockFromBlock
                 fragRef={block}
                 realmPath={path}
-                {...{ edit }}
+                editMode={edit}
             />,
             "VideoBlock": () => <VideoBlock fragRef={block} {...{ basePath, edit }} />,
             "PlaylistBlock": () => <PlaylistBlockFromBlock
                 fragRef={block}
                 realmPath={path}
-                {...{ edit }}
+                editMode={edit}
             />,
         })}
     </div>;

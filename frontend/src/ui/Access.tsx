@@ -28,7 +28,7 @@ import AsyncCreatableSelect from "react-select/async-creatable";
 import { fetchQuery, graphql } from "react-relay";
 import { i18n, ParseKeys } from "i18next";
 
-import { InfoWithTooltip, focusStyle } from ".";
+import { IconWithTooltip, focusStyle } from ".";
 import { useUser, isRealUser } from "../User";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
@@ -41,7 +41,7 @@ import { environment } from "../relay";
 import { AccessUserSearchQuery } from "./__generated__/AccessUserSearchQuery.graphql";
 import { ErrorDisplay } from "../util/err";
 import { useNavBlocker } from "../routes/util";
-import { currentRef } from "../util";
+import { currentRef, OcEntity } from "../util";
 import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
 import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 
@@ -64,7 +64,10 @@ type SelectOption = {
     label: string;
 }
 
+export type AclSubject = OcEntity | "realm";
+
 type AclContext = {
+    itemType: AclSubject;
     userIsRequired: boolean;
     acl: Acl;
     ownerDisplayName: string | null;
@@ -96,20 +99,20 @@ type AclSelectorProps = {
     permissionLevels: PermissionLevels;
     /** If `true`, ROLE_ANONYMOUS won't be offered as option. */
     disallowAnonymous?: boolean;
+    itemType: AclSubject;
 }
 
-export const AclSelector: React.FC<AclSelectorProps> = (
-    {
-        acl,
-        inheritedAcl = new Map(),
-        userIsRequired = false,
-        onChange,
-        knownRoles,
-        ownerDisplayName = "",
-        permissionLevels,
-        disallowAnonymous = false,
-    },
-) => {
+export const AclSelector: React.FC<AclSelectorProps> = ({
+    acl,
+    inheritedAcl = new Map(),
+    userIsRequired = false,
+    onChange,
+    knownRoles,
+    ownerDisplayName = "",
+    permissionLevels,
+    disallowAnonymous = false,
+    itemType = "video",
+}) => {
     const { i18n } = useTranslation();
     let knownGroups = [...knownRoles.knownGroups];
     [acl, inheritedAcl].forEach(list => insertBuiltinRoleInfo(list, knownGroups, i18n));
@@ -129,6 +132,7 @@ export const AclSelector: React.FC<AclSelectorProps> = (
     };
 
     const context = {
+        itemType,
         userIsRequired,
         acl,
         change,
@@ -414,7 +418,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                         paddingRight: 12,
                     }}>
                         {t("manage.access.table.inherited")}
-                        <InfoWithTooltip
+                        <IconWithTooltip
                             mode="info"
                             tooltip={t("manage.access.table.inherited-tooltip")}
                         />
@@ -556,7 +560,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
     return <TableRow
         labelCol={<>
             {label}
-            {isSubset && <InfoWithTooltip mode="info" tooltip={
+            {isSubset && <IconWithTooltip mode="info" tooltip={
                 t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
             } />}
         </>}
@@ -566,7 +570,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
             : <>
                 <ActionsMenu {...{ item, kind }} />
                 {item.large && noteworthyAccessType
-                    ? <InfoWithTooltip
+                    ? <IconWithTooltip
                         mode="warning"
                         tooltip={t("manage.access.table.actions.large-group-warning", {
                             val: t(`manage.access.table.actions.${noteworthyAccessType}-access`),
@@ -651,7 +655,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const ref = useRef<FloatingHandle>(null);
     const { t } = useTranslation();
-    const { change, permissionLevels } = useAclContext();
+    const { change, permissionLevels, itemType } = useAclContext();
     const allLabels = Object.keys(permissionLevels.all) as PermissionLevel[];
     const currentActionOption = getActionLabel(item, permissionLevels);
 
@@ -659,6 +663,14 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
         notNullish(prev.get(item.role)).actions
             = notNullish(permissionLevels.all[newOption]).actions;
     });
+
+    const description = (actionOption: PermissionLevel) => t(
+        `manage.access.table.actions.${itemType}-${actionOption}-description`,
+        {
+            count: kind === "user" ? 1 : 2,
+            defaultValue: t("manage.access.table.actions.unknown-description"),
+        },
+    );
 
     return (
         <FloatingBaseMenu
@@ -681,8 +693,6 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                 <Floating
                     backgroundColor={isDark ? COLORS.neutral10 : COLORS.neutral05}
                     hideArrowTip
-                    padding={0}
-                    borderWidth={isDark ? 1 : 0}
                     css={{ minWidth: 125, lineHeight: 1.4 }}
                 >
                     <ul css={{
@@ -694,10 +704,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                             key={actionOption}
                             disabled={actionOption === currentActionOption}
                             label={t(`manage.access.table.actions.${actionOption}`)}
-                            description={
-                                t(`manage.access.table.actions.${actionOption}-description`,
-                                    { count: kind === "user" ? 1 : 2 })
-                            }
+                            description={description(actionOption)}
                             onClick={() => changeOption(actionOption)}
                             close={() => ref.current?.close()}
                         />)}

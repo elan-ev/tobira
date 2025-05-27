@@ -6,10 +6,11 @@ use meilisearch_sdk::search::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
-    search, HasRoles,
+    model::{SeriesThumbnailStack, ThumbnailInfo},
+    search
 };
 
-use super::{field_matches_for, ByteSpan, SearchRealm, ThumbnailInfo};
+use super::{field_matches_for, ByteSpan, SearchRealm};
 
 
 #[derive(Debug, GraphQLObject)]
@@ -20,7 +21,7 @@ pub(crate) struct SearchSeries {
     title: String,
     description: Option<String>,
     host_realms: Vec<SearchRealm>,
-    thumbnails: Vec<ThumbnailInfo>,
+    thumbnail_stack: SeriesThumbnailStack,
     matches: SearchSeriesMatches,
     created: Option<DateTime<Utc>>,
 }
@@ -58,15 +59,12 @@ impl SearchSeries {
             host_realms: src.host_realms.into_iter()
                 .map(|r| SearchRealm::without_matches(r))
                 .collect(),
-            thumbnails: src.thumbnails.iter()
-                .filter(|info| context.auth.overlaps_roles(&info.read_roles))
-                .map(|info| ThumbnailInfo {
-                    thumbnail: info.url.clone(),
-                    audio_only: info.audio_only,
-                    is_live: info.live,
-                })
-                .take(3)
-                .collect(),
+            thumbnail_stack: SeriesThumbnailStack {
+                thumbnails: src.thumbnails.into_iter()
+                    .filter_map(|info| ThumbnailInfo::from_search(info, &context.auth))
+                    .take(3)
+                    .collect(),
+            },
             matches,
         }
     }

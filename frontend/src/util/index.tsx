@@ -1,12 +1,13 @@
 import { i18n } from "i18next";
-import { MutableRefObject, useEffect, useRef, useState } from "react";
+import { MutableRefObject, PropsWithChildren, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bug, match, useColorScheme } from "@opencast/appkit";
+import { css } from "@emotion/react";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
-import { css } from "@emotion/react";
+import { COLORS } from "../color";
 
 
 /**
@@ -137,19 +138,36 @@ export const useRefState = <T, >(
  * This is mainly for accessing refs in event handlers for elements
  * that are guaranteed to be alive as long as the ref itself.
  */
-export const currentRef = <T>(ref: React.RefObject<T>): T => (
+export const currentRef = <T, >(ref: React.RefObject<T>): T => (
     ref.current ?? bug("ref unexpectedly unbound")
 );
 
 
 // Some utilities to handle the different lifecycle stages of events and series
-type OpencastEntity = { syncedData: unknown };
-export type SyncedOpencastEntity<T extends OpencastEntity> = T & {
-    syncedData: NonNullable<T["syncedData"]>;
+export type OpencastEntity = {
+    syncedData: unknown
+} | {
+    state: "WAITING" | "READY" | "%future added value"
 };
-export const isSynced = <T extends OpencastEntity>(e: T): e is SyncedOpencastEntity<T> => (
-    Boolean(e.syncedData)
-);
+
+export type SyncedOpencastEntity<T extends OpencastEntity> = "syncedData" extends keyof T
+    ? (T & { syncedData: NonNullable<T["syncedData"]> })
+    : ("state" extends keyof T
+        ? (T & { state: Extract<T["state"], "READY"> })
+        : never
+    );
+
+export const isSynced = <T extends OpencastEntity>(
+    e: T,
+): e is SyncedOpencastEntity<T> => {
+    if ("syncedData" in e) {
+        return Boolean(e.syncedData);
+    }
+    if ("state" in e) {
+        return e.state === "READY";
+    }
+    return false;
+};
 
 /**
  * Adds `<meta name="robots" content="noindex">` to the document `<head>` and
@@ -296,3 +314,23 @@ export const visuallyHiddenStyle = css({
     whiteSpace: "nowrap",
     width: 1,
 });
+
+type InertableProps = PropsWithChildren<{
+    isInert: boolean;
+    className?: string;
+}>
+
+/** Can be used to conditionally disable and grey out control elements. */
+export const Inertable: React.FC<InertableProps> = ({ children, isInert, className }) => (
+    <div {...{ className }} {...isInert && { inert: "true", css: { opacity: 0.7 } }}>
+        {children}
+    </div>
+);
+
+export type OcEntity = "series" | "video";
+
+export const floatingMenuProps = (isDark: boolean) => ({
+    padding: 0,
+    borderWidth: isDark ? 1 : 0,
+    backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral05,
+}) as const;

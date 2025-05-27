@@ -408,29 +408,13 @@ impl User {
 
     /// Makes sure this user has the roles `ROLE_ANONYMOUS` and `ROLE_USER`.
     fn add_default_roles(&mut self) {
-        // The conditionals are to prevent heap allocations when unneceesary.
+        // The conditionals are to prevent heap allocations when unnecessary.
         if !self.roles.contains(ROLE_ANONYMOUS) {
             self.roles.insert(ROLE_ANONYMOUS.into());
         }
         if !self.roles.contains(ROLE_USER) {
             self.roles.insert(ROLE_USER.into());
         }
-    }
-}
-
-
-/// A marker type that serves to prove *some* user authorization has been done.
-///
-/// The goal of this is to prevent devs from forgetting to do authorization at
-/// all. Since the token does not contain any information about what was
-/// authorized, it cannot protect against anything else.
-///
-/// Has a private field so it cannot be created outside of this module.
-pub(crate) struct AuthToken(());
-
-impl AuthToken {
-    fn some_if(v: bool) -> Option<Self> {
-        if v { Some(Self(())) } else { None }
     }
 }
 
@@ -453,18 +437,17 @@ pub(crate) trait HasRoles {
         self.roles().iter().map(|s| &**s).collect()
     }
 
-    /// Returns an auth token IF this user is a Tobira admin (as determined
-    /// by `RoleConfig::tobira_admin`).
-    fn require_tobira_admin(&self, auth_config: &AuthConfig) -> Option<AuthToken> {
-        AuthToken::some_if(self.is_tobira_admin(auth_config))
-    }
-
     fn is_tobira_admin(&self, auth_config: &AuthConfig) -> bool {
         self.is_admin() || self.roles().contains(&auth_config.roles.tobira_admin)
     }
 
     fn can_upload(&self, auth_config: &AuthConfig) -> bool {
         self.is_tobira_admin(auth_config) || self.roles().contains(&auth_config.roles.upload)
+    }
+
+    fn can_create_series(&self, auth_config: &AuthConfig) -> bool {
+        self.is_tobira_admin(auth_config)
+            || self.roles().contains(&auth_config.roles.can_create_series)
     }
 
     fn can_use_studio(&self, auth_config: &AuthConfig) -> bool {

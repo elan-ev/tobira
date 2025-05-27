@@ -80,7 +80,7 @@ import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerCont
 import { CollapsibleDescription } from "../ui/metadata";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
 import { EmbedVideoRoute } from "./Embed";
-import { ManageVideoDetailsRoute } from "./manage/Video/Details";
+import { ManageVideoDetailsRoute } from "./manage/Video/VideoDetails";
 import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
 import { AuthenticationFormState, FormData, AuthenticationForm } from "./Login";
 import {
@@ -1132,7 +1132,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             }
             {updatedFull && <>
                 <br/>
-                <i>{t("video.updated")}</i>: {updatedFull}
+                <i>{t("manage.shared.updated")}</i>: {updatedFull}
             </>}
         </>;
 
@@ -1154,11 +1154,11 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
         tooltip = <>
             {startedDate
                 ? <><i>{t("video.started")}</i>: {startFull}</>
-                : <><i>{t("video.created")}</i>: {createdFull}</>
+                : <><i>{t("manage.shared.created")}</i>: {createdFull}</>
             }
             {updatedFull && <>
                 <br/>
-                <i>{t("video.updated")}</i>: {updatedFull}
+                <i>{t("manage.shared.updated")}</i>: {updatedFull}
             </>}
         </>;
 

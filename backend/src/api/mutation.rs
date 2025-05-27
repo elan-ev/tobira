@@ -1,6 +1,5 @@
 use juniper::graphql_object;
 
-use crate::api::model::event::RemovedEvent;
 use super::{
     Context,
     err::ApiResult,
@@ -8,6 +7,7 @@ use super::{
     model::{
         acl::AclInputEntry,
         series::{Series, NewSeries},
+        shared::BasicMetadata,
         realm::{
             ChildIndex,
             NewRealm,
@@ -64,7 +64,7 @@ impl Mutation {
     /// Note that "success" in this case only means the request was successfully sent
     /// and accepted, not that the deletion itself succeeded, which is instead checked
     /// in subsequent harvesting results.
-    async fn delete_video(id: Id, context: &Context) -> ApiResult<RemovedEvent> {
+    async fn delete_video(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         AuthorizedEvent::delete(id, context).await
     }
 
@@ -77,6 +77,64 @@ impl Mutation {
     /// This solution should be improved in the future.
     async fn update_event_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
         AuthorizedEvent::update_acl(id, acl, context).await
+    }
+
+    /// Updates the title and description of an event. A request for this is sent to Opencast,
+    /// and the event is optimistically updated in Tobira's DB.
+    async fn update_event_metadata(
+        id: Id,
+        metadata: BasicMetadata,
+        context: &Context,
+    ) -> ApiResult<AuthorizedEvent> {
+        AuthorizedEvent::update_metadata(id, metadata, context).await
+    }
+
+    /// Deletes the given series by sending a delete request to Opencast.
+    /// The series is marked as "deletion pending" in Tobira and fully removed once Opencast
+    /// finished deleting the series.
+    ///
+    /// Returns the preliminary deletion timestamp.
+    async fn delete_series(id: Id, context: &Context) -> ApiResult<Series> {
+        Series::delete(id, context).await
+    }
+
+    /// Updates the acl of a given series by sending the changes to Opencast.
+    /// The `acl` parameter can include `read` and `write` roles.
+    /// If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
+    /// this means it might get overwritten again if the update in Opencast failed for some reason.
+    async fn update_series_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
+        Series::update_acl(id, acl, context).await
+    }
+
+    /// Updates the title and description of a series. A request for this is sent to Opencast,
+    /// and the series is preliminarily updated in Tobira's DB.
+    async fn update_series_metadata(
+        id: Id,
+        metadata: BasicMetadata,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        Series::update_metadata(id, metadata, context).await
+    }
+
+    // Updates which events are part of a series by sending a request to Opencast and optimistically
+    // updating the events in Tobira's DB.
+    async fn update_series_content(
+        id: Id,
+        added_events: Vec<Id>,
+        removed_events: Vec<Id>,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        Series::update_content(id, added_events, removed_events, context).await
+    }
+
+    /// Sends an http request to Opencast to create a new series,
+    /// and stores the series in Tobira's DB.
+    async fn create_series(
+        metadata: BasicMetadata,
+        acl: Vec<AclInputEntry>,
+        context: &Context,
+    ) -> ApiResult<Series> {
+        Series::create_in_oc(metadata, acl, context).await
     }
 
     /// Sets the order of all children of a specific realm.

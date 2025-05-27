@@ -1,25 +1,30 @@
 import React, { MutableRefObject, ReactNode, useEffect, useId, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment } from "react-relay";
 import { keyframes } from "@emotion/react";
-import { Controller, useController, useForm } from "react-hook-form";
+import { Controller, FormProvider, useController, useForm } from "react-hook-form";
 import { LuCircleCheck, LuUpload, LuInfo } from "react-icons/lu";
-import { Spinner, WithTooltip, assertNever, bug, unreachable } from "@opencast/appkit";
+import {
+    Spinner, WithTooltip, assertNever, bug,
+    unreachable, Button, boxError, ErrorBox, Card,
+} from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
 import { environment, loadQuery } from "../relay";
-import { UploadQuery } from "./__generated__/UploadQuery.graphql";
+import { UploadQuery, UploadQuery$data } from "./__generated__/UploadQuery.graphql";
 import { makeRoute } from "../rauta";
 import { ErrorDisplay, errorDisplayInfo } from "../util/err";
 import { mapAcl, useNavBlocker } from "./util";
 import CONFIG from "../config";
-import { Button, boxError, ErrorBox, Card } from "@opencast/appkit";
 import { LinkButton } from "../ui/LinkButton";
-import { Form } from "../ui/Form";
-import { Input, TextArea } from "../ui/Input";
 import { isRealUser, User, useUser } from "../User";
-import { currentRef, useRefState } from "../util";
-import { FieldIsRequiredNote, InputContainer, TitleLabel } from "../ui/metadata";
+import { currentRef, Inertable, seriesId, useRefState } from "../util/index";
+import {
+    FieldIsRequiredNote,
+    InputContainer,
+    MetadataFields,
+    MetadataForm,
+} from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
 import { useRouter } from "../router";
 import { getJwt } from "../relay/auth";
@@ -27,7 +32,7 @@ import { VideoListSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav, ManageRoute } from "./manage";
 import { COLORS } from "../color";
-import { COMMON_ROLES } from "../util/roles";
+import { defaultAclMap } from "../util/roles";
 import { Acl, AclSelector, knownRolesFragment } from "../ui/Access";
 import {
     AccessKnownRolesData$data,
@@ -40,21 +45,25 @@ import {
 } from "./__generated__/UploadSeriesAclQuery.graphql";
 
 
-const PATH = "/~manage/upload" as const;
+export const PATH = "/~manage/upload" as const;
 export const UploadRoute = makeRoute({
-    url: PATH,
+    url: ({ seriesId }: { seriesId?: string | null } = {}): `${typeof PATH}${string | null}` =>
+        seriesId ? `${PATH}?${new URLSearchParams({ series: seriesId })}` : PATH,
     match: url => {
         if (url.pathname !== PATH) {
             return null;
         }
 
-        const queryRef = loadQuery<UploadQuery>(query, {});
+        const seriesParam = url.searchParams.get("series");
+        const preselectedSeries = seriesParam && seriesId(seriesParam);
+
+        const queryRef = loadQuery<UploadQuery>(query, { seriesId: preselectedSeries ?? "" });
         return {
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
                 nav={() => <ManageNav active={PATH} />}
-                render={data => <Upload knownRolesRef={data} />}
+                render={data => <Upload uploadQueryData={data} />}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -62,9 +71,17 @@ export const UploadRoute = makeRoute({
 });
 
 const query = graphql`
-    query UploadQuery {
+    query UploadQuery($seriesId: ID!) {
         ... UserData
         ... AccessKnownRolesData
+        series: seriesById(id: $seriesId) {
+            id
+            opencastId
+            title
+            description
+            created
+            acl { role actions info { label implies large } }
+        }
     }
 `;
 
@@ -80,12 +97,13 @@ type Metadata = {
 };
 
 type Props = {
-    knownRolesRef: AccessKnownRolesData$key;
+    uploadQueryData: UploadQuery$data;
 };
 
-const Upload: React.FC<Props> = ({ knownRolesRef }) => {
+const Upload: React.FC<Props> = ({ uploadQueryData }) => {
     const { t } = useTranslation();
-    const knownRoles = useFragment(knownRolesFragment, knownRolesRef);
+    const knownRoles = useFragment<AccessKnownRolesData$key>(knownRolesFragment, uploadQueryData);
+    const preselectedSeries = uploadQueryData.series;
 
     return (
         <div css={{
@@ -98,7 +116,7 @@ const Upload: React.FC<Props> = ({ knownRolesRef }) => {
                 tail={t("upload.title")}
             />
             <PageTitle title={t("upload.title")} />
-            <UploadMain {...{ knownRoles }} />
+            <UploadMain {...{ knownRoles, preselectedSeries }} />
         </div>
     );
 };
@@ -128,9 +146,10 @@ const CancelButton: React.FC<CancelButtonProps> = ({ abortController }) => {
 
 type UploadMainProps = {
     knownRoles: AccessKnownRolesData$data;
+    preselectedSeries?: UploadQuery$data["series"];
 };
 
-const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
+const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }) => {
     // TODO: on first mount, send an `ocRequest` to `info/me.json` and make sure
     // that connection works. That way we can show an error very early, before
     // the user selected a file.
@@ -233,7 +252,10 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
                 width: "100%",
                 maxWidth: 900,
             }}>
-                <UploadState state={uploadState.current} />
+                <UploadState
+                    state={uploadState.current}
+                    seriesId={preselectedSeries?.id}
+                />
                 <div>
                     {/* TODO: Show something after saving metadata.
                         - Just saying "saved" is kind of misleading because the data is only local.
@@ -245,7 +267,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles }) => {
                             ? <MetaDataEdit
                                 onSave={onMetadataSave}
                                 disabled={hasUploadError}
-                                knownRoles={knownRoles}
+                                {...{ knownRoles, preselectedSeries }}
                             />
                             : !hasUploadError && (
                                 <div css={{ margin: "0 auto", maxWidth: 500 }}>
@@ -495,9 +517,13 @@ type UploadState =
 
 /** State of an upload that is not yet finished */
 type NonFinishedUploadState = Exclude<UploadState, { state: "done" }>;
+type UploadStateProps = {
+    state: NonFinishedUploadState;
+    seriesId?: string | null;
+};
 
 /** Shows the current state of the upload */
-const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => {
+const UploadState: React.FC<UploadStateProps> = ({ state, seriesId }) => {
     const { t, i18n } = useTranslation();
 
     if (state.state === "starting") {
@@ -564,11 +590,11 @@ const UploadState: React.FC<{ state: NonFinishedUploadState }> = ({ state }) => 
             "& > :first-child": { marginBottom: "2rem" },
         }}>
             <span>{t("upload.upload-cancelled")}</span>
-            <div>
-                <LinkButton kind="call-to-action" to={UploadRoute.url}>
-                    {t("upload.reselect")}
-                </LinkButton>
-            </div>
+            <LinkButton kind="call-to-action" to={UploadRoute.url({
+                seriesId: seriesId ?? null,
+            })}>
+                {t("upload.reselect")}
+            </LinkButton>
         </div>;
     } else if (state.state === "error") {
         return <UploadErrorBox error={state.error} />;
@@ -680,21 +706,27 @@ type MetaDataEditProps = {
     onSave: (metadata: Metadata) => void;
     disabled: boolean;
     knownRoles: AccessKnownRolesData$data;
+    preselectedSeries?: UploadQuery$data["series"];
 };
 
 /** Form that lets the user set metadata about the video */
-const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRoles }) => {
+const MetaDataEdit: React.FC<MetaDataEditProps> = ({
+    onSave,
+    disabled,
+    knownRoles,
+    preselectedSeries,
+}) => {
     const { t } = useTranslation();
     const u = useUser();
     const user = isRealUser(u) ? u : unreachable();
 
-    const titleFieldId = useId();
-    const descriptionFieldId = useId();
     const seriesFieldId = useId();
-    const [lockedAcl, setLockedAcl] = useState<Acl | null>(null);
+    const [lockedAcl, setLockedAcl] = useState<Acl | null>(
+        preselectedSeries ? mapAcl(preselectedSeries.acl) : null,
+    );
     const [aclError, setAclError] = useState<ReactNode>(null);
     const [aclLoading, setAclLoading] = useState(false);
-    const aclEditingLocked = !!lockedAcl || aclLoading || !!aclError;
+    const aclEditingLocked = (lockedAcl && CONFIG.lockAclToSeries) || aclLoading || !!aclError;
 
     const fetchSeriesAcl = async (seriesId: string): Promise<Acl | null> => {
         const data = await fetchQuery<UploadSeriesAclQuery>(
@@ -743,91 +775,55 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
         }
     };
 
-    const defaultAcl: Acl = new Map([
-        [user.userRole, {
-            actions: new Set(["read", "write"]),
-            info: {
-                label: { "default": user.displayName },
-                implies: null,
-                large: false,
-            },
-        }],
-        [COMMON_ROLES.ANONYMOUS, {
-            actions: new Set(["read"]),
-            info: null,
-        }],
-    ]);
-
-    const { register, handleSubmit, control, formState: { isValid, errors } } = useForm<Metadata>({
+    const formMethods = useForm<Metadata>({
         mode: "onChange",
-        defaultValues: { acl: defaultAcl },
+        defaultValues: { acl: defaultAclMap(user) },
     });
+    const { handleSubmit, control, formState: { isValid, errors } } = formMethods;
 
     const { field: seriesField } = useController({
         name: "series",
         control,
+        ...preselectedSeries && {
+            defaultValue: {
+                id: preselectedSeries.opencastId,
+                acl: preselectedSeries.acl,
+            },
+        },
         rules: {
-            required: CONFIG.upload.requireSeries ? t("upload.errors.field-required") : false,
+            required: CONFIG.upload.requireSeries
+                ? t("metadata-form.errors.field-required")
+                : false,
         },
     });
 
     const onSubmit = handleSubmit(data => onSave(data));
 
-    // We only allow submitting the form on clicking the button below so that
-    // pressing 'enter' inside inputs doesn't lead to submit the form too
-    // early.
-    return (
-        <Form
-            noValidate
-            onSubmit={e => e.preventDefault()}
-            css={{
-                margin: "32px 2px",
-                "label": {
-                    color: "var(--color-neutral90)",
-                },
-            }}
-        >
-            {/* Title */}
-            <InputContainer>
-                <TitleLabel htmlFor={titleFieldId} />
-                <Input
-                    id={titleFieldId}
-                    required
-                    error={!!errors.title}
-                    css={{ width: 400, maxWidth: "100%" }}
-                    autoFocus
-                    {...register("title", {
-                        required: t("upload.errors.field-required") as string,
-                    })}
-                />
-                {boxError(errors.title?.message)}
-            </InputContainer>
 
-            <div css={{ maxWidth: 750 }}>
-                {/* Description */}
-                <InputContainer>
-                    <label htmlFor={descriptionFieldId}>{t("upload.metadata.description")}</label>
-                    <TextArea id={descriptionFieldId} {...register("description")} />
-                </InputContainer>
+    return <FormProvider {...formMethods}>
+        <MetadataForm>
+            {/* Title & Description */}
+            <MetadataFields />
 
-                {/* Series */}
-                <InputContainer>
-                    <label htmlFor={seriesFieldId}>
-                        {t("series.series")}
-                        {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
-                        <WithTooltip
-                            tooltip={t("upload.metadata.note-writable-series")}
-                            tooltipCss={{ width: 400 }}
-                            css={{
-                                display: "inline-block",
-                                verticalAlign: "middle",
-                                fontWeight: "normal",
-                                marginLeft: 8,
-                            }}
-                        >
-                            <span><LuInfo tabIndex={0} /></span>
-                        </WithTooltip>
-                    </label>
+            {/* Series */}
+            <InputContainer css={{ maxWidth: 750 }}>
+                <label htmlFor={seriesFieldId}>
+                    {t("series.series")}
+                    {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
+                    <WithTooltip
+                        tooltip={t("upload.metadata.note-writable-series")}
+                        tooltipCss={{ width: 400 }}
+                        css={{
+                            display: "inline-block",
+                            verticalAlign: "middle",
+                            fontWeight: "normal",
+                            marginLeft: 8,
+                        }}
+                    >
+                        <span><LuInfo tabIndex={0} /></span>
+                    </WithTooltip>
+                </label>
+                <Inertable isInert={!!preselectedSeries} >
                     <VideoListSelector
                         type="series"
                         inputId={seriesFieldId}
@@ -836,10 +832,11 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                         onChange={data => onSeriesChange({ opencastId: data?.opencastId })}
                         onBlur={seriesField.onBlur}
                         required={CONFIG.upload.requireSeries}
+                        defaultValue={preselectedSeries ?? undefined}
                     />
-                    {boxError(errors.series?.message)}
-                </InputContainer>
-            </div>
+                </Inertable>
+                {boxError(errors.series?.message)}
+            </InputContainer>
 
             {/* ACL */}
             <InputContainer>
@@ -847,25 +844,26 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                     marginTop: 32,
                     marginBottom: 12,
                     fontSize: 22,
-                }}>{t("manage.my-videos.acl.title")}</h2>
+                }}>{t("manage.shared.acl.title")}</h2>
                 {boxError(aclError)}
                 {aclLoading && <Spinner size={20} />}
-                {lockedAcl && (
+                {lockedAcl && CONFIG.lockAclToSeries && (
                     <Card kind="info" iconPos="left" css={{
                         maxWidth: 700,
                         fontSize: 14,
                         marginBottom: 10,
                     }}>
-                        {t("manage.access.locked-to-series")}
+                        <Trans i18nKey="manage.access.locked-to-series">
+                            <>series</>
+                        </Trans>
                     </Card>
                 )}
-                <div {...aclEditingLocked && { inert: "true" }} css={{
-                    ...aclEditingLocked && { opacity: .7 },
-                }}>
+                <Inertable isInert={aclEditingLocked}>
                     <Controller
                         name="acl"
                         control={control}
                         render={({ field }) => <AclSelector
+                            itemType="video"
                             userIsRequired
                             onChange={field.onChange}
                             acl={lockedAcl ?? field.value}
@@ -873,10 +871,10 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                             permissionLevels={READ_WRITE_ACTIONS}
                         />}
                     />
-                </div>
+                </Inertable>
             </InputContainer>
 
-            {/* Submit button */}
+            {/* Submit */}
             <Button
                 kind="call-to-action"
                 disabled={!isValid || disabled}
@@ -884,8 +882,8 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({ onSave, disabled, knownRole
                 onClick={onSubmit}>
                 {t("upload.metadata.save")}
             </Button>
-        </Form>
-    );
+        </MetadataForm>
+    </FormProvider>;
 };
 
 

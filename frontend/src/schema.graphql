@@ -8,12 +8,6 @@ schema {
   mutation: Mutation
 }
 
-enum EventSortColumn {
-  TITLE
-  CREATED
-  UPDATED
-}
-
 enum ItemType {
   EVENT
   SERIES
@@ -31,6 +25,19 @@ enum RealmOrder {
   BY_INDEX
   ALPHABETIC_ASC
   ALPHABETIC_DESC
+}
+
+enum SeriesSortColumn {
+  TITLE
+  CREATED
+  UPDATED
+  EVENT_COUNT
+}
+
+"Represents the different states a series can be in during its lifecycle"
+enum SeriesState {
+  READY
+  WAITING
 }
 
 enum SortDirection {
@@ -57,20 +64,26 @@ enum VideoListOrder {
   ORIGINAL
 }
 
+enum VideosSortColumn {
+  TITLE
+  CREATED
+  UPDATED
+  SERIES
+}
+
 input AclInputEntry {
   role: String!
   actions: [String!]!
 }
 
+input BasicMetadata {
+  title: String!
+  description: String
+}
+
 input ChildIndex {
   id: ID!
   index: Int!
-}
-
-"Defines the sort order for events."
-input EventSortOrder {
-  column: EventSortColumn!
-  direction: SortDirection!
 }
 
 input Filters {
@@ -96,6 +109,7 @@ input NewRealm {
 input NewSeries {
   opencastId: String!
   title: String!
+  description: String
 }
 
 input NewSeriesBlock {
@@ -128,6 +142,11 @@ input RealmLineageComponent {
 input RealmSpecifier {
   name: String
   pathSegment: String!
+}
+
+input SeriesSortOrder {
+  column: SeriesSortColumn!
+  direction: SortDirection!
 }
 
 input UpdatePlaylistBlock {
@@ -176,6 +195,11 @@ input UpdatedRealmName {
   block: ID
 }
 
+input VideosSortOrder {
+  column: VideosSortColumn!
+  direction: SortDirection!
+}
+
 "A `Block`: a UI element that belongs to a realm."
 interface Block {
   id: ID!
@@ -190,9 +214,6 @@ interface Node {
 
 "A byte range, encoded as two hex numbers separated by `-`."
 scalar ByteSpan
-
-"An opaque cursor used for pagination"
-scalar Cursor
 
 """
   Combined date and time (with time zone) in [RFC 3339][0] format.
@@ -315,20 +336,9 @@ type EmptyQuery {
 }
 
 type EventConnection {
-  pageInfo: EventPageInfo!
+  pageInfo: PageInfo!
   items: [AuthorizedEvent!]!
   totalCount: Int!
-}
-
-type EventPageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: Cursor
-  endCursor: Cursor
-  "The index of the first returned event."
-  startIndex: Int
-  "The index of the last returned event."
-  endIndex: Int
 }
 
 type EventSearchResults {
@@ -381,7 +391,7 @@ type Mutation {
     and accepted, not that the deletion itself succeeded, which is instead checked
     in subsequent harvesting results.
   """
-  deleteVideo(id: ID!): RemovedEvent!
+  deleteVideo(id: ID!): AuthorizedEvent!
   """
     Updates the acl of a given event by sending the changes to Opencast.
     The `acl` parameter can include `read` and `write` roles, as these are the
@@ -392,6 +402,37 @@ type Mutation {
     This solution should be improved in the future.
   """
   updateEventAcl(id: ID!, acl: [AclInputEntry!]!): AuthorizedEvent!
+  """
+    Updates the title and description of an event. A request for this is sent to Opencast,
+    and the event is optimistically updated in Tobira's DB.
+  """
+  updateEventMetadata(id: ID!, metadata: BasicMetadata!): AuthorizedEvent!
+  """
+    Deletes the given series by sending a delete request to Opencast.
+    The series is marked as "deletion pending" in Tobira and fully removed once Opencast
+    finished deleting the series.
+
+    Returns the preliminary deletion timestamp.
+  """
+  deleteSeries(id: ID!): Series!
+  """
+    Updates the acl of a given series by sending the changes to Opencast.
+    The `acl` parameter can include `read` and `write` roles.
+    If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
+    this means it might get overwritten again if the update in Opencast failed for some reason.
+  """
+  updateSeriesAcl(id: ID!, acl: [AclInputEntry!]!): Series!
+  """
+    Updates the title and description of a series. A request for this is sent to Opencast,
+    and the series is preliminarily updated in Tobira's DB.
+  """
+  updateSeriesMetadata(id: ID!, metadata: BasicMetadata!): Series!
+  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [ID!]!): Series!
+  """
+    Sends an http request to Opencast to create a new series,
+    and stores the series in Tobira's DB.
+  """
+  createSeries(metadata: BasicMetadata!, acl: [AclInputEntry!]!): Series!
   """
     Sets the order of all children of a specific realm.
 
@@ -491,6 +532,11 @@ type NotAllowed {
   dummy: Boolean
 }
 
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPrevPage: Boolean!
+}
+
 "A simple realm name: a fixed string."
 type PlainRealmName {
   name: String!
@@ -565,7 +611,7 @@ type Query {
       the user has preview access to. However, unless the user has the
       privilege to find unlisted events, only listed ones are searched.
   """
-  searchAllEvents(query: String!, writableOnly: Boolean!): EventSearchOutcome!
+  searchAllEvents(query: String!, writableOnly: Boolean!, excludeSeriesMembers: Boolean! = false, excludedIds: [String!]! = []): EventSearchOutcome!
   """
     Searches through series. Searches through:
 
@@ -696,10 +742,6 @@ type RemovedBlock {
   realm: Realm!
 }
 
-type RemovedEvent {
-  id: ID!
-}
-
 type RemovedRealm {
   parent: Realm
 }
@@ -786,7 +828,7 @@ type SearchSeries implements Node {
   title: String!
   description: String
   hostRealms: [SearchRealm!]!
-  thumbnails: [ThumbnailInfo!]!
+  thumbnailStack: SeriesThumbnailStack!
   matches: SearchSeriesMatches!
   created: DateTime
 }
@@ -815,9 +857,14 @@ type Series implements Node {
   opencastId: String!
   title: String!
   created: DateTime
+  updated: DateTime
   metadata: ExtraMetadata
-  syncedData: SyncedSeriesData
+  description: String
+  state: SeriesState!
+  numVideos: Int!
+  thumbnailStack: SeriesThumbnailStack!
   acl: [AclItem!]
+  tobiraDeletionTimestamp: DateTime
   hostRealms: [Realm!]!
   entries: [VideoListEntry!]!
   """
@@ -839,11 +886,21 @@ type SeriesBlock implements Block {
   realm: Realm!
 }
 
+type SeriesConnection {
+  pageInfo: PageInfo!
+  items: [Series!]!
+  totalCount: Int!
+}
+
 type SeriesSearchResults {
   items: [SearchSeries!]!
   totalHits: Int!
   "How long searching took in ms."
   duration: Int!
+}
+
+type SeriesThumbnailStack {
+  thumbnails: [ThumbnailInfo!]!
 }
 
 type SyncedEventData {
@@ -854,10 +911,6 @@ type SyncedEventData {
   duration: Float!
   thumbnail: String
   audioOnly: Boolean!
-}
-
-type SyncedSeriesData {
-  description: String
 }
 
 "A block just showing some text."
@@ -885,9 +938,10 @@ type TextMatch {
   highlights: [ByteSpan!]!
 }
 
+"Information necessary to render a thumbnail."
 type ThumbnailInfo {
-  thumbnail: String
-  isLive: Boolean!
+  url: String
+  live: Boolean!
   audioOnly: Boolean!
 }
 
@@ -929,20 +983,25 @@ type User {
   canUpload: Boolean!
   "`True` if the user has the permission to use Opencast Studio."
   canUseStudio: Boolean!
-  "`True` if the user has the permission to use Opencast Studio."
+  "`True` if the user has the permission to use Opencast Editor."
   canUseEditor: Boolean!
   canCreateUserRealm: Boolean!
   "`True` if the user is allowed to find unlisted items when editing page content."
   canFindUnlisted: Boolean!
+  "`True` if the user has the permission to create new series."
+  canCreateSeries: Boolean!
   """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page. This also returns events that have been marked
     as deleted (meaning their deletion in Opencast has been requested but they
     are not yet removed from Tobira's database).
-
-    Exactly one of `first` and `last` must be set!
   """
-  myVideos(order: EventSortOrder! = {column: "CREATED", direction: "DESCENDING"}, first: Int, after: Cursor, last: Int, before: Cursor): EventConnection!
+  myVideos(order: VideosSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!): EventConnection!
+  """
+    Returns all series that somehow "belong" to the user, i.e. that appear
+    on the "my series" page.
+  """
+  mySeries(order: SeriesSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!): SeriesConnection!
 }
 
 "A block for presenting a single Opencast event"

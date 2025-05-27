@@ -10,3 +10,4 @@ pub(crate) mod realm;
 pub(crate) mod search;
 pub(crate) mod series;
 pub(crate) mod user;
+pub(crate) mod shared;

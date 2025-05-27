@@ -28,6 +28,7 @@ general:
     select:
       no-options: Keine Optionen
       select-option: Option auswählen
+  no-description: Keine Beschreibung
   seconds: Sekunden
   minutes: Minuten
   hours: Stunden
@@ -129,8 +130,6 @@ video:
   video: Video
   video-page: 'Video Seite: „{{video}}“'
   video-player: Videoplayer
-  created: Erstellt
-  updated: Zuletzt verändert
   duration: Abspielzeit
   link: Videodetails
   part-of-series: Teil der Serie
@@ -217,6 +216,7 @@ series:
     text: >
       Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
       in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
+    label: nicht synchronisiert
 
 videolist-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
@@ -315,9 +315,6 @@ upload:
     angeschaut werden, sobald die Verarbeitung abgeschlossen ist. Sie können diese
     Seite jetzt schließen.
   metadata:
-    title: Videotitel
-    description: Beschreibung
-    required: Pflichtfeld
     save: Speichern und fertigstellen
     note-writable-series: >
       Sie können Videos nur in Serien hochladen, auf die Sie Schreibzugriff haben.
@@ -325,12 +322,22 @@ upload:
   errors:
     failed-to-upload: Hochladen fehlgeschlagen.
     unknown: Während des Dateiuploads ist ein unbekannter Fehler aufgetreten.
-    field-required: Dieses Feld darf nicht leer sein.
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
     failed-fetching-series-acl: Abruf der Serienzugangsberechtigungen fehlgeschlagen.
 
+metadata-form:
+  title: Titel
+  description: Beschreibung
+  required: Pflichtfeld
+  save: Metadaten speichern
+  errors:
+    field-required: Dieses Feld darf nicht leer sein.
+  event-workflow-active: >
+    Änderung der Metadaten ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
+    <br />
+    Bitte versuchen Sie es später nochmal.
 acl:
   unknown-user-note: unbekannt
   no-entries: Keine Einträge
@@ -351,7 +358,7 @@ manage:
       <br />
       Bitte versuchen Sie es später nochmal.
     locked-to-series: >
-      Die Berechtigungen dieses Videos werden durch seine Serie bestimmt und können daher nicht bearbeitet werden.
+      Die Berechtigungen dieses Videos werden durch seine <1>Serie</1> bestimmt und können daher nicht bearbeitet werden.
     users-no-options:
       initial-searchable: Nach Name suchen oder exakten Nutzernamen/exakte E-Mail angeben
       none-found-searchable: Keine Personen gefunden
@@ -373,27 +380,32 @@ manage:
       actions:
         title: Berechtigung
         read: Lesen
-        read-description_one: Kann das Video anschauen und Metadaten sehen.
-        read-description_other: Können das Video anschauen und Metadaten sehen.
         write: Lesen und schreiben
-        write-description_one: >
-          Kann außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
-        write-description_other: >
-          Können außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
         moderate: Moderation
-        moderate-description_one: >
+        unknown: Unbekanntes Berechtigungsschema
+        admin: Seitenadmin
+        unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
+        video-read-description_one: Kann das Video anschauen und Metadaten sehen.
+        video-read-description_other: Können das Video anschauen und Metadaten sehen.
+        video-write-description_one: >
+          Kann außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
+        video-write-description_other: >
+          Können außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
+        series-read-description: Nutzbar als Vorlage für Videos dieser Serie.
+        series-write-description_one: >
+          Kann Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
+        series-write-description_other: >
+          Können Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
+        realm-moderate-description_one: >
           Kann Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
           der Unterseiten bearbeiten.
-        moderate-description_other: >
+        realm-moderate-description_other: >
           Können Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
           der Unterseiten bearbeiten.
-        admin: Seitenadmin
-        admin-description_one: >
+        realm-admin-description_one: >
           Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
-        admin-description_other: >
+        realm-admin-description_other: >
           Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
-        unknown: Unbekanntes Berechtigungsschema
-        unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
         write-access: Schreibzugriff
         moderate-access: Moderationsrechte
         admin-access: Adminrechte
@@ -431,8 +443,8 @@ manage:
       Seite. Solange Sie angemeldet sind und die benötigten Rechte haben, gibt es dort entsprechende
       Seitenverwaltungs-Buttons in der Seitenleiste bzw. im Menu.
 
-  my-videos:
-    title: Meine Videos
+  item-table:
+    page-showing-ids: '{{start}}–{{end}} von {{total}}'
     navigation:
       first: Erste Seite
       previous: Vorherige Seite
@@ -444,32 +456,84 @@ manage:
       descending: absteigend
       title: Titel
       created: Erstellt
-    no-description: Keine Beschreibung
-    page-showing-video-ids: '{{start}}–{{end}} von {{total}}'
-    no-videos-found: Keine Videos gefunden.
+      updated: Aktualisiert
+      series: Serie
+    no-series: Keine
+    no-series-title: Fehlender Titel
+    no-entries-found: Keine Einträge gefunden.
+    missing-date: Unbekannt
+
+  shared:
+    created: Erstellt
+    updated: Zuletzt verändert
+    item:
+      video: Video
+      series: Serie
+    details:
+      #share-direct-link: Via Direktlink teilen
+      #copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
+      referencing-pages: Referenzierende Seiten
+    acl:
+      title: Zugriffsrechte
+    delete:
+      title: '{{item}} löschen'
+      confirm: '{{item}} löschen?'
+      cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
+      failed: Löschen fehlgeschlagen.
+      failed-maybe: Löschen möglicherweise fehlgeschlagen.
+      pending: Löschvorgang ausstehend.
+      in-progress: '„{{itemTitle}}“ wird gelöscht.'
+      tooltip:
+        failed: >
+          Der Löschvorgang für diesen Eintrag wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
+          und daher möglicherweise fehlgeschlagen.
+        pending: >
+          Der Löschvorgang dieses Eintrags in Opencast wurde angesetzt und es wird
+          nach dessen Erfolg hier entfernt.
+
+  video-list:
+    content: Videos
+    no-content: Keine Videos
+    no-of-videos_one: '{{count}} Videos'
+    no-of-videos_other: '{{count}} Videos'
+    edit:
+      add-video: Video hinzufügen
+      upload: Video hochladen
+      to-be-added: wird hinzugefügt
+      remove: Entfernen
+      to-be-removed: wird entfernt
+      cannot-be-removed: "Nicht entfernbar: Fehlender Schreibzugriff"
+      undo: Rückgängig
+      save: Änderungen speichern
+    error: Es gab einen Fehler beim Speichern der Änderungen.
+
+  my-series:
+    title: Meine Serien
+    details:
+      title: Seriendetails
+      referencing-pages-explanation: 'Diese Serie wird von den folgenden Seiten referenziert:'
+      no-referencing-pages: Diese Serie wird von keiner Seite referenziert.
+      created-note: Serie wurde erstellt.
+      edit-note: >
+        Sie können neue Videos als Teil dieser Serie hochladen und bestehende Videos, auf welche
+        Sie Schreibzugriff haben, hinzufügen oder entfernen.
+        Es können nur Videos hinzugefügt werden, die in keiner anderen Serie enthalten sind.
+        Hier entfernte Videos werden nicht gelöscht, sondern nur aus der Serie entfernt.
+    delete-note: >
+      In der Serie enthaltene Videos werden nicht gelöscht und können einer anderen Serie
+      zugeordnet werden.
+    create:
+      title: Serie erstellen
+
+  my-videos:
+    title: Meine Videos
     details:
       title: Videodetails
+      #set-time: 'Starten bei: '
       open-in-editor: Im Videoeditor öffnen
       referencing-pages: Referenzierende Seiten
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
-      delete:
-        title: Video löschen
-        confirm: Video löschen?
-        cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
-        failed: Löschen fehlgeschlagen.
-        failed-maybe: Löschen möglicherweise fehlgeschlagen.
-        pending: Löschvorgang ausstehend.
-        tooltip:
-          failed: >
-            Der Löschvorgang für dieses Video wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
-            und daher möglicherweise fehlgeschlagen.
-          pending: >
-            Der Löschvorgang dieses Videos in Opencast wurde angesetzt und es wird
-            nach dessen Erfolg hier entfernt.
-
-    acl:
-      title: Zugriffsrechte
     technical-details:
       title: Technische Details
       tracks: Video-/Audiospuren
@@ -671,15 +735,15 @@ api-remote-errors:
       Daher können Sie sich keine persönliche Seite anlegen.
       Kontaktieren Sie einen Systemadministrator für weitere Unterstützung.
   event:
-    delete:
-      not-found: Das zu löschende Video existiert nicht. Möglicherweise wurde es bereits entfernt.
-      not-allowed: Sie haben nicht die Berechtigung, dieses Video zu löschen.
-    acl:
-      not-found: "Zugriffsrechte konnten nicht geändert werden: Video nicht gefunden."
-      not-allowed: Sie haben nicht die Berechtigung, die Zugriffsreche dieses Videos zu ändern.
+    not-found: "Aktion fehlgeschlagen: Video nicht gefunden."
+    not-allowed: Sie haben nicht die Berechtigung, diese Videoaktion durchzuführen.
     workflow:
       not-allowed: Sie haben nicht die Berechtigung, die Workflowaktivität für dieses Video abzufragen.
-      active: $t(manage.access.workflow-active)
+      active-acl: $t(manage.access.workflow-active)
+      active-metadata: $t(metadata-form.event-workflow-active)
+  series:
+    not-found: "Aktion fehlgeschlagen: Serie nicht gefunden."
+    not-allowed: Sie haben nicht die Berechtigung, diese Serienaktion durchzuführen.
 
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.

@@ -192,12 +192,13 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({ info }) => (
     </WithTooltip>
 );
 
-type InfoWithTooltipProps = {
+type IconWithTooltipProps = {
     tooltip: string;
     mode: "info" | "warning";
 }
 
-export const InfoWithTooltip: React.FC<InfoWithTooltipProps> = ({ tooltip, mode }) => (
+/** Info or warning icon with tooltip. */
+export const IconWithTooltip: React.FC<IconWithTooltipProps> = ({ tooltip, mode }) => (
     <WithTooltip
         {...{ tooltip }}
         css={{ display: "flex", fontWeight: "normal" }}
@@ -206,5 +207,32 @@ export const InfoWithTooltip: React.FC<InfoWithTooltipProps> = ({ tooltip, mode 
         <span css={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
             {mode === "info" ? <LuInfo /> : <LuTriangleAlert css={{ color: COLORS.danger0 }}/>}
         </span>
+    </WithTooltip>
+);
+
+type NoteWithTooltipProps = {
+    note: string;
+    tooltip: string;
+}
+
+/** Similar to `IconWithTooltip`, but with a visible note. */
+export const NoteWithTooltip: React.FC<NoteWithTooltipProps> = ({ note, tooltip }) => (
+    <WithTooltip
+        tooltip={tooltip}
+        placement="bottom"
+        tooltipCss={{ width: 400 }}
+        css={{ display: "inline-block" }}
+    >
+        <div css={{
+            fontSize: 14,
+            lineHeight: 1,
+            color: COLORS.neutral60,
+            display: "flex",
+            gap: 4,
+            marginBottom: 16,
+        }}>
+            <LuInfo />
+            {note}
+        </div>
     </WithTooltip>
 );

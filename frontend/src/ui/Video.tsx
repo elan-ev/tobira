@@ -153,9 +153,10 @@ export const BaseThumbnailReplacement: React.FC<BaseThumbnailReplacementProps> =
 type ThumbnailOverlayProps = PropsWithChildren<{
     backgroundColor: string;
 }>;
-export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = (
-    { children, backgroundColor },
-) => (
+export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = ({
+    children,
+    backgroundColor,
+}) => (
     <div css={{
         display: "inline-flex",
         alignItems: "center",
@@ -168,18 +169,23 @@ export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = (
         fontSize: 14,
         backgroundColor,
         color: "white",
+        "@container thumbnail (width < 110px)": {
+            fontSize: 12,
+            " > svg": { fontSize: 15 },
+        },
     }}>
         {children}
     </div>
 );
 
-type ThumbnailOverlayContainerProps = JSX.IntrinsicElements["div"];
-export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps> = (
-    { children, ...rest },
-) => {
+export const ThumbnailOverlayContainer: React.FC<JSX.IntrinsicElements["div"]> = ({
+    children,
+    ...rest
+}) => {
     const isDark = useColorScheme().scheme === "dark";
 
     return <div css={{
+        container: "thumbnail / inline-size",
         position: "relative",
         transition: "0.2s box-shadow",
         overflow: "hidden",

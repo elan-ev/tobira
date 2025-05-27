@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use juniper::{GraphQLObject, GraphQLScalar, InputValue, ScalarValue};
+use juniper::{GraphQLScalar, InputValue, ScalarValue};
 use meilisearch_sdk::search::{FederationOptions, MatchRange, QueryFederationOptions};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -111,13 +111,6 @@ pub(crate) struct Filters {
     item_type: Option<ItemType>,
     start: Option<DateTime<Utc>>,
     end: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, GraphQLObject)]
-pub(crate) struct ThumbnailInfo {
-    pub(crate) thumbnail: Option<String>,
-    pub(crate) is_live: bool,
-    pub(crate) audio_only: bool,
 }
 
 
@@ -307,6 +300,8 @@ pub(crate) enum EventSearchOutcome {
 pub(crate) async fn all_events(
     user_query: &str,
     writable_only: bool,
+    exclude_series_members: bool,
+    excluded_ids: &[String],
     context: &Context,
 ) -> ApiResult<EventSearchOutcome> {
     let elapsed_time = measure_search_duration();
@@ -314,7 +309,7 @@ pub(crate) async fn all_events(
         return Err(context.not_logged_in_error());
     }
 
-    let filter = Filter::make_or_true_for_admins(context, || {
+    let mut filter = Filter::make_or_true_for_admins(context, || {
         // All users can always find all events they have write access to. If
         // `writable_only` is false, this API also returns events that are
         // listed and that the user can read.
@@ -327,7 +322,28 @@ pub(crate) async fn all_events(
                 writable,
             ])
         }
-    }).to_string();
+    });
+
+    if exclude_series_members {
+        filter = Filter::and([
+            filter,
+            Filter::Leaf("series_id IS NULL".into()),
+        ]);
+    }
+
+    if !excluded_ids.is_empty() {
+        filter = Filter::and([
+            filter,
+            Filter::Leaf(format!("id NOT IN [{}]",
+                excluded_ids.iter()
+                    .map(|id| format!("\"{}\"", id))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ).into()),
+        ]);
+    }
+
+    let filter = filter.to_string();
 
     let mut query = context.search.event_index.search();
     query.with_query(user_query);

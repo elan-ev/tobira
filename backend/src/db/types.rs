@@ -54,17 +54,6 @@ pub enum EventState {
 }
 
 
-/// Represents the `series_state` type defined in `04-series.sql`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
-#[postgres(name = "series_state")]
-#[graphql(description = "Represents the different states a series can be in during its lifecycle")]
-pub enum SeriesState {
-    #[postgres(name = "ready")]
-    Ready,
-    #[postgres(name = "waiting")]
-    Waiting,
-}
-
 /// Represents the `playlist_entry_type` type defined in `31-playlists.sql`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql)]
 #[postgres(name = "playlist_entry_type")]
@@ -81,16 +70,6 @@ pub struct PlaylistEntry {
     #[postgres(name = "type")]
     pub ty: PlaylistEntryType,
     pub content_id: String,
-}
-
-/// Represents the `playlist_entry` type defined in `31-playlists.sql`.
-#[derive(Debug, FromSql, ToSql, Clone, Serialize, Deserialize)]
-#[postgres(name = "search_thumbnail_info")]
-pub struct SearchThumbnailInfo {
-    pub url: Option<String>,
-    pub live: bool,
-    pub audio_only: bool,
-    pub read_roles: Vec<String>,
 }
 
 /// Represents the `timespan_text` type.
