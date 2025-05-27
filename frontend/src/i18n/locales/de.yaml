@@ -293,6 +293,8 @@ upload:
   drop-to-upload: Videodatei zum Hochladen per Drag-and-drop hinzufügen
   not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   specified-series-not-found: Angegebene Serie nicht gefunden.
+  missing-series-write-permission: >
+    Sie haben nicht die Berechtigung, in die angegebene Serie hochzuladen.
   select-files: Datei auswählen
   reselect: Datei erneut auswählen
   too-many-files: >

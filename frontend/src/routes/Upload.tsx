@@ -80,6 +80,7 @@ const query = graphql`
             title
             description
             created
+            canWrite
             acl { role actions info { label implies large } }
         }
     }
@@ -105,6 +106,12 @@ const Upload: React.FC<Props> = ({ uploadQueryData, seriesUrlParamSet }) => {
     const { t } = useTranslation();
     const knownRoles = useFragment<AccessKnownRolesData$key>(knownRolesFragment, uploadQueryData);
     const preselectedSeries = uploadQueryData.series;
+
+    if (preselectedSeries && !preselectedSeries.canWrite) {
+        return <Card kind="error">
+            {t("upload.missing-series-write-permission")}
+        </Card>;
+    }
 
     return (
         <div css={{

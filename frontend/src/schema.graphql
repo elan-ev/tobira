@@ -864,6 +864,8 @@ type Series implements Node {
   numVideos: Int!
   thumbnailStack: SeriesThumbnailStack!
   acl: [AclItem!]
+  "Whether the current user has write access to this series."
+  canWrite: Boolean!
   tobiraDeletionTimestamp: DateTime
   hostRealms: [Realm!]!
   entries: [VideoListEntry!]!

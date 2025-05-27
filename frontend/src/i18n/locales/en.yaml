@@ -293,6 +293,7 @@ upload:
   drop-to-upload: Drag and drop video file to upload
   not-authorized: You do not have the permission to upload videos.
   specified-series-not-found: Specified series not found.
+  missing-series-write-permission: You do not have the permission to upload into this series.
   select-files: Select file
   reselect: Reselect file
   too-many-files: You selected too many files. Currently, only a single file is supported.

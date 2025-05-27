@@ -686,6 +686,11 @@ impl Series {
         self.load_acl(context).await
     }
 
+    /// Whether the current user has write access to this series.
+    fn can_write(&self, context: &Context) -> bool {
+        self.write_roles.as_ref().is_some_and(|roles| context.auth.overlaps_roles(roles))
+    }
+
     fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {
         &self.tobira_deletion_timestamp
     }
@@ -789,4 +794,3 @@ define_sort_column_and_order!(
     };
     pub struct SeriesSortOrder
 );
-
