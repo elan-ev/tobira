@@ -322,7 +322,7 @@ metadata-form:
   title: Titel
   description: Beschreibung
   required: Pflichtfeld
-  save: Änderungen speichern
+  save: Metadaten speichern
   errors:
     field-required: Dieses Feld darf nicht leer sein.
   event-workflow-active: >
@@ -482,15 +482,34 @@ manage:
           Der Löschvorgang dieses Eintrags in Opencast wurde angesetzt und es wird
           nach dessen Erfolg hier entfernt.
 
+  video-list:
+    content: Videos
+    no-content: Keine Videos
+    no-of-videos_one: '{{count}} Videos'
+    no-of-videos_other: '{{count}} Videos'
+    edit:
+      add-video: Video hinzufügen
+      upload: Video hochladen
+      to-be-added: wird hinzugefügt
+      remove: Entfernen
+      to-be-removed: wird entfernt
+      cannot-be-removed: "Nicht entfernbar: Fehlender Schreibzugriff"
+      undo: Rückgängig
+      save: Änderungen speichern
+    error: Es gab einen Fehler beim Speichern der Änderungen.
+
   my-series:
     title: Meine Serien
-    content: Inhalt
-    no-of-videos: '{{count}} Videos'
     details:
       title: Seriendetails
       referencing-pages-explanation: 'Diese Serie wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Diese Serie wird von keiner Seite referenziert.
       created-note: Serie wurde erstellt.
+      edit-note: >
+        Sie können neue Videos als Teil dieser Serie hochladen und bestehende Videos, auf welche
+        Sie Schreibzugriff haben, hinzufügen oder entfernen.
+        Es können nur Videos hinzugefügt werden, die in keiner anderen Serie enthalten sind.
+        Hier entfernte Videos werden nicht gelöscht, sondern nur aus der Serie entfernt.
     delete-note: >
       In der Serie enthaltene Videos werden nicht gelöscht und können einer anderen Serie
       zugeordnet werden.

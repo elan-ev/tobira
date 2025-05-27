@@ -29,7 +29,7 @@ import {
     VideoListEventData$key,
 } from "./__generated__/VideoListEventData.graphql";
 import { PlaylistBlockPlaylistData$data } from "./__generated__/PlaylistBlockPlaylistData.graphql";
-import { keyOfId } from "../../util";
+import { floatingMenuProps, keyOfId } from "../../util";
 import { Link } from "../../router";
 import SeriesIcon from "../../icons/series.svg";
 import {
@@ -593,10 +593,8 @@ const List: React.FC<ListProps> = ({ type, close }) => {
     });
 
     return <Floating
-        backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
+        {...floatingMenuProps(isDark)}
         hideArrowTip
-        padding={0}
-        borderWidth={isDark ? 1 : 0}
         css={listStyle}
     >
         {list}

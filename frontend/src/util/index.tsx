@@ -6,6 +6,7 @@ import { bug, match, useColorScheme } from "@opencast/appkit";
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
+import { COLORS } from "../color";
 
 
 /**
@@ -305,13 +306,22 @@ export const useLogoConfig = () => {
 };
 
 
-type InertableProps = PropsWithChildren & { isInert: boolean }
+type InertableProps = PropsWithChildren<{
+    isInert: boolean;
+    className?: string;
+}>
 
 /** Can be used to conditionally disable and grey out control elements. */
-export const Inertable: React.FC<InertableProps> = ({ children, isInert }) => (
-    <div {...isInert && { inert: "true", css: { opacity: 0.7 } }}>
+export const Inertable: React.FC<InertableProps> = ({ children, isInert, className }) => (
+    <div {...{ className }} {...isInert && { inert: "true", css: { opacity: 0.7 } }}>
         {children}
     </div>
 );
 
 export type OcEntity = "series" | "video";
+
+export const floatingMenuProps = (isDark: boolean) => ({
+    padding: 0,
+    borderWidth: isDark ? 1 : 0,
+    backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral05,
+}) as const;

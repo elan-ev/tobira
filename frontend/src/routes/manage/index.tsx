@@ -21,7 +21,7 @@ import { COLORS } from "../../color";
 import { useMenu } from "../../layout/MenuState";
 import CONFIG from "../../config";
 import { translatedConfig } from "../../util";
-import { UploadRoute } from "../Upload";
+import { PATH as UploadPath } from "../Upload";
 import { ManageVideosRoute } from "./Video";
 import SeriesIcon from "../../icons/series.svg";
 import { ManageSeriesRoute } from "./Series";
@@ -77,7 +77,7 @@ const Manage: React.FC = () => {
 type ManageNavProps = {
     active?: typeof PATH
         | typeof ManageVideosRoute.url
-        | typeof UploadRoute.url
+        | typeof UploadPath
         | typeof ManageSeriesRoute.url
         | typeof CreateSeriesRoute.url
         | `/@${string}`
@@ -102,7 +102,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     entries.push([ManageVideosRoute.url, t("manage.my-videos.title"), <LuFilm />]);
 
     if (isRealUser(user) && user.canUpload) {
-        entries.push([UploadRoute.url, t("upload.title"), <LuUpload />]);
+        entries.push([UploadPath, t("upload.title"), <LuUpload />]);
     }
 
     if (isRealUser(user) && user.canUseStudio) {

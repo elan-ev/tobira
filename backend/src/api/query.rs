@@ -125,9 +125,19 @@ impl Query {
     async fn search_all_events(
         query: String,
         writable_only: bool,
+        #[graphql(default = false)]
+        exclude_series_members: bool,
+        #[graphql(default = [])]
+        excluded_ids: Vec<String>,
         context: &Context,
     ) -> ApiResult<EventSearchOutcome> {
-        search::all_events(&query, writable_only, context).await
+        search::all_events(
+            &query,
+            writable_only,
+            exclude_series_members,
+            &excluded_ids,
+            context,
+        ).await
     }
 
     /// Searches through series. Searches through:

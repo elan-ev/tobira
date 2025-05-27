@@ -425,6 +425,7 @@ type Mutation {
     and the series is preliminarily updated in Tobira's DB.
   """
   updateSeriesMetadata(id: ID!, metadata: BasicMetadata!): Series!
+  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [ID!]!): Series!
   """
     Sends an http request to Opencast to create a new series,
     and stores the series in Tobira's DB.
@@ -608,7 +609,7 @@ type Query {
       the user has preview access to. However, unless the user has the
       privilege to find unlisted events, only listed ones are searched.
   """
-  searchAllEvents(query: String!, writableOnly: Boolean!): EventSearchOutcome!
+  searchAllEvents(query: String!, writableOnly: Boolean!, excludeSeriesMembers: Boolean! = false, excludedIds: [String!]! = []): EventSearchOutcome!
   """
     Searches through series. Searches through:
 
