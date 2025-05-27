@@ -5,6 +5,7 @@ import { MutationParameters, Disposable } from "relay-runtime";
 import { LuCalendar, LuCircleUser, LuListPlus, LuListX, LuUndo2, LuUpload } from "react-icons/lu";
 import {
     boxError,
+    bug,
     Button,
     Floating,
     FloatingContainer,
@@ -30,6 +31,7 @@ import { thumbnailLinkStyle, titleLinkStyle } from "./Table";
 import { useNavBlocker } from "../../util";
 import { UploadRoute } from "../../Upload";
 import { LinkButton } from "../../../ui/LinkButton";
+import { isRealUser, useUser } from "../../../User";
 
 
 type Entry = Series["entries"][number];
@@ -68,6 +70,11 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
     useNavBlocker(() => events.some(e => e.action !== "none") || inFlight);
 
+    const user = useUser();
+    if (!isRealUser(user)) {
+        return bug("Used <ManageVideoListContent> without user");
+    }
+
     const onSubmit = () => commit({
         variables: {
             id: listId,
@@ -103,10 +110,10 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
             <AddVideoMenu {...{ setEvents, events }} />
             {/* // Todo: Omit upload button when adding this route for playlists */}
-            <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
+            {user.canUpload && <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
                 <LuUpload />
                 {t("manage.video-list.edit.upload")}
-            </LinkButton>
+            </LinkButton>}
         </div>
         {events.length > 0 && <>
             <div css={{
@@ -391,4 +398,3 @@ const mapItems = (entries: readonly Entry[]): ListEvent[] =>
         ...e,
         action: "none",
     }));
-

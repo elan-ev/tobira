@@ -18,7 +18,7 @@ import { mapAcl, useNavBlocker } from "./util";
 import CONFIG from "../config";
 import { LinkButton } from "../ui/LinkButton";
 import { isRealUser, User, useUser } from "../User";
-import { currentRef, Inertable, seriesId, useRefState } from "../util/index";
+import { currentRef, Inertable, keyOfId, seriesId, useRefState } from "../util/index";
 import {
     FieldIsRequiredNote,
     InputContainer,
@@ -63,7 +63,7 @@ export const UploadRoute = makeRoute({
                 {...{ query, queryRef }}
                 noindex
                 nav={() => <ManageNav active={PATH} />}
-                render={data => <Upload uploadQueryData={data} />}
+                render={data => <Upload uploadQueryData={data} seriesUrlParamSet={!!seriesParam} />}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -80,6 +80,7 @@ const query = graphql`
             title
             description
             created
+            canWrite
             acl { role actions info { label implies large } }
         }
     }
@@ -98,12 +99,19 @@ type Metadata = {
 
 type Props = {
     uploadQueryData: UploadQuery$data;
+    seriesUrlParamSet: boolean;
 };
 
-const Upload: React.FC<Props> = ({ uploadQueryData }) => {
+const Upload: React.FC<Props> = ({ uploadQueryData, seriesUrlParamSet }) => {
     const { t } = useTranslation();
     const knownRoles = useFragment<AccessKnownRolesData$key>(knownRolesFragment, uploadQueryData);
     const preselectedSeries = uploadQueryData.series;
+
+    if (preselectedSeries && !preselectedSeries.canWrite) {
+        return <Card kind="error">
+            {t("upload.missing-series-write-permission")}
+        </Card>;
+    }
 
     return (
         <div css={{
@@ -116,6 +124,11 @@ const Upload: React.FC<Props> = ({ uploadQueryData }) => {
                 tail={t("upload.title")}
             />
             <PageTitle title={t("upload.title")} />
+            {seriesUrlParamSet && preselectedSeries == null && (
+                <Card kind="error" css={{ marginBottom: 16 }}>
+                    {t("upload.specified-series-not-found")}
+                </Card>
+            )}
             <UploadMain {...{ knownRoles, preselectedSeries }} />
         </div>
     );
@@ -591,7 +604,7 @@ const UploadState: React.FC<UploadStateProps> = ({ state, seriesId }) => {
         }}>
             <span>{t("upload.upload-cancelled")}</span>
             <LinkButton kind="call-to-action" to={UploadRoute.url({
-                seriesId: seriesId ?? null,
+                seriesId: seriesId ? keyOfId(seriesId) : null,
             })}>
                 {t("upload.reselect")}
             </LinkButton>
