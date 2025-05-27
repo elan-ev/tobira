@@ -726,7 +726,8 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
     );
     const [aclError, setAclError] = useState<ReactNode>(null);
     const [aclLoading, setAclLoading] = useState(false);
-    const aclEditingLocked = (lockedAcl && CONFIG.lockAclToSeries) || aclLoading || !!aclError;
+    const lockToSeries = CONFIG.lockAclToSeries && lockedAcl;
+    const aclEditingLocked = !!lockToSeries || aclLoading || !!aclError;
 
     const fetchSeriesAcl = async (seriesId: string): Promise<Acl | null> => {
         const data = await fetchQuery<UploadSeriesAclQuery>(
@@ -847,7 +848,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
                 }}>{t("manage.shared.acl.title")}</h2>
                 {boxError(aclError)}
                 {aclLoading && <Spinner size={20} />}
-                {lockedAcl && CONFIG.lockAclToSeries && (
+                {lockToSeries && (
                     <Card kind="info" iconPos="left" css={{
                         maxWidth: 700,
                         fontSize: 14,
@@ -866,7 +867,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
                             itemType="video"
                             userIsRequired
                             onChange={field.onChange}
-                            acl={lockedAcl ?? field.value}
+                            acl={lockToSeries ? lockedAcl : field.value}
                             knownRoles={knownRoles}
                             permissionLevels={READ_WRITE_ACTIONS}
                         />}
