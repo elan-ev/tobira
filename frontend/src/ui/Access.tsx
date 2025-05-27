@@ -693,6 +693,8 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                 <Floating
                     backgroundColor={isDark ? COLORS.neutral10 : COLORS.neutral05}
                     hideArrowTip
+                    padding={0}
+                    borderWidth={isDark ? 1 : 0}
                     css={{ minWidth: 125, lineHeight: 1.4 }}
                 >
                     <ul css={{
