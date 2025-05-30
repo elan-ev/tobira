@@ -43,6 +43,9 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
                     padding: 16,
                     borderRadius: 4,
                 },
+                "a > div": {
+                    padding: 0,
+                },
             },
             nav: {
                 "> a": {
