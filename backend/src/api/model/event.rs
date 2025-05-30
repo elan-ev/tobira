@@ -310,7 +310,7 @@ impl AuthorizedEvent {
     }
 
     /// Whether the event has active workflows.
-    async fn has_active_workflows(&self, context: &Context) -> ApiResult<bool> {
+    async fn workflow_status(&self, context: &Context) -> ApiResult<WorkflowStatus> {
         if !context.auth.overlaps_roles(&self.write_roles) {
             return Err(err::not_authorized!(
                 key = "event.workflow.not-allowed",
@@ -318,16 +318,16 @@ impl AuthorizedEvent {
             ));
         }
 
-        let response = context
-            .oc_client
-            .has_active_workflows(&self.opencast_id)
-            .await
-            .map_err(|e| {
+        let status = match context.oc_client.has_active_workflows(&self.opencast_id).await {
+            Ok(true) => WfStatus::Busy,
+            Ok(false) => WfStatus::Idle,
+            Err(e) => {
                 error!("Failed to get workflow activity: {}", e);
-                err::opencast_error!("API returned unexpected response, event might be unknown")
-            })?;
+                WfStatus::Unobtainable
+            }
+        };
 
-        Ok(response)
+        Ok(WorkflowStatus { status })
     }
 
     async fn series<S: ScalarValue>(
@@ -519,6 +519,67 @@ impl AuthorizedEvent {
         Ok(event)
     }
 
+    /// Checks the current workflow status for this event. If a workflow is active or
+    /// the status cannot be determined, returns a localized error blocking the operation.
+    /// Used to guard mutation operations that also start workflows.
+    pub(crate) async fn require_idle(&self, context: &Context) -> ApiResult<()> {
+        match Self::workflow_status(self, context).await?.status {
+            WfStatus::Idle => Ok(()),
+            WfStatus::Busy => Err(err::opencast_error!(
+                key = "event.workflow.active",
+                "Cannot perform operation: another workflow is still active"
+            )),
+            WfStatus::Unobtainable => Err(err::opencast_error!(
+                key = "event.workflow.unknown-status",
+                "Cannot perform operation: workflow status could not be determined"
+            )),
+        }
+    }
+
+    pub(crate) async fn create_placeholder(event: NewEvent, context: &Context) -> ApiResult<Self> {
+        let query = format!("\
+            insert into all_events ( \
+                opencast_id, title, description, \
+                creators, series, tracks, \
+                read_roles, write_roles, preview_roles, \
+                metadata, is_live, updated, created, state \
+            ) values ( \
+                $1, $2, $3, $4, $5, $6, $7, $8, \
+                '{{}}', '{{}}', false, '-infinity', now(), 'waiting' \
+            ) returning id \
+        ");
+
+        let acl = convert_acl_input(event.acl);
+        let dummy_tracks = vec![EventTrack {
+            uri: "https://example.org/video.mp4".to_string(),
+            flavor: "presenter/preview".to_string(),
+            mimetype: Some("video/mp4".to_string()),
+            resolution: Some([1280, 720]),
+            is_master: Some(true),
+        }];
+
+        context.db.execute(&query, &[
+            &event.opencast_id,
+            &event.title,
+            &event.description,
+            &event.creators,
+            &event.series.map(|id| id.key_for(Id::SERIES_KIND)),
+            &dummy_tracks,
+            &acl.read_roles,
+            &acl.write_roles,
+        ]).await?;
+
+        let event = Self::load_by_opencast_id(event.opencast_id, context)
+            .await?
+            .ok_or_else(|| err::invalid_input!(
+                // TODO: change to generic key once #1313 is merged
+                key = "event.placeholder.not-found",
+                "event not found",
+            ))?
+            .into_result()?;
+        Ok(event)
+    }
+
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_for_mutation(id, context).await?;
 
@@ -555,15 +616,10 @@ impl AuthorizedEvent {
             return Err(err::not_authorized!("editing ACLs is not allowed"));
         }
 
-        info!(event_id = %id, "Requesting ACL update of event");
         let event = Self::load_for_mutation(id, context).await?;
+        event.require_idle(context).await?;
 
-        if Self::has_active_workflows(&event, context).await? {
-            return Err(err::opencast_error!(
-                key = "event.workflow.active-acl",
-                "ACL change blocked by another workflow",
-            ));
-        }
+        info!(event_id = %id, "Requesting ACL update of event");
 
         let response = context
             .oc_client
@@ -603,15 +659,7 @@ impl AuthorizedEvent {
         context: &Context,
     ) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_for_mutation(id, context).await?;
-
-        if Self::has_active_workflows(&event, context).await? {
-            return Err(err::opencast_error!(
-                key = "event.workflow.active-metadata",
-                "Metadata change blocked by another workflow",
-            ));
-        }
-
-        info!(event_id = %id, "Requesting metadata update of event");
+        event.require_idle(context).await?;
 
         let metadata_json = serde_json::json!([
             {
@@ -623,6 +671,8 @@ impl AuthorizedEvent {
                 "value": metadata.description
             },
         ]);
+
+        info!(event_id = %id, "Requesting metadata update of event");
 
         let response = context
             .oc_client
@@ -797,3 +847,27 @@ define_sort_column_and_order!(
     };
     pub struct VideosSortOrder
 );
+
+
+#[derive(Debug, GraphQLInputObject)]
+pub(crate) struct NewEvent {
+    opencast_id: String,
+    title: String,
+    description: Option<String>,
+    series: Option<Id>,
+    creators: Vec<String>,
+    acl: Vec<AclInputEntry>,
+}
+
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct WorkflowStatus {
+    pub(crate) status: WfStatus,
+}
+
+#[derive(GraphQLEnum, PartialEq)]
+pub(crate) enum WfStatus {
+    Busy,
+    Idle,
+    Unobtainable,
+}

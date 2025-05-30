@@ -1,6 +1,7 @@
 import React, { MutableRefObject, ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { fetchQuery, graphql, useFragment } from "react-relay";
+import { fetchQuery, graphql, useFragment, useMutation } from "react-relay";
+import type { Disposable } from "relay-runtime";
 import { keyframes } from "@emotion/react";
 import { Controller, FormProvider, useController, useForm } from "react-hook-form";
 import { LuCircleCheck, LuUpload, LuInfo } from "react-icons/lu";
@@ -43,6 +44,9 @@ import {
     UploadSeriesAclQuery,
     UploadSeriesAclQuery$data,
 } from "./__generated__/UploadSeriesAclQuery.graphql";
+import {
+    UploadCreatePlaceholderMutation,
+} from "./__generated__/UploadCreatePlaceholderMutation.graphql";
 
 
 export const PATH = "/~manage/upload" as const;
@@ -157,6 +161,21 @@ const CancelButton: React.FC<CancelButtonProps> = ({ abortController }) => {
     );
 };
 
+const createPlaceholderMutation = graphql`
+    mutation UploadCreatePlaceholderMutation($event: NewEvent!) {
+        createPlaceholderEvent(event: $event) { id }
+    }
+`;
+
+type PlaceholderEvent = {
+    opencastId: string;
+    title: string;
+    description?: string;
+    seriesId?: string;
+    creators: string[];
+    acl: Acl;
+}
+
 type UploadMainProps = {
     knownRoles: AccessKnownRolesData$data;
     preselectedSeries?: UploadQuery$data["series"];
@@ -176,6 +195,22 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
 
     const progressHistory = useRef<ProgressHistory>([]);
     const abortController = useRef(new AbortController());
+    const [commit] = useMutation<UploadCreatePlaceholderMutation>(createPlaceholderMutation);
+
+    const createPlaceholder = async (event: PlaceholderEvent) => commit({
+        variables: {
+            event: {
+                ...event,
+                acl: [...event.acl].map(
+                    ([role, { actions }]) => ({
+                        role,
+                        actions: [...actions],
+                    }),
+                ),
+            },
+        },
+        updater: store => store. invalidateStore(),
+    });
 
     router.listenAtNav(() => {
         const state = uploadState.current?.state;
@@ -216,7 +251,13 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
             if (metadata.current === null) {
                 setUploadState({ state: "waiting-for-metadata", mediaPackage, abortController });
             } else {
-                finishUpload(mediaPackage, metadata.current, user, setUploadState);
+                finishUpload(
+                    mediaPackage,
+                    metadata.current,
+                    user,
+                    setUploadState,
+                    createPlaceholder,
+                );
             }
         };
         startUpload(files, setUploadState, onProgressCallback, onDone, abortController);
@@ -251,7 +292,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
             if (uploadState.current.state === "waiting-for-metadata") {
                 // The tracks have already been uploaded, so we can finish the upload now.
                 const mediaPackage = uploadState.current.mediaPackage;
-                finishUpload(mediaPackage, metadata, user, setUploadState);
+                finishUpload(mediaPackage, metadata, user, setUploadState, createPlaceholder);
             }
         };
         const hasUploadError = uploadState.current.state === "error";
@@ -710,6 +751,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ state }) => {
 const SeriesAclQuery = graphql`
     query UploadSeriesAclQuery($seriesId: String!) {
         series: seriesByOpencastId(id: $seriesId) {
+            id
             acl { role actions info { label implies large } }
         }
     }
@@ -1112,6 +1154,7 @@ const finishUpload = async (
     metadata: Metadata,
     user: User,
     setUploadState: (state: UploadState) => void,
+    createPlaceholder: (event: PlaceholderEvent) => Promise<Disposable>,
 ) => {
     try {
         setUploadState({ state: "finishing" });
@@ -1159,6 +1202,25 @@ const finishUpload = async (
                 body.append("workflowDefinitionId", CONFIG.upload.workflow);
             }
             await ocRequest("/ingest/ingest", { method: "post", body: body }, id);
+        }
+
+        // Create placeholder to show on 'my videos' until the event is synced.
+        {
+            const ocId = new DOMParser()
+                .parseFromString(mediaPackage, "text/xml")
+                .documentElement
+                .getAttribute("id");
+
+            if (ocId) {
+                createPlaceholder({
+                    opencastId: ocId,
+                    title: metadata.title,
+                    description: metadata.description,
+                    seriesId: metadata.series?.id,
+                    acl: metadata.acl,
+                    creators: [user.displayName],
+                });
+            }
         }
 
         setUploadState({ state: "done" });
