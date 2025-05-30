@@ -228,6 +228,11 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     },
                 },
             },
+            ".paella-fallback-fullscreen": {
+                position: "fixed !important" as "fixed",
+                inset: "0 !important",
+                zIndex: "500000 !important",
+            },
         }} />
         <div
             // We use `key` here to force React to re-create this `div` and not
@@ -292,15 +297,6 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                         transform: "translate(2px, -1px)",
                         fontFamily: "var(--main-font) !important",
                     },
-                },
-
-                "& .paella-fallback-fullscreen": {
-                    position: "fixed",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    zIndex: 500000,
                 },
 
                 "button:has(.preview-play-icon), & .loader-container i": {
