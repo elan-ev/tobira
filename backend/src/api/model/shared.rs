@@ -201,7 +201,7 @@ where
     let mut acl_filter = format!("where {table}.write_roles && $1 and {table}.read_roles && $1");
     let mut user_roles = vec![];
     if context.auth.is_admin() {
-        acl_filter.push_str("or true");
+        acl_filter.push_str(" or true");
     } else {
         user_roles = context.auth.roles_vec();
     };
