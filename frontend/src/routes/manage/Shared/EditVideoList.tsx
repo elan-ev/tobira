@@ -393,8 +393,9 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
 
 
 const isAuthorizedEvent = (e: Entry): e is AuthEvent => e.__typename === "AuthorizedEvent";
-const mapItems = (entries: readonly Entry[]): ListEvent[] =>
-    entries.filter(isAuthorizedEvent).map(e => ({
-        ...e,
-        action: "none",
-    }));
+const mapItems = (entries: readonly Entry[]): ListEvent[] => entries
+    .filter(isAuthorizedEvent)
+    .sort((a, b) => a.created === b.created
+        ? 0
+        : (a.created > b.created ? 1 : -1))
+    .map(e => ({ ...e, action: "none" }));
