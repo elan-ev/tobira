@@ -231,7 +231,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             ".paella-fallback-fullscreen": {
                 position: "fixed !important" as "fixed",
                 inset: "0 !important",
-                zIndex: "500000 !important",
+                zIndex: "499 !important",
             },
         }} />
         <div
