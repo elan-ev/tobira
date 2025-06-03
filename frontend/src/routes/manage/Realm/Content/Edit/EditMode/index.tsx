@@ -1,4 +1,4 @@
-import React, { useRef, useContext } from "react";
+import React, { useRef, useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useForm, useFormContext, FormProvider } from "react-hook-form";
@@ -105,6 +105,18 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
             onCancel?.();
         }
     };
+
+    const handleEsc = (ev: KeyboardEvent) => {
+        // Pressing Escape cancels the edit mode.
+        if (ev.key === "Escape" || ev.key === "Esc") {
+            handleOnCancel();
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener("keydown", handleEsc);
+        return () => document.removeEventListener("keydown", handleEsc);
+    }, [isDirty]);
 
     const { id: realm, blocks } = useFragment(graphql`
         fragment EditModeFormRealmData on Realm {
