@@ -174,7 +174,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
             {...{ title, description, timestamp, creators, shareInfo, initialLayout, isPlaylist }}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
-                ? <div css={{ padding: 14 }}>{t("videolist-block.no-videos")}</div>
+                ? <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
                 : <>
                     {upcomingLiveEvents.length > 1 && (
                         <UpcomingEventsGrid count={upcomingLiveEvents.length}>
@@ -186,11 +186,11 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
             }
             {hasHiddenItems && <div css={{ marginTop: 16 }}>
                 {missingItems > 0 && editMode && <HiddenItemsInfo>
-                    {t("videolist-block.hidden-items.missing", { count: missingItems })}
+                    {t("video-list-block.hidden-items.missing", { count: missingItems })}
                 </HiddenItemsInfo>}
                 {unauthorizedItems > 0 && <HiddenItemsInfo>
                     <span>
-                        {t("videolist-block.hidden-items.unauthorized", {
+                        {t("video-list-block.hidden-items.unauthorized", {
                             count: unauthorizedItems,
                         })}
                         &nbsp;
@@ -456,19 +456,19 @@ const VideoListShareButton: React.FC<VideoListShareButtonProps> = props => {
 const OrderMenu: React.FC = () => {
     const { t } = useTranslation();
     const ref = useRef<FloatingHandle>(null);
-    const order = useContext(OrderContext) ?? bug("order context not defined for videolist block");
+    const order = useContext(OrderContext) ?? bug("order context not defined for video-list block");
 
     const triggerContent = match(order.eventOrder, {
-        "ORIGINAL": () => t("videolist-block.settings.original"),
-        "NEW_TO_OLD": () => t("videolist-block.settings.new-to-old"),
-        "OLD_TO_NEW": () => t("videolist-block.settings.old-to-new"),
-        "AZ": () => t("videolist-block.settings.a-z"),
-        "ZA": () => t("videolist-block.settings.z-a"),
+        "ORIGINAL": () => t("video-list-block.settings.original"),
+        "NEW_TO_OLD": () => t("video-list-block.settings.new-to-old"),
+        "OLD_TO_NEW": () => t("video-list-block.settings.old-to-new"),
+        "AZ": () => t("video-list-block.settings.a-z"),
+        "ZA": () => t("video-list-block.settings.z-a"),
     });
 
     return <FloatingBaseMenu
         {...{ ref }}
-        label={t("videolist-block.settings.order-label")}
+        label={t("video-list-block.settings.order-label")}
         triggerContent={<>{triggerContent}</>}
         list={<List type="order" close={() => ref.current?.close()} />}
     />;
@@ -496,7 +496,7 @@ const LayoutMenu: React.FC = () => {
 
     return <FloatingBaseMenu
         {...{ ref, triggerContent }}
-        label={t("videolist-block.settings.layout-label")}
+        label={t("video-list-block.settings.layout-label")}
         list={<List type="layout" close={() => ref.current?.close()} />}
     />;
 };
@@ -561,12 +561,12 @@ const List: React.FC<ListProps> = ({ type, close }) => {
 
     const sharedProps = (key: LayoutTranslationKey | OrderTranslationKey) => ({
         close: close,
-        label: t(`videolist-block.settings.${key}`),
+        label: t(`video-list-block.settings.${key}`),
     });
 
     const list = match(type, {
         layout: () => <>
-            <div>{t("videolist-block.settings.layout")}</div>
+            <div>{t("video-list-block.settings.layout")}</div>
             <ul role="menu" onBlur={handleBlur}>
                 {layoutItems.map(([layout, translationKey, icon], index) => <MenuItem
                     key={`${itemId}-${layout}`}
@@ -579,7 +579,7 @@ const List: React.FC<ListProps> = ({ type, close }) => {
             </ul>
         </>,
         order: () => <>
-            <div>{t("videolist-block.settings.order")}</div>
+            <div>{t("video-list-block.settings.order")}</div>
             <ul role="menu" onBlur={handleBlur}>
                 {orderItems.map(([order, orderKey], index) => <MenuItem
                     key={`${itemId}-${order}`}
@@ -892,12 +892,12 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
                 />
             ))}
             {leftVisible && <ProtoButton
-                aria-label={t("videolist-block.slider.scroll-left")}
+                aria-label={t("video-list-block.slider.scroll-left")}
                 onClick={() => scroll(-scrollDistance)}
                 css={{ left: 8, ...buttonCss }}
             ><LuChevronLeft /></ProtoButton>}
             {rightVisible && <ProtoButton
-                aria-label={t("videolist-block.slider.scroll-right")}
+                aria-label={t("video-list-block.slider.scroll-right")}
                 onClick={() => scroll(scrollDistance)}
                 css={{ right: 8, ...buttonCss }}
             ><LuChevronRight /></ProtoButton>}
@@ -936,7 +936,7 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
                 ...focusStyle({}),
             }}>
                 <span css={{ marginLeft: 4 }}>
-                    {t("videolist-block.upcoming-live-streams", { count })}
+                    {t("video-list-block.upcoming-live-streams", { count })}
                 </span>
             </summary>
             {children}
@@ -1008,9 +1008,9 @@ const Item: React.FC<ItemProps> = ({
             color: COLORS.neutral80,
         } as const;
         if (item === "missing") {
-            return <i css={placeholderStyle}>{t("videolist-block.missing-video")}</i>;
+            return <i css={placeholderStyle}>{t("not-found.video-not-found")}</i>;
         } else if (item === "unauthorized") {
-            return <i css={placeholderStyle}>{t("videolist-block.unauthorized")}</i>;
+            return <i css={placeholderStyle}>{t("video-list-block.unauthorized")}</i>;
         } else {
             return item.title;
         }

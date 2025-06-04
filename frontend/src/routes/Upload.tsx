@@ -120,7 +120,7 @@ const Upload: React.FC<Props> = ({ uploadQueryData, seriesUrlParamSet }) => {
             flexDirection: "column",
         }}>
             <Breadcrumbs
-                path={[{ label: t("user.manage-content"), link: ManageRoute.url }]}
+                path={[{ label: t("user.manage"), link: ManageRoute.url }]}
                 tail={t("upload.title")}
             />
             <PageTitle title={t("upload.title")} />
@@ -806,7 +806,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
         },
         rules: {
             required: CONFIG.upload.requireSeries
-                ? t("metadata-form.errors.field-required")
+                ? t("manage.metadata-form.errors.field-required")
                 : false,
         },
     });
@@ -822,7 +822,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
             {/* Series */}
             <InputContainer css={{ maxWidth: 750 }}>
                 <label htmlFor={seriesFieldId}>
-                    {t("series.series")}
+                    {t("series.singular")}
                     {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
                     <WithTooltip
                         tooltip={t("upload.metadata.note-writable-series")}
@@ -858,7 +858,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
                     marginTop: 32,
                     marginBottom: 12,
                     fontSize: 22,
-                }}>{t("manage.shared.acl.title")}</h2>
+                }}>{t("acl.title")}</h2>
                 {boxError(aclError)}
                 {aclLoading && <Spinner size={20} />}
                 {lockToSeries && (
@@ -867,7 +867,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
                         fontSize: 14,
                         marginBottom: 10,
                     }}>
-                        <Trans i18nKey="manage.access.locked-to-series">
+                        <Trans i18nKey="acl.locked-to-series">
                             <>series</>
                         </Trans>
                     </Card>

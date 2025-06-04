@@ -22,7 +22,7 @@ export const ManageVideoAccessRoute = makeManageVideoRoute(
     "/access",
     (event, data) => (
         <AclPage note={<UnlistedNote />} breadcrumbTails={[
-            { label: i18n.t("manage.my-videos.title"), link: ManageVideosRoute.url },
+            { label: i18n.t("manage.video.table"), link: ManageVideosRoute.url },
             { label: event.title, link: ManageVideoDetailsRoute.url({ videoId: event.id }) },
         ]}>
             <EventAclEditor {...{ event, data }} />
@@ -36,8 +36,8 @@ const UnlistedNote: React.FC = () => {
     const { t } = useTranslation();
 
     return <NoteWithTooltip
-        note={t("manage.access.unlisted.note")}
-        tooltip={t("manage.access.unlisted.explanation")}
+        note={t("acl.unlisted.note")}
+        tooltip={t("acl.unlisted.explanation")}
     />;
 };
 
@@ -86,11 +86,11 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
 
     return <>
         {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
-            <Trans i18nKey="manage.access.workflow-active" />
+            <Trans i18nKey="acl.workflow-active" />
         </Card>}
         {aclLockedToSeries && (
             <Card kind="info" iconPos="left" css={{ fontSize: 14, marginBottom: 10 }}>
-                <Trans i18nKey="manage.access.locked-to-series">
+                <Trans i18nKey="acl.locked-to-series">
                     series
                     <Link to={ManageSeriesAccessRoute.url({ seriesId: event.series.id })} />
                 </Trans>

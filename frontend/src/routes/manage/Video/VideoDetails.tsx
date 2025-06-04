@@ -30,10 +30,10 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
     "",
     authEvent => <DetailsPage
         kind="video"
-        pageTitle="manage.my-videos.details.title"
+        pageTitle="video.details"
         item={{ ...authEvent, updated: authEvent.syncedData?.updated }}
         breadcrumb={{
-            label: i18n.t("manage.my-videos.title"),
+            label: i18n.t("manage.video.table"),
             link: ManageVideosRoute.url,
         }}
         sections={event => [
@@ -47,9 +47,9 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
             } />,
             <VideoMetadataSection key="metadata" event={event} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
-                <HostRealms kind="videos" hostRealms={authEvent.hostRealms} itemLink={realmPath => (
+                <HostRealms kind="video" hostRealms={authEvent.hostRealms} itemLink={realmPath => (
                     <Link to={VideoRoute.url({ realmPath: realmPath, videoID: authEvent.id })}>
-                        {i18n.t("video.video")}
+                        {i18n.t("video.singular")}
                     </Link>
                 )}/>
             </div>,
@@ -94,7 +94,7 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
                 fallback="button"
                 css={buttonStyle(config, "normal", isHighContrast)}
             >
-                {t("manage.my-videos.details.open-in-editor")}
+                {t("manage.video.details.open-in-editor")}
             </ExternalLink>
         )}
         <DeleteButton
@@ -111,7 +111,7 @@ const VideoMetadataSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) =
 
     return <>
         {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: -14 }}>
-            <Trans i18nKey="metadata-form.event-workflow-active" />
+            <Trans i18nKey="manage.metadata-form.event-workflow-active" />
         </Card>}
         <MetadataSection
             disabled={event.hasActiveWorkflows}

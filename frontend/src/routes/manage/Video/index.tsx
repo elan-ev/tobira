@@ -49,7 +49,7 @@ export const ManageVideosRoute = makeRoute({
                     : <ManageItems
                         vars={vars}
                         connection={data.currentUser.myVideos}
-                        titleKey="manage.my-videos.title"
+                        titleKey="manage.video.table"
                         additionalColumns={videoColumns}
                         RenderRow={EventRow}
                     />
@@ -105,7 +105,7 @@ export type Event = Events[number];
 const videoColumns: ColumnProps<Event>[] = [
     {
         key: "SERIES",
-        label: "manage.item-table.columns.series",
+        label: "series.singular",
         headerWidth: 175,
         column: ({ item }) => <SeriesColumn
             title={item.series?.title}
@@ -114,12 +114,12 @@ const videoColumns: ColumnProps<Event>[] = [
     },
     {
         key: "UPDATED",
-        label: "manage.item-table.columns.updated",
+        label: "manage.table.columns.updated",
         column: ({ item }) => <DateColumn date={item.syncedData?.updated} />,
     },
     {
         key: "CREATED",
-        label: "manage.item-table.columns.created",
+        label: "manage.table.columns.created",
         column: ({ item }) => <DateColumn date={item.created} />,
     },
 ];
@@ -135,10 +135,10 @@ const SeriesColumn: React.FC<SeriesColumnProps> = ({ title, seriesId }) => {
     const titleLink = seriesId
         ? <Link to={DirectSeriesRoute.url({ seriesId })} css={{ textDecoration: "none" }}>
             {title && title.trim().length > 0 ? title : <i>
-                {t("manage.item-table.no-series-title")}
+                {t("manage.table.no-series-title")}
             </i>}
         </Link>
-        : <i css={{ color: COLORS.neutral60 }}>{t("manage.item-table.no-series")}</i>;
+        : <i css={{ color: COLORS.neutral60 }}>{t("general.none")}</i>;
 
     return (
         <td css={{

@@ -174,7 +174,7 @@ const LoginBox: React.FC = () => {
                     : t("login-page.user-id"),
                 password: CONFIG.auth.passwordLabel
                     ? translatedConfig(CONFIG.auth.passwordLabel, i18n)
-                    : t("login-page.password"),
+                    : t("general.password"),
                 submit: t("user.login"),
             }}
         >

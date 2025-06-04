@@ -277,7 +277,7 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesRef, realmRef, realmPath 
     // anything.
     const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
     const tail = series.title === realm.name
-        ? <i>{t("series.series")}</i>
+        ? <i>{t("series.singular")}</i>
         : series.title;
 
     return <div css={{ display: "flex", flexDirection: "column" }}>

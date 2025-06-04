@@ -120,25 +120,25 @@ export function VideoListFormFields<TFieldValues extends FieldValues>({
     const optionProps = [
         {
             option: "order",
-            title: t("videolist-block.settings.new-to-old"),
+            title: t("video-list-block.settings.new-to-old"),
             checked: order === "NEW_TO_OLD",
             value: "NEW_TO_OLD",
         },
         {
             option: "order",
-            title: t("videolist-block.settings.old-to-new"),
+            title: t("video-list-block.settings.old-to-new"),
             checked: order === "OLD_TO_NEW",
             value: "OLD_TO_NEW",
         },
         {
             option: "order",
-            title: t("videolist-block.settings.a-z"),
+            title: t("video-list-block.settings.a-z"),
             checked: order === "AZ",
             value: "AZ",
         },
         {
             option: "order",
-            title: t("videolist-block.settings.z-a"),
+            title: t("video-list-block.settings.z-a"),
             checked: order === "ZA",
             value: "ZA",
         },
@@ -146,7 +146,7 @@ export function VideoListFormFields<TFieldValues extends FieldValues>({
     if (allowOriginalOrder) {
         optionProps.unshift({
             option: "order",
-            title: t("videolist-block.settings.original"),
+            title: t("video-list-block.settings.original"),
             checked: order === "ORIGINAL",
             value: "ORIGINAL",
         });
@@ -175,30 +175,30 @@ export function VideoListFormFields<TFieldValues extends FieldValues>({
                 role="group"
                 aria-labelledby={headingId + "-order"}
             >
-                <Heading id={headingId + "-order"}>{t("videolist-block.settings.order")}</Heading>
+                <Heading id={headingId + "-order"}>{t("video-list-block.settings.order")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form, optionProps }} />
             </div>
             <div
                 role="group"
                 aria-labelledby={headingId + "-view"}
             >
-                <Heading id={headingId + "-view"}>{t("videolist-block.settings.layout")}</Heading>
+                <Heading id={headingId + "-view"}>{t("video-list-block.settings.layout")}</Heading>
                 <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
                     {
                         option: "layout",
-                        title: t("videolist-block.settings.slider"),
+                        title: t("video-list-block.settings.slider"),
                         checked: layout === "SLIDER",
                         value: "SLIDER",
                     },
                     {
                         option: "layout",
-                        title: t("videolist-block.settings.gallery"),
+                        title: t("video-list-block.settings.gallery"),
                         checked: layout === "GALLERY",
                         value: "GALLERY",
                     },
                     {
                         option: "layout",
-                        title: t("videolist-block.settings.list"),
+                        title: t("video-list-block.settings.list"),
                         checked: layout === "LIST",
                         value: "LIST",
                     },
@@ -209,17 +209,17 @@ export function VideoListFormFields<TFieldValues extends FieldValues>({
                 aria-labelledby={headingId + "-metadata"}
             >
                 <Heading id={headingId + "-metadata"}>
-                    {t("manage.realm.content.series.metadata.heading")}
+                    {t("manage.block.metadata")}
                 </Heading>
                 <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
                     {
                         option: "showTitle",
-                        title: t("manage.realm.content.show-title"),
+                        title: t("manage.block.options.show-title"),
                         checked: showTitle,
                     },
                     {
                         option: "showMetadata",
-                        title: t("manage.realm.content.show-description"),
+                        title: t("manage.block.options.show-description"),
                         checked: showMetadata,
                     },
                 ]} />
