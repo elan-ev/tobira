@@ -57,7 +57,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
     const [event, refetch] = useEventWithAuthData(protoEvent);
 
     if (event == null && edit) {
-        return <Card kind="error">{t("video.deleted-video-block")}</Card>;
+        return <Card kind="error">{t("video.deleted-block")}</Card>;
     }
 
     if (event == null) {
@@ -65,7 +65,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
     }
 
     if (event.__typename === "NotAllowed") {
-        return <Card kind="error">{t("video.not-allowed-video-block")}</Card>;
+        return <Card kind="error">{t("video.not-allowed-block")}</Card>;
     }
     if (event.__typename !== "AuthorizedEvent") {
         return unreachable();
@@ -96,7 +96,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
                 outlineOffset: 1,
             }}
         >
-            {t("video.link")}
+            {t("video.details")}
             <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
         </Link>}
     </div>;

@@ -111,7 +111,7 @@ const ChangePath: React.FC<InnerProps> = ({ realm }) => {
         return <>
             <h3>{t("manage.realm.danger-zone.change-path.heading")}</h3>
             <p css={{ fontSize: 14 }}>
-                {t("manage.realm.danger-zone.change-path.cannot-userrealm")}
+                {t("manage.realm.danger-zone.change-path.cannot-user-realm")}
             </p>
         </>;
     }
@@ -204,7 +204,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
     };
 
     const buttonContent = realm.numberOfDescendants === 0
-        ? t("manage.realm.danger-zone.delete.button-single")
+        ? t("manage.realm.danger-zone.delete.title")
         : <span>
             <Trans i18nKey="manage.realm.danger-zone.delete.button">
                 {{ numSubPages: realm.numberOfDescendants }}
@@ -212,7 +212,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
         </span>;
 
     return <>
-        <h3>{t("manage.realm.danger-zone.delete.heading")}</h3>
+        <h3>{t("manage.realm.danger-zone.delete.title")}</h3>
         <p css={{ fontSize: 14 }}>
             {t("manage.realm.danger-zone.delete.warning")}
         </p>
@@ -230,7 +230,7 @@ const RemoveRealm: React.FC<InnerProps> = ({ realm }) => {
             ref={modalRef}
         >
             <p>
-                <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone" />
+                <Trans i18nKey="general.action.cannot-be-undone" />
             </p>
         </ConfirmationModal>
     </>;

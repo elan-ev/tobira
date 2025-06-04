@@ -119,7 +119,7 @@ const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag, realmPath }) 
     }
 
     if (playlist.__typename === "NotAllowed") {
-        return <ErrorPage title={t("api-remote-errors.view.playlist")} />;
+        return <ErrorPage title={t("playlist.not-allowed")} />;
     }
     if (playlist.__typename !== "AuthorizedPlaylist") {
         return unreachable();
@@ -136,7 +136,7 @@ const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag, realmPath }) 
         <p css={{ maxWidth: "90ch" }}>{playlist.description}</p>
         <div css={{ marginTop: 12 }}>
             <PlaylistBlockFromPlaylist
-                title={t("videolist-block.videos.heading")}
+                title={t("video.singular")}
                 realmPath={realmPath}
                 fragRef={playlist}
             />

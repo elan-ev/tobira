@@ -51,7 +51,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
             },
             onError: error => {
                 currentRef(modalRef).reportError(
-                    displayCommitError(error, t("manage.realm.content.removing-failed")),
+                    displayCommitError(error, t("manage.block.removing-failed")),
                 );
             },
         });
@@ -94,7 +94,7 @@ export const RemoveButton: React.FC<Props> = ({ block: blockRef, onConfirm, name
             ref={modalRef}
         >
             <p>
-                <Trans i18nKey="manage.realm.danger-zone.delete.cannot-be-undone" />
+                <Trans i18nKey="general.action.cannot-be-undone" />
             </p>
         </ConfirmationModal>
     </>;
