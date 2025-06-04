@@ -57,7 +57,7 @@ export const EditTextBlock: React.FC<EditTextBlockProps> = ({ block: blockRef })
 
     return <EditModeForm create={create} save={save} map={(data: TextFormData) => data}>
         <TextArea
-            placeholder={t("manage.realm.content.text.content")}
+            placeholder={t("manage.block.text")}
             defaultValue={content}
             css={{ display: "block" }}
             {...form.register("content")}

@@ -64,11 +64,11 @@ const Manage: React.FC = () => {
     }
 
     return <>
-        <Breadcrumbs path={[]} tail={t("user.manage-content")} />
+        <Breadcrumbs path={[]} tail={t("user.manage")} />
         <PageTitle title={t("manage.dashboard.title")} />
         <div css={{ maxWidth: "80ch", fontSize: 14, h2: { marginBottom: 8, fontSize: 18 } }}>
-            <h2>{t("manage.dashboard.manage-pages-tile-title")}</h2>
-            {t("manage.dashboard.manage-pages-tile-body")}
+            <h2>{t("manage.dashboard.manage-pages-title")}</h2>
+            {t("manage.dashboard.manage-pages-body")}
         </div>
     </>;
 };
@@ -99,20 +99,20 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
         entries.push([`/@${user.username}`, t("realm.user-realm.my-page"), <HiOutlineFire />]);
     }
 
-    entries.push([ManageVideosRoute.url, t("manage.my-videos.title"), <LuFilm />]);
+    entries.push([ManageVideosRoute.url, t("manage.video.table"), <LuFilm />]);
 
     if (isRealUser(user) && user.canUpload) {
         entries.push([UploadPath, t("upload.title"), <LuUpload />]);
     }
 
     if (isRealUser(user) && user.canUseStudio) {
-        entries.push(["STUDIO", t("manage.dashboard.studio-tile-title"), <LuVideo />]);
+        entries.push(["STUDIO", t("manage.dashboard.studio-title"), <LuVideo />]);
     }
 
-    entries.push([ManageSeriesRoute.url, t("manage.my-series.title"), <SeriesIcon />]);
+    entries.push([ManageSeriesRoute.url, t("manage.series.table.title"), <SeriesIcon />]);
 
     if (isRealUser(user) && user.canCreateSeries) {
-        entries.push([CreateSeriesRoute.url, t("manage.my-series.create.title"), <LuCirclePlus />]);
+        entries.push([CreateSeriesRoute.url, t("manage.series.table.create"), <LuCirclePlus />]);
     }
     /* eslint-enable react/jsx-key */
 

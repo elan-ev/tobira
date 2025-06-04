@@ -117,7 +117,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
                 setSuccess(true);
                 setNotification({
                     kind: "info",
-                    message: () => t("manage.my-series.details.created-note"),
+                    message: () => t("manage.series.created-note"),
                     scope: returnPath,
                 });
                 router.goto(returnPath);
@@ -130,7 +130,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
     const onSubmit = handleSubmit(data => createSeries(data));
 
     return <>
-        <PageTitle title={t("manage.my-series.create.title")} />
+        <PageTitle title={t("manage.series.table.create")} />
         <Form
             noValidate
             onSubmit={e => e.preventDefault()}
@@ -153,7 +153,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
                     css={{ width: 400, maxWidth: "100%" }}
                     autoFocus
                     {...register("title", {
-                        required: t("metadata-form.errors.field-required") as string,
+                        required: t("manage.metadata-form.errors.field-required") as string,
                     })}
                 />
                 {boxError(errors.title?.message)}
@@ -161,7 +161,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
 
             {/* Description */}
             <InputContainer css={{ maxWidth: 750 }}>
-                <label htmlFor={descriptionFieldId}>{t("metadata-form.description")}</label>
+                <label htmlFor={descriptionFieldId}>{t("manage.metadata-form.description")}</label>
                 <TextArea id={descriptionFieldId} {...register("description")} />
             </InputContainer>
 
@@ -171,7 +171,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
                     marginTop: 32,
                     marginBottom: 12,
                     fontSize: 22,
-                }}>{t("manage.shared.acl.title")}</h2>
+                }}>{t("acl.title")}</h2>
                 <Controller
                     name="acl"
                     control={control}
@@ -188,7 +188,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
 
             {/* Submit button */}
             <SubmitButtonWithStatus
-                label={t("manage.my-series.create.title")}
+                label={t("manage.series.table.create")}
                 onClick={onSubmit}
                 disabled={!!commitError || inFlight || !isValid}
                 success={success && !isDirty}

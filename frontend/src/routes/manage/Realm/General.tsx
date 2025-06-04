@@ -142,9 +142,9 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
             // still pending, or are deleted.
             let label;
             if (block.event?.title != null) {
-                label = t("video.video") + ": " + block.event.title;
+                label = t("video.singular") + ": " + block.event.title;
             } else if (block.series?.title != null) {
-                label = t("series.series") + ": " + block.series.title;
+                label = t("series.singular") + ": " + block.series.title;
             } else {
                 return null;
             }

@@ -119,9 +119,7 @@ export const TimeInputWithCheckbox: React.FC<TimeInputWithCheckboxProps> = ({
 
     return (
         <div aria-label={t("share.set-time-label", {
-            time: timestamp > 0
-                ? secondsToTimeString(timestamp)
-                : t("share.no-time"),
+            time: timestamp > 0 ? secondsToTimeString(timestamp) : t("general.none"),
         })}>
             <InputWithCheckbox
                 {...{ checkboxChecked, setCheckboxChecked }}

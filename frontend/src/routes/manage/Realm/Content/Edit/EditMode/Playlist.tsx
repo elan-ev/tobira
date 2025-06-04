@@ -84,16 +84,16 @@ export const EditPlaylistBlock: React.FC<EditPlaylistBlockProps> = ({ block: blo
 
     return <EditModeForm create={create} save={save} map={(data: PlaylistFormData) => data}>
         <Heading>
-            {t("manage.realm.content.playlist.playlist.heading")}
+            {t("playlist.singular")}
             {isRealUser(user) && !user.canFindUnlisted && <InfoTooltip
-                info={t("manage.realm.content.playlist.playlist.findable-playlist-note")}
+                info={t("manage.block.playlist.findable-playlist-note")}
             />}
         </Heading>
         {"playlist" in errors && <div css={{ margin: "8px 0" }}>
-            <Card kind="error">{t("manage.realm.content.playlist.playlist.invalid")}</Card>
+            <Card kind="error">{t("manage.block.playlist.invalid")}</Card>
         </div>}
         {playlist?.__typename === "NotAllowed" && <Card kind="error" css={{ margin: "8px 0" }}>
-            {t("playlist.not-allowed-playlist-block")}
+            {t("playlist.not-allowed-block")}
         </Card>}
         <VideoListSelector
             type="playlist"

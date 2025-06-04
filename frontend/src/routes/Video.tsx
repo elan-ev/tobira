@@ -634,7 +634,7 @@ export const PreviewPlaceholder: React.FC<ProtectedPlayerProps> = ({
 export const CREDENTIALS_STORAGE_KEY = "tobira-video-credentials-";
 
 const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refetch }) => {
-    const { t } = useTranslation(undefined, { keyPrefix: "video.password" });
+    const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const [authState, setAuthState] = useState<AuthenticationFormState>("idle");
@@ -733,11 +733,11 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
                 setAuthState("idle");
             },
             eventAuthError: () => {
-                setAuthError(t("no-preview-permission"));
+                setAuthError(t("video.password.no-preview-permission"));
                 setAuthState("idle");
             },
             incorrectCredentials: () => {
-                setAuthError(t("invalid-credentials"));
+                setAuthError(t("video.password.invalid-credentials"));
                 setAuthState("idle");
             },
         });
@@ -760,7 +760,7 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
                 [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
                     textAlign: "left",
                 },
-            }}>{t("heading")}</h2>
+            }}>{t("video.password.heading")}</h2>
             <div css={{
                 display: "flex",
                 [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
@@ -778,9 +778,9 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
                         error={null}
                         SubmitIcon={LuLockOpen}
                         labels={{
-                            user: t("label.id"),
-                            password: t("label.password"),
-                            submit: t("label.submit"),
+                            user: t("video.password.label.id"),
+                            password: t("general.password"),
+                            submit: t("video.password.label.submit"),
                         }}
                         css={{
                             "&": { backgroundColor: "transparent" },
@@ -894,7 +894,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                         ...shrinkOnMobile,
                     }}>
                         <LuSettings size={16} />
-                        {t("video.manage")}
+                        {t("user.manage")}
                     </LinkButton>
                 )}
                 {CONFIG.showDownloadButton && event.authorizedData && (
@@ -1132,7 +1132,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             }
             {updatedFull && <>
                 <br/>
-                <i>{t("manage.shared.updated")}</i>: {updatedFull}
+                <i>{t("manage.table.updated")}</i>: {updatedFull}
             </>}
         </>;
 
@@ -1154,11 +1154,11 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
         tooltip = <>
             {startedDate
                 ? <><i>{t("video.started")}</i>: {startFull}</>
-                : <><i>{t("manage.shared.created")}</i>: {createdFull}</>
+                : <><i>{t("manage.table.columns.created")}</i>: {createdFull}</>
             }
             {updatedFull && <>
                 <br/>
-                <i>{t("manage.shared.updated")}</i>: {updatedFull}
+                <i>{t("manage.table.updated")}</i>: {updatedFull}
             </>}
         </>;
 

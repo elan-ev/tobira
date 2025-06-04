@@ -57,7 +57,7 @@ export const PlaylistBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...r
     const { t } = useTranslation();
     const { playlist, ...block } = useFragment(blockFragment, fragRef);
     return playlist == null && rest.editMode
-        ? <Card kind="error">{t("playlist.deleted-playlist-block")}</Card>
+        ? <Card kind="error">{t("playlist.deleted-block")}</Card>
         : playlist != null && <PlaylistBlockFromPlaylist fragRef={playlist} {...rest} {...block} />;
 };
 
@@ -88,13 +88,13 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
 
     if (!playlist) {
         return <VideoListBlockContainer showViewOptions={false}>
-            {t("playlist.deleted-playlist-block")}
+            {t("playlist.deleted-block")}
         </VideoListBlockContainer>;
     }
 
     if (playlist.__typename === "NotAllowed") {
         return <VideoListBlockContainer showViewOptions={false}>
-            {t("playlist.not-allowed-playlist-block")}
+            {t("playlist.not-allowed-block")}
         </VideoListBlockContainer>;
     }
     if (playlist.__typename !== "AuthorizedPlaylist") {
