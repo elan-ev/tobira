@@ -52,7 +52,7 @@ export const makeManageSeriesRoute = (
                         <ReturnLink
                             key={1}
                             url={ManageSeriesRoute.url}
-                            title="manage.my-series.title"
+                            title="manage.series.table.title"
                         />,
                         <ManageSeriesNav key={2} series={data.series} active={page} />,
                     ] : []}
@@ -118,7 +118,7 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
         {
             url: `/~manage/series/${id}`,
             page: "details",
-            body: <><LuPenLine />{t("manage.my-series.details.title")}</>,
+            body: <><LuPenLine />{t("manage.series.details.title")}</>,
         },
     ];
 
@@ -126,7 +126,7 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
         navEntries.splice(1, 0, {
             url: `/~manage/series/${id}/access`,
             page: "acl",
-            body: <><LuShieldCheck />{t("manage.shared.acl.title")}</>,
+            body: <><LuShieldCheck />{t("acl.title")}</>,
         });
     }
 

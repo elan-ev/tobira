@@ -60,10 +60,10 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
     "",
     series => <DetailsPage
         kind="series"
-        pageTitle="manage.my-series.details.title"
+        pageTitle="manage.series.details.title"
         item={series}
         breadcrumb={{
-            label: i18n.t("manage.my-series.title"),
+            label: i18n.t("manage.series.table.title"),
             link: ManageSeriesRoute.url,
         }}
         sections={series => [
@@ -78,7 +78,7 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms kind="series" hostRealms={series.hostRealms} itemLink={realmPath => (
                     <Link to={SeriesRoute.url({ realmPath: realmPath, seriesId: series.id })}>
-                        {i18n.t("series.series")}
+                        {i18n.t("series.singular")}
                     </Link>
                 )}/>
             </div>,
@@ -103,7 +103,7 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
             commit={commit}
         >
             <br />
-            <p>{t("manage.my-series.delete-note")}</p>
+            <p>{t("manage.series.details.delete-note")}</p>
         </DeleteButton>
     </div>;
 };
@@ -125,7 +125,7 @@ const SeriesContentSection: React.FC<{ series: Series }> = ({ series }) => {
         listId={series.id}
         listEntries={[...series.entries]}
         getUpdatedEntries={data => [...data.updateSeriesContent.entries]}
-        description={t("manage.my-series.details.edit-note")}
+        description={t("manage.series.details.edit-note")}
         {...{ commit, inFlight }}
     />;
 };

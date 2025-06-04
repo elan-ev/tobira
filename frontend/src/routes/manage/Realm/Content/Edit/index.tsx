@@ -17,7 +17,7 @@ type Props = {
     index: number;
     onCommit?: () => void;
     onCompleted?: () => void;
-    onError?: (error: Error, action: "manage.realm.content.moving-failed") => void;
+    onError?: (error: Error, action: "manage.block.moving-failed") => void;
     onEdit?: () => void;
 };
 
@@ -47,7 +47,7 @@ export const EditButtons: React.FC<Props> = ({
     const { blocks } = realm;
 
     const onMoveError = (error: Error) => {
-        onError?.(error, "manage.realm.content.moving-failed");
+        onError?.(error, "manage.block.moving-failed");
     };
 
     return <ButtonGroup>

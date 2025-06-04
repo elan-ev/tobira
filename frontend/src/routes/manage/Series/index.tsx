@@ -50,7 +50,7 @@ export const ManageSeriesRoute = makeRoute({
                     : <ManageItems
                         vars={vars}
                         connection={data.currentUser.mySeries}
-                        titleKey="manage.my-series.title"
+                        titleKey="manage.series.table.title"
                         additionalColumns={seriesColumns}
                         RenderRow={SeriesRow}
                     >
@@ -98,7 +98,7 @@ const CreateSeriesLink: React.FC = () => {
     return (!isRealUser(user) || !user.canCreateSeries)
         ? null
         : <LinkButton to={CREATE_SERIES_PATH} css={{ width: "fit-content" }}>
-            {t("manage.my-series.create.title")}
+            {t("manage.series.table.create")}
             <LuCirclePlus />
         </LinkButton>;
 };
@@ -111,7 +111,7 @@ export type SingleSeries = Series[number];
 const seriesColumns: ColumnProps<SingleSeries>[] = [
     {
         key: "EVENT_COUNT",
-        label: "manage.video-list.content",
+        label: "video.plural",
         headerWidth: 112,
         column: ({ item }) => <td css={{ fontSize: 14 }}>
             {i18n.t("manage.video-list.no-of-videos", { count: item.numVideos })}
@@ -119,12 +119,12 @@ const seriesColumns: ColumnProps<SingleSeries>[] = [
     },
     {
         key: "UPDATED",
-        label: "manage.item-table.columns.updated",
+        label: "manage.table.columns.updated",
         column: ({ item }) => <DateColumn date={item.updated} />,
     },
     {
         key: "CREATED",
-        label: "manage.item-table.columns.created",
+        label: "manage.table.columns.created",
         column: ({ item }) => <DateColumn date={item.created} />,
     },
 ];

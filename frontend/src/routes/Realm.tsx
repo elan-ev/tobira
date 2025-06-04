@@ -226,7 +226,7 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
     };
 
     return <>
-        <Breadcrumbs path={[]} tail={<i>{t("realm.user-realm.create.heading")}</i>} />
+        <Breadcrumbs path={[]} tail={<i>{t("realm.user-realm.create.title")}</i>} />
         <div css={{
             width: "80ch",
             maxWidth: "100%",
@@ -248,13 +248,13 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
             <Card kind="info" css={{ marginBottom: 32 }}>
                 {t("realm.user-realm.create.currently-none")}
             </Card>
-            <h1>{t("realm.user-realm.create.heading")}</h1>
+            <h1>{t("realm.user-realm.create.title")}</h1>
             <p>{t("realm.user-realm.create.what-you-can-do")}</p>
             <p>{t("realm.user-realm.create.available-at")}</p>
             <code css={{ textAlign: "center" }}>{window.location.origin + realmPath}</code>
             <p>{t("realm.user-realm.create.find-and-delete")}</p>
             <Button kind="call-to-action"css={{ marginTop: 32 }} onClick={onSubmit}>
-                {t("realm.user-realm.create.button")}
+                {t("realm.user-realm.create.title")}
             </Button>
             {isInFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
             {boxError(error)}

@@ -8,14 +8,16 @@ general:
   home: Home
   homepage: Homepage
   page: Page
+  password: Password
   leave-page-confirmation: Leave page? Changes you made may not be saved!
   action:
     close: Close
     cancel: Cancel
     save: Save
     back: Back
-    goto-homepage: Go to homepage
     share: Share
+    are-you-sure: Are you sure?
+    cannot-be-undone: This action <strong>cannot</strong> be undone!
   version-information: Version
   logo-alt: Homepage of “{{title}}”
   no-root-children: No pages yet
@@ -31,6 +33,8 @@ general:
   seconds: seconds
   minutes: minutes
   hours: hours
+  none: None
+  title: Title
 
 welcome:
   title: Welcome to Tobira!
@@ -91,16 +95,13 @@ invalid-url:
     responsible for publishing that link.
 
 about-tobira:
-  title: About “Tobira”
+  title: About Tobira
   body: >
     This video portal is powered by Tobira, a video portal software for
     Opencast. It allows its users to browse, watch and organize all videos
     and series of the connected Opencast instance. Tobira, like Opencast, is
     free open source software. For more information and to report bugs, please
     visit <1>its GitHub repository</1>.
-
-footer:
-  about-tobira: About Tobira
 
 main-menu:
   label: Menu
@@ -114,28 +115,27 @@ user:
   login: Login
   logout: Log out
   settings: User settings
-  manage-content: Manage
+  manage: Manage
 
 login-page:
-  heading: Login
+  heading: $t(user.login)
   user-id: User ID
-  password: Password
   bad-credentials: 'Login failed: invalid credentials.'
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
   already-logged-in: You are already logged in.
 
 video:
-  video: Video
+  singular: Video
+  plural: Videos
   video-page: 'Video page: “{{video}}”'
   video-player: Video player
   duration: Duration
-  link: Video details
+  details: Video details
   part-of-series: Part of series
   more-from-series: More from “{{series}}”
   more-from-playlist: More from “{{playlist}}”
-  deleted-video-block: The video referenced here was deleted.
-  not-allowed-video-block: You are not allowed to view the video embedded here.
-  preview: Preview
+  deleted-block: The video referenced here was deleted.
+  not-allowed-block: You are not allowed to view the video embedded here.
   preview-only: You need additional permissions to watch this video.
   not-ready:
     title: Video not processed yet
@@ -165,7 +165,6 @@ video:
     slides: Video (presentation)
     info: >
       Here you can download the video(s) in different formats/qualities (Right click - Save as).
-  manage: Manage
   extra-buttons: Additional video actions
   start: Start
   end: End
@@ -179,13 +178,29 @@ video:
       please note that these are not your login credentials.
     label:
       id: Identifier
-      password: Password
       submit: Verify
     invalid-credentials: Invalid credentials.
 
+series:
+  singular: Series
+  plural: Series
+  series-page: 'Series page: “{{series}}”'
+  deleted-block: The series referenced here was deleted.
+  entry-of-series-thumbnail: "Thumbnail for entry of “{{series}}”"
+  not-ready:
+    title: Series not synchronized yet
+    text: >
+      The data of the requested series has not been fully transferred yet. This should
+      happen automatically soon. Try again in a few minutes.
+    label: not synchronized
+
+playlist:
+  singular: Playlist
+  deleted-block: The playlist referenced here was deleted.
+  not-allowed: You are not authorized to view this playlist.
+  not-allowed-block: You are not authorized to view the playlist embedded here.
+
 share:
-  share-video: Share video
-  direct-link: Direct link
   share-direct-link: Share via direct link
   link: Link
   embed: Embed
@@ -198,37 +213,15 @@ share:
   set-time: 'Start at: '
   set-time-label: 'Set video start time. Current time: {{time}}.'
   set-time-unit: Set {{unit}}
-  no-time: None
 
-playlist:
-  deleted-playlist-block: The playlist referenced here was deleted.
-  not-allowed-playlist-block: You are not allowed to view the playlist embedded here.
-
-series:
-  series: Series
-  series-page: 'Series page: “{{series}}”'
-  deleted: Deleted series
-  deleted-series-block: The series referenced here was deleted.
-  entry-of-series-thumbnail: "Thumbnail for entry of “{{series}}”"
-  not-ready:
-    title: Series not synchronized yet
-    text: >
-      The data of the requested series has not been fully transferred yet. This should
-      happen automatically soon. Try again in a few minutes.
-    label: not synchronized
-
-videolist-block:
+video-list-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"
-  missing-video: Video not found
-  no-videos: No videos
   unauthorized: Missing permissions
   hidden-items:
     unauthorized_one: One video requires additional permissions to view.
     unauthorized_other: '{{count}} videos require additional permissions to view.'
     missing_one: One video is missing.
     missing_other: '{{count}} videos are missing.'
-  videos:
-    heading: Videos
   settings:
     order: Order
     order-label: Choose video order
@@ -258,8 +251,8 @@ realm:
       This is a personal user page which is managed by {{user}}.
       They are responsible for all contents.
     create:
+      title: Create your own page
       currently-none: You don't currently have a personal page.
-      heading: Create your own page
       what-you-can-do: >
         On your personal page, you can freely arrange videos, text, and other elements.
         This allows you to better present and share your content.
@@ -269,8 +262,6 @@ realm:
         Anyone who has this link or knows your username can visit your page.
         However, it will not appear anywhere in main navigation of this video portal.
         You can always delete your page later, should you change your mind.
-      button: Create your own page
-
 
 search:
   input-label: Search
@@ -280,13 +271,13 @@ search:
   too-few-characters: Please type more characters to start the search.
   unavailable: The search is currently unavailable. Try again later.
   clear: Clear search input
-  filter:
-    all: All
-    event: Videos
-    realm: Pages
-    series: Series
   select-time-frame: Select time frame
   clear-time-frame: Clear time frame
+  filter:
+    all: All
+    event: '$t(video.plural)'
+    realm: Pages
+    series: '$t(series.plural)'
 
 upload:
   title: Upload video
@@ -321,111 +312,160 @@ upload:
       Other series are therefore not listed as selectable here.
   errors:
     failed-to-upload: Failed to upload video.
-    unknown: Unknown error occurred during video upload.
     opencast-server-error: Opencast server error (unexpected response).
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
     failed-fetching-series-acl: Failed to fetch series acl.
 
-metadata-form:
-  title: Title
-  description: Description
-  required: required
-  save: Save metadata
-  errors:
-    field-required: This field is required (cannot be empty).
-  event-workflow-active: >
-      Changing the metadata is not possible at this time, since the video is being processed in the background.
-      <br />
-      Please try again later.
-
 acl:
-  unknown-user-note: unknown
-  no-entries: No entries
-  admin-user: Admin
+  title: Access policy
+  authorized-groups: Authorized groups
+  authorized-users: Authorized users
+  editing-disabled: Access policy editing is disabled.
+  workflow-active: >
+    Changing the access policy is not possible at this time, since the video is being processed in the background.
+    <br />
+    Please try again later.
+  locked-to-series: The access policy of this video is determined by its <1>series</1> and can't be edited.
+  users-no-options:
+    initial-searchable: Type to search for users by name (or enter exact email/username)
+    none-found-searchable: No user found
+    initial-not-searchable: Enter username or email of the person you want to add
+    none-found-not-searchable: No user with that username/email found
+  select:
+    groups: Add groups
+    users: Add users
+    create: 'Create {{item}}'
   groups:
     admins: Administrators
     everyone: Everyone
     logged-in-users: Logged in users
     global-page-admins: Global page admins
+  table:
+    group: Group
+    user: User
+    yourself: You
+    admin-user: Admin
+    unknown-user-note: unknown
+    no-entries: No entries
+    subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
+    inherited: 'Inherited permissions:'
+    inherited-tooltip: >
+      The following permissions were granted in a higher level page and are inherited to all subpages.
+    permissions:
+      title: Actions
+      read: Read
+      write: Read and write
+      moderate: Moderator
+      admin: Page admin
+      unknown: Unknown permission
+      unknown-description: This permission isn't known.
+      video-read-description: Can watch the video and view metadata.
+      video-write-description: Can also edit and delete the video, metadata and other details.
+      series-read-description: Usable as template for videos in this series.
+      series-write-description: Can delete the series, change metadata and add or remove videos.
+      realm-moderate-description: Can edit content, add subpages and change the name and subpage order.
+      realm-admin-description: Can moderate, delete pages and edit permissions.
+      write-access: write-access
+      moderate-access: moderating-rights
+      admin-access: page admin-rights
+      large-group-warning: You are giving {{val}} to a large group. Is this intentional?
+  unlisted:
+    note: This video is unlisted.
+    explanation: >
+      An unlisted video can only be found by sharing its direct link or via its series.
+  reset-modal:
+    label: Reset
+    title: Reset changes?
+    body: The changes you have made will be reset.
+  save-modal:
+    title: Remove own access?
+    disclaimer-write: The current selection will remove your write-access.
+      Without this, you will lose the ability to make any further edits.
+    disclaimer-admin: The current selection will remove your page admin-rights.
+      Without these, you can no longer edit these permissions, change the realm path, or delete the page.
+    confirm: Confirm
 
 manage:
-  access:
-    authorized-groups: Authorized groups
-    authorized-users: Authorized users
-    editing-disabled: Access policy editing is disabled.
-    workflow-active: >
-      Changing the access policy is not possible at this time, since the video is being processed in the background.
-      <br />
-      Please try again later.
-    locked-to-series: >
-      The access policy of this video is determined by its <1>series</1> and can't be edited.
-    users-no-options:
-      initial-searchable: Type to search for users by name (or enter exact email/username)
-      none-found-searchable: No user found
-      initial-not-searchable: Enter username or email of the person you want to add
-      none-found-not-searchable: No user with that username/email found
-    select:
-      groups: Add groups
-      users: Add users
-      create: 'Create {{item}}'
-    table:
-      group: Group
-      user: User
-      yourself: You
-      subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
-      inherited: 'Inherited permissions:'
-      inherited-tooltip: >
-        The following permissions were granted in a higher level page and are inherited to all subpages.
-      actions:
-        title: Actions
-        read: Read
-        write: Read and write
-        moderate: Moderator
-        admin: Page admin
-        unknown: Unknown permission
-        unknown-description: This permission isn't known.
-        video-read-description: Can watch the video and view metadata.
-        video-write-description: Can also edit and delete the video, metadata and other details.
-        series-read-description: Usable as template for videos in this series.
-        series-write-description: Can delete the series, change metadata and add or remove videos.
-        realm-moderate-description: Can edit content, add subpages and change the name and subpage order.
-        realm-admin-description: Can moderate, delete pages and edit permissions.
-        write-access: write-access
-        moderate-access: moderating-rights
-        admin-access: page admin-rights
-        large-group-warning: You are giving {{val}} to a large group. Is this intentional?
-    unlisted:
-      note: This video is unlisted.
-      explanation: >
-        An unlisted video can only be found by sharing its direct link or via its series.
-    reset-modal:
-      label: Reset
-      title: Reset changes?
-      body: The changes you have made will be reset.
-    save-modal:
-      title: Remove own access?
-      disclaimer-write: The current selection will remove your write-access.
-        Without this, you will lose the ability to make any further edits.
-      disclaimer-admin: The current selection will remove your page admin-rights.
-        Without these, you can no longer edit these permissions, change the realm path, or delete the page.
-      confirm: Confirm
-
   dashboard:
     title: Dashboard
-    upload-tile: Here you can upload a new video from your computer.
-    studio-tile-title: Record video
-    studio-tile-body: >
-      Create videos by recording your screen, webcam and microphone.
-    my-videos-tile: Here you can view and edit your videos.
-    user-realm-tile: >
-      On your personal pages, you can arrange videos, text, and other elements.
-    manage-pages-tile-title: Manage pages
-    manage-pages-tile-body: >
+    studio-title: Record video
+    manage-pages-title: Manage pages
+    manage-pages-body: >
       To rename, modify, and delete pages, navigate to the page in question. If you
       are logged in and have the necessary permissions, page management buttons will appear.
 
-  item-table:
+  video:
+    table: My videos
+    details:
+      delete: Delete video
+      confirm-delete: Delete video?
+      open-in-editor: Open in video editor
+      referencing-pages-explanation: 'This video is referenced on the following pages:'
+      no-referencing-pages: No pages reference this video.
+    technical-details:
+      title: Technical details
+      tracks: Video/audio tracks
+      video: $t(video.singular)
+      audio: Audio
+      unknown-mimetype: Unknown MIME type
+      opencast-id: Opencast ID
+      copy-oc-id-to-clipboard: Copy Opencast-ID to clipboard
+      further-info: Further information
+      synced: Synchronized?
+      part-of: 'Part of:'
+      is-live: Live?
+
+  series:
+    created-note: Series has been created.
+    table:
+      title: My series
+      create: Create series
+    details:
+      title: Series details
+      delete: Delete series
+      confirm-delete: Delete series?
+      referencing-pages-explanation: 'This series is referenced on the following pages:'
+      no-referencing-pages: No pages reference this series.
+      delete-note: >
+        Videos in this series will not be deleted.
+        They will remain in the system and can be added to another series.
+      edit-note: >
+        You can upload new videos as part of this series and add or remove existing videos that you
+        have write access for.
+        You may only add videos that are not part of any other series.
+        Removing a video from this list does not delete the video itself but just removes it from
+        this series.
+
+  video-list:
+    no-content: No videos
+    no-of-videos_one: '{{count}} video'
+    no-of-videos_other: '{{count}} videos'
+    edit:
+      add-video: Add video
+      to-be-added: will be added
+      remove: Remove
+      to-be-removed: will be removed
+      cannot-be-removed: "Can't be removed: Missing write access"
+      undo: Undo
+      save: Save changes
+      error: Failed to update series content.
+
+  details:
+    referencing-pages: Referencing pages
+
+  metadata-form:
+    description: Description
+    required: required
+    save: Save metadata
+    errors:
+      field-required: This field is required (cannot be empty).
+    event-workflow-active: >
+      Changing the metadata is not possible at this time, since the video is being processed in the background.
+      <br />
+      Please try again later.
+
+  table:
     page-showing-ids: '{{start}}–{{end}} of {{total}}'
     navigation:
       first: First page
@@ -436,118 +476,37 @@ manage:
       description: 'Sort by {{title}}, {{direction}}'
       ascending: ascending
       descending: descending
-      title: Title
       created: Created
       updated: Updated
-      series: Series
-    no-series: None
     no-series-title: Missing title
     no-entries-found: No entries found.
     missing-date: Unknown
-
-  shared:
-    created: Created
     updated: Last updated
-    item:
-      video: video
-      series: series
-    details:
-      #share-direct-link: Share via direct link
-      #copy-direct-link-to-clipboard: Copy link to clipboard
-      referencing-pages: Referencing pages
-    acl:
-      title: Access policy
-    delete:
-      title: Delete {{item}}
-      confirm: Delete {{item}}?
-      cannot-be-undone: This action <strong>cannot</strong> be undone!
-      failed: Deleting the {{item}} failed.
-      failed-maybe: Deleting the {{item}} possibly failed.
-      in-progress: '“{{itemTitle}}” is being deleted.'
+    deletion:
+      failed: Deletion failed.
+      failed-maybe: Deletion possibly failed.
       pending: Deletion is pending.
+      in-progress: '“{{itemTitle}}” is being deleted.'
       tooltip:
         failed: >
           The deletion of this entry was requested {{time}} but still has not happened, so it might have failed.
         pending: >
           The deletion of this entry was requested in Opencast and it will be removed from this list upon success.
 
-  video-list:
-    content: Videos
-    no-content: No videos
-    no-of-videos_one: '{{count}} video'
-    no-of-videos_other: '{{count}} videos'
-    edit:
-      add-video: Add video
-      to-be-added: will be added
-      upload: Upload video
-      remove: Remove
-      to-be-removed: will be removed
-      cannot-be-removed: "Can't be removed: Missing write access"
-      undo: Undo
-      save: Save changes
-    error: Failed to update series content.
-
-  my-series:
-    title: My series
-    details:
-      title: Series details
-      referencing-pages-explanation: 'This series is referenced on the following pages:'
-      no-referencing-pages: No pages reference this series.
-      created-note: Series has been created.
-      edit-note: >
-        You can upload new videos as part of this series and add or remove existing videos that you
-        have write access for.
-        You may only add videos that are not part of any other series.
-        Removing a video from this list does not delete the video itself but just removes it from
-        this series.
-    delete-note: >
-      Videos in this series will not be deleted.
-      They will remain in the system and can be added to another series.
-    create:
-      title: Create series
-
-  my-videos:
-    title: My videos
-    details:
-      title: Video details
-      #set-time: 'Start at: '
-      open-in-editor: Open in video editor
-      referencing-pages: Referencing pages
-      referencing-pages-explanation: 'This video is referenced on the following pages:'
-      no-referencing-pages: No pages reference this video.
-    technical-details:
-      title: Technical details
-      tracks: Video/audio tracks
-      video: Video
-      audio: Audio
-      unknown-mimetype: Unknown MIME type
-      opencast-id: Opencast ID
-      copy-oc-id-to-clipboard: Copy Opencast-ID to clipboard
-      further-info: Further information
-      synced: Synchronized?
-      part-of: 'Part of:'
-      is-live: Live?
-
-  are-you-sure: Are you sure?
-
   realm:
-    invalid-path: >
-      Error: invalid path to page. Was the page deleted or its path changed?
+    invalid-path: 'Error: invalid path to page. Was the page deleted or its path changed?'
     heading: Settings of page “{{realm}}”
     heading-root: Homepage settings
     descendants-count: This page has {{count}} direct and indirect subpages.
     view-page: Go to page
-
+    permissions: Manage permissions
     name-must-not-be-empty: Name must not be empty.
     path-must-not-be-empty: Path segment must not be empty.
     path-too-short: Path segment must be at least two characters long.
     no-control-in-path: Path segments may not include control characters.
     no-space-in-path: Path segments may not include whitespace characters.
-    illegal-chars-in-path: >
-      Path segment may not include the following characters: {{illegalChars}}
-    reserved-char-in-path: >
-      Path segment may not start with the following characters: {{reservedChars}}
-
+    illegal-chars-in-path: 'Path segment may not include the following characters: {{illegalChars}}'
+    reserved-char-in-path: 'Path segment may not start with the following characters: {{reservedChars}}'
     general:
       page-name: Page name
       name-directly: Name directly
@@ -558,7 +517,6 @@ manage:
       no-name: Omit name
       no-blocks: There are no linkable video/series on this page.
       rename-failed: Failed to change the name.
-
     children:
       heading: Order of subpages
       sort-alphabetically-asc: Sort alphabetically ascending
@@ -567,10 +525,6 @@ manage:
       failed: Changing the order failed.
       move-up: Move up
       move-down: Move down
-
-    permissions:
-      heading: Manage permissions
-
     danger-zone:
       heading: Danger zone
       root-note: The homepage cannot be deleted or moved, nor can its path be changed.
@@ -578,94 +532,42 @@ manage:
         heading: Change path
         button: Change path segment
         failed: Changing the path failed.
-        cannot-userrealm: The path of your personal page cannot be changed.
+        cannot-user-realm: The path of your personal page cannot be changed.
         warning: >
           Important: Changing the path of this page invalidates all links to
           this page, to all direct or indirect subpages, and to all videos
           linked on any of those pages. Old links, e.g. in personal
           browser-bookmarks or published somewhere, won't work anymore.
       delete:
-        heading: Delete page
+        title: Delete page
         button: Delete this page and <strong>{{numSubPages}}</strong> subpages
-        button-single: Delete page
-        cannot-be-undone: This action <strong>cannot</strong> be undone!
         confirm-removal: Delete page?
         failed: Deleting the page failed.
         warning: >
           Deleting this page will also automatically delete all direct and
           indirect subpages, as well as all content of these pages. This
           cannot be undone!
-
     content:
       heading: Edit page “{{realm}}”
       heading-root: Edit homepage
       view-page: View page
-
       add: Insert a new block here
       add-popup-title: Add new
-      add-title: Title
+      add-title: $t(general.title)
       add-text: Text
-      add-series: Series
-      add-video: Video
-      add-playlist: Playlist
-
+      add-series: $t(series.singular)
+      add-video: '$t(video.singular)'
+      add-playlist: $t(playlist.singular)
       move-down: Move block down
       move-up: Move block up
       edit: Edit block
       remove: Remove block
       confirm-removal: Remove block?
-
       cannot-remove-block: Cannot remove block
       cannot-remove-name-source-block: >
         Removal not possible as the current page derives its name from this
         block. In order to remove this block, change the name of this page in
         the page settings.
-
-      title:
-        content: Title
-
-      text:
-        content: You can add your text content here. You can also use Markdown.
-
-      series:
-        series:
-          heading: Series
-          invalid: Please select a series
-          findable-series-note: >
-            You can only select series here which are listed or which you have write-access to.
-        metadata:
-          heading: Metadata
-
-      playlist:
-        playlist:
-          heading: Playlist
-          invalid: Please select a playlist
-          findable-playlist-note: >
-            You can only select playlists here which are listed or which you have write-access to.
-        metadata:
-          heading: Metadata
-
-      event:
-        event:
-          heading: Event
-          invalid: Please select an event
-          findable-events-note: >
-            You can only select videos here which are listed or which you have write-access to.
-          no-read-access-to-current: >
-            You do not have read access to the video that is currently referenced here.
-
-      show-title: Show title
-      show-link: Show link to video page
-      show-description: Show description and metadata
-      display-options: Display options
-
-      cancel: Discard
-      confirm-cancel: Discard changes?
-      cancel-warning: Your changes have not yet been saved!
-
-      removing-failed: Removing failed.
-      moving-failed: Moving failed.
-      saving-failed: Saving your changes failed.
 
   add-child:
     heading: Add page
@@ -685,23 +587,49 @@ manage:
       Path segments must not contain whitespace nor <code>{{illegalChars}}</code>
       and they must not start with <code>{{reservedChars}}</code>.
 
+  block:
+    text: You can add your text content here. You can also use Markdown.
+    series:
+      invalid: Please select a series
+      findable-series-note: >
+        You can only select series here which are listed or which you have write-access to.
+    playlist:
+      invalid: Please select a playlist
+      findable-playlist-note: >
+        You can only select playlists here which are listed or which you have write-access to.
+    event:
+      invalid: Please select a video
+      findable-events-note: >
+        You can only select videos here which are listed or which you have write-access to.
+      no-read-access-to-current: >
+        You do not have read access to the video that is currently referenced here.
+    options:
+      show-title: Show title
+      show-link: Show link to video page
+      show-description: Show description and metadata
+    metadata: Metadata
+    cancel: Discard
+    confirm-cancel: Discard changes?
+    cancel-warning: Your changes have not yet been saved!
+    removing-failed: Removing failed.
+    moving-failed: Moving failed.
+    saving-failed: Saving your changes failed.
+
+embed:
+  not-supported: This page can't be embedded.
+
 
 # These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:
   view:
     event: You are not authorized to view this video.
-    playlist: You are not authorized to view this playlist.
-  upload:
-    not-logged-in: You have to be logged in to upload videos.
-    not-authorized: $t(upload.not-authorized)
   mutation:
     not-logged-in: You have to be logged in to perform this action.
-    not-a-tobira-admin: You have to be a Tobira admin to perform this action.
   realm:
     path-is-reserved: The chosen path is reserved and cannot be used for pages.
     path-collision: A page with this path already exists.
     no-moderator-rights: You are not allowed to modify this page.
-    no-page-admin-rights: You are not allowed to carry out this action.
+    no-page-admin-rights: You are not allowed to perform this action.
     cannot-create-user-realm: You are not allowed to create your own page.
     user-realm-already-exists: Your own page already exists.
     username-not-valid-as-path: >
@@ -709,15 +637,12 @@ api-remote-errors:
       thus you cannot create your own page. Contact a system administrator for
       further assistance.
   event:
-    not-found: "Action failed: event not found."
-    not-allowed: You are not allowed to perform this event action.
+    not-found: "Action failed: Video not found."
+    not-allowed: You are not allowed to perform this video action.
     workflow:
       not-allowed: You are not allowed to inquire about workflow activity of this video.
-      active-acl: $t(manage.access.workflow-active)
+      active-acl: $t(manage.acl.workflow-active)
       active-metadata: $t(metadata-form.event-workflow-active)
   series:
     not-found: "Action failed: series not found."
     not-allowed: You are not allowed to perform this series action.
-
-embed:
-  not-supported: This page can't be embedded.

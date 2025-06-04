@@ -55,7 +55,7 @@ export const makeManageVideoRoute = (
                         <ReturnLink
                             key={1}
                             url={ManageVideosRoute.url}
-                            title="manage.my-videos.title"
+                            title="manage.video.table"
                         />,
                         <ManageVideoNav key={2} event={data.event} active={page} />,
                     ]}
@@ -141,12 +141,12 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         {
             url: `/~manage/videos/${id}`,
             page: "details",
-            body: <><LuPenLine />{t("manage.my-videos.details.title")}</>,
+            body: <><LuPenLine />{t("video.details")}</>,
         },
         {
             url: `/~manage/videos/${id}/technical-details`,
             page: "technical-details",
-            body: <><LuInfo />{t("manage.my-videos.technical-details.title")}</>,
+            body: <><LuInfo />{t("manage.video.technical-details.title")}</>,
         },
     ];
 
@@ -154,7 +154,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         navEntries.splice(1, 0, {
             url: `/~manage/videos/${id}/access`,
             page: "acl",
-            body: <><LuShieldCheck />{t("manage.shared.acl.title")}</>,
+            body: <><LuShieldCheck />{t("acl.title")}</>,
         });
     }
 
