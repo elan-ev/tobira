@@ -82,13 +82,13 @@ export const EditSeriesBlock: React.FC<EditSeriesBlockProps> = ({ block: blockRe
 
     return <EditModeForm create={create} save={save} map={(data: SeriesFormData) => data}>
         <Heading>
-            {t("manage.realm.content.series.series.heading")}
+            {t("series.singular")}
             {isRealUser(user) && !user.canFindUnlisted && <InfoTooltip
-                info={t("manage.realm.content.series.series.findable-series-note")}
+                info={t("manage.block.series.findable-series-note")}
             />}
         </Heading>
         {"series" in errors && <div css={{ margin: "8px 0" }}>
-            <Card kind="error">{t("manage.realm.content.series.series.invalid")}</Card>
+            <Card kind="error">{t("manage.block.series.invalid")}</Card>
         </div>}
         <VideoListSelector
             type="series"

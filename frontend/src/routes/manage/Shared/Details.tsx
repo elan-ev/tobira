@@ -54,7 +54,7 @@ export const DetailsPage = <T extends Item>({
 }: PageProps<T>) => {
     const { t } = useTranslation();
     const breadcrumbs = [
-        { label: t("user.manage-content"), link: ManageRoute.url },
+        { label: t("user.manage"), link: ManageRoute.url },
         breadcrumb,
     ];
 
@@ -102,10 +102,10 @@ export const UpdatedCreatedInfo: React.FC<UpdatedCreatedInfoProps> = ({ item }) 
         <div css={{ marginBottom: 16, fontSize: 14 }}>
             {created && (
                 <span css={{ "&:not(:last-child):after": { content: "'•'", margin: "0 12px" } }}>
-                    <DateValue label={t("manage.shared.created")} value={created} />
+                    <DateValue label={t("manage.table.columns.created")} value={created} />
                 </span>
             )}
-            {updated && <DateValue label={t("manage.shared.updated")} value={updated} />}
+            {updated && <DateValue label={t("manage.table.updated")} value={updated} />}
         </div>
     );
 };
@@ -207,7 +207,7 @@ export const MetadataSection = <TMutation extends MetadataMutationParams>({
                 <MetadataFields />
                 {/* Submit */}
                 <SubmitButtonWithStatus
-                    label={t("metadata-form.save")}
+                    label={t("manage.metadata-form.save")}
                     onClick={onSubmit}
                     disabled={!!commitError || !isValid || !isDirty || inFlight}
                     success={success && !isDirty}
@@ -248,7 +248,7 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
     const modalRef = useRef<ConfirmationModalHandle>(null);
     const router = useRouter();
 
-    const i18nKey = t(`manage.shared.item.${kind}`);
+    const buttonText = t(`manage.${kind}.details.delete`);
 
     const onSubmit = () => {
         commit({
@@ -259,14 +259,14 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
                 setNotification({
                     kind: "info",
                     message: i18n => i18n.t(
-                        "manage.shared.delete.in-progress", { itemTitle: item.title },
+                        "manage.table.deletion.in-progress", { itemTitle: item.title },
                     ),
                     scope: returnPath,
                 });
                 router.goto(returnPath);
             },
             onError: error => {
-                const failedAction = t("manage.shared.delete.failed", { item: kind });
+                const failedAction = t("manage.table.deletion.failed");
                 currentRef(modalRef).reportError(displayCommitError(error, failedAction));
             },
         });
@@ -275,16 +275,16 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
     return <Inertable isInert={!isSynced(item)}>
         <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
             <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
-                {t("manage.shared.delete.title", { item: i18nKey })}
+                {buttonText}
             </span>
         </Button>
         <ConfirmationModal
-            title={t("manage.shared.delete.confirm", { item: i18nKey })}
-            buttonContent={t("manage.shared.delete.title", { item: i18nKey })}
+            title={t(`manage.${kind}.details.confirm-delete`)}
+            buttonContent={buttonText}
             onSubmit={onSubmit}
             ref={modalRef}
         >
-            <p><Trans i18nKey="manage.shared.delete.cannot-be-undone" /></p>
+            <p><Trans i18nKey="general.action.cannot-be-undone" /></p>
             {children}
         </ConfirmationModal>
     </Inertable>;
@@ -298,7 +298,7 @@ type HostRealmsProps = {
         readonly path: string;
     }[];
     itemLink: (path: string) => ReactNode;
-    kind: "videos" | "series";
+    kind: OcEntity;
 };
 
 export const HostRealms: React.FC<HostRealmsProps> = ({ hostRealms, itemLink, kind }) => {
@@ -306,12 +306,12 @@ export const HostRealms: React.FC<HostRealmsProps> = ({ hostRealms, itemLink, ki
 
     return <>
         <h2 css={{ fontSize: 20, marginBottom: 8 }}>
-            {t("manage.shared.details.referencing-pages")}
+            {t("manage.details.referencing-pages")}
         </h2>
         {hostRealms.length === 0
-            ? <i>{t(`manage.my-${kind}.details.no-referencing-pages`)}</i>
+            ? <i>{t(`manage.${kind}.details.no-referencing-pages`)}</i>
             : <>
-                <p>{t(`manage.my-${kind}.details.referencing-pages-explanation`)}</p>
+                <p>{t(`manage.${kind}.details.referencing-pages-explanation`)}</p>
                 <ul>{hostRealms.map(realm => (
                     <li key={realm.id}>
                         {realm.isMainRoot ? <i>{t("general.homepage")}</i> : realm.name}

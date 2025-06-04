@@ -74,7 +74,7 @@ export const ManageItems = <T extends Item>({
         inner = <div css={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 32 }}>
             <Notification />
             <Card kind="info" css={{ width: "fit-content", marginTop: 16 }}>
-                {t("manage.item-table.no-entries-found")}
+                {t("manage.table.no-entries-found")}
             </Card>
         </div>;
     } else {
@@ -106,7 +106,7 @@ export const ManageItems = <T extends Item>({
             height: "100%",
         }}>
             <Breadcrumbs tail={title} path={[{
-                label: t("user.manage-content"),
+                label: t("user.manage"),
                 link: ManageRoute.url,
             }]} />
             <PageTitle title={title} css={{ marginBottom: 32 }} />
@@ -212,7 +212,7 @@ const ItemTable = <T extends Item>({
                     <th></th>
                     {/* Title */}
                     <ColumnHeader
-                        label={t("manage.item-table.columns.title")}
+                        label={t("general.title")}
                         sortKey="TITLE"
                         {...{ vars }}
                     />
@@ -266,7 +266,7 @@ export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
         {parsedDate
             ? <RelativeDate date={parsedDate} />
             : <i css={greyColor}>
-                {t("manage.item-table.missing-date")}
+                {t("manage.table.missing-date")}
             </i>
         }
     </td>;
@@ -353,10 +353,7 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
             </div>
             {/* Description */}
             {deletionIsPending
-                ? <PendingDeletionBody
-                    itemType={props.itemType}
-                    {...{ deletionFailed, deletionDate }}
-                />
+                ? <PendingDeletionBody {...{ deletionFailed, deletionDate }} />
                 : <SmallDescription
                     css={{ ...descriptionStyle }}
                     text={item.description}
@@ -370,11 +367,11 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
 type PendingDeleteBodyProps = {
     deletionFailed: boolean;
     deletionDate: Date;
-    itemType: OcEntity;
 }
 
 const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
-    deletionFailed, deletionDate, itemType,
+    deletionFailed,
+    deletionDate,
 }) => {
     const isDark = useColorScheme().scheme === "dark";
     const { t } = useTranslation();
@@ -391,12 +388,12 @@ const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
             padding: "0 4px",
         }}>
             <span css={{ fontStyle: "italic" }}>
-                {t(`manage.shared.delete.${
+                {t(`manage.table.deletion.${
                     deletionFailed ? "failed-maybe" : "pending"
-                }`, { item: itemType })}
+                }`)}
             </span>
             <IconWithTooltip
-                tooltip={t(`manage.shared.delete.tooltip.${
+                tooltip={t(`manage.table.deletion.tooltip.${
                     deletionFailed ? "failed" : "pending"
                 }`, { time: relative })}
                 mode={deletionFailed ? "warning" : "info"}
@@ -419,9 +416,9 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
     return <th>
         <Link
             aria-label={
-                t("manage.item-table.columns.description", {
+                t("manage.table.columns.description", {
                     title: label,
-                    direction: t(`manage.item-table.columns.${directionTransKey}`),
+                    direction: t(`manage.table.columns.${directionTransKey}`),
                 })
             }
             to={varsToLink({
@@ -470,7 +467,7 @@ const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
             gap: 48,
         }}>
             <div>
-                {t("manage.item-table.page-showing-ids", {
+                {t("manage.table.page-showing-ids", {
                     start: page * LIMIT - LIMIT + 1,
                     end: Math.min(page * LIMIT, total),
                     total,
@@ -481,25 +478,25 @@ const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
                 <PageLink
                     vars={{ ...vars, page: 1 }}
                     disabled={!pageInfo.hasPrevPage}
-                    label={t("manage.item-table.navigation.first")}
+                    label={t("manage.table.navigation.first")}
                 ><FirstPage /></PageLink>
                 {/* Previous page */}
                 <PageLink
                     vars={{ ...vars, page: page - 1 }}
                     disabled={!pageInfo.hasPrevPage}
-                    label={t("manage.item-table.navigation.previous")}
+                    label={t("manage.table.navigation.previous")}
                 ><LuChevronLeft /></PageLink>
                 {/* Next page */}
                 <PageLink
                     vars={{ ...vars, page: page + 1 }}
                     disabled={!pageInfo.hasNextPage}
-                    label={t("manage.item-table.navigation.next")}
+                    label={t("manage.table.navigation.next")}
                 ><LuChevronRight /></PageLink>
                 {/* Last page */}
                 <PageLink
                     vars={{ ...vars, page: Math.ceil(total / LIMIT) }}
                     disabled={!pageInfo.hasNextPage}
-                    label={t("manage.item-table.navigation.last")}
+                    label={t("manage.table.navigation.last")}
                 ><LastPage /></PageLink>
             </div>
         </div>

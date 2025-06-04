@@ -60,7 +60,7 @@ export const EditBlock: React.FC<Props> = ({
         onCompleted?.();
     };
 
-    type ActionErrorKeys = `manage.realm.content.${"moving" | "saving"}-failed`;
+    type ActionErrorKeys = `manage.block.${"moving" | "saving"}-failed`;
     const onBlockError = (error: Error, action: ActionErrorKeys) => {
         setError(displayCommitError(error, t(action)));
         onError?.(error, action, index);
@@ -121,7 +121,7 @@ export const EditBlock: React.FC<Props> = ({
                         setError(null);
                     }}
                     onSave={onBlockCommit}
-                    onError={error => onBlockError(error, "manage.realm.content.saving-failed")}
+                    onError={error => onBlockError(error, "manage.block.saving-failed")}
                     onCompleted={() => {
                         onBlockCompleted();
                         commitLocalUpdate(relayEnv, store => {

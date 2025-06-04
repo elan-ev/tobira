@@ -137,7 +137,7 @@ const formatOption = (event: Option, t: TFunction) => (
             <div css={{ ...ellipsisOverflowCss(1) }}>{event.title}</div>
             <Creators creators={event.creators} />
             {event.series?.title && <div css={{ fontSize: 14 }}>
-                <i>{t("series.series")}</i>{": "}
+                <i>{t("series.singular")}</i>{": "}
                 {event.series?.title}
             </div>}
         </div>

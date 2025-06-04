@@ -60,7 +60,7 @@ export const SeriesBlockFromBlock: React.FC<FromBlockProps> = ({ fragRef, ...res
     const { series, ...block } = useFragment(blockFragment, fragRef);
 
     return series == null && rest.editMode
-        ? <Card kind="error">{t("series.deleted-series-block")}</Card>
+        ? <Card kind="error">{t("series.deleted-block")}</Card>
         : series != null && <SeriesBlockFromSeries fragRef={series} {...rest} {...block} />;
 };
 

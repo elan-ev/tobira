@@ -85,16 +85,16 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
 
     return <EditModeForm create={create} save={save} map={(data: VideoFormData) => data}>
         <Heading>
-            {t("manage.realm.content.event.event.heading")}
+            {t("video.singular")}
             {isRealUser(user) && !user.canFindUnlisted && <InfoTooltip
-                info={t("manage.realm.content.event.event.findable-events-note")}
+                info={t("manage.block.event.findable-events-note")}
             />}
         </Heading>
         {"event" in errors && <div css={{ margin: "8px 0" }}>
-            <Card kind="error">{t("manage.realm.content.event.event.invalid")}</Card>
+            <Card kind="error">{t("manage.block.event.invalid")}</Card>
         </div>}
         {event?.__typename === "NotAllowed" && <Card kind="error" css={{ margin: "8px 0" }}>
-            {t("manage.realm.content.event.event.no-read-access-to-current")}
+            {t("manage.block.event.no-read-access-to-current")}
         </Card>}
         <Controller
             defaultValue={currentEvent?.id}
@@ -111,12 +111,12 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
             {
                 option: "showTitle",
-                title: t("manage.realm.content.show-title"),
+                title: t("manage.block.options.show-title"),
                 checked: showTitle,
             },
             {
                 option: "showLink",
-                title: t("manage.realm.content.show-link"),
+                title: t("manage.block.options.show-link"),
                 checked: showLink,
             },
         ]} />
