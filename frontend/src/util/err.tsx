@@ -188,6 +188,25 @@ export class GlobalErrorBoundary
         return { error };
     }
 
+    public componentDidMount() {
+        window.addEventListener("popstate", GlobalErrorBoundary.popStateHandler);
+    }
+
+    public componentWillUnmount() {
+        window.removeEventListener("popstate", GlobalErrorBoundary.popStateHandler);
+    }
+
+    // When this error boundary is triggered, users instinctively want to go
+    // back in the browser, to where no error occured. And that might very well
+    // fix the problem. But since the browser knows that prior route was served
+    // by the same SPA instance, the browser does not perform a normal
+    // navigation, but assumes that the SPA handles it. The `onpopstate` handler
+    // of the router is already unmounted, but we need to manually reload the
+    // page like this instead.
+    private static popStateHandler(this: void) {
+        location.reload();
+    }
+
     public render(): ReactNode {
         const error = this.state.error;
         if (!error) {
