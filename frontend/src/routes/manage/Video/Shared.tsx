@@ -10,7 +10,7 @@ import { NotFound } from "../../NotFound";
 import { b64regex } from "../../util";
 import { Thumbnail } from "../../../ui/Video";
 import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.graphql";
-import { eventId, keyOfId } from "../../../util";
+import { eventId, isSynced, keyOfId } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
@@ -94,7 +94,7 @@ const query = graphql`
                 created
                 canWrite
                 isLive
-                hasActiveWorkflows @include(if: $fetchWorkflowState)
+                workflowStatus @include(if: $fetchWorkflowState) { status }
                 acl { role actions info { label implies large } }
                 syncedData {
                     duration
@@ -167,9 +167,11 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         backgroundColor: "black",
         borderRadius: 8,
     };
+
+    const thumbnailItemStatus = !isSynced(event) ? "waiting" : "ready";
     const thumbnail = <>
         <LuPlay />
-        <Thumbnail event={event} />
+        <Thumbnail event={event} status={thumbnailItemStatus} />
     </>;
 
     return <ManageNav {...{
