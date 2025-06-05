@@ -73,10 +73,10 @@ const Login: React.FC<Props> = ({ queryRef }) => {
                     alignItems: "center",
                 }}>
                     <div css={{ alignSelf: "flex-start" }}>
-                        <Breadcrumbs path={[]} tail={t("login-page.heading")} />
+                        <Breadcrumbs path={[]} tail={t("user.login")} />
                     </div>
                     <div css={{ maxWidth: "100%" }}>
-                        <PageTitle title={t("login-page.heading")} css={{
+                        <PageTitle title={t("user.login")} css={{
                             fontSize: 36,
                             marginTop: 3,
                             textAlign: "center",
@@ -174,7 +174,7 @@ const LoginBox: React.FC = () => {
                     : t("login-page.user-id"),
                 password: CONFIG.auth.passwordLabel
                     ? translatedConfig(CONFIG.auth.passwordLabel, i18n)
-                    : t("login-page.password"),
+                    : t("general.password"),
                 submit: t("user.login"),
             }}
         >

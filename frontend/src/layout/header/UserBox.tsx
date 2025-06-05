@@ -210,7 +210,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
         {
             icon: <LuFolder />,
             wrapper: <Link to={ManageRoute.url} />,
-            children: t("user.manage-content"),
+            children: t("user.manage"),
             css: { minWidth: 200 },
         },
         ...user.canCreateUserRealm ? [{
@@ -222,7 +222,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
         {
             icon: <LuFilm />,
             wrapper: <Link to={ManageVideosRoute.url} />,
-            children: t("manage.my-videos.title"),
+            children: t("manage.video.table"),
             css: indent,
         },
         ...user.canUpload ? [{
@@ -242,19 +242,19 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 fallback="link"
             />,
             keepOpenAfterClick: true,
-            children: t("manage.dashboard.studio-tile-title"),
+            children: t("manage.dashboard.studio-title"),
             css: { ...indent, width: "100%" },
         }] : [],
         {
             icon: <SeriesIcon />,
             wrapper: <Link to={ManageSeriesRoute.url} />,
-            children: t("manage.my-series.title"),
+            children: t("manage.series.table.title"),
             css: indent,
         },
         ...user.canCreateSeries ? [{
             icon: <LuCirclePlus />,
             wrapper: <Link to={CreateSeriesRoute.url} />,
-            children: t("manage.my-series.create.title"),
+            children: t("manage.series.table.create"),
             css: indent,
         }] : [],
 

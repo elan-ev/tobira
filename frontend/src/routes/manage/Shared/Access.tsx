@@ -40,18 +40,18 @@ export const AclPage: React.FC<AclPageProps> = ({ children, note, breadcrumbTail
     }
 
     const breadcrumbs = [
-        { label: t("user.manage-content"), link: ManageRoute.url },
+        { label: t("user.manage"), link: ManageRoute.url },
         ...breadcrumbTails,
     ];
 
     return <>
-        <Breadcrumbs path={breadcrumbs} tail={t("manage.shared.acl.title")} />
-        <PageTitle title={t("manage.shared.acl.title")} />
+        <Breadcrumbs path={breadcrumbs} tail={t("acl.title")} />
+        <PageTitle title={t("acl.title")} />
         {note}
         <br />
         {CONFIG.allowAclEdit
             ? children
-            : <Card kind="info">{t("manage.access.editing-disabled")}</Card>
+            : <Card kind="info">{t("acl.editing-disabled")}</Card>
         }
     </>;
 };

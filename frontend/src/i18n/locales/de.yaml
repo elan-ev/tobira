@@ -8,6 +8,7 @@ general:
   home: Startseite
   homepage: Startseite
   page: Seite
+  password: Password
   leave-page-confirmation: >
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
   action:
@@ -15,8 +16,9 @@ general:
     cancel: Abbrechen
     save: Speichern
     back: Zurück
-    goto-homepage: Zur Startseite
     share: Teilen
+    are-you-sure: Sind Sie sich sicher?
+    cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
   version-information: Version
   logo-alt: Startseite von „{{title}}“
   no-root-children: Noch keine Seiten
@@ -32,6 +34,8 @@ general:
   seconds: Sekunden
   minutes: Minuten
   hours: Stunden
+  none: Keine
+  title: Titel
 
 welcome:
   title: Willkommen zu Tobira!
@@ -92,7 +96,7 @@ invalid-url:
     Stelle, die diesen veröffentlicht hat.
 
 about-tobira:
-  title: Informationen über „Tobira“
+  title: Informationen über Tobira
   body: >
     Dieses Videoportal nutzt Tobira, eine Videoportal-Software für
     Opencast. Es erlaubt seinen Nutzern, alle Videos und Serien aus der
@@ -100,9 +104,6 @@ about-tobira:
     organisieren. Tobira, wie auch Opencast selber, ist kostenlose
     Open-Source-Software. Weitere Informationen und die Möglichkeit,
     Fehler zu melden, gibt es im <1>GitHub-Repository des Projekts</1>.
-
-footer:
-  about-tobira: Über Tobira
 
 main-menu:
   label: Menü
@@ -116,29 +117,28 @@ user:
   login: Anmelden
   logout: Abmelden
   settings: Nutzereinstellungen
-  manage-content: Verwalten
+  manage: Verwalten
 
 login-page:
   heading: Anmeldung
   user-id: Nutzerkennung
-  password: Passwort
   bad-credentials: 'Anmeldung fehlgeschlagen: Falsche Anmeldedaten.'
   unexpected-response: '$t(errors.unexpected-response) $t(errors.not-your-fault)'
   already-logged-in: Sie sind bereits angemeldet.
 
 video:
-  video: Video
+  singular: Video
+  plural: Videos
   video-page: 'Video Seite: „{{video}}“'
   video-player: Videoplayer
   duration: Abspielzeit
-  link: Videodetails
+  details: Videodetails
   part-of-series: Teil der Serie
   more-from-series: Mehr von „{{series}}“
   more-from-playlist: Mehr von „{{playlist}}”
-  deleted-video-block: Das hier referenzierte Video wurde gelöscht.
-  not-allowed-video-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
-  preview: Vorschau
-  preview-only: Sie brauchen zusätzliche Berichtigungen, um dieses Video anzuschauen.
+  deleted-block: Das hier referenzierte Video wurde gelöscht.
+  not-allowed-block: Sie sind nicht autorisiert, das hier eingebettete Video zu sehen.
+  preview-only: Sie benötigen zusätzliche Berechtigungen, um dieses Video anzusehen.
   not-ready:
     title: Video noch nicht verarbeitet
     text: >
@@ -168,7 +168,6 @@ video:
     info: >
       Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen
       (Rechtsklick - Speichern unter).
-  manage: Verwalten
   extra-buttons: Weitere Videoaktionen
   start: Anfang
   end: Ende
@@ -176,20 +175,37 @@ video:
   password:
     heading: Geschütztes Video
     sub-heading: Zugriff zu diesem Video ist beschränkt.
+    no-preview-permission: $t(api-remote-errors.view.event)
     body: >
       Bitte geben Sie die Zugangsdaten ein, die Sie für dieses Videos erhalten haben.
       Beachten Sie, dass diese nicht Ihren Logindaten für dieses Portal entsprechen.
     label:
       id: Kennung
-      password: Passwort
       submit: Freischalten
     invalid-credentials: Ungültige Zugangsdaten.
 
+series:
+  singular: Serie
+  plural: Serien
+  series-page: 'Serienseite: “{{series}}”'
+  deleted-block: Die hier referenzierte Serie wurde gelöscht.
+  entry-of-series-thumbnail: "Vorschlaubild für Teil von „{{series}}“"
+  not-ready:
+    title: Serie noch nicht synchronisiert
+    text: >
+      Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
+      in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
+    label: nicht synchronisiert
+
+playlist:
+  singular: Playlist
+  deleted-block: Die hier referenzierte Playlist wurde gelöscht.
+  not-allowed: Sie sind nicht autorisiert, diese Playlist zu sehen.
+  not-allowed-block: Sie sind nicht autorisiert, die hier eingebettete Playlist zu sehen.
+
 share:
-  share-video: Video teilen
-  direct-link: Direktlink
   share-direct-link: Via Direktlink teilen
-  main: Link
+  link: Link
   embed: Einbetten
   rss: RSS
   show-qr-code: QR Code anzeigen
@@ -200,36 +216,15 @@ share:
   set-time: 'Starten bei: '
   set-time-label: 'Videostartzeit einstellen. Aktuell: {{time}}.'
   set-time-unit: '{{unit}} einstellen'
-  no-time: Keine
 
-playlist:
-  deleted-playlist-block: Die hier referenzierte Playlist wurde gelöscht.
-  not-allowed-playlist-block: Sie sind nicht autorisiert, die hier eingebettete Playlist zu sehen.
-
-series:
-  series: Serie
-  deleted: Gelöschte Serie
-  deleted-series-block: Die hier referenzierte Serie wurde gelöscht.
-  entry-of-series-thumbnail: "Vorschlaubild für Teil von „{{series}}“"
-  not-ready:
-    title: Serie noch nicht synchronisiert
-    text: >
-      Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
-      in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
-    label: nicht synchronisiert
-
-videolist-block:
+video-list-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
-  missing-video: Video nicht gefunden
-  no-videos: Keine Videos
   unauthorized: Fehlende Berechtigung
   hidden-items:
     unauthorized_one: Für ein Video fehlen Ihnen die Zugriffsrechte.
     unauthorized_other: 'Für {{count}} Videos fehlen Ihnen die Zugriffsrechte.'
     missing_one: Ein Video wurde nicht gefunden.
     missing_other: '{{count}} Videos wurden nicht gefunden.'
-  videos:
-    heading: Videos
   settings:
     order: Reihenfolge
     order-label: Video Reihenfolge auswählen
@@ -259,8 +254,8 @@ realm:
       Dies ist eine persönliche Nutzerseite, die allein von {{user}} gepflegt wird.
       Für alle Inhalte ist {{user}} verantwortlich.
     create:
+      title: Persönliche Seite erstellen
       currently-none: Sie haben zurzeit keine persönliche Seite.
-      heading: Persönliche Seite erstellen
       what-you-can-do: >
         Auf Ihrer persönlichen Seite können Sie frei Videos, Text und andere Elemente anordnen,
         um so Inhalte besser präsentieren und teilen zu können.
@@ -270,7 +265,6 @@ realm:
         Alle, die diesen Link oder Ihren Benutzernamen kennen, können Ihre Seite besuchen.
         Ihre Seite wird jedoch nicht in der Hauptnavigation dieses Videoportals auftauchen.
         Sie können Ihre Seite später jederzeit wieder löschen.
-      button: Persönliche Seite erstellen
 
 search:
   input-label: Suche
@@ -280,13 +274,13 @@ search:
   too-few-characters: Tippen Sie weitere Zeichen, um die Suche zu starten.
   unavailable: Die Suchfunktion ist zurzeit nicht verfügbar. Versuchen Sie es später erneut.
   clear: Suchbegriff löschen
-  filter:
-    all: Alle
-    event: Videos
-    realm: Seiten
-    series: Serien
   select-time-frame: Zeitraum auswählen
   clear-time-frame: Zeitraum zurücksetzen
+  filter:
+    all: Alle
+    event: '$t(video.plural)'
+    realm: Seiten
+    series: '$t(series.plural)'
 
 upload:
   title: Video hochladen
@@ -324,129 +318,178 @@ upload:
       Andere Serien sind daher hier nicht auswählbar.
   errors:
     failed-to-upload: Hochladen fehlgeschlagen.
-    unknown: Während des Dateiuploads ist ein unbekannter Fehler aufgetreten.
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
     failed-fetching-series-acl: Abruf der Serienzugangsberechtigungen fehlgeschlagen.
 
-metadata-form:
-  title: Titel
-  description: Beschreibung
-  required: Pflichtfeld
-  save: Metadaten speichern
-  errors:
-    field-required: Dieses Feld darf nicht leer sein.
-  event-workflow-active: >
-    Änderung der Metadaten ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
+acl:
+  title: Zugriffsrechte
+  authorized-groups: Autorisierte Gruppen
+  authorized-users: Autorisierte Personen
+  editing-disabled: Bearbeitung der Zugangsberechtigungen ist deaktiviert.
+  workflow-active: >
+    Änderung der Berechtigungen ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
     <br />
     Bitte versuchen Sie es später nochmal.
-acl:
-  unknown-user-note: unbekannt
-  no-entries: Keine Einträge
-  admin-user: Admin
+  locked-to-series: >
+    Die Berechtigungen dieses Videos werden durch seine <1>Serie</1> bestimmt und können daher nicht bearbeitet werden.
+  users-no-options:
+    initial-searchable: Nach Name suchen oder exakten Nutzernamen/exakte E-Mail angeben
+    none-found-searchable: Keine Personen gefunden
+    initial-not-searchable: Geben Sie Nutzernamen oder E-Mail an, um Personen hinzuzufügen
+    none-found-not-searchable: Keine Person mit diesem Nutzernamen bzw. dieser E-Mail gefunden
+  select:
+    groups: Gruppen hinzufügen
+    users: Personen hinzufügen
+    create: '{{item}} erstellen'
   groups:
     admins: Administration
     everyone: Alle
     logged-in-users: Eingeloggte Nutzende
     global-page-admins: Globale Seitenadministration
+  table:
+    group: Gruppe
+    user: Person
+    yourself: Sie
+    admin-user: Admin
+    unknown-user-note: unbekannt
+    no-entries: Keine Einträge
+    subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
+    inherited: 'Geerbte Berechtigungen:'
+    inherited-tooltip: >
+      Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden an alle Unterseiten
+      vererbt.
+    permissions:
+      title: Berechtigung
+      read: Lesen
+      write: Lesen und schreiben
+      moderate: Moderation
+      admin: Seitenadmin
+      unknown: Unbekanntes Berechtigungsschema
+      unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
+      video-read-description_one: Kann das Video anschauen und Metadaten sehen.
+      video-read-description_other: Können das Video anschauen und Metadaten sehen.
+      video-write-description_one: >
+        Kann außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
+      video-write-description_other: >
+        Können außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
+      series-read-description: Nutzbar als Vorlage für Videos dieser Serie.
+      series-write-description_one: >
+        Kann Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
+      series-write-description_other: >
+        Können Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
+      realm-moderate-description_one: >
+        Kann Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
+        der Unterseiten bearbeiten.
+      realm-moderate-description_other: >
+        Können Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
+        der Unterseiten bearbeiten.
+      realm-admin-description_one: >
+        Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
+      realm-admin-description_other: >
+        Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
+      write-access: Schreibzugriff
+      moderate-access: Moderationsrechte
+      admin-access: Adminrechte
+      large-group-warning: Sie geben einer großen Gruppe {{val}}. Ist das beabsichtigt?
+  unlisted:
+      note: Dieses Video ist ungelistet.
+      explanation: >
+        Ein ungelistetes Video ist nur über seinen direkten Link oder seine Serie aufrufbar.
+  reset-modal:
+    label: Zurücksetzen
+    title: Änderungen zurücksetzen?
+    body: Von Ihnen getätigte Änderungen werden zurückgesetzt.
+  save-modal:
+    title: Eigenen Zugriff entfernen?
+    disclaimer-write: Die aktuelle Auswahl wird Ihren Schreibzugriff entfernen.
+      Ohne diesen werden Sie keine weiteren Änderungen vornehmen können.
+    disclaimer-admin: Die aktuelle Auswahl wird ihre Verwaltungsrechte entfernen.
+      Ohne diese werden Sie keine weiteren Änderungen an diesen Berechtigungen und dem Seitenpfad
+      vornehmen können, und die Seite kann von Ihnen nicht mehr gelöscht werden.
+    confirm: Bestätigen
 
 manage:
-  access:
-    authorized-groups: Autorisierte Gruppen
-    authorized-users: Autorisierte Personen
-    editing-disabled: Bearbeitung der Zugangsberechtigungen ist deaktiviert.
-    workflow-active: >
-      Änderung der Berechtigungen ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
-      <br />
-      Bitte versuchen Sie es später nochmal.
-    locked-to-series: >
-      Die Berechtigungen dieses Videos werden durch seine <1>Serie</1> bestimmt und können daher nicht bearbeitet werden.
-    users-no-options:
-      initial-searchable: Nach Name suchen oder exakten Nutzernamen/exakte E-Mail angeben
-      none-found-searchable: Keine Personen gefunden
-      initial-not-searchable: Geben Sie Nutzernamen oder E-Mail an, um Personen hinzuzufügen
-      none-found-not-searchable: Keine Person mit diesem Nutzernamen bzw. dieser E-Mail gefunden
-    select:
-      groups: Gruppen hinzufügen
-      users: Personen hinzufügen
-      create: '{{item}} erstellen'
-    table:
-      group: Gruppe
-      user: Person
-      yourself: Sie
-      subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
-      inherited: 'Geerbte Berechtigungen:'
-      inherited-tooltip: >
-        Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden an alle Unterseiten
-        vererbt.
-      actions:
-        title: Berechtigung
-        read: Lesen
-        write: Lesen und schreiben
-        moderate: Moderation
-        unknown: Unbekanntes Berechtigungsschema
-        admin: Seitenadmin
-        unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
-        video-read-description_one: Kann das Video anschauen und Metadaten sehen.
-        video-read-description_other: Können das Video anschauen und Metadaten sehen.
-        video-write-description_one: >
-          Kann außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
-        video-write-description_other: >
-          Können außerdem das Video editieren, löschen und Metadaten sowie andere Videodetails verändern.
-        series-read-description: Nutzbar als Vorlage für Videos dieser Serie.
-        series-write-description_one: >
-          Kann Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
-        series-write-description_other: >
-          Können Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
-        realm-moderate-description_one: >
-          Kann Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
-          der Unterseiten bearbeiten.
-        realm-moderate-description_other: >
-          Können Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
-          der Unterseiten bearbeiten.
-        realm-admin-description_one: >
-          Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
-        realm-admin-description_other: >
-          Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
-        write-access: Schreibzugriff
-        moderate-access: Moderationsrechte
-        admin-access: Adminrechte
-        large-group-warning: Sie geben einer großen Gruppe {{val}}. Ist das beabsichtigt?
-    unlisted:
-        note: Dieses Video ist ungelistet.
-        explanation: >
-          Ein ungelistetes Video ist nur über seinen direkten Link oder seine Serie aufrufbar.
-    reset-modal:
-      label: Zurücksetzen
-      title: Änderungen zurücksetzen?
-      body: Von Ihnen getätigte Änderungen werden zurückgesetzt.
-    save-modal:
-      title: Eigenen Zugriff entfernen?
-      disclaimer-write: Die aktuelle Auswahl wird Ihren Schreibzugriff entfernen.
-        Ohne diesen werden Sie keine weiteren Änderungen vornehmen können.
-      disclaimer-admin: Die aktuelle Auswahl wird ihre Verwaltungsrechte entfernen.
-        Ohne diese werden Sie keine weiteren Änderungen an diesen Berechtigungen und dem Seitenpfad
-        vornehmen können, und die Seite kann von Ihnen nicht mehr gelöscht werden.
-      confirm: Bestätigen
-
   dashboard:
     title: Dashboard
-    upload-tile: Hier können Sie Videos von Ihrem Computer hochladen.
-    studio-tile-title: Video aufnehmen
-    studio-tile-body: >
-      Erstellen Sie Videos, indem Sie Ihren Bildschirm, Ihre Webcam
-      und Ihr Mikrofonsignal aufzeichnen.
-    my-videos-tile: Hier finden Sie Ihre Videos und können diese verwalten und bearbeiten.
-    user-realm-tile: >
-      Auf Ihren persönlichen Seiten können Sie Videos, Text und andere Elemente anordnen.
-    manage-pages-tile-title: Seiten verwalten
-    manage-pages-tile-body: >
+    studio-title: Video aufnehmen
+    manage-pages-title: Seiten verwalten
+    manage-pages-body: >
       Um Seiten zu bearbeiten, umzubenennen und zu löschen, navigieren Sie zu der gewünschten
       Seite. Solange Sie angemeldet sind und die benötigten Rechte haben, gibt es dort entsprechende
       Seitenverwaltungs-Buttons in der Seitenleiste bzw. im Menu.
 
-  item-table:
+  video:
+    table: Meine Videos
+    details:
+      delete: Video löschen
+      confirm-delete: Video löschen?
+      open-in-editor: Im Videoeditor öffnen
+      referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
+      no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
+    technical-details:
+      title: Technische Details
+      tracks: Video-/Audiospuren
+      video: $t(video.singular)
+      audio: Audio
+      unknown-mimetype: Unbekannter MIME-Type
+      opencast-id: Opencast-ID
+      copy-oc-id-to-clipboard: Opencast-ID in Zwischenablage kopieren
+      further-info: Weitere Informationen
+      synced: Synchronisiert?
+      part-of: 'Teil von:'
+      is-live: Live?
+
+  series:
+    created-note: Serie wurde erstellt.
+    table:
+      title: Meine Serien
+      create: Serie erstellen
+    details:
+      title: Seriendetails
+      delete: Serie löschen
+      confirm-delete: Serie löschen?
+      referencing-pages-explanation: 'Diese Serie wird von den folgenden Seiten referenziert:'
+      no-referencing-pages: Diese Serie wird von keiner Seite referenziert.
+      delete-note: >
+        In der Serie enthaltene Videos werden nicht gelöscht und können einer anderen Serie
+        zugeordnet werden.
+      edit-note: >
+        Sie können neue Videos als Teil dieser Serie hochladen und bestehende Videos, auf welche
+        Sie Schreibzugriff haben, hinzufügen oder entfernen.
+        Es können nur Videos hinzugefügt werden, die in keiner anderen Serie enthalten sind.
+        Hier entfernte Videos werden nicht gelöscht, sondern nur aus der Serie entfernt.
+
+  video-list:
+    no-content: Keine Videos
+    no-of-videos_one: '{{count}} Videos'
+    no-of-videos_other: '{{count}} Videos'
+    edit:
+      add-video: Video hinzufügen
+      to-be-added: wird hinzugefügt
+      remove: Entfernen
+      to-be-removed: wird entfernt
+      cannot-be-removed: "Nicht entfernbar: Fehlender Schreibzugriff"
+      undo: Rückgängig
+      save: Änderungen speichern
+      error: Es gab einen Fehler beim Speichern der Änderungen.
+
+  details:
+    referencing-pages: Referenzierende Seiten
+
+  metadata-form:
+    description: Beschreibung
+    required: Pflichtfeld
+    save: Metadaten speichern
+    errors:
+      field-required: Dieses Feld darf nicht leer sein.
+    event-workflow-active: >
+      Änderung der Metadaten ist zurzeit nicht möglich, da das Video im Hintergrund verarbeitet wird.
+      <br />
+      Bitte versuchen Sie es später nochmal.
+
+  table:
     page-showing-ids: '{{start}}–{{end}} von {{total}}'
     navigation:
       first: Erste Seite
@@ -457,31 +500,13 @@ manage:
       description: 'Sortieren nach {{title}}, {{direction}}'
       ascending: aufsteigend
       descending: absteigend
-      title: Titel
       created: Erstellt
       updated: Aktualisiert
-      series: Serie
-    no-series: Keine
     no-series-title: Fehlender Titel
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt
-
-  shared:
-    created: Erstellt
     updated: Zuletzt verändert
-    item:
-      video: Video
-      series: Serie
-    details:
-      #share-direct-link: Via Direktlink teilen
-      #copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
-      referencing-pages: Referenzierende Seiten
-    acl:
-      title: Zugriffsrechte
-    delete:
-      title: '{{item}} löschen'
-      confirm: '{{item}} löschen?'
-      cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
+    deletion:
       failed: Löschen fehlgeschlagen.
       failed-maybe: Löschen möglicherweise fehlgeschlagen.
       pending: Löschvorgang ausstehend.
@@ -494,64 +519,6 @@ manage:
           Der Löschvorgang dieses Eintrags in Opencast wurde angesetzt und es wird
           nach dessen Erfolg hier entfernt.
 
-  video-list:
-    content: Videos
-    no-content: Keine Videos
-    no-of-videos_one: '{{count}} Videos'
-    no-of-videos_other: '{{count}} Videos'
-    edit:
-      add-video: Video hinzufügen
-      upload: Video hochladen
-      to-be-added: wird hinzugefügt
-      remove: Entfernen
-      to-be-removed: wird entfernt
-      cannot-be-removed: "Nicht entfernbar: Fehlender Schreibzugriff"
-      undo: Rückgängig
-      save: Änderungen speichern
-    error: Es gab einen Fehler beim Speichern der Änderungen.
-
-  my-series:
-    title: Meine Serien
-    details:
-      title: Seriendetails
-      referencing-pages-explanation: 'Diese Serie wird von den folgenden Seiten referenziert:'
-      no-referencing-pages: Diese Serie wird von keiner Seite referenziert.
-      created-note: Serie wurde erstellt.
-      edit-note: >
-        Sie können neue Videos als Teil dieser Serie hochladen und bestehende Videos, auf welche
-        Sie Schreibzugriff haben, hinzufügen oder entfernen.
-        Es können nur Videos hinzugefügt werden, die in keiner anderen Serie enthalten sind.
-        Hier entfernte Videos werden nicht gelöscht, sondern nur aus der Serie entfernt.
-    delete-note: >
-      In der Serie enthaltene Videos werden nicht gelöscht und können einer anderen Serie
-      zugeordnet werden.
-    create:
-      title: Serie erstellen
-
-  my-videos:
-    title: Meine Videos
-    details:
-      title: Videodetails
-      #set-time: 'Starten bei: '
-      open-in-editor: Im Videoeditor öffnen
-      referencing-pages: Referenzierende Seiten
-      referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
-      no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
-    technical-details:
-      title: Technische Details
-      tracks: Video-/Audiospuren
-      video: Video
-      audio: Audio
-      unknown-mimetype: Unbekannter MIME-Type
-      opencast-id: Opencast-ID
-      copy-oc-id-to-clipboard: Opencast-ID in Zwischenablage kopieren
-      further-info: Weitere Informationen
-      synced: Synchronisiert?
-      part-of: 'Teil von:'
-      is-live: Live?
-
-  are-you-sure: Sind Sie sich sicher?
-
   realm:
     invalid-path: >
       Fehler: ungültiger Pfad zur Seite. Wurde die Seite gelöscht oder ihr Pfad geändert?
@@ -559,7 +526,7 @@ manage:
     heading-root: Einstellungen zur Startseite
     descendants-count: Diese Seite besitzt {{count}} direkte und indirekte Unterseiten.
     view-page: Zur Seite
-
+    permissions: Berechtigungen verwalten
     name-must-not-be-empty: Name darf nicht leer sein.
     path-must-not-be-empty: Pfadsegment darf nicht leer sein.
     path-too-short: Pfadsegment muss mindestens zwei Zeichen lang sein.
@@ -569,7 +536,6 @@ manage:
       Pfadsegment darf nicht folgende Zeichen enthalten: {{illegalChars}}
     reserved-char-in-path: >
       Pfadsegment darf nicht mit den folgenden Zeichen beginnen: {{reservedChars}}
-
     general:
       page-name: Seitenname
       name-directly: Direkt benennen
@@ -581,7 +547,6 @@ manage:
       no-name: Keinen Namen anzeigen
       no-blocks: Auf dieser Seite befinden sich keine verknüpfbaren Videos/Serien.
       rename-failed: Änderung des Namen fehlgeschlagen.
-
     children:
       heading: Reihenfolge Unterseiten
       sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
@@ -590,10 +555,6 @@ manage:
       failed: Änderung fehlgeschlagen.
       move-up: Hoch schieben
       move-down: Runter schieben
-
-    permissions:
-      heading: Berechtigungen verwalten
-
     danger-zone:
       heading: Gefahrenbereich
       root-note: >
@@ -603,7 +564,7 @@ manage:
         heading: Pfad ändern
         button: Pfadsegment ändern
         failed: Änderung des Pfades fehlgeschlagen.
-        cannot-userrealm: Der Pfad Ihrer persönlichen Seite kann nicht geändert werden.
+        cannot-user-realm: Der Pfad Ihrer persönlichen Seite kann nicht geändert werden.
         warning: >
           Wichtig: Wenn Sie den Pfad ändern, invalidieren Sie damit alle bisherigen
           Links zu dieser Seite, zu allen direkten und indirekten Unterseiten, und
@@ -611,90 +572,35 @@ manage:
           dann nicht mehr. Das betrifft persönliche Browser-Lesezeichen wie auch
           bereits veröffentlichte Links.
       delete:
-        heading: Seite löschen
+        title: Seite löschen
         button: Diese Seite und <strong>{{numSubPages}}</strong> Unterseiten löschen
-        button-single: Seite löschen
-        cannot-be-undone: Diese Aktion kann <strong>nicht</strong> rückgängig gemacht werden!
         confirm-removal: Seite löschen?
-        failed: Löschung fehlgeschlagen.
+        failed: Löschen der Seite ist fehlgeschlagen.
         warning: >
           Wenn Sie diese Seite löschen, werden automatisch alle direkten und
           indirekten Unterseiten sowie alle Inhalte dieser Seiten
           mitgelöscht. Die Löschung kann nicht wieder rückgängig gemacht werden!
-
     content:
       heading: Seite „{{realm}}“ bearbeiten
       heading-root: Startseite bearbeiten
       view-page: Seite ansehen
-
       add: Hier einen neuen Block einfügen
       add-popup-title: Neu hinzufügen
-      add-title: Titel
+      add-title: $t(general.title)
       add-text: Text
-      add-series: Serie
-      add-video: Video
-      add-playlist: Playlist
-
+      add-series: $t(series.singular)
+      add-video: '$t(video.singular)'
+      add-playlist: $t(playlist.singular)
       move-down: Block nach unten verschieben
       move-up: Block nach oben verschieben
       edit: Block bearbeiten
       remove: Block entfernen
       confirm-removal: Block entfernen?
-
       cannot-remove-block: Block nicht entfernbar
       cannot-remove-name-source-block: >
         Entfernen nicht möglich, da diese Seite ihren Namen von diesem Block
         bezieht. Um den Block zu entfernen, müssen Sie zuerst den Seitennamen in
         den Seiteneinstellungen ändern.
-
-      title:
-        content: Titel
-
-      text:
-        content: Hier können Sie Ihren Text einfügen. Sie können auch Markdown verwenden.
-
-      series:
-        series:
-          heading: Serie
-          invalid: Bitte eine Serie auswählen
-          findable-series-note: >
-            Sie können hier nur Serien wählen, die gelistet sind oder auf die
-            Sie Schreibzugriff haben.
-        metadata:
-          heading: Metadaten
-
-      playlist:
-        playlist:
-          heading: Playlist
-          invalid: Bitte eine Playlist auswählen
-          findable-playlist-note: >
-            Sie können hier nur Playlisten wählen, die gelistet sind oder auf die
-            Sie Schreibzugriff haben.
-        metadata:
-          heading: Metadaten
-
-      event:
-        event:
-          heading: Video
-          invalid: Bitte ein Video auswählen
-          findable-events-note: >
-            Sie können hier nur Videos wählen, die gelistet sind oder auf die
-            Sie Schreibzugriff haben.
-          no-read-access-to-current: >
-            Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
-
-      show-title: Titel anzeigen
-      show-link: Link zur Videoseite anzeigen
-      show-description: Beschreibung und Metadaten anzeigen
-      display-options: Anzeigeoptionen
-
-      cancel: Verwerfen
-      confirm-cancel: Änderungen verwerfen?
-      cancel-warning: Ihre Änderungen wurden noch nicht gespeichert!
-
-      removing-failed: Entfernen ist fehlgeschlagen.
-      moving-failed: Verschieben ist fehlgeschlagen.
-      saving-failed: Speichern Ihrer Änderungen ist fehlgeschlagen.
 
   add-child:
     heading: Seite hinzufügen
@@ -714,18 +620,47 @@ manage:
       Pfadsegmente dürfen weder Leerzeichen noch <code>{{illegalChars}}</code> enthalten und nicht
       mit <code>{{reservedChars}}</code> beginnen.
 
+  block:
+    text: Hier können Sie Ihren Text einfügen. Sie können auch Markdown verwenden.
+    series:
+      invalid: Bitte eine Serie auswählen
+      findable-series-note: >
+        Sie können hier nur Serien wählen, die gelistet sind oder auf die
+        Sie Schreibzugriff haben.
+    playlist:
+      invalid: Bitte eine Playlist auswählen
+      findable-playlist-note: >
+        Sie können hier nur Playlisten wählen, die gelistet sind oder auf die
+        Sie Schreibzugriff haben.
+    event:
+      invalid: Bitte ein Video auswählen
+      findable-events-note: >
+        Sie können hier nur Videos wählen, die gelistet sind oder auf die
+        Sie Schreibzugriff haben.
+      no-read-access-to-current: >
+        Sie haben keinen Lesezugriff zu dem derzeit verlinkten Video.
+    options:
+      show-title: Titel anzeigen
+      show-link: Link zur Videoseite anzeigen
+      show-description: Beschreibung und Metadaten anzeigen
+    metadata: Metadaten
+    cancel: Verwerfen
+    confirm-cancel: Änderungen verwerfen?
+    cancel-warning: Ihre Änderungen wurden noch nicht gespeichert!
+    removing-failed: Entfernen ist fehlgeschlagen.
+    moving-failed: Verschieben ist fehlgeschlagen.
+    saving-failed: Speichern Ihrer Änderungen ist fehlgeschlagen.
+
+embed:
+  not-supported: Diese Seite kann nicht eingebettet werden.
+
 
 # These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:
   view:
     event: Sie sind nicht autorisiert, dieses Video zu sehen.
-    playlist: Sie sind nicht autorisiert, diese Playlist zu sehen.
-  upload:
-    not-logged-in: Sie müssen angemeldet sein, um Videos hochzuladen.
-    not-authorized: $t(upload.not-authorized)
   mutation:
     not-logged-in: Sie müssen eingeloggt sein, um diese Aktion auszuführen.
-    not-a-tobira-admin: Sie müssen Tobira Admin sein, um diese Aktion auszuführen.
   realm:
     path-is-reserved: Dieser Pfad ist reserviert und kann nicht für Seiten genutzt werden.
     path-collision: Eine Seite mit diesem Pfad existiert bereits.
@@ -747,6 +682,3 @@ api-remote-errors:
   series:
     not-found: "Aktion fehlgeschlagen: Serie nicht gefunden."
     not-allowed: Sie haben nicht die Berechtigung, diese Serienaktion durchzuführen.
-
-embed:
-  not-supported: Diese Seite kann nicht eingebettet werden.
