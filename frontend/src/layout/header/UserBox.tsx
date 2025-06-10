@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     LuTriangleAlert, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
@@ -9,6 +9,8 @@ import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
     match, ProtoButton, screenWidthAbove, screenWidthAtMost, Spinner,
     HeaderMenuItemDef, HeaderMenuProps, WithHeaderMenu, checkboxMenuItem, useColorScheme,
+    Button,
+    WithTooltip,
 } from "@opencast/appkit";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
@@ -29,6 +31,7 @@ import { CREDENTIALS_STORAGE_KEY } from "../../routes/Video";
 import { ManageSeriesRoute } from "../../routes/manage/Series";
 import SeriesIcon from "../../icons/series.svg";
 import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
+import { TranslationModal } from "../../routes/Translations";
 
 
 
@@ -36,6 +39,56 @@ import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
 export const UserBox: React.FC = () => {
     const { t } = useTranslation();
     const user = useUser();
+
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+    useEffect(() => {
+        const handleShortcut = (event: KeyboardEvent) => {
+            // If any element is focussed that could receive character input, we
+            // don't do anything.
+            if (/^input|textarea|select$/i.test(document.activeElement?.tagName ?? "")) {
+                return;
+            }
+
+            // With ctrl and meta key, this could be bound to some other
+            // shortcut (ctrl+s) that we want to ignore.
+            if (event.ctrlKey || event.metaKey) {
+                return;
+            }
+
+            if (event.key === "t" || event.key === "T") {
+                setIsModalOpen(true);
+            }
+
+            if (event.key === "l" || event.key === "L") {
+                event.preventDefault();
+                const currentLanguage = i18n.language;
+                const languageKeys = Object.keys(languages);
+                const currentIndex = languageKeys.indexOf(currentLanguage);
+                const nextIndex = (currentIndex + 1) % languageKeys.length;
+                i18n.changeLanguage(languageKeys[nextIndex]);
+            }
+
+            if (event.key === "1") {
+                i18n.changeLanguage("en");
+            }
+
+            if (event.key === "2") {
+                i18n.changeLanguage("de");
+            }
+
+            if (event.key === "3") {
+                i18n.changeLanguage("it");
+            }
+
+            if (event.key === "4") {
+                i18n.changeLanguage("fr");
+            }
+        };
+
+        document.addEventListener("keyup", handleShortcut);
+        return () => document.removeEventListener("keyup", handleShortcut);
+    }, []);
 
     const iconCss = {
         height: "100%",
@@ -57,6 +110,28 @@ export const UserBox: React.FC = () => {
     }
 
     return <>
+        <WithTooltip tooltip={"Press 't' to manage translations, 'l' to change language"}>
+            <Button
+                kind="call-to-action"
+                onClick={() => setIsModalOpen(true)}
+                css={{
+                    "&&": {
+                        height: 38,
+                        border: "none",
+                        ...focusStyle({ offset: 1 }),
+                        ":hover, :focus": {
+                            border: "none",
+                            backgroundColor: COLORS.primary1,
+                            color: COLORS.primary1BwInverted,
+                        },
+                    },
+                }}
+            >
+                Manage translations
+            </Button>
+        </WithTooltip>
+
+        <TranslationModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
         <LanguageSettings />
         <ColorSchemeSettings />
         {boxContent}
@@ -157,6 +232,11 @@ export const LanguageSettings: React.FC = () => {
         >
             <ActionIcon title={t("general.language.selection")}>
                 <HiOutlineTranslate />
+                <span css={{
+                    fontSize: 14,
+                }}>
+                    {i18n.resolvedLanguage}
+                </span>
             </ActionIcon>
         </WithHeaderMenu>
     );
