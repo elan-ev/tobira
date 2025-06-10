@@ -9,6 +9,7 @@ import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
     match, ProtoButton, screenWidthAbove, screenWidthAtMost, Spinner,
     HeaderMenuItemDef, HeaderMenuProps, WithHeaderMenu, checkboxMenuItem, useColorScheme,
+    Button,
 } from "@opencast/appkit";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
@@ -29,6 +30,7 @@ import { CREDENTIALS_STORAGE_KEY } from "../../routes/Video";
 import { ManageSeriesRoute } from "../../routes/manage/Series";
 import SeriesIcon from "../../icons/series.svg";
 import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
+import { TranslationModal } from "../../routes/Translations";
 
 
 
@@ -36,6 +38,8 @@ import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
 export const UserBox: React.FC = () => {
     const { t } = useTranslation();
     const user = useUser();
+
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
 
     const iconCss = {
         height: "100%",
@@ -57,6 +61,11 @@ export const UserBox: React.FC = () => {
     }
 
     return <>
+        <Button kind="call-to-action" onClick={() => setIsModalOpen(true)}>
+            Manage translations
+        </Button>
+
+        <TranslationModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
         <LanguageSettings />
         <ColorSchemeSettings />
         {boxContent}
