@@ -37,64 +37,62 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
             fragment NavigationData on Realm {
                 id
                 name
-                childOrder
-                isUserRoot
-                children { id name path }
-                parent { isMainRoot name path }
+                path
+                nav {
+                    up { name path }
+                    showSelf
+                    list { name path }
+                    listOrder
+                }
             }
         `,
         fragRef,
     );
-
-    const parent = realm.isUserRoot
-        ? {
-            path: "/",
-            name: t("general.home"),
-            isMainRoot: true,
-        }
-        : realm.parent;
-    const hasRealmParent = parent != null;
+    const nav = realm.nav;
 
     // We expect all production instances to have more than the root realm. So
     // we print this information instead of an empty div to avoid confusion.
-    if (realm.children.length === 0 && !hasRealmParent) {
+    if (nav.list.length === 0 && !nav.up) {
         return <div css={{ margin: "8px 12px" }}>{t("general.no-root-children")}</div>;
     }
 
-    const children = sortRealms(realm.children, realm.childOrder, i18n.language);
+    const list = sortRealms(nav.list, nav.listOrder, i18n.language);
 
     return <nav>
-        {hasRealmParent && <>
+        {nav.up && <>
             <LinkWithIcon
-                to={parent.path}
+                to={nav.up.path || "/"} // Single slash for root realm
                 iconPos="left"
                 css={{
                     color: COLORS.neutral60,
                     padding: "10px 14px",
                     borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
+                    ...nav.showSelf ? {} : { borderBottom: `2px solid ${COLORS.neutral05}` },
                     ...focusStyle({ inset: true }),
                 }}
             >
                 {/* Show arrow and hide chevron in burger menu */}
                 <LuCornerLeftUp css={{ display: "none" }}/>
                 <LuChevronLeft />
-                {parent.isMainRoot ? t("general.home") : parent.name ?? <MissingRealmName />}
+                {nav.up.path === "" ? t("general.home") : nav.up.name ?? <MissingRealmName />}
             </LinkWithIcon>
-            <div css={{
-                padding: "8px 14px 8px 16px",
+            {nav.showSelf && <div css={{
+                padding: nav.showSelf ? "8px 14px 8px 16px" : 2,
                 color: COLORS.primary2,
                 backgroundColor: COLORS.neutral20,
                 border: `2px solid ${COLORS.neutral05}`,
                 borderLeft: "none",
                 borderRight: "none",
-            }}>{realm.name ?? <MissingRealmName />}</div>
+            }}>{nav.showSelf ? realm.name ?? <MissingRealmName /> : null}</div>}
         </>}
         <LinkList
-            items={children.map(child => (
+            items={list.map(item => (
                 <Item
-                    key={child.id}
-                    label={child.name ?? <MissingRealmName />}
-                    link={child.path}
+                    key={item.path}
+                    label={item.name ?? <MissingRealmName />}
+                    link={item.path}
+                    isActive={item.path === realm.path}
+                    indent={nav.showSelf && !!nav.up}
                 />
             ))}
         />
@@ -104,11 +102,19 @@ export const Nav: React.FC<Props> = ({ fragRef }) => {
 type ItemProps = {
     label: ReactNode;
     link: string;
+    isActive: boolean;
+    indent: boolean;
 };
 
-const Item: React.FC<ItemProps> = ({ label, link }) => (
-    <LinkWithIcon to={link} iconPos="right">
-        <div css={ellipsisOverflowCss(3)}>{label}</div>
+const Item: React.FC<ItemProps> = ({ label, link, isActive, indent }) => isActive
+    ? <span css={{
+        backgroundColor: COLORS.neutral20,
+        fontWeight: "bold",
+    }}>{label}</span>
+    : <LinkWithIcon to={link} iconPos="right">
+        <div css={{
+            ...indent && { paddingLeft: 16 },
+            ...ellipsisOverflowCss(3),
+        }}>{label}</div>
         <LuChevronRight />
-    </LinkWithIcon>
-);
+    </LinkWithIcon>;
