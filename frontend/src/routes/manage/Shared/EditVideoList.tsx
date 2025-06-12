@@ -87,7 +87,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         },
         onError: e => {
             setSuccess(false);
-            setCommitError(displayCommitError(e, t("manage.video-list.error")));
+            setCommitError(displayCommitError(e, t("manage.video-list.edit.error")));
         },
     });
 
@@ -95,7 +95,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
     return <Inertable isInert={inFlight || !!commitError} css={{ marginBottom: 32, maxWidth: 750 }}>
         <div css={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <h2 css={{ fontSize: 20 }}>
-                {t("manage.video-list.content")}
+                {t("video.singular")}
             </h2>
             <i css={{ fontSize: 14, color: COLORS.neutral50 }}>
                 ({listEntries.length > 0
@@ -112,7 +112,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
             {/* // Todo: Omit upload button when adding this route for playlists */}
             {user.canUpload && <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
                 <LuUpload />
-                {t("manage.video-list.edit.upload")}
+                {t("upload.title")}
             </LinkButton>}
         </div>
         {events.length > 0 && <>

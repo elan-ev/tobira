@@ -38,7 +38,7 @@ export const Footer: React.FC = () => {
                 {CONFIG.footerLinks.map((entry, i) => {
                     if (entry === "about") {
                         return <li key={i}>
-                            <Link to={AboutRoute.url}>{t("footer.about-tobira")}</Link>
+                            <Link to={AboutRoute.url}>{t("about-tobira.title")}</Link>
                         </li>;
                     } else if (entry === "graphiql") {
                         return <li key={i}>
