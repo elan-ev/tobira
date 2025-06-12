@@ -1,19 +1,18 @@
-import React, { useRef, useContext } from "react";
+import React, { useRef, useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useForm, useFormContext, FormProvider } from "react-hook-form";
-import { bug, match } from "@opencast/appkit";
+import { FocusTrap } from "focus-trap-react";
+import { bug, match, Button } from "@opencast/appkit";
 
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
-import { Button } from "@opencast/appkit";
-import { currentRef, useOnOutsideClick } from "../../../../../../util";
+import { currentRef } from "../../../../../../util";
 import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
 import type { EditModeFormRealmData$key } from "./__generated__/EditModeFormRealmData.graphql";
 import { EditTitleBlock } from "./Title";
 import { EditTextBlock } from "./Text";
 import { EditSeriesBlock } from "./Series";
 import { EditVideoBlock } from "./Video";
-import FocusTrap from "focus-trap-react";
 import { EditPlaylistBlock } from "./Playlist";
 
 
@@ -107,7 +106,17 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
         }
     };
 
-    useOnOutsideClick(ref, () => handleOnCancel());
+    const handleEsc = (ev: KeyboardEvent) => {
+        // Pressing Escape cancels the edit mode.
+        if (ev.key === "Escape" || ev.key === "Esc") {
+            handleOnCancel();
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener("keydown", handleEsc);
+        return () => document.removeEventListener("keydown", handleEsc);
+    }, [isDirty]);
 
     const { id: realm, blocks } = useFragment(graphql`
         fragment EditModeFormRealmData on Realm {
@@ -147,7 +156,7 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
 
 
     return <FormProvider<FormData> {...form}>
-        <FocusTrap>
+        <FocusTrap focusTrapOptions={{ clickOutsideDeactivates: true }}>
             <form ref={ref} onSubmit={onSubmit}>
                 {children}
                 <EditModeButtons onCancel={handleOnCancel} />
