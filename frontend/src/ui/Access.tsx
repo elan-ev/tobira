@@ -664,12 +664,22 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
             = notNullish(permissionLevels.all[newOption]).actions;
     });
 
+    const getI18nKey = (itemType: AclSubject, actionOption: PermissionLevel): ParseKeys => {
+        if (actionOption === "unknown") {
+            return "acl.table.permissions.unknown-description";
+        }
+        if (actionOption === "admin" || actionOption === "moderate") {
+            return `acl.table.permissions.realm-${actionOption}-description`;
+        }
+        if (itemType === "video" || itemType === "series") {
+            return `acl.table.permissions.${itemType}-${actionOption}-description`;
+        }
+        return "acl.table.permissions.unknown-description";
+    };
+
     const description = (actionOption: PermissionLevel) => t(
-        `acl.table.permissions.${itemType}-${actionOption}-description`,
-        {
-            count: kind === "user" ? 1 : 2,
-            defaultValue: t("acl.table.permissions.unknown-description"),
-        },
+        getI18nKey(itemType, actionOption),
+        { count: kind === "user" ? 1 : 2 },
     );
 
     return (
