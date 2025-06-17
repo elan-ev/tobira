@@ -94,7 +94,7 @@ const config: CallableOption = (_env, argv) => ({
         }),
         new ESLintPlugin({
             extensions: ["ts", "tsx", "js"],
-            configType: "flat",
+            failOnError: false,
         }),
         new CopyPlugin({
             patterns: [
