@@ -295,14 +295,14 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         isMulti: true,
         isSearchable: true,
         backspaceRemovesValue: false,
-        placeholder: t(`manage.access.select.${kind}s`),
+        placeholder: t(`acl.select.${kind}s`),
         // TODO: for users, this should say "type to search" or "enter
         // username, email, ... to add user" depending on the
         // users_searchable config.
         noOptionsMessage: kind === "group"
             ? () => t("general.form.select.no-options")
             : ({ inputValue }: { inputValue: string }) => (
-                t(`manage.access.users-no-options.${
+                t(`acl.users-no-options.${
                     inputValue.length === 0 ? "initial" : "none-found"
                 }-${CONFIG.usersSearchable ? "" : "not-"}searchable`)
             ),
@@ -311,7 +311,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             const validRole = /^ROLE_\w+/.test(input);
             return kind === "group" ? (validRole && !validUserRole) : validUserRole;
         },
-        formatCreateLabel: (input: string) => t("manage.access.select.create", { item: input }),
+        formatCreateLabel: (input: string) => t("acl.select.create", { item: input }),
         value: entries.map(e => ({ role: e.role, label: e.label })),
         getOptionValue: (option: SelectOption) => option.role,
         onCreateOption: handleCreate,
@@ -331,7 +331,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             flexBasis: 280,
         },
     }}>
-        <strong>{t(`manage.access.authorized-${kind}s`)}</strong>
+        <strong>{t(`acl.authorized-${kind}s`)}</strong>
         {error && <Card kind="error" css={{ marginBottom: 8 }}>{error}</Card>}
         {kind === "group"
             ? <CreatableSelect
@@ -368,14 +368,14 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         }
         <div>
             <Table header={<>
-                <th>{t(`manage.access.table.${kind}`)}</th>
-                <th>{t("manage.access.table.actions.title")}</th>
+                <th>{t(`acl.table.${kind}`)}</th>
+                <th>{t("acl.table.permissions.title")}</th>
                 <th></th></>
             }>
                 {/* Placeholder if there are no entries */}
                 {noEntries && <tr>
                     <td colSpan={3} css={{ textAlign: "center", fontStyle: "italic" }}>
-                        {t("acl.no-entries")}
+                        {t("acl.table.no-entries")}
                     </td>
                 </tr>}
 
@@ -402,7 +402,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                 */}
                 {showUserEntry && <TableRow
                     labelCol={!userIsOwner ? <>{ownerDisplayName}</> : <>
-                        <i>{t("manage.access.table.yourself")}</i>
+                        <i>{t("acl.table.yourself")}</i>
                             &nbsp;({ownerDisplayName})
                     </>}
                     actionCol={<UnchangeableAllActions />}
@@ -417,10 +417,10 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                         justifyContent: "space-between",
                         paddingRight: 12,
                     }}>
-                        {t("manage.access.table.inherited")}
+                        {t("acl.table.inherited")}
                         <IconWithTooltip
                             mode="info"
-                            tooltip={t("manage.access.table.inherited-tooltip")}
+                            tooltip={t("acl.table.inherited-tooltip")}
                         />
                     </span>
                 </th>
@@ -542,7 +542,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
 
     let label: JSX.Element;
     if (isUser) {
-        label = <span><i>{t("manage.access.table.yourself")}</i>&nbsp;({item.label})</span>;
+        label = <span><i>{t("acl.table.yourself")}</i>&nbsp;({item.label})</span>;
     } else if (kind === "user" && isUserRole(item.label)) {
         // We strip the user role prefix (we take the longest prefix that
         // matches, though in almost all cases just a single one will match).
@@ -552,7 +552,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
         const name = item.role.slice(Math.max(...prefixes.map(p => p.length)))
             .toLocaleLowerCase(i18n.resolvedLanguage)
             .replace("_", " ");
-        label = <span>{name} (<i>{t("acl.unknown-user-note")}</i>)</span>;
+        label = <span>{name} (<i>{t("acl.table.unknown-user-note")}</i>)</span>;
     } else {
         label = <>{item.label}</>;
     }
@@ -561,7 +561,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
         labelCol={<>
             {label}
             {isSubset && <IconWithTooltip mode="info" tooltip={
-                t("manage.access.table.subset-warning", { groups: supersets.join(", ") })
+                t("acl.table.subset-warning", { groups: supersets.join(", ") })
             } />}
         </>}
         mutedLabel={isSubset || inherited}
@@ -572,8 +572,8 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
                 {item.large && noteworthyAccessType
                     ? <IconWithTooltip
                         mode="warning"
-                        tooltip={t("manage.access.table.actions.large-group-warning", {
-                            val: t(`manage.access.table.actions.${noteworthyAccessType}-access`),
+                        tooltip={t("acl.table.permissions.large-group-warning", {
+                            val: t(`acl.table.permissions.${noteworthyAccessType}-access`),
                         })}
                     />
                     : <div css={{ width: 22 }} />
@@ -648,7 +648,7 @@ const UnchangeableAllActions: React.FC<{ permission?: PermissionLevel }> = ({ pe
     const { t } = useTranslation();
     const { permissionLevels } = useAclContext();
     const label = permission ?? permissionLevels.highest;
-    return <span css={{ marginLeft: 8 }}>{t(`manage.access.table.actions.${label}`)}</span>;
+    return <span css={{ marginLeft: 8 }}>{t(`acl.table.permissions.${label}`)}</span>;
 };
 
 const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
@@ -664,19 +664,29 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
             = notNullish(permissionLevels.all[newOption]).actions;
     });
 
+    const getI18nKey = (itemType: AclSubject, actionOption: PermissionLevel): ParseKeys => {
+        if (actionOption === "unknown") {
+            return "acl.table.permissions.unknown-description";
+        }
+        if (actionOption === "admin" || actionOption === "moderate") {
+            return `acl.table.permissions.realm-${actionOption}-description`;
+        }
+        if (itemType === "video" || itemType === "series") {
+            return `acl.table.permissions.${itemType}-${actionOption}-description`;
+        }
+        return "acl.table.permissions.unknown-description";
+    };
+
     const description = (actionOption: PermissionLevel) => t(
-        `manage.access.table.actions.${itemType}-${actionOption}-description`,
-        {
-            count: kind === "user" ? 1 : 2,
-            defaultValue: t("manage.access.table.actions.unknown-description"),
-        },
+        getI18nKey(itemType, actionOption),
+        { count: kind === "user" ? 1 : 2 },
     );
 
     return (
         <FloatingBaseMenu
             ref={ref}
-            label={t("manage.access.table.actions.title")}
-            triggerContent={<>{t(`manage.access.table.actions.${currentActionOption}`)}</>}
+            label={t("acl.table.permissions.title")}
+            triggerContent={<>{t(`acl.table.permissions.${currentActionOption}`)}</>}
             triggerStyles={{
                 width: "100%",
                 gap: 0,
@@ -705,7 +715,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                         {allLabels.map(actionOption => <ActionMenuItem
                             key={actionOption}
                             disabled={actionOption === currentActionOption}
-                            label={t(`manage.access.table.actions.${actionOption}`)}
+                            label={t(`acl.table.permissions.${actionOption}`)}
                             description={description(actionOption)}
                             onClick={() => changeOption(actionOption)}
                             close={() => ref.current?.close()}
@@ -845,10 +855,10 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
                 onClick={() => currentRef(resetModalRef).open()}
                 css={{ ...!buttonsDisabled && { ":hover": { color: COLORS.danger0 } } }}
             >
-                {t("manage.access.reset-modal.label")}
+                {t("acl.reset-modal.label")}
             </Button>
-            <Modal ref={resetModalRef} title={t("manage.access.reset-modal.title")}>
-                <p>{t("manage.access.reset-modal.body")}</p>
+            <Modal ref={resetModalRef} title={t("acl.reset-modal.title")}>
+                <p>{t("acl.reset-modal.body")}</p>
                 <div css={{
                     display: "flex",
                     gap: 12,
@@ -862,7 +872,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
                     <Button kind="danger" onClick={() => {
                         setSelections(initialAcl);
                         currentRef(resetModalRef).close?.();
-                    }}>{t("manage.access.reset-modal.label")}</Button>
+                    }}>{t("acl.reset-modal.label")}</Button>
                 </div>
             </Modal>
 
@@ -880,11 +890,11 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
             {inFlight && <div css={{ marginTop: 16 }}><Spinner size={20} /></div>}
             <ConfirmationModal
                 ref={saveModalRef}
-                title={t("manage.access.save-modal.title")}
-                buttonContent={t("manage.access.save-modal.confirm")}
+                title={t("acl.save-modal.title")}
+                buttonContent={t("acl.save-modal.confirm")}
                 onSubmit={() => submit(selections)}
             >
-                <p>{t(`manage.access.save-modal.disclaimer-${kind}`)}</p>
+                <p>{t(`acl.save-modal.disclaimer-${kind}`)}</p>
             </ConfirmationModal>
         </div>
     );
@@ -900,7 +910,7 @@ type TranslatedLabel = { default: string } & Record<string, string | undefined>;
 /** Returns a label for the role, if known to Tobira. */
 const getLabel = (role: string, label: TranslatedLabel | undefined, i18n: i18n) => {
     if (role === COMMON_ROLES.USER_ADMIN) {
-        return i18n.t("acl.admin-user");
+        return i18n.t("acl.table.admin-user");
     }
     if (label) {
         return label[i18n.language] ?? label.default;

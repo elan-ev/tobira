@@ -23,12 +23,10 @@ import { RelativeDate } from "./time";
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
     const { t } = useTranslation();
-    return (
-        <label {...{ htmlFor }}>
-            {t("metadata-form.title")}
-            <FieldIsRequiredNote />
-        </label>
-    );
+    return <label {...{ htmlFor }}>
+        {t("general.title")}
+        <FieldIsRequiredNote />
+    </label>;
 };
 
 export const FieldIsRequiredNote: React.FC = () => {
@@ -36,7 +34,7 @@ export const FieldIsRequiredNote: React.FC = () => {
 
     return <span css={{ fontWeight: "normal" }}>
         {" ("}
-        <em>{t("metadata-form.required")}</em>
+        <em>{t("manage.metadata-form.required")}</em>
         {")"}
     </span>;
 };
@@ -339,7 +337,7 @@ export const MetadataFields: React.FC<MetadataFieldsProps> = ({ disabled = false
                 error={!!errors.title}
                 css={{ width: 400, maxWidth: "100%" }}
                 {...register("title", {
-                    required: t("metadata-form.errors.field-required") as string,
+                    required: t("manage.metadata-form.errors.field-required") as string,
                 })}
             />
             {boxError(errors.title?.message as string)}
@@ -348,7 +346,7 @@ export const MetadataFields: React.FC<MetadataFieldsProps> = ({ disabled = false
         {/* Description */}
         <InputContainer>
             <label htmlFor={descriptionFieldId}>
-                {t("metadata-form.description")}
+                {t("manage.metadata-form.description")}
             </label>
             <TextArea
                 id={descriptionFieldId}

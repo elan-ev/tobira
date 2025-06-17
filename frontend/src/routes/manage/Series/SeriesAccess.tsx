@@ -18,7 +18,7 @@ export const ManageSeriesAccessRoute = makeManageSeriesRoute(
     "/access",
     (series, data) => (
         <AclPage note={!isSynced(series) && <NotReadyNote kind="series" />} breadcrumbTails={[
-            { label: i18n.t("manage.my-series.title"), link: ManageSeriesRoute.url },
+            { label: i18n.t("manage.series.table.title"), link: ManageSeriesRoute.url },
             { label: series.title, link: ManageSeriesDetailsRoute.url({ seriesId: series.id }) },
         ]}>
             <SeriesAclEditor {...{ series, data }} />

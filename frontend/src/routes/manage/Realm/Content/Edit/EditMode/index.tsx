@@ -154,12 +154,12 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
             </form>
         </FocusTrap>
         <ConfirmationModal
-            title={t("manage.realm.content.confirm-cancel")}
-            buttonContent={t("manage.realm.content.cancel")}
+            title={t("manage.block.confirm-cancel")}
+            buttonContent={t("manage.block.cancel")}
             onSubmit={onCancel}
             ref={modalRef}
         >
-            <p>{t("manage.realm.content.cancel-warning")}</p>
+            <p>{t("manage.block.cancel-warning")}</p>
         </ConfirmationModal>
     </FormProvider>;
 };
@@ -182,7 +182,7 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
             kind="danger"
             onClick={onCancel}
         >
-            {t("manage.realm.content.cancel")}
+            {t("manage.block.cancel")}
         </Button>
         <Button kind="call-to-action" type="submit">
             {t("general.action.save")}

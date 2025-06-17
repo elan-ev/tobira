@@ -35,7 +35,7 @@ export const ConfirmationModal
             text={{
                 cancel: t("general.action.cancel"),
                 close: t("general.action.close"),
-                areYouSure: t("manage.are-you-sure"),
+                areYouSure: t("general.action.are-you-sure"),
             }}
             {...props}
         />;

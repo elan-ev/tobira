@@ -36,8 +36,8 @@ const Page: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
     const breadcrumbs = [
-        { label: t("user.manage-content"), link: ManageRoute.url },
-        { label: t("manage.my-videos.title"), link: ManageVideosRoute.url },
+        { label: t("user.manage"), link: ManageRoute.url },
+        { label: t("manage.video.table"), link: ManageVideosRoute.url },
         { label: event.title, link: ManageVideoDetailsRoute.url({ videoId: event.id }) },
     ];
 
@@ -47,8 +47,8 @@ const Page: React.FC<Props> = ({ event }) => {
     }
 
     return <>
-        <Breadcrumbs path={breadcrumbs} tail={t("manage.my-videos.technical-details.title")} />
-        <PageTitle title={t("manage.my-videos.technical-details.title")} />
+        <Breadcrumbs path={breadcrumbs} tail={t("manage.video.technical-details.title")} />
+        <PageTitle title={t("manage.video.technical-details.title")} />
         <div css={{
             maxWidth: PAGE_WIDTH,
             "& > section:not(:last-child)": {
@@ -70,9 +70,9 @@ const OpencastId: React.FC<Props> = ({ event }) => {
     const { t } = useTranslation();
 
     return <section>
-        <h2>{t("manage.my-videos.technical-details.opencast-id")}</h2>
+        <h2>{t("manage.video.technical-details.opencast-id")}</h2>
         <CopyableInput
-            label={t("manage.my-videos.technical-details.copy-oc-id-to-clipboard")}
+            label={t("manage.video.technical-details.copy-oc-id-to-clipboard")}
             value={event.opencastId}
             css={{ width: 400, fontSize: 14 }}
         />
@@ -119,7 +119,7 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
     const isSingleFlavor = flavors.size === 1;
 
     return <section css={className}>
-        <h2>{t("manage.my-videos.technical-details.tracks")}</h2>
+        <h2>{t("manage.video.technical-details.tracks")}</h2>
         <ul css={{ fontSize: 15, marginTop: 8, paddingLeft: 24 }}>
             {Array.from(flavors, ([flavor, tracks]) => {
                 const trackItems = tracks
@@ -144,7 +144,7 @@ const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => 
     const type = mimetype && mimetype.split("/")[0];
     const subtype = mimetype && mimetype.split("/")[1];
     const typeTranslation = (type === "audio" || type === "video")
-        ? t(`manage.my-videos.technical-details.${type}`)
+        ? t(`manage.video.technical-details.${type}`)
         : type;
 
     const resolutionString = (type && " ")
@@ -157,7 +157,7 @@ const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => 
             <a href={uri}>
                 {type
                     ? <>{typeTranslation}</>
-                    : <i>{t("manage.my-videos.technical-details.unknown-mimetype")}</i>
+                    : <i>{t("manage.video.technical-details.unknown-mimetype")}</i>
                 }
                 {(resolution || subtype) && resolutionString}
             </a>
@@ -181,15 +181,15 @@ const FurtherInfo: React.FC<Props> = ({ event }) => {
     };
 
     return <section>
-        <h2>{t("manage.my-videos.technical-details.further-info")}</h2>
+        <h2>{t("manage.video.technical-details.further-info")}</h2>
         <ul>
-            <SingleInfo label={t("manage.my-videos.technical-details.synced")}>
+            <SingleInfo label={t("manage.video.technical-details.synced")}>
                 {boolToYesNo(event.syncedData !== null)}
             </SingleInfo>
-            <SingleInfo label={t("manage.my-videos.technical-details.part-of")}>
+            <SingleInfo label={t("manage.video.technical-details.part-of")}>
                 <code css={{ fontSize: 15 }}>{event.series?.opencastId ?? "null"}</code>
             </SingleInfo>
-            <SingleInfo label={t("manage.my-videos.technical-details.is-live")}>
+            <SingleInfo label={t("manage.video.technical-details.is-live")}>
                 {boolToYesNo(event.isLive)}
             </SingleInfo>
             {event.syncedData && <>
