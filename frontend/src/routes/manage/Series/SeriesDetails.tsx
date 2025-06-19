@@ -21,7 +21,7 @@ import {
 import { useNotification } from "../../../ui/NotificationContext";
 import { ManageVideoListContent } from "../Shared/EditVideoList";
 import { SeriesDetailsContentMutation } from "./__generated__/SeriesDetailsContentMutation.graphql";
-import { isSynced } from "../../../util";
+import { Inertable, isSynced } from "../../../util";
 import { NotReadyNote } from "../../util";
 
 
@@ -126,11 +126,13 @@ const SeriesContentSection: React.FC<{ series: Series }> = ({ series }) => {
     const { t } = useTranslation();
     const [commit, inFlight] = useMutation<SeriesDetailsContentMutation>(editSeriesContent);
 
-    return <ManageVideoListContent
-        listId={series.id}
-        listEntries={[...series.entries]}
-        getUpdatedEntries={data => [...data.updateSeriesContent.entries]}
-        description={t("manage.series.details.edit-note")}
-        {...{ commit, inFlight }}
-    />;
+    return <Inertable isInert={!isSynced(series)}>
+        <ManageVideoListContent
+            listId={series.id}
+            listEntries={[...series.entries]}
+            getUpdatedEntries={data => [...data.updateSeriesContent.entries]}
+            description={t("manage.series.details.edit-note")}
+            {...{ commit, inFlight }}
+        />
+    </Inertable>;
 };
