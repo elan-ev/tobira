@@ -30,6 +30,27 @@ insert into series (state, opencast_id, title, description, updated, read_roles,
 values ('waiting', '2b814c02-c849-4553-b5f5-f4e9e69fd74f', null, null, '-infinity', null, null);
 
 
+-- ----- Playlists ------------------------------------------------------------
+insert into playlists (opencast_id, title, description, creator, entries, read_roles, write_roles, updated)
+values ('27fd7a20-522c-473b-a1d8-f66a44bdbb46', 'A Playlist With A Twist', 'Twisty twisty twist.',
+    'John Opencast',
+    '{"(260692,event,aaa12fa0-95f8-4722-84d7-4fac5e59a572)",
+      "(170360,event,2784521d-d10a-4a27-a77c-cd3f557259c2)"}',
+    '{"ROLE_USER_JOSE", "ROLE_ANONYMOUS"}', '{"ROLE_USER_JOSE"}',
+    '2022-03-01 12:00:00+00'
+);
+
+insert into playlists (opencast_id, title, description, creator, entries, read_roles, write_roles, updated)
+values ('f974e2c3-c248-4a93-bbb2-245c582cd7a3', 'A Playlist Without A Twist',
+    'Boring boring boring. But what’s in the box?!',
+    'John Opencast & Friends',
+    '{"(260692,event,aaa12fa0-95f8-4722-84d7-4fac5e59a572)"}',
+    '{"ROLE_USER"}', '{"ROLE_USER_JOSE", "ROLE_USER_SABINE"}',
+    '2022-03-01 12:00:00+00'
+);
+
+
+
 -- ----- Videos ---------------------------------------------------------------
 -- We have only very few different video files, as we really don't need many for
 -- testing. So most videos have a video file that's unrelated to their content.
