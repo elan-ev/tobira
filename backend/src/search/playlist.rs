@@ -93,7 +93,7 @@ impl Playlist {
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
     util::lazy_set_special_attributes(index, "playlist", FieldAbilities {
         searchable: &["title", "description"],
-        filterable: &["read_roles", "write_roles"],
+        filterable: &["listed", "read_roles", "write_roles"],
         sortable: &["updated_timestamp"],
     }).await
 }

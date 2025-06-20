@@ -25,6 +25,16 @@ export type Block =
             layout: "slider" | "gallery" | "list";
             order: "newest first" | "oldest first" | "a to z" | "z to a";
         };
+    }
+    | {
+        type: "playlist";
+        query: string;
+        options?: {
+            showTitle?: boolean;
+            showDescription?: boolean;
+            layout: "slider" | "gallery" | "list";
+            order: "playlist order" | "newest first" | "oldest first" | "a to z" | "z to a";
+        };
     };
 
 
@@ -71,7 +81,8 @@ export const addBlock = async (page: Page, pos: number, block: Block) => {
             await saveButton.click();
             break;
         }
-        case "series": {
+        case "series":
+        case "playlist": {
             const input = page.getByRole("combobox");
             await input.pressSequentially(block.query);
             await page.getByRole("option", { name: block.query }).click();

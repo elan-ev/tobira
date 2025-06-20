@@ -27,6 +27,16 @@ const testBlocks: Block[] = [
             order: "newest first",
         },
     },
+    {
+        type: "playlist",
+        query: "A Playlist With A Twist",
+        options: {
+            showTitle: true,
+            showDescription: false,
+            layout: "gallery",
+            order: "playlist order",
+        },
+    },
 ];
 
 
@@ -213,8 +223,86 @@ for (const realmType of realmTypes) {
                             await expect(page.getByLabel("Oldest first")).toBeChecked();
                             await saveButton.click();
 
-                            await expect(page.getByRole("button", { name: "Choose video order" }))
-                                .toHaveText("Oldest first");
+                            await expect(
+                                page.getByRole("button", { name: "Choose video order" }).first(),
+                            ).toHaveText("Oldest first");
+                        });
+                    });
+                });
+
+                await test.step("Playlist blocks", async () => {
+                    const editButton = page
+                        .locator("div")
+                        .filter({ hasText: "Playlist order" })
+                        .filter({ hasNotText: "Nice test page" })
+                        .first()
+                        .getByLabel("Edit block");
+
+                    const newPlaylist = {
+                        title: "A Playlist Without A Twist",
+                        description: "Boring boring boring. But what’s in the box?!",
+                    };
+
+                    await test.step("Playlist can be changed", async () => {
+                        await editButton.click();
+                        const input = page.getByRole("combobox");
+                        await input.pressSequentially(newPlaylist.title);
+                        await page.getByRole("option", { name: newPlaylist.title }).click();
+                        await saveButton.click();
+
+                        await expect(page.getByRole("heading", { name: newPlaylist.title }))
+                            .toBeVisible();
+                    });
+
+                    await test.step("Layout options can be changed", async () => {
+                        await test.step("Title and videos (initial)", async () => {
+                            await expect(page.getByRole("heading", { name: newPlaylist.title }))
+                                .toBeVisible();
+                        });
+
+                        await test.step("Videos only", async () => {
+                            await editButton.click();
+                            await page.getByLabel("Show title").setChecked(false);
+                            await page.getByLabel("Show description").setChecked(false);
+                            await saveButton.click();
+
+                            await expect(page.getByRole("heading", { name: newPlaylist.title }))
+                                .toBeHidden();
+                            await expect(page.getByText(newPlaylist.description))
+                                .toBeHidden();
+                        });
+
+                        await test.step("Description and videos", async () => {
+                            await editButton.click();
+                            await page.getByLabel("Show description").setChecked(true);
+                            await saveButton.click();
+
+                            await expect(page.getByRole("heading", { name: newPlaylist.title }))
+                                .toBeHidden();
+
+                            await expect(page.getByText(newPlaylist.description)).toHaveCount(2);
+                        });
+
+                        await test.step("Title, description and videos", async () => {
+                            await editButton.click();
+                            await page.getByLabel("Show title").setChecked(true);
+                            await page.getByLabel("Show description").setChecked(true);
+                            await saveButton.click();
+
+                            await expect(page.getByRole("heading", { name: newPlaylist.title }))
+                                .toBeVisible();
+                            await expect(page.getByText(newPlaylist.description)).toHaveCount(2);
+                        });
+
+                        await test.step("Video order can be changed", async () => {
+                            await editButton.click();
+                            await page.getByLabel("Oldest first").setChecked(true);
+                            await expect(page.getByLabel("Oldest first")).toBeChecked();
+                            await saveButton.click();
+
+                            await expect(
+                                page.getByRole("button", { name: "Choose video order" }).nth(1),
+                            ).toHaveText("Oldest first");
                         });
                     });
                 });
