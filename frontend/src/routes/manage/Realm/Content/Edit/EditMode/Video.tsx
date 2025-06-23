@@ -19,8 +19,10 @@ import { EventSelector } from "../../../../../../ui/EventSelector";
 
 type VideoFormData = {
     event: string;
-    showTitle: boolean;
-    showLink: boolean;
+    displayOptions: {
+        showTitle: boolean;
+        showLink: boolean;
+    }
 };
 
 type EditVideoBlockProps = {
@@ -108,16 +110,16 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                 />
             )}
         />
-        <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
+        <DisplayOptionGroup name="displayOptions" type="checkbox" optionProps={[
             {
-                option: "showTitle",
+                value: "showTitle",
                 title: t("manage.block.options.show-title"),
-                checked: showTitle,
+                defaultChecked: showTitle,
             },
             {
-                option: "showLink",
+                value: "showLink",
                 title: t("manage.block.options.show-link"),
-                checked: showLink,
+                defaultChecked: showLink,
             },
         ]} />
     </EditModeForm>;

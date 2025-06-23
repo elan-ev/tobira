@@ -64,7 +64,10 @@ impl BlockValue {
                     (realm, index, type, series, videolist_order, videolist_layout, show_title, show_metadata) \
                     values ($1, $2, 'series', $3, $4, $5, $6, $7)",
                 &[&realm.key, &index, &series,
-                    &block.order, &block.layout, &block.show_title, &block.show_metadata],
+                    &block.order, &block.layout,
+                    &block.display_options.show_title,
+                    &block.display_options.show_metadata,
+                ],
             )
             .await?;
 
@@ -87,7 +90,10 @@ impl BlockValue {
                     (realm, index, type, playlist, videolist_order, videolist_layout, show_title, show_metadata) \
                     values ($1, $2, 'playlist', $3, $4, $5, $6, $7)",
                 &[&realm.key, &index, &playlist,
-                    &block.order, &block.layout, &block.show_title, &block.show_metadata],
+                    &block.order, &block.layout,
+                    &block.display_options.show_title,
+                    &block.display_options.show_metadata,
+                ],
             )
             .await?;
 
@@ -108,7 +114,13 @@ impl BlockValue {
             .execute(
                 "insert into blocks (realm, index, type, video, show_title, show_link) \
                     values ($1, $2, 'video', $3, $4, $5)",
-                &[&realm.key, &index, &event, &block.show_title, &block.show_link],
+                &[
+                    &realm.key,
+                    &index,
+                    &event,
+                    &block.display_options.show_title,
+                    &block.display_options.show_link,
+                ],
             )
             .await?;
 
@@ -310,8 +322,8 @@ impl BlockValue {
             &series_id,
             &set.order,
             &set.layout,
-            &set.show_title,
-            &set.show_metadata,
+            &set.display_options.show_title,
+            &set.display_options.show_metadata,
         ];
         context.db
             .query_one(&query, &args)
@@ -348,8 +360,8 @@ impl BlockValue {
             &playlist_id,
             &set.order,
             &set.layout,
-            &set.show_title,
-            &set.show_metadata,
+            &set.display_options.show_title,
+            &set.display_options.show_metadata,
         ];
         context.db
             .query_one(&query, &args)
@@ -380,7 +392,12 @@ impl BlockValue {
                 returning {selection}",
         );
         context.db
-            .query_one(&query, &[&Self::key_for(id)?, &video_id, &set.show_title, &set.show_link])
+            .query_one(&query, &[
+                &Self::key_for(id)?,
+                &video_id,
+                &set.display_options.show_title,
+                &set.display_options.show_link,
+            ])
             .await?
             .pipe(|row| Ok(Self::from_row_start(&row)))
     }
@@ -452,8 +469,7 @@ pub(crate) struct NewTextBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewSeriesBlock {
     pub(crate) series: Id,
-    pub(crate) show_title: bool,
-    pub(crate) show_metadata: bool,
+    pub(crate) display_options: DisplayOptions,
     pub(crate) order: VideoListOrder,
     pub(crate) layout: VideoListLayout,
 }
@@ -461,8 +477,7 @@ pub(crate) struct NewSeriesBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewPlaylistBlock {
     pub(crate) playlist: Id,
-    pub(crate) show_title: bool,
-    pub(crate) show_metadata: bool,
+    pub(crate) display_options: DisplayOptions,
     pub(crate) order: VideoListOrder,
     pub(crate) layout: VideoListLayout,
 }
@@ -470,10 +485,8 @@ pub(crate) struct NewPlaylistBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewVideoBlock {
     event: Id,
-    show_title: bool,
-    show_link: bool,
+    display_options: DisplayOptions,
 }
-
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateTitleBlock {
@@ -488,8 +501,7 @@ pub(crate) struct UpdateTextBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateSeriesBlock {
     series: Option<Id>,
-    show_title: Option<bool>,
-    show_metadata: Option<bool>,
+    display_options: DisplayOptions,
     order: Option<VideoListOrder>,
     layout: Option<VideoListLayout>,
 }
@@ -497,8 +509,7 @@ pub(crate) struct UpdateSeriesBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdatePlaylistBlock {
     playlist: Option<Id>,
-    show_title: Option<bool>,
-    show_metadata: Option<bool>,
+    display_options: DisplayOptions,
     order: Option<VideoListOrder>,
     layout: Option<VideoListLayout>,
 }
@@ -506,10 +517,15 @@ pub(crate) struct UpdatePlaylistBlock {
 #[derive(GraphQLInputObject)]
 pub(crate) struct UpdateVideoBlock {
     event: Option<Id>,
-    show_title: Option<bool>,
-    show_link: Option<bool>,
+    display_options: DisplayOptions,
 }
 
+#[derive(GraphQLInputObject)]
+pub(crate) struct DisplayOptions {
+    pub(crate) show_title: Option<bool>,
+    pub(crate) show_link: Option<bool>,
+    pub(crate) show_metadata: Option<bool>,
+}
 
 #[derive(GraphQLObject)]
 #[graphql(Context = Context)]

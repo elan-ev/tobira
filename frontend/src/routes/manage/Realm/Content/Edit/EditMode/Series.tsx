@@ -26,8 +26,10 @@ type SeriesFormData = {
     series: string;
     order: VideoListOrder;
     layout: VideoListLayout;
-    showTitle: boolean;
-    showMetadata: boolean;
+    displayOptions: {
+        showTitle: boolean;
+        showMetadata: boolean;
+    };
 };
 
 type EditSeriesBlockProps = {

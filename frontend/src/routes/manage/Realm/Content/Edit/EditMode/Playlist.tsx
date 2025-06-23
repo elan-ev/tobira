@@ -19,8 +19,10 @@ type PlaylistFormData = {
     playlist: string;
     order: VideoListOrder;
     layout: VideoListLayout;
-    showTitle: boolean;
-    showMetadata: boolean;
+    displayOptions: {
+        showTitle: boolean;
+        showMetadata: boolean;
+    }
 };
 
 type EditPlaylistBlockProps = {
