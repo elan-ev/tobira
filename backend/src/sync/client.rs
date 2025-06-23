@@ -119,10 +119,14 @@ impl OcClient {
     /// Sends the given serialized JSON to the `/stats` endpoint in Opencast.
     pub async fn send_stats(&self, stats: String) -> Result<Response<Incoming>> {
         // TODO: maybe introduce configurable node for this
+        let params = Serializer::new(String::new())
+            .append_pair("stats", &stats)
+            .finish();
+
         let req = self.authed_req_builder(&self.external_api_node, Self::STATS_PATH)
             .method(http::Method::POST)
-            .header(http::header::CONTENT_TYPE, "application/json")
-            .body(stats.into())
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
             .expect("failed to build request");
 
         self.http_client.request(req).await.map_err(Into::into)
