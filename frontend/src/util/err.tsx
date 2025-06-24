@@ -73,7 +73,7 @@ export const errorDisplayInfo = (error: unknown, i18n: i18n): ErrorDisplayInfo =
             // Use a message fitting to the exact error key, if it is present.
             const translationKey = err.key ? `api-remote-errors.${err.key}` : null;
             if (translationKey && i18n.exists(translationKey)) {
-                // more strictly than just `string` or `ParseKeys` for the `<Trans>`
+                // More strictly than just `string` or `ParseKeys` for the `<Trans>`
                 // component.
                 const msg = <Trans i18nKey={translationKey} />;
                 causes.add(msg);

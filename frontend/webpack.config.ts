@@ -116,7 +116,7 @@ const config: CallableOption = (_env, argv) => ({
                     // To guard against updates.
                     throw new Error("Paella skin CSS changed! Adjust webpack config.");
                 }
-                // that's trick to configure for this file.
+                // That's a trick to configure for this file.
                 const out = file.replace(fontDecl, "").replaceAll("font-family: roboto;", "");
                 fs.writeFileSync(outPath, out);
             });
