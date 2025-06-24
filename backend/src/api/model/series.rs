@@ -600,7 +600,12 @@ impl Series {
             set tobira_deletion_timestamp = current_timestamp \
             where id = $1 \
         ", &[&series.key]).await?;
-        // Todo: Consider optimistically updating events as well.
+
+        context.db.execute("\
+            update all_events \
+            set series = null, part_of = null \
+            where series = $1 \
+        ", &[&series.key]).await?;
 
 
         let oc_client = context.oc_client.clone();
