@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MIN_RUST_VERSION="1.80.0"
+MIN_RUST_VERSION="1.81.0"
 MIN_NPM_VERSION="7.0"
 
 has_command() {

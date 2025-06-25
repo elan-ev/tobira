@@ -93,7 +93,7 @@ procfs = "0.17.0"
 tikv-jemallocator = "0.6"
 
 [build-dependencies]
-built = { version = "0.7", features = ["chrono", "git2"] }
+built = { version = "0.8", features = ["chrono", "git2"] }
 
 
 # Codegen options
