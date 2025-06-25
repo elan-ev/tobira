@@ -64,7 +64,7 @@ pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> SecretBox<[u8; N]> {
         bytes
     }
 
-    SecretBox::new(Box::new(imp(rand::thread_rng())))
+    SecretBox::new(Box::new(imp(rand::rng())))
 }
 
 pub(crate) type HttpsClient<B> = Client<HttpsConnector<HttpConnector>, B>;
