@@ -1,5 +1,5 @@
 import * as path from "path";
-import { CallableOption } from "webpack-cli";
+import type { CallableOption } from "webpack-cli";
 import YAML from "yaml";
 import { CleanWebpackPlugin } from "clean-webpack-plugin";
 import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
@@ -7,7 +7,9 @@ import ESLintPlugin from "eslint-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import * as fs from "fs";
+import { fileURLToPath } from "url";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_PATH = path.join(__dirname, "src");
 const OUT_PATH = path.join(__dirname, "build");
 const PAELLA_SKIN_PATH = path.join(__dirname, "node_modules", "paella-skins", "skins", "opencast");

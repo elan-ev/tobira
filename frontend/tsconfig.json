@@ -6,7 +6,7 @@
     "incremental": true,
 
     "target": "es2020",
-    "module": "CommonJS",
+    "module": "preserve",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
