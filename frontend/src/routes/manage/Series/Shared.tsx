@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { LuShieldCheck, LuPenLine, LuEye } from "react-icons/lu";
+import { LuShieldCheck, LuPenLine, LuEye, LuTrash } from "react-icons/lu";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
@@ -7,7 +7,7 @@ import { makeRoute, Route } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotFound } from "../../NotFound";
 import { b64regex } from "../../util";
-import { seriesId, keyOfId } from "../../../util";
+import { seriesId, keyOfId, isSynced } from "../../../util";
 import CONFIG from "../../../config";
 import { ManageSeriesRoute, SingleSeries } from ".";
 import { SharedSeriesManageQuery } from "./__generated__/SharedSeriesManageQuery.graphql";
@@ -15,6 +15,8 @@ import { DirectSeriesRoute } from "../../Series";
 import { ReturnLink, ManageNav, SharedManageNavProps } from "../Shared/Nav";
 import { COLORS } from "../../../color";
 import { ThumbnailStack } from "../../../ui/ThumbnailStack";
+import { ThumbnailItemStatus } from "../../../ui/Video";
+import { MovingTruck } from "../../../ui/Waiting";
 
 
 export const PAGE_WIDTH = 1100;
@@ -82,6 +84,7 @@ const query = graphql`
             acl { role actions info { label implies large } }
             description
             state
+            tobiraDeletionTimestamp
             entries {
                 __typename
                 ...on AuthorizedEvent {
@@ -133,6 +136,9 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
     const link = DirectSeriesRoute.url({ seriesId: id });
     const title = series.title;
     const ariaLabel = t("series.series-page", { series: series.title });
+    const seriesStatus = series.tobiraDeletionTimestamp ? "deleted" : (
+        !isSynced(series) ? "waiting" : "ready"
+    );
 
     const additionalStyles = {
         padding: 8,
@@ -141,7 +147,7 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
 
     const thumbnail = <>
         <LuEye />
-        <SeriesThumbnail series={{
+        <SeriesThumbnail {...{ seriesStatus }} series={{
             ...series,
             thumbnailStack: {
                 thumbnails: series.entries.slice(0, 3).map(entry => {
@@ -175,15 +181,38 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
 
 type SeriesThumbnailProps = {
     series: Pick<SingleSeries, "title" | "thumbnailStack">;
-    deletionIsPending?: boolean;
+    seriesStatus: ThumbnailItemStatus;
 }
 
-export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, deletionIsPending }) => (
-    <div css={{ "> div": { width: "100%" } }}>
+export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, seriesStatus }) => (
+    <div css={{ position: "relative", "> div": { width: "100%" } }}>
         <ThumbnailStack
             thumbnails={series.thumbnailStack.thumbnails}
             title={series.title}
-            {...{ deletionIsPending }}
+            css={seriesStatus === "deleted" && { filter: "blur(2px)" }}
         />
+        {seriesStatus !== "ready" && <span css={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: COLORS.neutral70,
+            ...seriesStatus === "deleted" && {
+                backgroundColor: COLORS.neutral10,
+                color: COLORS.danger1,
+                borderRadius: "50%",
+                width: 50,
+                height: 50,
+            },
+        }}>
+            {seriesStatus === "deleted"
+                ? <LuTrash size={32} />
+                : <MovingTruck />
+            }
+        </span>}
     </div>
 );

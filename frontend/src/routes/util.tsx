@@ -9,6 +9,7 @@ import { LoginRoute, REDIRECT_STORAGE_KEY } from "./Login";
 import { AclArray } from "./Upload";
 import { RealmOrder } from "../layout/__generated__/NavigationData.graphql";
 import { NoteWithTooltip } from "../ui";
+import { Acl } from "../ui/Access";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
@@ -99,11 +100,24 @@ export const LoginLink: React.FC<LoginLinkProps> = ({ className, children }) => 
     >{children}</Link>
 );
 
-export const mapAcl = (acl?: AclArray) => new Map(
+/**
+ * Converts array-based ACL into a Map structure that is used in frontend.
+ */
+export const aclArrayToMap = (acl?: AclArray) => new Map(
     acl?.map(item => [item.role, {
         actions: new Set(item.actions),
         info: item.info,
     }]),
+);
+
+/**
+ * Converts map-based ACL into an array format required by the backend API.
+ */
+export const aclMapToArray = (acl: Acl) => [...acl].map(
+    ([role, { actions }]) => ({
+        role,
+        actions: [...actions],
+    }),
 );
 
 export const NotReadyNote: React.FC<{ kind: "series" | "video"}> = ({ kind }) => {
