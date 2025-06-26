@@ -550,19 +550,12 @@ impl AuthorizedEvent {
                 read_roles, write_roles, preview_roles, \
                 metadata, is_live, updated, created, state \
             ) values ( \
-                $1, $2, $3, $4, $5, $6, $7, $8, \
+                $1, $2, $3, $4, $5, '{{}}', $6, $7, \
                 '{{}}', '{{}}', false, '-infinity', now(), 'waiting' \
             ) returning id \
         ");
 
         let acl = convert_acl_input(event.acl);
-        let dummy_tracks = vec![EventTrack {
-            uri: "https://example.org/video.mp4".to_string(),
-            flavor: "presenter/preview".to_string(),
-            mimetype: Some("video/mp4".to_string()),
-            resolution: Some([1280, 720]),
-            is_master: Some(true),
-        }];
 
         context.db.execute(&query, &[
             &event.opencast_id,
@@ -570,7 +563,6 @@ impl AuthorizedEvent {
             &event.description,
             &event.creators,
             &event.series_id.map(|id| id.key_for(Id::SERIES_KIND)),
-            &dummy_tracks,
             &acl.read_roles,
             &acl.write_roles,
         ]).await?;
