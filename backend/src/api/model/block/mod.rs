@@ -23,7 +23,7 @@ use crate::{
 };
 
 
-mod mutations;
+pub(crate) mod mutations;
 
 pub(crate) use mutations::{
     NewTitleBlock,

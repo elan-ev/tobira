@@ -1,10 +1,10 @@
 import React from "react";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useTranslation } from "react-i18next";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import { Card } from "@opencast/appkit";
 
-import { EditModeForm } from ".";
+import { EditModeError, EditModeForm } from ".";
 import { Heading } from "./util";
 import type {
     VideoEditModeBlockData$key,
@@ -19,8 +19,10 @@ import { EventSelector } from "../../../../../../ui/EventSelector";
 
 type VideoFormData = {
     event: string;
-    showTitle: boolean;
-    showLink: boolean;
+    displayOptions: {
+        showTitle: boolean;
+        showLink: boolean;
+    }
 };
 
 type EditVideoBlockProps = {
@@ -28,6 +30,10 @@ type EditVideoBlockProps = {
 };
 
 export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef }) => {
+    const { t } = useTranslation();
+    const user = useUser();
+
+
     const { event, showTitle, showLink } = useFragment(graphql`
         fragment VideoEditModeBlockData on VideoBlock {
             event {
@@ -68,11 +74,8 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         }
     `);
 
-    const { t } = useTranslation();
-    const user = useUser();
 
-    const form = useFormContext<VideoFormData>();
-    const { formState: { errors } } = form;
+    const map = (data: VideoFormData) => data;
 
     const currentEvent = event?.__typename === "AuthorizedEvent"
         ? {
@@ -83,16 +86,23 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         }
         : undefined;
 
-    return <EditModeForm create={create} save={save} map={(data: VideoFormData) => data}>
+    const defaultValues = {
+        event: currentEvent?.id ?? "",
+        displayOptions: {
+            showTitle,
+            showLink,
+        },
+    };
+
+
+    return <EditModeForm {...{ defaultValues, map, save, create }}>
         <Heading>
             {t("video.singular")}
             {isRealUser(user) && !user.canFindUnlisted && <InfoTooltip
                 info={t("manage.block.event.findable-events-note")}
             />}
         </Heading>
-        {"event" in errors && <div css={{ margin: "8px 0" }}>
-            <Card kind="error">{t("manage.block.event.invalid")}</Card>
-        </div>}
+        <EditModeError blockType="event" />
         {event?.__typename === "NotAllowed" && <Card kind="error" css={{ margin: "8px 0" }}>
             {t("manage.block.event.no-read-access-to-current")}
         </Card>}
@@ -103,21 +113,21 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
             render={({ field: { onChange, onBlur } }) => (
                 <EventSelector
                     defaultValue={currentEvent}
-                    {...{ onBlur }}
                     onChange={selectedEvent => onChange(selectedEvent?.id)}
+                    {...{ onBlur }}
                 />
             )}
         />
-        <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
+        <DisplayOptionGroup name="displayOptions" type="checkbox" optionProps={[
             {
-                option: "showTitle",
+                value: "showTitle",
                 title: t("manage.block.options.show-title"),
-                checked: showTitle,
+                defaultChecked: showTitle,
             },
             {
-                option: "showLink",
+                value: "showLink",
                 title: t("manage.block.options.show-link"),
-                checked: showLink,
+                defaultChecked: showLink,
             },
         ]} />
     </EditModeForm>;

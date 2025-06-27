@@ -6,7 +6,7 @@ import { Button } from "@opencast/appkit";
 import { COLORS } from "../color";
 import { secondsToTimeString, timeStringToSeconds, visuallyHiddenStyle } from "../util";
 import { focusStyle } from ".";
-import { FieldValues, Path, UseFormReturn } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 
@@ -339,34 +339,43 @@ export const CopyableInput: React.FC<CopyableInputProps> = ({
     );
 };
 
-type DisplayOptionGroup<TFieldValues extends FieldValues> = {
-    form: UseFormReturn<TFieldValues>;
-    type: "radio" | "checkbox";
+type DisplayOptionGroupProps = {
+    type: "radio" | "checkbox"
+    name: string
     optionProps: {
-        option: string;
-        title: string;
-        checked?: boolean;
-        value?: string;
-    }[];
+        value: string
+        title: string
+        defaultChecked: boolean
+    }[]
 }
 
 /** Group of input elements to be used with react-hook-form */
-export function DisplayOptionGroup<TFieldValues extends FieldValues>(
-    { form, type, optionProps }: DisplayOptionGroup<TFieldValues>,
-): JSX.Element {
-    const id = useId();
+export const DisplayOptionGroup: React.FC<DisplayOptionGroupProps> = ({
+    type, name, optionProps,
+}) => {
+    const { control } = useFormContext();
 
     return <div css={{ display: "flex", flexDirection: "column", marginTop: 8 }}>
-        {optionProps.map(({ option, title, checked, value }, index) =>
-            <label key={`${id}-${option}${index}`} css={{ display: "flex" }}>
-                <input
-                    {...{ type, value }}
-                    defaultChecked={checked}
-                    {...form.register(option as Path<TFieldValues>)}
-                    style={{ marginRight: 6 }}
-                />
-                {title}
-            </label>)
-        }
+        {optionProps.map(({ value, title, defaultChecked }) => <Controller
+            key={`${type}-${name}-${value}`}
+            control={control}
+            name={type === "checkbox" ? `${name}.${value}` : name}
+            defaultValue={defaultChecked}
+            render={({ field }) => (
+                <label css={{ display: "flex" }}>
+                    <input
+                        css={{ marginRight: 6 }}
+                        {...{ type, value }}
+                        checked={type === "radio" ? (field.value === value) : field.value}
+                        onChange={e => type === "radio"
+                            ? field.onChange(value)
+                            : field.onChange(e.target.checked)
+                        }
+                    />
+                    {title}
+                </label>
+            )}
+        />)}
     </div>;
-}
+};
+

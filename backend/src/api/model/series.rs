@@ -31,6 +31,7 @@ use crate::{
 };
 
 use self::acl::AclInputEntry;
+use super::block::mutations::DisplayOptions;
 
 use super::{
     block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
@@ -261,8 +262,11 @@ impl Series {
             0,
             NewSeriesBlock {
                 series: series.id(),
-                show_title: false,
-                show_metadata: true,
+                display_options: DisplayOptions {
+                    show_title: Some(false),
+                    show_metadata: Some(true),
+                    show_link: None,
+                },
                 order: VideoListOrder::NewToOld,
                 layout: VideoListLayout::Gallery,
             },

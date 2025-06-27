@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
-import { useFormContext } from "react-hook-form";
+import { Controller } from "react-hook-form";
 
 import { Input } from "../../../../../../ui/Input";
 import { EditModeForm } from ".";
@@ -35,9 +35,6 @@ export const EditTitleBlock: React.FC<EditTitleBlockProps> = ({ block: blockRef 
     `, blockRef);
 
 
-    const form = useFormContext<TitleFormData>();
-
-
     const [save] = useMutation<TitleEditSaveMutation>(graphql`
         mutation TitleEditSaveMutation($id: ID!, $set: UpdateTitleBlock!) {
             updateTitleBlock(id: $id, set: $set) {
@@ -55,12 +52,21 @@ export const EditTitleBlock: React.FC<EditTitleBlockProps> = ({ block: blockRef 
     `);
 
 
-    return <EditModeForm create={create} save={save} map={(data: TitleFormData) => data}>
-        <h3><Input
-            placeholder={t("general.title")}
-            defaultValue={content}
-            css={{ display: "block", width: "100%" }}
-            {...form.register("content")}
-        /></h3>
+    const map = (data: TitleFormData) => data;
+    const defaultValues = { content };
+
+
+    return <EditModeForm {...{ defaultValues, map, save, create }}>
+        <Controller
+            name="content"
+            render={({ field }) => <h3>
+                <Input
+                    placeholder={t("general.title")}
+                    defaultValue={content}
+                    css={{ display: "block", width: "100%" }}
+                    {...field}
+                />
+            </h3>}
+        />
     </EditModeForm>;
 };

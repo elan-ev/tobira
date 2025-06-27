@@ -1,19 +1,18 @@
-import React, { useRef, useContext } from "react";
+import React, { useRef, useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useForm, useFormContext, FormProvider } from "react-hook-form";
-import { bug, match } from "@opencast/appkit";
+import { useForm, FormProvider, DefaultValues, useFormContext } from "react-hook-form";
+import { FocusTrap } from "focus-trap-react";
+import { bug, match, Button, Card } from "@opencast/appkit";
 
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
-import { Button } from "@opencast/appkit";
-import { currentRef, useOnOutsideClick } from "../../../../../../util";
+import { currentRef } from "../../../../../../util";
 import type { EditModeRealmData$key } from "./__generated__/EditModeRealmData.graphql";
 import type { EditModeFormRealmData$key } from "./__generated__/EditModeFormRealmData.graphql";
 import { EditTitleBlock } from "./Title";
 import { EditTextBlock } from "./Text";
 import { EditSeriesBlock } from "./Series";
 import { EditVideoBlock } from "./Video";
-import FocusTrap from "focus-trap-react";
 import { EditPlaylistBlock } from "./Playlist";
 
 
@@ -51,18 +50,15 @@ export const EditMode: React.FC<EditModeProps> = props => {
     const block = result.blocks[index];
     const { __typename: type } = block;
 
-    const form = useForm();
 
     return <EditModeFormContext.Provider value={{ ...props, realm: result }}>
-        <FormProvider {...form}>
-            {match(type, {
-                TitleBlock: () => <EditTitleBlock block={block} />,
-                TextBlock: () => <EditTextBlock block={block} />,
-                SeriesBlock: () => <EditSeriesBlock block={block} />,
-                VideoBlock: () => <EditVideoBlock block={block} />,
-                PlaylistBlock: () => <EditPlaylistBlock block={block} />,
-            }) ?? bug("unknown block type")}
-        </FormProvider>
+        {match(type, {
+            TitleBlock: () => <EditTitleBlock block={block} />,
+            TextBlock: () => <EditTextBlock block={block} />,
+            SeriesBlock: () => <EditSeriesBlock block={block} />,
+            VideoBlock: () => <EditVideoBlock block={block} />,
+            PlaylistBlock: () => <EditPlaylistBlock block={block} />,
+        }) ?? bug("unknown block type")}
     </EditModeFormContext.Provider>;
 };
 
@@ -86,18 +82,21 @@ type EditModeFormProps<FormData, ApiData = FormData> = {
         onError?: (error: Error) => void;
     }) => void;
     map: (data: FormData) => ApiData;
+    defaultValues?: DefaultValues<FormData>;
 };
 
-export const EditModeForm = <FormData extends object, ApiData extends object>(
-    { save, create, children, map }: React.PropsWithChildren<EditModeFormProps<FormData, ApiData>>,
-) => {
+export const EditModeForm = <FormData extends object, ApiData extends object>({
+    save, create, children, map, defaultValues,
+}: React.PropsWithChildren<EditModeFormProps<FormData, ApiData>>) => {
     const { realm: realmRef, index, onSave, onCancel, onCompleted, onError }
         = useContext(EditModeFormContext) ?? bug("missing context provider");
 
     const { t } = useTranslation();
-    const { formState: { isDirty } } = useFormContext();
     const modalRef = useRef<ConfirmationModalHandle>(null);
     const ref = useRef<HTMLFormElement>(null);
+    const form = useForm<FormData>({ defaultValues });
+    const isDirty = form.formState.isDirty;
+
 
     const handleOnCancel = () => {
         if (isDirty) {
@@ -107,7 +106,18 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
         }
     };
 
-    useOnOutsideClick(ref, () => handleOnCancel());
+    const handleEsc = (ev: KeyboardEvent) => {
+        // Pressing Escape cancels the edit mode.
+        if (ev.key === "Escape" || ev.key === "Esc") {
+            ev.stopPropagation();
+            handleOnCancel();
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener("keydown", handleEsc);
+        return () => document.removeEventListener("keydown", handleEsc);
+    }, [isDirty]);
 
     const { id: realm, blocks } = useFragment(graphql`
         fragment EditModeFormRealmData on Realm {
@@ -117,8 +127,6 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
     `, realmRef);
     const { id } = blocks[index];
 
-
-    const form = useFormContext<FormData>();
 
     const onSubmit = form.handleSubmit(data => {
         onSave?.();
@@ -146,9 +154,9 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
     });
 
 
-    return <FormProvider<FormData> {...form}>
-        <FocusTrap>
-            <form ref={ref} onSubmit={onSubmit}>
+    return <FormProvider {...form}>
+        <FocusTrap focusTrapOptions={{ clickOutsideDeactivates: true }}>
+            <form {...{ ref, onSubmit }}>
                 {children}
                 <EditModeButtons onCancel={handleOnCancel} />
             </form>
@@ -188,4 +196,22 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
             {t("general.action.save")}
         </Button>
     </div>;
+};
+
+
+type EditModeErrorProps = {
+    blockType: "event" | "playlist" | "series";
+}
+
+export const EditModeError: React.FC<EditModeErrorProps> = ({ blockType }) => {
+    const { t } = useTranslation();
+    const { formState: { errors } } = useFormContext();
+
+    return blockType in errors && (
+        <div css={{ margin: "8px 0" }}>
+            <Card kind="error">
+                {t(`manage.block.${blockType}.invalid`)}
+            </Card>
+        </div>
+    );
 };

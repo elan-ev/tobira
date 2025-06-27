@@ -4,7 +4,6 @@ import { screenWidthAbove, screenWidthAtMost } from "@opencast/appkit";
 import { BREAKPOINT_SMALL } from "../../../../../../GlobalStyle";
 import { DisplayOptionGroup } from "../../../../../../ui/Input";
 import { useTranslation } from "react-i18next";
-import { FieldValues, UseFormReturn } from "react-hook-form";
 import {
     VideoListLayout,
     VideoListOrder,
@@ -98,8 +97,7 @@ export const NiceRadioOption = React.forwardRef<HTMLInputElement, NiceRadioOptio
     ),
 );
 
-type VideoListFormFieldProps<TFieldValues extends FieldValues> = {
-    form: UseFormReturn<TFieldValues>;
+type VideoListFormFieldProps = {
     order: VideoListOrder;
     layout: VideoListLayout;
     showTitle: boolean;
@@ -107,47 +105,41 @@ type VideoListFormFieldProps<TFieldValues extends FieldValues> = {
     allowOriginalOrder?: boolean;
 }
 
-export function VideoListFormFields<TFieldValues extends FieldValues>({
-    form,
+export const VideoListFormFields: React.FC<VideoListFormFieldProps> = ({
     order,
     layout,
     showTitle,
     showMetadata,
     allowOriginalOrder,
-}: VideoListFormFieldProps<TFieldValues>) {
+}) => {
     const { t } = useTranslation();
     const headingId = useId();
     const optionProps = [
         {
-            option: "order",
             title: t("video-list-block.settings.new-to-old"),
-            checked: order === "NEW_TO_OLD",
+            defaultChecked: order === "NEW_TO_OLD",
             value: "NEW_TO_OLD",
         },
         {
-            option: "order",
             title: t("video-list-block.settings.old-to-new"),
-            checked: order === "OLD_TO_NEW",
+            defaultChecked: order === "OLD_TO_NEW",
             value: "OLD_TO_NEW",
         },
         {
-            option: "order",
             title: t("video-list-block.settings.a-z"),
-            checked: order === "AZ",
+            defaultChecked: order === "AZ",
             value: "AZ",
         },
         {
-            option: "order",
             title: t("video-list-block.settings.z-a"),
-            checked: order === "ZA",
+            defaultChecked: order === "ZA",
             value: "ZA",
         },
     ];
     if (allowOriginalOrder) {
         optionProps.unshift({
-            option: "order",
             title: t("video-list-block.settings.original"),
-            checked: order === "ORIGINAL",
+            defaultChecked: order === "ORIGINAL",
             value: "ORIGINAL",
         });
     }
@@ -176,30 +168,27 @@ export function VideoListFormFields<TFieldValues extends FieldValues>({
                 aria-labelledby={headingId + "-order"}
             >
                 <Heading id={headingId + "-order"}>{t("video-list-block.settings.order")}</Heading>
-                <DisplayOptionGroup type="radio" {...{ form, optionProps }} />
+                <DisplayOptionGroup type="radio" name="order" {...{ optionProps }} />
             </div>
             <div
                 role="group"
                 aria-labelledby={headingId + "-view"}
             >
                 <Heading id={headingId + "-view"}>{t("video-list-block.settings.layout")}</Heading>
-                <DisplayOptionGroup type="radio" {...{ form }} optionProps={[
+                <DisplayOptionGroup type="radio" name="layout" optionProps={[
                     {
-                        option: "layout",
                         title: t("video-list-block.settings.slider"),
-                        checked: layout === "SLIDER",
+                        defaultChecked: layout === "SLIDER",
                         value: "SLIDER",
                     },
                     {
-                        option: "layout",
                         title: t("video-list-block.settings.gallery"),
-                        checked: layout === "GALLERY",
+                        defaultChecked: layout === "GALLERY",
                         value: "GALLERY",
                     },
                     {
-                        option: "layout",
                         title: t("video-list-block.settings.list"),
-                        checked: layout === "LIST",
+                        defaultChecked: layout === "LIST",
                         value: "LIST",
                     },
                 ]} />
@@ -211,20 +200,19 @@ export function VideoListFormFields<TFieldValues extends FieldValues>({
                 <Heading id={headingId + "-metadata"}>
                     {t("manage.block.metadata")}
                 </Heading>
-                <DisplayOptionGroup type="checkbox" {...{ form }} optionProps={[
+                <DisplayOptionGroup name="displayOptions" type="checkbox" optionProps={[
                     {
-                        option: "showTitle",
+                        value: "showTitle",
                         title: t("manage.block.options.show-title"),
-                        checked: showTitle,
+                        defaultChecked: showTitle,
                     },
                     {
-                        option: "showMetadata",
+                        value: "showMetadata",
                         title: t("manage.block.options.show-description"),
-                        checked: showMetadata,
+                        defaultChecked: showMetadata,
                     },
                 ]} />
             </div>
         </div>
     );
-}
-
+};

@@ -86,6 +86,12 @@ input ChildIndex {
   index: Int!
 }
 
+input DisplayOptions {
+  showTitle: Boolean
+  showLink: Boolean
+  showMetadata: Boolean
+}
+
 input Filters {
   itemType: ItemType
   start: DateTime
@@ -94,8 +100,7 @@ input Filters {
 
 input NewPlaylistBlock {
   playlist: ID!
-  showTitle: Boolean!
-  showMetadata: Boolean!
+  displayOptions: DisplayOptions!
   order: VideoListOrder!
   layout: VideoListLayout!
 }
@@ -114,8 +119,7 @@ input NewSeries {
 
 input NewSeriesBlock {
   series: ID!
-  showTitle: Boolean!
-  showMetadata: Boolean!
+  displayOptions: DisplayOptions!
   order: VideoListOrder!
   layout: VideoListLayout!
 }
@@ -130,8 +134,7 @@ input NewTitleBlock {
 
 input NewVideoBlock {
   event: ID!
-  showTitle: Boolean!
-  showLink: Boolean!
+  displayOptions: DisplayOptions!
 }
 
 input RealmLineageComponent {
@@ -151,8 +154,7 @@ input SeriesSortOrder {
 
 input UpdatePlaylistBlock {
   playlist: ID
-  showTitle: Boolean
-  showMetadata: Boolean
+  displayOptions: DisplayOptions!
   order: VideoListOrder
   layout: VideoListLayout
 }
@@ -164,8 +166,7 @@ input UpdateRealm {
 
 input UpdateSeriesBlock {
   series: ID
-  showTitle: Boolean
-  showMetadata: Boolean
+  displayOptions: DisplayOptions!
   order: VideoListOrder
   layout: VideoListLayout
 }
@@ -180,8 +181,7 @@ input UpdateTitleBlock {
 
 input UpdateVideoBlock {
   event: ID
-  showTitle: Boolean
-  showLink: Boolean
+  displayOptions: DisplayOptions!
 }
 
 input UpdatedPermissions {
