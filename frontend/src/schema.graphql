@@ -684,6 +684,8 @@ type Realm implements Node {
     `null` is returned.
   """
   ownerDisplayName: String
+  "Info about the navigation UI for this realm."
+  nav: RealmNav!
   """
     Returns the acl of this realm, combining moderator and admin roles and assigns
     the respective actions that are necessary for UI purposes.
@@ -735,6 +737,32 @@ type Realm implements Node {
 "A realm name that is derived from a block of that realm."
 type RealmNameFromBlock {
   block: Block!
+}
+
+"Information to render the navigation for a single realm."
+type RealmNav {
+  """
+    Elements above the list, usually current page and parent. Is either
+    0, 1 or 2 elements long. Order is "reversed" in that the last element
+    is rendered first/topmost. The main root realm is treated as parent of
+    user root realms.
+  """
+  header: [RealmNavItem!]!
+  """
+    Main part of the nav: list of realms to navigate to. These are usually
+    the children of the current realm, except for non-root leaf nodes, where
+    it's the siblings (including itself) instead.
+  """
+  list: [RealmNavItem!]!
+  "Dictates in what order the items in `list` should be displayed."
+  listOrder: RealmOrder!
+}
+
+type RealmNavItem {
+  "Resolved name, like `Realm.name`."
+  name: String
+  path: String!
+  hasChildren: Boolean!
 }
 
 type RemovedBlock {

@@ -14,7 +14,7 @@ import { DangerZone } from "./DangerZone";
 import { LinkButton } from "../../../ui/LinkButton";
 import { LuCircleArrowRight, LuCirclePlus } from "react-icons/lu";
 import { Card } from "@opencast/appkit";
-import { Nav } from "../../../layout/Navigation";
+import { RealmNav } from "../../../layout/Navigation";
 import { CenteredContent } from "../../../ui";
 import { NotAuthorized } from "../../../ui/error";
 import { RealmSettingsContainer } from "./util";
@@ -52,7 +52,7 @@ export const ManageRealmRoute = makeRoute({
                 noindex
                 nav={data => data.realm
                     ? [
-                        <Nav key="main-nav" fragRef={data.realm} />,
+                        <RealmNav key="main-nav" fragRef={data.realm} />,
                         <RealmEditLinks key="edit-buttons" path={data.realm.path} />,
                     ]
                     : []}

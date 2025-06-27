@@ -19,7 +19,7 @@ import { displayCommitError, RealmSettingsContainer, realmValidations } from "./
 import { Button, boxError } from "@opencast/appkit";
 import { AddChildMutation$data } from "./__generated__/AddChildMutation.graphql";
 import { Spinner } from "@opencast/appkit";
-import { Nav } from "../../../layout/Navigation";
+import { RealmNav } from "../../../layout/Navigation";
 import { makeRoute } from "../../../rauta";
 import { ILLEGAL_CHARS, RealmEditLinks, RESERVED_CHARS } from "../../Realm";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
@@ -52,7 +52,7 @@ export const AddChildRoute = makeRoute({
                 noindex
                 nav={data => data.parent
                     ? [
-                        <Nav key="main-nav" fragRef={data.parent} />,
+                        <RealmNav key="main-nav" fragRef={data.parent} />,
                         <RealmEditLinks key="edit-buttons" path={parent} />,
                     ]
                     : []}

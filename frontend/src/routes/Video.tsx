@@ -23,7 +23,7 @@ import { VideoObject, WithContext } from "schema-dts";
 import { environment, loadQuery } from "../relay";
 import { InitialLoading, RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
-import { Nav } from "../layout/Navigation";
+import { RealmNav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
 import { getPlayerAspectRatio, InlinePlayer, PlayerPlaceholder } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
@@ -145,7 +145,7 @@ export const VideoRoute = makeRoute({
         return {
             render: () => <RootLoader
                 {... { query, queryRef }}
-                nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+                nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
                 render={({ event, realm, playlist }) => {
                     if (!realm || (event && !event.isReferencedByRealm)) {
                         return <ForwardToDirectRoute videoId={videoId} />;
@@ -213,7 +213,7 @@ export const OpencastVideoRoute = makeRoute({
         return {
             render: () => <RootLoader
                 {... { query, queryRef }}
-                nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+                nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
                 render={({ event, realm, playlist }) => {
                     if (!realm || (event && !event.isReferencedByRealm)) {
                         return <ForwardToDirectOcRoute ocID={id} />;
@@ -381,7 +381,7 @@ const matchedDirectRoute = (
     render: () => <RootLoader
         {... { query, queryRef }}
         noindex
-        nav={data => data.realm ? <Nav fragRef={data.realm} /> : []}
+        nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
         render={({ event, realm, playlist }) => <VideoPage
             eventRef={event}
             realmRef={realm ?? unreachable("root realm doesn't exist")}
