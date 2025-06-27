@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
-import { useFormContext } from "react-hook-form";
+import { Controller } from "react-hook-form";
 
 import { TextArea } from "../../../../../../ui/Input";
 import { EditModeForm } from ".";
@@ -35,9 +35,6 @@ export const EditTextBlock: React.FC<EditTextBlockProps> = ({ block: blockRef })
     `, blockRef);
 
 
-    const form = useFormContext<TextFormData>();
-
-
     const [save] = useMutation<TextEditSaveMutation>(graphql`
         mutation TextEditSaveMutation($id: ID!, $set: UpdateTextBlock!) {
             updateTextBlock(id: $id, set: $set) {
@@ -55,12 +52,19 @@ export const EditTextBlock: React.FC<EditTextBlockProps> = ({ block: blockRef })
     `);
 
 
-    return <EditModeForm create={create} save={save} map={(data: TextFormData) => data}>
-        <TextArea
-            placeholder={t("manage.block.text")}
+    const map = (data: TextFormData) => data;
+    const defaultValues = { content };
+
+
+    return <EditModeForm {...{ defaultValues, map, save, create }}>
+        <Controller
+            name="content"
             defaultValue={content}
-            css={{ display: "block" }}
-            {...form.register("content")}
+            render={({ field }) => <TextArea
+                placeholder={t("manage.block.text")}
+                css={{ display: "block" }}
+                {...field}
+            />}
         />
     </EditModeForm>;
 };

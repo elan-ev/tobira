@@ -1,9 +1,9 @@
 import React, { useRef, useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useForm, useFormContext, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, DefaultValues, useFormContext } from "react-hook-form";
 import { FocusTrap } from "focus-trap-react";
-import { bug, match, Button } from "@opencast/appkit";
+import { bug, match, Button, Card } from "@opencast/appkit";
 
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
 import { currentRef } from "../../../../../../util";
@@ -50,18 +50,15 @@ export const EditMode: React.FC<EditModeProps> = props => {
     const block = result.blocks[index];
     const { __typename: type } = block;
 
-    const form = useForm();
 
     return <EditModeFormContext.Provider value={{ ...props, realm: result }}>
-        <FormProvider {...form}>
-            {match(type, {
-                TitleBlock: () => <EditTitleBlock block={block} />,
-                TextBlock: () => <EditTextBlock block={block} />,
-                SeriesBlock: () => <EditSeriesBlock block={block} />,
-                VideoBlock: () => <EditVideoBlock block={block} />,
-                PlaylistBlock: () => <EditPlaylistBlock block={block} />,
-            }) ?? bug("unknown block type")}
-        </FormProvider>
+        {match(type, {
+            TitleBlock: () => <EditTitleBlock block={block} />,
+            TextBlock: () => <EditTextBlock block={block} />,
+            SeriesBlock: () => <EditSeriesBlock block={block} />,
+            VideoBlock: () => <EditVideoBlock block={block} />,
+            PlaylistBlock: () => <EditPlaylistBlock block={block} />,
+        }) ?? bug("unknown block type")}
     </EditModeFormContext.Provider>;
 };
 
@@ -85,18 +82,21 @@ type EditModeFormProps<FormData, ApiData = FormData> = {
         onError?: (error: Error) => void;
     }) => void;
     map: (data: FormData) => ApiData;
+    defaultValues?: DefaultValues<FormData>;
 };
 
-export const EditModeForm = <FormData extends object, ApiData extends object>(
-    { save, create, children, map }: React.PropsWithChildren<EditModeFormProps<FormData, ApiData>>,
-) => {
+export const EditModeForm = <FormData extends object, ApiData extends object>({
+    save, create, children, map, defaultValues,
+}: React.PropsWithChildren<EditModeFormProps<FormData, ApiData>>) => {
     const { realm: realmRef, index, onSave, onCancel, onCompleted, onError }
         = useContext(EditModeFormContext) ?? bug("missing context provider");
 
     const { t } = useTranslation();
-    const { formState: { isDirty } } = useFormContext();
     const modalRef = useRef<ConfirmationModalHandle>(null);
     const ref = useRef<HTMLFormElement>(null);
+    const form = useForm<FormData>({ defaultValues });
+    const isDirty = form.formState.isDirty;
+
 
     const handleOnCancel = () => {
         if (isDirty) {
@@ -109,6 +109,7 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
     const handleEsc = (ev: KeyboardEvent) => {
         // Pressing Escape cancels the edit mode.
         if (ev.key === "Escape" || ev.key === "Esc") {
+            ev.stopPropagation();
             handleOnCancel();
         }
     };
@@ -126,8 +127,6 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
     `, realmRef);
     const { id } = blocks[index];
 
-
-    const form = useFormContext<FormData>();
 
     const onSubmit = form.handleSubmit(data => {
         onSave?.();
@@ -155,9 +154,9 @@ export const EditModeForm = <FormData extends object, ApiData extends object>(
     });
 
 
-    return <FormProvider<FormData> {...form}>
+    return <FormProvider {...form}>
         <FocusTrap focusTrapOptions={{ clickOutsideDeactivates: true }}>
-            <form ref={ref} onSubmit={onSubmit}>
+            <form {...{ ref, onSubmit }}>
                 {children}
                 <EditModeButtons onCancel={handleOnCancel} />
             </form>
@@ -197,4 +196,22 @@ const EditModeButtons: React.FC<EditModeButtonsProps> = ({ onCancel }) => {
             {t("general.action.save")}
         </Button>
     </div>;
+};
+
+
+type EditModeErrorProps = {
+    blockType: "event" | "playlist" | "series";
+}
+
+export const EditModeError: React.FC<EditModeErrorProps> = ({ blockType }) => {
+    const { t } = useTranslation();
+    const { formState: { errors } } = useFormContext();
+
+    return blockType in errors && (
+        <div css={{ margin: "8px 0" }}>
+            <Card kind="error">
+                {t(`manage.block.${blockType}.invalid`)}
+            </Card>
+        </div>
+    );
 };

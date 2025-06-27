@@ -1,4 +1,8 @@
 import { graphql, useFragment, useMutation } from "react-relay";
+import { Card } from "@opencast/appkit";
+import { useTranslation } from "react-i18next";
+import { Controller } from "react-hook-form";
+
 import {
     PlaylistEditModeBlockData$key,
     VideoListLayout,
@@ -6,14 +10,12 @@ import {
 } from "./__generated__/PlaylistEditModeBlockData.graphql";
 import { PlaylistEditSaveMutation } from "./__generated__/PlaylistEditSaveMutation.graphql";
 import { PlaylistEditCreateMutation } from "./__generated__/PlaylistEditCreateMutation.graphql";
-import { useTranslation } from "react-i18next";
 import { isRealUser, useUser } from "../../../../../../User";
-import { useController, useFormContext } from "react-hook-form";
-import { EditModeForm } from ".";
+import { EditModeError, EditModeForm } from ".";
 import { Heading, VideoListFormFields } from "./util";
 import { VideoListSelector } from "../../../../../../ui/SearchableSelect";
 import { InfoTooltip } from "../../../../../../ui";
-import { Card } from "@opencast/appkit";
+
 
 type PlaylistFormData = {
     playlist: string;
@@ -30,6 +32,10 @@ type EditPlaylistBlockProps = {
 }
 
 export const EditPlaylistBlock: React.FC<EditPlaylistBlockProps> = ({ block: blockRef }) => {
+    const { t } = useTranslation();
+    const user = useUser();
+
+
     const { playlist, showTitle, showMetadata, order, layout } = useFragment(graphql`
         fragment PlaylistEditModeBlockData on PlaylistBlock {
             playlist {
@@ -49,6 +55,7 @@ export const EditPlaylistBlock: React.FC<EditPlaylistBlockProps> = ({ block: blo
         }
     `, blockRef);
 
+
     const [save] = useMutation<PlaylistEditSaveMutation>(graphql`
         mutation PlaylistEditSaveMutation($id: ID!, $set: UpdatePlaylistBlock!) {
             updatePlaylistBlock(id: $id, set: $set) {
@@ -66,49 +73,47 @@ export const EditPlaylistBlock: React.FC<EditPlaylistBlockProps> = ({ block: blo
         }
     `);
 
-    const { t } = useTranslation();
-    const user = useUser();
+
+    const map = (data: PlaylistFormData) => data;
 
     const currentPlaylist = playlist?.__typename === "AuthorizedPlaylist"
         ? playlist
         : undefined;
 
-    const form = useFormContext<PlaylistFormData>();
-    const { formState: { errors }, control } = form;
-    const { field: playlistField } = useController({
-        defaultValue: currentPlaylist?.id,
-        name: "playlist",
-        control,
-        rules: { required: true },
-    });
+    const defaultValues = {
+        playlist: currentPlaylist?.id ?? "",
+        order,
+        layout,
+        displayOptions: {
+            showTitle,
+            showMetadata,
+        },
+    };
 
 
-
-    return <EditModeForm create={create} save={save} map={(data: PlaylistFormData) => data}>
+    return <EditModeForm {...{ defaultValues, map, save, create }}>
         <Heading>
             {t("playlist.singular")}
             {isRealUser(user) && !user.canFindUnlisted && <InfoTooltip
                 info={t("manage.block.playlist.findable-playlist-note")}
             />}
         </Heading>
-        {"playlist" in errors && <div css={{ margin: "8px 0" }}>
-            <Card kind="error">{t("manage.block.playlist.invalid")}</Card>
-        </div>}
+        <EditModeError blockType="playlist" />
         {playlist?.__typename === "NotAllowed" && <Card kind="error" css={{ margin: "8px 0" }}>
             {t("playlist.not-allowed-block")}
         </Card>}
-        <VideoListSelector
-            type="playlist"
-            defaultValue={currentPlaylist == null ? undefined : {
-                ...currentPlaylist,
-                description: currentPlaylist.description ?? null,
-            }}
-            onChange={data => playlistField.onChange(data?.id)}
-            onBlur={playlistField.onBlur}
-            autoFocus
+        <Controller
+            name="playlist"
+            defaultValue={currentPlaylist?.id}
+            rules={{ required: true }}
+            render={({ field: { onChange, onBlur } }) => <VideoListSelector
+                type="playlist"
+                defaultValue={currentPlaylist}
+                onChange={data => onChange(data?.id)}
+                {...{ onBlur }}
+            />}
         />
         <VideoListFormFields allowOriginalOrder {...{
-            form,
             order,
             layout,
             showMetadata,
