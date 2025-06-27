@@ -15,6 +15,7 @@ import { Link } from "../router";
 import { match, screenWidthAbove, useColorScheme } from "@opencast/appkit";
 import { css } from "@emotion/react";
 import { useMenu } from "./MenuState";
+import { useDevConfig } from "../DevConfig";
 
 
 /** The breakpoint, in pixels, where mobile/desktop navigations are swapped. */
@@ -32,6 +33,7 @@ type Props = {
  */
 export const RealmNav: React.FC<Props> = ({ fragRef }) => {
     const { t, i18n } = useTranslation();
+    const devConfig = useDevConfig();
     const realm = useFragment(
         graphql`
             fragment NavigationData on Realm {
@@ -47,12 +49,16 @@ export const RealmNav: React.FC<Props> = ({ fragRef }) => {
         `,
         fragRef,
     );
-    const nav = realm.nav;
+    const nav = { ...realm.nav };
 
     // We expect all production instances to have more than the root realm. So
     // we print this information instead of an empty div to avoid confusion.
     if (nav.list.length === 0 && nav.header.length === 0) {
         return <div css={{ margin: "8px 12px" }}>{t("general.no-root-children")}</div>;
+    }
+
+    if (!devConfig.nestedHome && realm.path === "/") {
+        nav.header = [];
     }
 
     const shared = (item: { path: string, name?: string | null }) => ({
@@ -104,8 +110,9 @@ type NavProps = {
  */
 export const Nav: React.FC<NavProps> = ({ items, treeIcons = false }) => {
     const isDarkMode = useColorScheme().scheme === "dark";
+    const devConfig = useDevConfig();
     const treeIcon = (idx: number): NavItemProps["treeIcon"] => {
-        if (!treeIcons) {
+        if (!treeIcons || !devConfig.treeIcons) {
             return undefined;
         }
 
@@ -115,9 +122,15 @@ export const Nav: React.FC<NavProps> = ({ items, treeIcons = false }) => {
 
         return {
             incoming: item.indent > 0 && prev && prev.indent <= item.indent,
-            outgoing: !next || next.indent < item.indent ? "none" : (
-                next.indent > item.indent ? "child" : "sibling"
-            ),
+            outgoing: (() => {
+                if (!next || next.indent < item.indent) {
+                    return "none";
+                }
+                if (next.indent === item.indent) {
+                    return item.indent === 0 ? "none" : "sibling";
+                }
+                return "child";
+            })(),
         };
     };
 
