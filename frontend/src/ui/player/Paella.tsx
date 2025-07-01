@@ -323,7 +323,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
 };
 
 const PAELLA_CONFIG = {
-    logLevel: "DEBUG",
+    logLevel: "WARN",
     defaultVideoPreview: "/~assets/1x1-black.png",
     ui: {
         hideUITimer: 2000,
