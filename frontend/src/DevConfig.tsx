@@ -5,13 +5,10 @@ import { COLORS } from "./color";
 // NOTE TO DEVELOPERS: you only need to adjust the `DevConfig` type and
 // `DEFAULT` value. Everything else should work automatically.
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type DevConfig = {
-    treeIcons: boolean;
-    nestedHome: boolean;
 };
 const DEFAULT: DevConfig = {
-    treeIcons: false,
-    nestedHome: false,
 };
 
 // -----

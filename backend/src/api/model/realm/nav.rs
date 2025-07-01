@@ -53,9 +53,7 @@ impl RealmNav {
             end",
         );
 
-        let list_filter = if realm.is_main_root() {
-            "parent = $1"
-        } else if realm.is_user_root() {
+        let list_filter = if realm.is_main_root() || realm.is_user_root() {
             "parent = $1"
         } else {
             "case
@@ -123,8 +121,12 @@ impl RealmNav {
                 path: realm.full_path.clone(),
                 has_children: true,
             };
+
+            // Special case main root where we don't show "this".
+            let this = if realm.is_main_root() { None } else { Some(this) };
+
             Ok(Self {
-                header: [parent, Some(this)].into_iter().flatten().collect(),
+                header: [parent, this].into_iter().flatten().collect(),
                 list,
                 list_order: realm.child_order,
             })

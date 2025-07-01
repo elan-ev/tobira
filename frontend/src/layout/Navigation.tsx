@@ -15,7 +15,6 @@ import { Link } from "../router";
 import { match, screenWidthAbove, useColorScheme } from "@opencast/appkit";
 import { css } from "@emotion/react";
 import { useMenu } from "./MenuState";
-import { useDevConfig } from "../DevConfig";
 
 
 /** The breakpoint, in pixels, where mobile/desktop navigations are swapped. */
@@ -33,7 +32,6 @@ type Props = {
  */
 export const RealmNav: React.FC<Props> = ({ fragRef }) => {
     const { t, i18n } = useTranslation();
-    const devConfig = useDevConfig();
     const realm = useFragment(
         graphql`
             fragment NavigationData on Realm {
@@ -57,17 +55,13 @@ export const RealmNav: React.FC<Props> = ({ fragRef }) => {
         return <div css={{ margin: "8px 12px" }}>{t("general.no-root-children")}</div>;
     }
 
-    if (!devConfig.nestedHome && realm.path === "/") {
-        nav.header = [];
-    }
-
     const shared = (item: { path: string, name?: string | null }) => ({
         label: item.path === "" ? t("general.home") : item.name ?? <MissingRealmName />,
         active: item.path === realm.path,
         link: item.path || "/",
     });
 
-    return <Nav treeIcons items={[
+    return <Nav items={[
         // Header
         ...nav.header.map((item, i) => ({
             ...shared(item),
@@ -101,38 +95,14 @@ type NavItem = {
 };
 
 type NavProps = {
-    treeIcons?: boolean;
     items: NavItem[];
 };
 
 /**
  * TODO: docs
  */
-export const Nav: React.FC<NavProps> = ({ items, treeIcons = false }) => {
+export const Nav: React.FC<NavProps> = ({ items }) => {
     const isDarkMode = useColorScheme().scheme === "dark";
-    const devConfig = useDevConfig();
-    const treeIcon = (idx: number): NavItemProps["treeIcon"] => {
-        if (!treeIcons || !devConfig.treeIcons) {
-            return undefined;
-        }
-
-        const item = items[idx];
-        const prev = items[idx - 1];
-        const next = items[idx + 1];
-
-        return {
-            incoming: item.indent > 0 && prev && prev.indent <= item.indent,
-            outgoing: (() => {
-                if (!next || next.indent < item.indent) {
-                    return "none";
-                }
-                if (next.indent === item.indent) {
-                    return item.indent === 0 ? "none" : "sibling";
-                }
-                return "child";
-            })(),
-        };
-    };
 
     const menu = useMenu();
     const closeBurger = () => menu.state === "burger" && menu.close();
@@ -162,7 +132,6 @@ export const Nav: React.FC<NavProps> = ({ items, treeIcons = false }) => {
                     <NavItem
                         {...{ item, isDarkMode }}
                         onLinkClick={item.closeBurgerOnClick ? closeBurger : undefined}
-                        treeIcon={treeIcon(i)}
                     />
                 </li>
             ))}
@@ -174,13 +143,9 @@ type NavItemProps = {
     item: NavItem,
     isDarkMode: boolean;
     onLinkClick?: () => void;
-    treeIcon?: {
-        incoming: boolean;
-        outgoing: "none" | "sibling" | "child";
-    },
 };
 
-const NavItem: React.FC<NavItemProps> = ({ item, isDarkMode, onLinkClick, treeIcon }) => {
+const NavItem: React.FC<NavItemProps> = ({ item, isDarkMode, onLinkClick }) => {
     // Shared style (for active & links)
     const style = css({
         display: "block",
@@ -205,29 +170,6 @@ const NavItem: React.FC<NavItemProps> = ({ item, isDarkMode, onLinkClick, treeIc
         gap: 12,
     }}>
         {item.icon && item.icon.position === "left" && item.icon.icon}
-        {treeIcon && <div css={{
-            position: "absolute",
-            left: -14,
-            top: -12,
-            bottom: -12,
-            display: "flex",
-            alignItems: "center",
-        }}>
-            <svg
-                viewBox="0 0 24 44"
-                height="44px"
-                stroke="currentColor"
-                fill="none"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                css={{ color: COLORS.neutral40 }}
-            >
-                {treeIcon.incoming && <path d="M2 2v16q0 4,4 4h2" />}
-                {treeIcon.outgoing === "sibling" && <path d="M2 24v18" />}
-                {treeIcon.outgoing === "child" && <path d="M18 38v14" />}
-            </svg>
-        </div>}
         <span css={ellipsisOverflowCss(2)}>{item.label}</span>
         {item.icon && item.icon.position === "right" && item.icon.icon}
     </div>;
