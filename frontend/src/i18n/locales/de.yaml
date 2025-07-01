@@ -680,3 +680,25 @@ api-remote-errors:
   series:
     not-found: "Aktion fehlgeschlagen: Serie nicht gefunden."
     not-allowed: Sie haben nicht die Berechtigung, diese Serienaktion durchzuführen.
+
+eth-not-immediately-translated:
+  site-title: Videoportal
+  terms-of-service:
+    title: Nutzungsbestimmungen
+    button: Akzeptieren
+    text: >
+      "Mit «Akzeptieren» erklären Sie sich einverstanden mit den Nutzungsbestimmungen und der
+      Video Policy des Videoportals der ETH Zürich; diese können Sie über die Links unten einsehen.
+      - [Nutzungsbestimmungen](https://unlimited.ethz.ch/x/9hYsEQ)
+      - [Video Policy](https://unlimited.ethz.ch/x/9hYsEQ)"
+  footer:
+    label1: Nutzungsbestimmungen
+    label2: Disclaimer & Copyright
+    label3: Impressum
+  metadata:
+    spatial: Ort
+  roles:
+    member: Angehörige der ETH
+    faculty: Lehrende der ETH
+    staff: Mitarbeitende der ETH
+    student: Studierende der ETH

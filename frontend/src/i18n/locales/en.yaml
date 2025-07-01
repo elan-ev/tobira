@@ -644,3 +644,25 @@ api-remote-errors:
   series:
     not-found: "Action failed: series not found."
     not-allowed: You are not allowed to perform this series action.
+
+
+eth-not-immediately-translated:
+  site-title: Video portal
+  terms-of-service:
+    title: Terms of Use
+    button: Agree
+    text: "By clicking “Agree”, you agree to the terms of use and the video policy of the ETH Zurich video portal; you can review these via the links below.
+      - [Terms of use](https://unlimited.ethz.ch/x/fRcsEQ)
+      - [Video policy](https://unlimited.ethz.ch/x/fRcsEQ)
+      "
+  footer:
+    label1: Terms of Use
+    label2: Disclaimer & Copyright
+    label3: Imprint
+  metadata:
+    spatial: Location
+  roles:
+    member: Members of ETH
+    faculty: Lecturers at ETH
+    staff: Employees of ETH
+    student: Students of ETH
