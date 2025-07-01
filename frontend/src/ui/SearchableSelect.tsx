@@ -1,7 +1,7 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
-import { CSSObjectWithLabel, Theme } from "react-select";
+import { CSSObjectWithLabel, SelectInstance, Theme } from "react-select";
 import AsyncSelect from "react-select/async";
 import { fetchQuery, graphql, GraphQLTaggedNode } from "react-relay";
 import { Card, useColorScheme } from "@opencast/appkit";
@@ -91,8 +91,16 @@ export const SearchableSelect = <T, >({
 }: SearchableSelectProps<T>) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
+    const ref = useRef<SelectInstance<T>>(null);
 
     return <AsyncSelect
+        ref={ref}
+        onKeyDown={ev => {
+            // Prevents triggering other `esc` handlers when the menu is open.
+            if ((ev.key === "Escape" || ev.key === "Esc") && ref.current?.props.menuIsOpen) {
+                ev.stopPropagation();
+            }
+        }}
         loadOptions={loadOptions}
         formatOptionLabel={(option: T) => format(option, t)}
         cacheOptions
