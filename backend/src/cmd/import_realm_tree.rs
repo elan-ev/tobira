@@ -5,7 +5,7 @@ use serde::Deserialize;
 use tokio_postgres::IsolationLevel;
 use deadpool_postgres::GenericClient;
 use std::{fs::File, future::Future, path::PathBuf, pin::Pin, collections::HashMap};
-use rand::{thread_rng, Rng, distributions::WeightedIndex, prelude::*};
+use rand::{rng, Rng, distr::weighted::WeightedIndex, prelude::*};
 
 use crate::{
     config::Config,
@@ -109,7 +109,7 @@ pub(crate) async fn run(args: &Args, config: &Config) -> Result<()> {
         info!("Generating dummy blocks...");
         add_dummy_blocks(&mut root, &tx).await?;
     }
-    
+
     info!("Starting to insert realms into the DB...");
     insert_realm(&tx, &root, 0).await?;
     tx.commit().await?;
@@ -124,12 +124,12 @@ fn for_all_empty_realms(realm: &mut Realm, mut f: impl FnMut(&mut Realm)) {
         if realm.blocks.is_empty() {
             f(realm);
         }
-            
+
         for child in &mut realm.children {
             for_all_realms_rec(child, f);
         }
     }
-    
+
     for_all_realms_rec(realm, &mut f);
 }
 
@@ -150,7 +150,7 @@ async fn load_entities_from_db(db: &impl GenericClient, list_type: ListType) -> 
 
 /// Adds different kinds of blocks to empty realms.
 async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<()> {
-    let mut rng = thread_rng();
+    let mut rng = rng();
 
     // Load series
     let mut series = load_entities_from_db(db, ListType::Series).await?;
@@ -207,7 +207,7 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
 
     // Do the same for playlists
     let (playlists, playlist_probability) = list_prob(playlists);
-    
+
     // Insert blocks into remaining realms.
     for_all_empty_realms(root, |realm| {
         // Text blocks:
@@ -234,14 +234,14 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
                 );
             }
         };
-        
+
 
         // Series blocks:
         add_video_list(series_probability, &series, ListType::Series);
-    
+
         // Playlist blocks:
         add_video_list(playlist_probability, &playlists, ListType::Playlist);
-       
+
         // Video blocks:
         let num_video_blocks = {
             let choices = [0, 1, 2, 3];
@@ -287,7 +287,7 @@ fn insert_realm<'a>(
             ";
             db.execute(query, &[&realm.page_admins, &realm.page_moderators, &id]).await?;
         }
-        
+
 
         match name_source_block_id {
             Some(block_id) => {
@@ -403,10 +403,10 @@ fn dummy_text(title: &str) -> String {
         sit similique ipsum.";
 
     let num_sentences = DUMMY_TEXT.chars().filter(|c| c == &'.').count();
-    let num = thread_rng().gen_range(1..num_sentences);
+    let num = rng().random_range(1..num_sentences);
     let end_index = DUMMY_TEXT.char_indices().filter(|(_, c)| c == &'.').nth(num).unwrap().0;
     let text = &DUMMY_TEXT[..=end_index];
-    
+
     let num = num + 1; // 0-based to 1-based
     format!("\
         What you are seeing here is __{title}__, a collection of videos about potentially \
@@ -418,4 +418,3 @@ fn dummy_text(title: &str) -> String {
         {text} \
     ")
 }
-
