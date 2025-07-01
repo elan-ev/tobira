@@ -17,6 +17,5 @@
         "src/typings",
         "node_modules/@types"
     ]
-  },
-  "include": ["src", "tests", "playwright.config.ts"]
+  }
 }
