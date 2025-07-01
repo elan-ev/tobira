@@ -189,11 +189,11 @@ export class GlobalErrorBoundary
     }
 
     public componentDidMount() {
-        window.addEventListener("popstate", GlobalErrorBoundary.popStateHandler);
+        window.addEventListener("popstate", this.popStateHandler);
     }
 
     public componentWillUnmount() {
-        window.removeEventListener("popstate", GlobalErrorBoundary.popStateHandler);
+        window.removeEventListener("popstate", this.popStateHandler);
     }
 
     // When this error boundary is triggered, users instinctively want to go
@@ -203,9 +203,11 @@ export class GlobalErrorBoundary
     // navigation, but assumes that the SPA handles it. The `onpopstate` handler
     // of the router is already unmounted, but we need to manually reload the
     // page like this instead.
-    private static popStateHandler(this: void) {
-        location.reload();
-    }
+    private popStateHandler = () => {
+        if (this.state.error) {
+            location.reload();
+        }
+    };
 
     public render(): ReactNode {
         const error = this.state.error;
