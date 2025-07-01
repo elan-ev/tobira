@@ -52,7 +52,12 @@ export const RealmNav: React.FC<Props> = ({ fragRef }) => {
     // We expect all production instances to have more than the root realm. So
     // we print this information instead of an empty div to avoid confusion.
     if (nav.list.length === 0 && nav.header.length === 0) {
-        return <div css={{ margin: "8px 12px" }}>{t("general.no-root-children")}</div>;
+        return <Nav items={[{
+            label: t("general.no-root-children"),
+            active: true,
+            indent: 0,
+            link: "/",
+        }]} />;
     }
 
     const shared = (item: { path: string, name?: string | null }) => ({
