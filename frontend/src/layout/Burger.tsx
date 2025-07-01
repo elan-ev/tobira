@@ -40,29 +40,18 @@ export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (
                 margin: 8,
                 borderBottom: "none",
                 "a, span, button": {
-                    padding: 16,
                     borderRadius: 4,
                 },
             },
-            nav: {
-                "> a": {
-                    margin: 8,
-                    padding: "12px 4px",
-                    borderRadius: 4,
-                    "svg:first-of-type": {
-                        display: "block",
-                        fontSize: 24,
-                    },
-                    "svg:last-of-type": { display: "none" },
-                },
-                "> div": {
-                    backgroundColor: COLORS.neutral20,
-                    borderRadius: 4,
-                    border: "none",
-                    color: COLORS.primary2,
+            "div > ul > li": {
+                "a, span, button": {
                     padding: 16,
-                    margin: "0 8px",
-                    "~ ul": { marginLeft: 26 },
+                },
+            },
+            "div > nav > ul > li": {
+                "> a, > div, > button": {
+                    paddingTop: 16,
+                    paddingBottom: 16,
                 },
             },
         }}>
