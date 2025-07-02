@@ -10,7 +10,7 @@ import { NotFoundQuery } from "./__generated__/NotFoundQuery.graphql";
 import { LuFrown } from "react-icons/lu";
 import { PageTitle } from "../layout/header/ui";
 import { CenteredContent } from "../ui";
-import { Breadcrumbs } from "../ui/Breadcrumbs";
+import { Breadcrumbs, Props as BreadcrumbsProps } from "../ui/Breadcrumbs";
 
 
 export const NotFoundRoute = {
@@ -33,9 +33,10 @@ const query = graphql`
 
 type Props = {
     kind: "page" | "video" | "series" | "playlist";
+    breadcrumbsPath?: BreadcrumbsProps["path"],
 };
 
-export const NotFound: React.FC<Props> = ({ kind }) => {
+export const NotFound: React.FC<Props> = ({ kind, breadcrumbsPath }) => {
     const { t } = useTranslation();
     const title = match(kind, {
         "page": () => t("not-found.page-not-found"),
@@ -53,7 +54,7 @@ export const NotFound: React.FC<Props> = ({ kind }) => {
     useNoindexTag();
 
     return <>
-        <Breadcrumbs path={[]} tail={<i>{title}</i>} />
+        <Breadcrumbs path={breadcrumbsPath ?? []} tail={<i>{title}</i>} />
         <LuFrown css={{ margin: "0 auto", display: "block", fontSize: 90 }} />
         <PageTitle
             title={title}

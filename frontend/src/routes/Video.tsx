@@ -531,9 +531,10 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
     const realm = useFragment(realmFragment, realmRef);
     const protoEvent = useFragment(eventFragment, eventRef);
     const [event, refetch] = useEventWithAuthData(protoEvent);
+    const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     if (!event) {
-        return <NotFound kind="video" />;
+        return <NotFound kind="video" breadcrumbsPath={breadcrumbs} />;
     }
 
     if (event.__typename === "NotAllowed") {
@@ -546,7 +547,6 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
         return <WaitingPage type="video" />;
     }
 
-    const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
     const { hasStarted, hasEnded } = getEventTimeInfo(event);
     const isCurrentlyLive = hasStarted === true && hasEnded === false;
 

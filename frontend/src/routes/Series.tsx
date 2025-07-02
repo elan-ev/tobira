@@ -261,9 +261,10 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesRef, realmRef, realmPath 
     const { t } = useTranslation();
     const series = useFragment(fragment, seriesRef ?? null);
     const realm = useFragment(realmFragment, realmRef);
+    const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     if (!series) {
-        return <NotFound kind="series" />;
+        return <NotFound kind="series" breadcrumbsPath={breadcrumbs} />;
     }
 
     if (!isSynced(series)) {
@@ -275,7 +276,6 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesRef, realmRef, realmPath 
     // that the realm is actually deriving the name from this series. But
     // either way, showing the same string a second time doesn't help with
     // anything.
-    const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
     const tail = series.title === realm.name
         ? <i>{t("series.singular")}</i>
         : series.title;
