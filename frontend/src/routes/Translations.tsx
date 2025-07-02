@@ -61,31 +61,51 @@ type NestedTranslation = {
     [key: string]: string | NestedTranslation;
 };
 
-const hasKey = <T extends object>(obj: T, key: PropertyKey): key is keyof T => key in obj;
 const isNestedTranslation = (value: unknown): value is NestedTranslation =>
     typeof value === "object" && value !== null && !Array.isArray(value);
 
-const matchesPattern = (obj: unknown) => {
-    if (!isNestedTranslation(obj)) {
-        return false;
+const validateUploadedTranslation = (
+    candidate: unknown,
+    pattern: NestedTranslation,
+): { isValid: boolean; missing: string[]; extra: string[] } => {
+    if (!isNestedTranslation(candidate)) {
+        // Not even an object, so treat as mostly invalid
+        return { isValid: false, missing: [], extra: [] };
     }
 
-    const checkStructure = (pattern: unknown, candidate: unknown): boolean => {
-        if (!isNestedTranslation(pattern)) {
-            return true;
-        }
-        if (!isNestedTranslation(candidate)) {
-            return false;
-        }
-        return Object.keys(pattern).every(key => {
-            if (!hasKey(candidate, key)) {
-                return false;
+    const missing: string[] = [];
+    const extra: string[] = [];
+
+    // Recursive walk to check missing/extra keys
+    const compareStructs = (
+        pat: NestedTranslation,
+        obj: NestedTranslation,
+        path = "",
+    ) => {
+        // Check for keys that exist in pattern but not in uploaded file
+        Object.keys(pat).forEach(k => {
+            const fullPath = path ? `${path}.${k}` : k;
+            if (!(k in obj)) {
+                missing.push(fullPath);
+            } else if (isNestedTranslation(pat[k]) && isNestedTranslation(obj[k])) {
+                compareStructs(pat[k] as NestedTranslation, obj[k] as NestedTranslation, fullPath);
             }
-            return checkStructure(pattern[key], candidate[key]);
+        });
+
+        // Check for keys that exist in uploaded file but not in pattern
+        Object.keys(obj).forEach(k => {
+            const fullPath = path ? `${path}.${k}` : k;
+            if (!(k in pat)) {
+                extra.push(fullPath);
+            } else if (isNestedTranslation(obj[k]) && isNestedTranslation(pat[k])) {
+                compareStructs(pat[k] as NestedTranslation, obj[k] as NestedTranslation, fullPath);
+            }
         });
     };
 
-    return checkStructure(blankTranslation, obj);
+    compareStructs(pattern, candidate);
+    // 'isValid' is true if it's at least an object
+    return { isValid: true, missing, extra };
 };
 
 
@@ -111,6 +131,8 @@ export const TranslationModal: React.FC<TranslationModalProps> = ({ open, onClos
 
     const [importSuccess, setImportSuccess] = useState<Record<string, boolean>>({});
     const [importing, setImporting] = useState<Record<string, boolean>>({});
+    const [importWarning, setImportWarning]
+        = useState<null | { missing: string[]; extra: string[] }>(null);
     const [displayedKeys, setDisplayedKeys] = useState<string[]>([]);
     const [visibleLangs, setVisibleLangs] = useState<string[]>(() => {
         const storedVisibleLangs = localStorage.getItem(VISIBLE_LANGS);
@@ -187,6 +209,7 @@ export const TranslationModal: React.FC<TranslationModalProps> = ({ open, onClos
     };
 
     const handleClose = () => {
+        setImportWarning(null);
         editableLangs.forEach(lang => {
             i18n.removeResourceBundle(lang, namespace);
             i18n.addResourceBundle(lang, namespace, editedValues[lang] || {}, false, true);
@@ -214,10 +237,16 @@ export const TranslationModal: React.FC<TranslationModalProps> = ({ open, onClos
         reader.onload = ev => {
             try {
                 const imported = yaml.load(ev.target?.result as string);
-                if (!matchesPattern(imported)) {
-                    alert("YAML structure does not match the required pattern.");
-                    setImporting(prev => ({ ...prev, [lang]: false }));
-                    return;
+                const { missing, extra } = validateUploadedTranslation(
+                    imported, blankTranslation as NestedTranslation,
+                );
+                if (missing.length > 0 || extra.length > 0) {
+                    setImportWarning({
+                        missing: Array.from(new Set(missing)),
+                        extra: Array.from(new Set(extra)),
+                    });
+                } else {
+                    setImportWarning(null);
                 }
                 const flat = flattenTranslation(imported as TranslationRecord);
                 setEditedValues(prev => {
@@ -322,6 +351,46 @@ export const TranslationModal: React.FC<TranslationModalProps> = ({ open, onClos
 
 
     return !open ? null : ReactDOM.createPortal(<ModalWrapper onClose={handleClose}>
+        {importWarning && (
+            <div css={{
+                backgroundColor: isDark
+                    ? "#643636"
+                    : "#ffecec",
+                padding: "8px 12px",
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 24,
+            }}>
+                <div>
+                    <h3>Some translation keys are mismatched.</h3>
+                    {importWarning.missing.length > 0 && (
+                        <div>
+                            <h4>Upload is missing:</h4>
+                            <ul css={{ margin: 0 }}>
+                                {importWarning.missing.map(key => (
+                                    <li key={`missing-${key}`}>{key}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {importWarning.extra.length > 0 && (
+                        <div>
+                            <h4>Upload has extra:</h4>
+                            <ul css={{ margin: 0 }}>
+                                {importWarning.extra.map(key => (
+                                    <li key={`extra-${key}`}>{key}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+                <Button onClick={() => setImportWarning(null)} css={{
+                    marginLeft: 16,
+                    marginTop: 4,
+                }}>Dismiss</Button>
+            </div>
+        )}
         <input
             type="file"
             accept=".yaml, .yml"
