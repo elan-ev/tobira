@@ -31,6 +31,7 @@ for (const realmType of realmTypes) {
         });
 
         const nav = page.locator("nav").first().getByRole("listitem");
+        const navHeader = ["Home", parentPageName];
         const subPages = ["Apple", "Banana", "Cherry"];
         // User realm already has an "Apple" sub-page
         const pagesToAdd = realmType === "User realm" ? ["Banana", "Cherry"] : subPages;
@@ -41,7 +42,7 @@ for (const realmType of realmTypes) {
                 await page.getByRole("heading", { name: parentPageName, level: 1 }).waitFor();
             }
 
-            await expect(nav).toHaveText(subPages);
+            await expect(nav).toHaveText([...navHeader, ...subPages]);
         });
 
         const saveButton = page.getByRole("button", { name: "Save" });
@@ -52,14 +53,14 @@ for (const realmType of realmTypes) {
                 await page.getByText("Sort alphabetically descending").click();
                 await saveButton.nth(1).click();
 
-                await expect(nav).toHaveText(subPages.slice().reverse());
+                await expect(nav).toHaveText([...navHeader, ...subPages.slice().reverse()]);
             });
 
             await test.step("Sort alphabetically ascending", async () => {
                 await page.getByText("Sort alphabetically ascending").click();
                 await saveButton.nth(1).click();
 
-                await expect(nav).toHaveText(subPages);
+                await expect(nav).toHaveText([...navHeader, ...subPages]);
             });
 
             await test.step("Manually order", async () => {
@@ -80,7 +81,7 @@ for (const realmType of realmTypes) {
                 }
                 await saveButton.nth(1).click();
 
-                await expect(nav).toHaveText(postOrder);
+                await expect(nav).toHaveText([...navHeader, ...postOrder]);
             });
         });
 

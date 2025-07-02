@@ -14,7 +14,7 @@ import { loadQuery } from "../../../../relay";
 import { PathInvalid } from "..";
 import { NotAuthorized } from "../../../../ui/error";
 import { RealmSettingsContainer } from "../util";
-import { Nav } from "../../../../layout/Navigation";
+import { RealmNav } from "../../../../layout/Navigation";
 import { makeRoute } from "../../../../rauta";
 import { Spinner } from "@opencast/appkit";
 import { AddButtons } from "./AddButtons";
@@ -51,7 +51,7 @@ export const ManageRealmContentRoute = makeRoute({
                 noindex
                 nav={data => data.realm
                     ? [
-                        <Nav key="main-nav" fragRef={data.realm} />,
+                        <RealmNav key="main-nav" fragRef={data.realm} />,
                         <RealmEditLinks key="edit-buttons" path={path} />,
                     ]
                     : []}

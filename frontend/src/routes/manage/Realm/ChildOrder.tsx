@@ -22,6 +22,7 @@ const fragment = graphql`
         name
         childOrder
         children { id name index }
+        ...NavigationData
     }
 `;
 

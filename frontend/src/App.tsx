@@ -21,6 +21,7 @@ import { COLORS } from "./color";
 import { InitialConsent } from "./ui/InitialConsent";
 import { InitialLoading } from "./layout/Root";
 import { NotificationProvider } from "./ui/NotificationContext";
+import { DevConfig } from "./DevConfig";
 
 
 type Props = {
@@ -36,19 +37,21 @@ export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
                     <GlobalStyle />
                     <GlobalErrorBoundary>
                         <RelayEnvironmentProvider {...{ environment }}>
-                            <Router initialRoute={initialRoute}>
-                                <GraphQLErrorBoundary>
-                                    <MenuProvider>
-                                        <NotificationProvider>
-                                            <LoadingIndicator />
-                                            <InitialConsent {...{ consentGiven }} />
-                                            <Suspense fallback={<InitialLoading />}>
-                                                <ActiveRoute />
-                                            </Suspense>
-                                        </NotificationProvider>
-                                    </MenuProvider>
-                                </GraphQLErrorBoundary>
-                            </Router>
+                            <DevConfig>
+                                <Router initialRoute={initialRoute}>
+                                    <GraphQLErrorBoundary>
+                                        <MenuProvider>
+                                            <NotificationProvider>
+                                                <LoadingIndicator />
+                                                <InitialConsent {...{ consentGiven }} />
+                                                <Suspense fallback={<InitialLoading />}>
+                                                    <ActiveRoute />
+                                                </Suspense>
+                                            </NotificationProvider>
+                                        </MenuProvider>
+                                    </GraphQLErrorBoundary>
+                                </Router>
+                            </DevConfig>
                         </RelayEnvironmentProvider>
                     </GlobalErrorBoundary>
                 </AppkitConfigProvider>

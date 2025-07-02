@@ -11,8 +11,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
 import { RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
-import { Nav } from "../layout/Navigation";
-import { LinkList, LinkWithIcon } from "../ui";
+import { RealmNav, Nav } from "../layout/Navigation";
 import { characterClass, useTitle, useTranslatedConfig, visuallyHiddenStyle } from "../util";
 import { makeRoute } from "../rauta";
 import { MissingRealmName } from "./util";
@@ -23,7 +22,6 @@ import { displayCommitError } from "./manage/Realm/util";
 import { Spinner, boxError } from "@opencast/appkit";
 import { useRouter } from "../router";
 import { COLORS } from "../color";
-import { useMenu } from "../layout/MenuState";
 import { ManageNav } from "./manage";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../layout/Navigation";
 import CONFIG from "../config";
@@ -98,7 +96,7 @@ export const RealmRoute = makeRoute({
                         return [];
                     }
 
-                    const mainNav = <Nav key="nav" fragRef={data.realm} />;
+                    const mainNav = <RealmNav key="nav" fragRef={data.realm} />;
                     return data.realm.canCurrentUserModerate
                         ? [mainNav, <RealmEditLinks key="edit-buttons" path={realmPath} />]
                         : mainNav;
@@ -264,7 +262,6 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
 
 export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
     const { t } = useTranslation();
-    const menu = useMenu();
 
     /* eslint-disable react/jsx-key */
     const buttons: [string, string, ReactElement][] = [
@@ -278,19 +275,17 @@ export const RealmEditLinks: React.FC<{ path: string }> = ({ path }) => {
 
     const encodedPath = pathToQuery(path);
 
-    const items = buttons.map(([route, label, icon], i) => (
-        <LinkWithIcon key={i}
-            to={`${route}${encodedPath}`}
-            iconPos="left"
-            active={isActive(route)}
-            close={() => menu.state === "burger" && menu.close()}
-        >
-            {icon}
-            {label}
-        </LinkWithIcon>
-    ));
-
-    return <LinkList items={items} />;
+    return <Nav items={buttons.map(([route, label, icon]) => ({
+        active: isActive(route),
+        indent: 0,
+        label,
+        link: `${route}${encodedPath}`,
+        icon: {
+            position: "left",
+            icon,
+        },
+        closeBurgerOnClick: true,
+    }))} />;
 };
 
 /**
