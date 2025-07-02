@@ -13,7 +13,9 @@ import { NetworkError } from "../util/err";
 
 
 export const environment = new Environment({
-    store: new Store(new RecordSource()),
+    store: new Store(new RecordSource(), {
+        queryCacheExpirationTime: 30 * 60 * 1000,
+    }),
     network: Network.create(
         async ({ text: query }, variables) => {
             const response = await fetch("/graphql", {
