@@ -48,6 +48,8 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
         {...props}
     />,
     a: ({ node, href, ...props }) => <Link to={href ?? ""} {...props} />,
+    ul: ({ node, ...props }) => <ul css={{ maxWidth: 800 }} {...props} />,
+    ol: ({ node, ...props }) => <ol css={{ maxWidth: 800 }} {...props} />,
     blockquote: ({ node, ...props }) => <blockquote
         css={{
             borderLeft: `4px solid ${COLORS.neutral25}`,
@@ -86,8 +88,8 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
 export const TextBlock: React.FC<Props> = ({ content }) => (
     <div css={{
         maxWidth: 1200,
-        "& > *:first-of-type": { marginTop: 0 },
-        "& > *:last-of-type": { marginBottom: 0 },
+        "& > *:first-child": { marginTop: 0 },
+        "& > *:last-child": { marginBottom: 0 },
         color: COLORS.neutral80,
         a: {
             borderRadius: 4,
