@@ -796,6 +796,7 @@ const ListView: React.FC<ViewProps> = ({ basePath, items, showSeries, listId }) 
                 key={idx}
                 {...{ item, active, basePath, showSeries, listId }}
                 showDescription
+                dateAndCreatorOneLine
                 css={{
                     width: "100%",
                     margin: 6,
@@ -951,6 +952,7 @@ type ItemProps = {
     listId?: string;
     active: boolean;
     showDescription?: boolean;
+    dateAndCreatorOneLine?: boolean;
     showSeries?: boolean;
     className?: string;
 };
@@ -961,6 +963,7 @@ const Item: React.FC<ItemProps> = ({
     listId,
     active,
     showDescription = false,
+    dateAndCreatorOneLine = false,
     showSeries = false,
     className,
 }) => {
@@ -1016,6 +1019,56 @@ const Item: React.FC<ItemProps> = ({
         }
     })();
 
+    const dateAndCreator = () => {
+        if (isPlaceholder) {
+            return null;
+        }
+
+        const date = item.syncedData?.startTime ?? item.created;
+
+        if (dateAndCreatorOneLine) {
+            return <DateAndCreators
+                isLive={item.isLive}
+                creators={[...item.creators]}
+                timestamp={date}
+            />;
+        }
+
+        return <>
+            <div css={{
+                position: "relative",
+                zIndex: 6,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                marginBottom: 2,
+                fontSize: 13,
+                color: COLORS.neutral70,
+            }}>
+                <RelativeDate date={new Date(date)} isLive={item.isLive} />
+            </div>
+            {item.creators.length > 0 && <ul css={{
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+                color: COLORS.neutral80,
+                fontSize: 14,
+                "& > li": {
+                    display: "inline",
+                    "&:not(:last-child):after": {
+                        content: "'•'",
+                        padding: "0 6px",
+                    },
+                },
+            }}>
+                {item.creators.map((creator, i) => <li key={i}>{creator}</li>)}
+            </ul>}
+        </>;
+    };
+
     const inner = <>
         <div css={{
             position: "relative",
@@ -1049,33 +1102,7 @@ const Item: React.FC<ItemProps> = ({
                 }}>{title}</div>
             </h3>
             {!isPlaceholder && <>
-                <div css={{
-                    color: COLORS.neutral80,
-                    fontSize: 14,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    "& > span": {
-                        display: "inline-block",
-                        whiteSpace: "nowrap",
-                    },
-                }}>
-                    {item.creators.length > 0 && <span css={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        "&:after": {
-                            content: "'•'",
-                            padding: "0 8px",
-                        },
-                        // TODO: maybe find something better than `join`
-                    }}>{item.creators.join(", ")}</span>}
-                    {/* `new Date` is well defined for our ISO Date strings */}
-                    <div css={{ zIndex: 6 }}>
-                        <RelativeDate
-                            date={new Date(item.syncedData?.startTime ?? item.created)}
-                            isLive={item.isLive}
-                        />
-                    </div>
-                </div>
+                {dateAndCreator()}
                 {showDescription && <SmallDescription lines={3} text={item.description} />}
                 {showSeries && item.series?.id && item.series.title && <PartOfSeriesLink
                     seriesId={item.series.id}
