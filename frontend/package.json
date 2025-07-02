@@ -20,7 +20,9 @@
   },
   "browserslist": [
     "defaults",
-    "not iOS < 15"
+    "not ios < 15",
+    "not op_mini all",
+    "not kaios < 3"
   ],
   "dependencies": {
     "@babel/core": "^7.27.1",
