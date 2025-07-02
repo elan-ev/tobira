@@ -81,6 +81,7 @@
     "@types/react-transition-group": "^4.4.12",
     "@types/webpack-env": "^1.18.8",
     "eslint": "^9.26.0",
+    "eslint-plugin-compat": "^6.0.2",
     "eslint-webpack-plugin": "^5.0.1",
     "fork-ts-checker-webpack-plugin": "^9.1.0",
     "html-webpack-plugin": "^5.6.3",
