@@ -77,6 +77,7 @@ type AclContext = {
     knownGroups: Map<string, {
         label: TranslatedLabel;
         implies: Set<string>;
+        sortKey: string | null;
         large: boolean;
     }>;
     groupDag: GroupDag;
@@ -143,6 +144,7 @@ export const AclSelector: React.FC<AclSelectorProps> = ({
         knownGroups: new Map(knownGroups.map(g => [g.role, {
             label: g.label,
             implies: new Set(g.implies),
+            sortKey: g.sortKey ?? null,
             large: g.large,
         }])),
     };
@@ -164,7 +166,7 @@ type RoleKind = "group" | "user";
 
 export const knownRolesFragment = graphql`
     fragment AccessKnownRolesData on Query {
-        knownGroups { role label implies large }
+        knownGroups { role label implies sortKey large }
     }
 `;
 
@@ -211,9 +213,29 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         label: getLabel(role, info?.label, i18n),
         large: info?.large ?? false,
     }));
+    let groupSelectorEntries: { role: string, label: string, sortKey: string | null }[] = [];
     if (kind === "group") {
         // Sort large groups to the top.
         entries = groupDag.sort(entries);
+
+        // In the group selector, sort groups by the sortKey and then alphabetically.
+        groupSelectorEntries = [...knownGroups.entries()].map(([role, { label, sortKey }]) => ({
+            role,
+            label: getLabel(role, label, i18n),
+            sortKey,
+        }));
+        groupSelectorEntries.sort((a, b) => {
+            if (a.sortKey === b.sortKey) {
+                return a.label.localeCompare(b.label, i18n.language);
+            }
+            if (a.sortKey === null) {
+                return 1;
+            }
+            if (b.sortKey === null) {
+                return -1;
+            }
+            return a.sortKey < b.sortKey ? -1 : 1;
+        });
     } else {
         // Always show the current user first, if included. Then show all known
         // users, then all unknown ones, both in alphabetical order.
@@ -340,10 +362,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         {kind === "group"
             ? <CreatableSelect
                 {...commonSelectProps}
-                options={[...knownGroups.entries()].map(([role, { label }]) => ({
-                    role,
-                    label: getLabel(role, label, i18n),
-                }))}
+                options={groupSelectorEntries}
             />
             : <AsyncCreatableSelect
                 {...commonSelectProps}
@@ -973,6 +992,7 @@ const insertBuiltinRoleInfo = (
             implies: [],
             label: keyToTranslatedString("acl.groups.everyone"),
             large: true,
+            sortKey: "_a",
         };
         knownGroups.push(anonymousInfo);
     }
@@ -983,6 +1003,7 @@ const insertBuiltinRoleInfo = (
             implies: [COMMON_ROLES.ANONYMOUS],
             label: keyToTranslatedString("acl.groups.logged-in-users"),
             large: true,
+            sortKey: "_b",
         };
         knownGroups.push(userInfo);
     }
@@ -1012,7 +1033,7 @@ interface GroupDag {
      * Topologically sorts the given groups such that large groups are first,
      * smaller ones last.
      */
-    sort(groups: Entry[]): Entry[];
+    sort<T extends { role: string }>(groups: T[]): T[];
 }
 
 const buildDag = (groups: AccessKnownRolesData$data["knownGroups"]): GroupDag => {

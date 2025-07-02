@@ -31,6 +31,11 @@ pub(crate) enum Args {
     ///         "large": true
     ///     }
     /// }
+    ///
+    /// Each entry may also have a field `sortKey` which is used to sort entries
+    /// in the group selector. Entries with same `sortKey` are sorted
+    /// alphabetically. Entries without `sortKey` are sorted last. By default,
+    /// ROLE_ANONYMOUS has sortKey "_a" and ROLE_USER has "_b".
     Upsert {
         /// File to JSON file containing groups to add.
         file: String,
@@ -123,13 +128,14 @@ async fn upsert(file: &str, config: &Config, tx: Transaction<'_>) -> Result<()> 
     // Insert into DB
     let len = groups.len();
     for (role, info) in groups {
-        let sql = "insert into known_groups (role, label, implies, large) \
-            values ($1, $2, $3, $4) \
+        let sql = "insert into known_groups (role, label, implies, sort_key, large) \
+            values ($1, $2, $3, $4, $5) \
             on conflict (role) do update set \
                 label = excluded.label, \
                 implies = excluded.implies, \
+                sort_key = excluded.sort_key, \
                 large = excluded.large";
-        tx.execute(sql, &[&role, &info.label, &info.implies, &info.large]).await?;
+        tx.execute(sql, &[&role, &info.label, &info.implies, &info.sort_key, &info.large]).await?;
     }
     tx.commit().await?;
 
@@ -182,6 +188,7 @@ async fn clear(tx: Transaction<'_>) -> Result<()> {
 
 
 #[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct GroupData {
     label: TranslatedString,
 
@@ -189,6 +196,7 @@ struct GroupData {
     implies: Vec<Role>,
 
     large: bool,
+    sort_key: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize, PartialEq, Eq, Hash, ToSql)]
