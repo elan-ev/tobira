@@ -118,8 +118,6 @@ const config: CallableOption = (_env, argv) => ({
                     // To guard against updates.
                     throw new Error("Paella skin CSS changed! Adjust webpack config.");
                 }
-                // @ts-expect-error replaceAll requires a newer es standard, but
-                // that's trick to configure for this file.
                 const out = file.replace(fontDecl, "").replaceAll("font-family: roboto;", "");
                 fs.writeFileSync(outPath, out);
             });
