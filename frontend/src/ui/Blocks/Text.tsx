@@ -5,6 +5,7 @@ import type { Options } from "react-markdown";
 
 import { TextBlockData$key } from "./__generated__/TextBlockData.graphql";
 import { COLORS } from "../../color";
+import { Link } from "../../router";
 
 
 const fragment = graphql`
@@ -46,6 +47,7 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
         }}
         {...props}
     />,
+    a: ({ node, href, ...props }) => <Link to={href ?? ""} {...props} />,
     blockquote: ({ node, ...props }) => <blockquote
         css={{
             borderLeft: `4px solid ${COLORS.neutral25}`,
