@@ -21,6 +21,7 @@ import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 import { Link, useRouter } from "../../../router";
 import { useNotification } from "../../../ui/NotificationContext";
 import { NotReadyNote } from "../../util";
+import { preciseDateTime, preferredLocaleForLang } from "../../../ui/time";
 
 
 type UrlProps = {
@@ -92,32 +93,35 @@ type UpdatedCreatedInfoProps = {
 /** Shows the `created` and `updated` timestamps. */
 export const UpdatedCreatedInfo: React.FC<UpdatedCreatedInfoProps> = ({ item }) => {
     const { t, i18n } = useTranslation();
-    const created = item.created && new Date(item.created).toLocaleString(i18n.language);
-
-    const updated = item.updated == null
-        ? null
-        : new Date(item.updated).toLocaleString(i18n.language);
+    const locale = preferredLocaleForLang(i18n.language);
+    const { updated, created } = item;
 
     return (
         <div css={{ marginBottom: 16, fontSize: 14 }}>
             {created && (
                 <span css={{ "&:not(:last-child):after": { content: "'•'", margin: "0 12px" } }}>
-                    <DateValue label={t("manage.table.columns.created")} value={created} />
+                    <DateValue
+                        label={t("manage.table.columns.created")}
+                        date={preciseDateTime(new Date(created), locale)}
+                    />
                 </span>
             )}
-            {updated && <DateValue label={t("manage.table.updated")} value={updated} />}
+            {updated && <DateValue
+                label={t("manage.table.updated")}
+                date={preciseDateTime(new Date(updated), locale)}
+            />}
         </div>
     );
 };
 
 type DateValueProps = {
     label: string;
-    value: string;
+    date: string;
 };
 
-const DateValue: React.FC<DateValueProps> = ({ label, value }) => <>
+const DateValue: React.FC<DateValueProps> = ({ label, date }) => <>
     <span css={{ color: COLORS.neutral60, lineHeight: 1 }}>{label + ":"}</span>
-    <span css={{ marginLeft: 6, marginTop: 4 }}>{value}</span>
+    <span css={{ marginLeft: 6, marginTop: 4 }}>{date}</span>
 </>;
 
 
