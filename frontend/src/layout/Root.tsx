@@ -1,7 +1,7 @@
-import React, { ReactNode, useEffect, useMemo, useRef } from "react";
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
-import { screenWidthAtMost } from "@opencast/appkit";
+import { currentRef, match, screenWidthAtMost } from "@opencast/appkit";
 
 import { Header } from "./header";
 import { BREAKPOINT as NAV_BREAKPOINT, NavItems } from "./Navigation";
@@ -38,17 +38,9 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
             )}
             <Main>
                 {/* Sidebar */}
-                {navExists && <div css={{
-                    flex: "1 0 12.5%",
-                    minWidth: 240,
-                    maxWidth: 360,
-                    marginRight: 48,
-                    [screenWidthAtMost(NAV_BREAKPOINT)]: {
-                        display: "none",
-                    },
-                }}>
+                {navExists && <StickyNav>
                     {navElements.map((elem, i) => <SideBox key={i}>{elem}</SideBox>)}
-                </div>}
+                </StickyNav>}
 
                 {/* Main part */}
                 <div css={{ width: "100%", minWidth: 0, flex: "12 0 0" }}>
@@ -89,6 +81,151 @@ const Main: React.FC<{ children: ReactNode }> = ({ children }) => (
         alignItems: "stretch",
     }}>{children}</main>
 );
+
+/**
+ * The left side navigation that sticks to the viewport.
+ *
+ * This is unfortunately not easy. Mind you, if the nav fits into the
+ * viewport, all is good: that case is trivial. But dealing with the case when
+ * it not fits is hard, in particular if you want a good UX, not just a nested
+ * scrollbar, for example.
+ *
+ * The UX we are going for is the nav being dragged around by the viewport. The
+ * whole viewport is always filled with the nav. If the top of the nav aligns
+ * with the top of the viewport, and the user scrolls up, the nav switches to
+ * sticky/fixed and stays in the same place relative to the viewport. Same for
+ * the other direction. The advantage is that whenever a user scrolls to reveal
+ * parts of the nav that were hidden before, the nav immediately scrolls.
+ */
+const StickyNav: React.FC<React.PropsWithChildren> = ({ children }) => {
+    const VIEWPORT_MARGIN = 16;
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const stickyBoxRef = useRef<HTMLDivElement | null>(null);
+
+    // This is called whenever the nav or viewport resizes, or when the user
+    // scrolls in a different direction than the previous scroll (i.e. changes
+    // direction). If the viewport does not fit the nav, this sets a bunch of
+    // CSS properties.
+    const setStyle = useCallback((direction: "up" | "down") => {
+        const container = currentRef(containerRef);
+        const stickyBox = currentRef(stickyBoxRef);
+
+
+        // If the nav fits the viewport, we don't set anything. The static CSS
+        // properties set in the JSX can deal with that.
+        const fitsViewport = window.innerHeight >= stickyBox.scrollHeight + 2 * VIEWPORT_MARGIN;
+        if (fitsViewport) {
+            // Reset everything this function might have set.
+            ["margin-top", "margin-bottom", "top", "bottom"]
+                .forEach(prop => stickyBox.style.removeProperty(prop));
+            container.style.removeProperty("align-items");
+
+            return;
+        }
+
+        // Set CSS properties to make the nav drag along with the viewport. The
+        // idea is that we set 'top/bottom' to a negative number corresponding
+        // to the amount of overflow (see `pos`). That way, when scrolling down,
+        // the top of the nav can scroll out of view and only sticks later, when
+        // the bottom of the nav aligns with the bottom of the viewport. The
+        // same works `bottom` the other way around. We have to align the nav
+        // at the bottom of the container in that case though, that's why we
+        // set `alignItems`.
+        //
+        // But that's not enough yet, this does not have a "memory" yet so the
+        // positioning is a pure function from just the scroll position. Imagine
+        // really long main content and the user having scrolled to the center
+        // of the page. Changing scroll direction there would immediately snap
+        // the nav to one of the limit positions, being aligned either top or
+        // bottom with the viewport. But we want the nav to only scroll as fast
+        // as the main page. This is done by setting margin-top/bottom to
+        // artificially enlarge the element by the exact amount so that in the
+        // instance of scroll-direction-change, the `position: sticky` has no
+        // effect. This is just the space between the top/bottom of the nav and
+        // the top/bottom of the container. This space appears due to
+        // `position: sticky`, but this way we manually position the nav via
+        // margins.
+        const posInContainer = stickyBox.offsetTop - container.offsetTop;
+        const marginBottom = container.offsetHeight - posInContainer - stickyBox.offsetHeight;
+        const pos = `calc(100vh - ${stickyBox.scrollHeight}px - ${VIEWPORT_MARGIN}px)`;
+        match(direction, {
+            "down": () => {
+                stickyBox.style.top = pos;
+                stickyBox.style.marginTop = `${posInContainer}px`;
+                container.style.alignItems = "start";
+                stickyBox.style.removeProperty("margin-bottom");
+                stickyBox.style.removeProperty("bottom");
+            },
+            "up": () => {
+                stickyBox.style.bottom = pos;
+                stickyBox.style.marginBottom = `${marginBottom}px`;
+                container.style.alignItems = "end";
+
+                // It is very important to set this to `initial` to overwrite
+                // the CSS set below in the JSX. Removing the property here
+                // means the `top: VIEWPORT_MARGIN` stays active and conflicts
+                // with `bottom`, which can lead to weird bugs in specific
+                // situations.
+                stickyBox.style.top = "initial";
+                stickyBox.style.removeProperty("margin-top");
+            },
+        });
+    }, []);
+
+    const lastDirection = useRef<"up" | "down" | null>(null);
+    const resizeObserver = useMemo(() => new ResizeObserver(() => {
+        setStyle(lastDirection.current ?? "down");
+    }), []);
+
+    const lastScrollY = useRef(window.scrollY);
+    useEffect(() => {
+        // Listen for resizes of the viewport or the nav element.
+        const stickyBox = currentRef(stickyBoxRef);
+        resizeObserver.observe(stickyBox);
+        resizeObserver.observe(document.body);
+
+        // Check if the scroll direction reversed and if so, call `setStyle`
+        const onScroll = () => {
+            if (window.scrollY === lastScrollY.current) {
+                return;
+            }
+
+            const direction = window.scrollY < lastScrollY.current ? "up" : "down";
+            lastScrollY.current = window.scrollY;
+            if (direction !== lastDirection.current) {
+                lastDirection.current = direction;
+                setStyle(direction);
+            }
+        };
+
+        document.addEventListener("scroll", onScroll);
+        return () => {
+            resizeObserver.disconnect();
+            document.removeEventListener("scroll", onScroll);
+        };
+    }, []);
+
+    return <div ref={containerRef} css={{
+        flex: "1 0 12.5%",
+        minWidth: 240,
+        maxWidth: 360,
+        marginRight: 48,
+        display: "flex",
+        alignItems: "start",
+        [screenWidthAtMost(NAV_BREAKPOINT)]: {
+            display: "none",
+        },
+    }}>
+        <div ref={stickyBoxRef} css={{
+            width: "100%",
+            position: "sticky",
+            top: VIEWPORT_MARGIN,
+        }}>
+            {children}
+        </div>
+    </div>;
+};
 
 export const InitialLoading: React.FC = () => {
     const { t } = useTranslation();
