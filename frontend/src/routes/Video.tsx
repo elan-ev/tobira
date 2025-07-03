@@ -75,7 +75,7 @@ import { ellipsisOverflowCss } from "../ui";
 import { realmBreadcrumbs } from "../util/realm";
 import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
-import { RelativeDate } from "../ui/time";
+import { PrettyDate } from "../ui/time";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 import { CollapsibleDescription } from "../ui/metadata";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
@@ -1138,7 +1138,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
 
         inner = hasStarted
             ? <div>
-                <RelativeDate date={startTime} isLive noTooltip />
+                <PrettyDate date={startTime} isLive noTooltip />
             </div>
             : <div>
                 {t("video.upcoming") + ": "}

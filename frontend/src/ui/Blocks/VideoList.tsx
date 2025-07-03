@@ -36,7 +36,7 @@ import {
     BaseThumbnailReplacement, isPastLiveEvent, isUpcomingLiveEvent, Thumbnail,
     ThumbnailOverlayContainer,
 } from "../Video";
-import { RelativeDate } from "../time";
+import { PrettyDate } from "../time";
 import { CollapsibleDescription, DateAndCreators, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { COLORS } from "../../color";
@@ -1045,7 +1045,7 @@ const Item: React.FC<ItemProps> = ({
                 fontSize: 13,
                 color: COLORS.neutral70,
             }}>
-                <RelativeDate date={new Date(date)} isLive={item.isLive} />
+                <PrettyDate date={new Date(date)} isLive={item.isLive} />
             </div>
             {item.creators.length > 0 && <ul css={{
                 listStyle: "none",
