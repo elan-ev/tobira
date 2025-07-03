@@ -159,6 +159,7 @@ video:
   source: Quelle
   stream-ended: Dieser Stream ist beendet.
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
+  created: Erstellt
   started: Gestartet
   started-when: Gestartet {{datetime}}
   starts: Startet
