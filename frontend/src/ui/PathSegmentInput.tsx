@@ -28,6 +28,7 @@ export const PathSegmentInput = React.forwardRef<HTMLInputElement, Props>(
             <Input
                 css={{ margin: -1, width: 160 }}
                 spellCheck={false}
+                autoCorrect="off"
                 autoCapitalize="none"
                 ref={ref}
                 {...rest}
