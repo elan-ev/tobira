@@ -130,13 +130,14 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ tabs, onOpen, height, 
             >
                 {header}
                 <div css={{
-                    margin: 16,
+                    padding: 16,
                     flexGrow: 1,
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
                     fontSize: 14,
                     width: 400,
+                    maxWidth: "100%",
                 }}>{activeTab && tabs[activeTab].render()}</div>
             </Floating>
         </FloatingContainer>
