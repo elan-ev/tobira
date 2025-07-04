@@ -71,6 +71,12 @@ enum VideosSortColumn {
   SERIES
 }
 
+enum WorkflowStatus {
+  BUSY
+  IDLE
+  UNOBTAINABLE
+}
+
 input AclInputEntry {
   role: String!
   actions: [String!]!
@@ -96,6 +102,15 @@ input Filters {
   itemType: ItemType
   start: DateTime
   end: DateTime
+}
+
+input NewEvent {
+  opencastId: String!
+  title: String!
+  description: String
+  seriesId: ID
+  creators: [String!]!
+  acl: [AclInputEntry!]!
 }
 
 input NewPlaylistBlock {
@@ -283,7 +298,7 @@ type AuthorizedEvent implements Node {
   canWrite: Boolean!
   tobiraDeletionTimestamp: DateTime
   "Whether the event has active workflows."
-  hasActiveWorkflows: Boolean!
+  workflowStatus: WorkflowStatus!
   series: Series
   "Returns a list of realms where this event is referenced (via some kind of block)."
   hostRealms: [Realm!]!
@@ -381,6 +396,12 @@ type Mutation {
   addRealm(realm: NewRealm!): Realm!
   "Creates the current users realm. Errors if it already exists."
   createMyUserRealm: Realm!
+  """
+    Creates a placeholder event in the DB when a video is uploaded.
+    With that, the event can be listed on the "My videos" page before
+    its processing in Opencast is finished and the event is synced.
+  """
+  createPlaceholderEvent(event: NewEvent!): AuthorizedEvent!
   """
     Deletes the given event. Meaning: a deletion request is sent to Opencast, the event
     is marked as "deletion pending" in Tobira, and fully removed once Opencast

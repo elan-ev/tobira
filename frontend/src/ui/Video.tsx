@@ -4,8 +4,10 @@ import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuCircleUser, LuVolume2 } fr
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
+import { MovingTruck } from "./Waiting";
 
 
+export type ThumbnailItemStatus = "ready" | "waiting" | "deleted";
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
     /** The event of which a thumbnail should be shown */
     event: {
@@ -19,36 +21,43 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
             endTime?: string | null;
             audioOnly?: boolean;
         } | null;
+        tobiraDeletionTimestamp?: string | null;
     };
 
     /** If `true`, an indicator overlay is shown */
     active?: boolean;
-
-    /** If `true`, a special icon is shown instead of the thumbnail */
-    deletionIsPending?: boolean;
 };
 
-export const Thumbnail: React.FC<ThumbnailProps> = ({
-    event,
-    active = false,
-    deletionIsPending = false,
-    ...rest
-}) => {
+export const Thumbnail: React.FC<ThumbnailProps> = ({ event, active, ...rest }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
+    const deletionIsPending = event.tobiraDeletionTimestamp != null;
+
+    let videoStatus: ThumbnailItemStatus | "upcoming" = "ready";
+    if (isUpcoming) {
+        videoStatus = "upcoming";
+    }
+    if (!event.syncedData) {
+        videoStatus = "waiting";
+    }
+    if (deletionIsPending) {
+        videoStatus = "deleted";
+    }
 
     let inner;
-    if (event.syncedData?.thumbnail && !deletionIsPending) {
+    if (!event.syncedData?.thumbnail || videoStatus !== "ready") {
+        inner = <ThumbnailReplacement
+            audioOnly={event.syncedData?.audioOnly}
+            videoStatus={videoStatus !== "ready" ? videoStatus : null}
+            {...{ isDark }}
+        />;
+    } else {
         // We have a proper thumbnail.
         inner = <ThumbnailImg
             src={event.syncedData.thumbnail}
             alt={t("video.thumbnail-for", { video: event.title })}
         />;
-    } else {
-        inner = <ThumbnailReplacement audioOnly={event.syncedData?.audioOnly} {...{
-            isUpcoming, isDark, deletionIsPending,
-        }}/>;
     }
 
     let overlay;
@@ -96,23 +105,29 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({
 type ThumbnailReplacementProps = {
     audioOnly?: boolean;
     isDark: boolean;
-    isUpcoming?: boolean;
-    deletionIsPending?: boolean;
+    videoStatus: Exclude<ThumbnailItemStatus, "ready"> | "upcoming" | null;
 }
-export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
-    { audioOnly, isDark, isUpcoming, deletionIsPending },
-) => {
+export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = ({
+    videoStatus,
+    audioOnly,
+    isDark,
+}) => {
+    const deletionIsPending = videoStatus === "deleted";
     // We have no thumbnail. If the resolution is `null` as well, we are
     // dealing with an audio-only event and show an appropriate icon.
     // Otherwise we use a generic icon.
     // If the event has been marked as deleted, the other criteria are
-    // ignored and an icon that indicates deletion is shown instead.
+    // ignored and an icon that indicates deletion is shown instead, and
+    // if the event is waiting for processing, a truck icon is shown.
     let icon = <LuFilm />;
     if (audioOnly) {
         icon = <LuVolume2 />;
     }
     if (deletionIsPending) {
-        icon = <LuTrash />;
+        icon = <LuTrash css={{ color: COLORS.danger1 }} />;
+    }
+    if (videoStatus === "waiting") {
+        icon = <MovingTruck />;
     }
 
     return <BaseThumbnailReplacement css={{
@@ -125,7 +140,7 @@ export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = (
         backgroundColor: !deletionIsPending ? "#292929" : COLORS.neutral50,
         ...isDark && !deletionIsPending && {
             backgroundColor: "#313131",
-            background: isUpcoming
+            background: videoStatus === "upcoming"
                 ? "linear-gradient(135deg, #48484880 50%, transparent 0),"
                     + "linear-gradient(-135deg, #48484880 50%, transparent 0)"
                 : "linear-gradient(135deg, #3e3e3e80 50%, transparent 0),"
@@ -184,7 +199,7 @@ export const ThumbnailOverlayContainer: React.FC<JSX.IntrinsicElements["div"]> =
 }) => {
     const isDark = useColorScheme().scheme === "dark";
 
-    return <div css={{
+    return <div {...rest} css={{
         container: "thumbnail / inline-size",
         position: "relative",
         transition: "0.2s box-shadow",
@@ -198,7 +213,7 @@ export const ThumbnailOverlayContainer: React.FC<JSX.IntrinsicElements["div"]> =
                 transition: "0.1s filter",
             },
         },
-    }} {...rest}>
+    }}>
         {children}
     </div>;
 };

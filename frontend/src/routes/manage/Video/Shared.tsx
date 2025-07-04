@@ -94,7 +94,7 @@ const query = graphql`
                 created
                 canWrite
                 isLive
-                hasActiveWorkflows @include(if: $fetchWorkflowState)
+                workflowStatus @include(if: $fetchWorkflowState)
                 acl { role actions info { label implies large } }
                 syncedData {
                     duration
@@ -167,6 +167,7 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
         backgroundColor: "black",
         borderRadius: 8,
     };
+
     const thumbnail = <>
         <LuPlay />
         <Thumbnail event={event} />
