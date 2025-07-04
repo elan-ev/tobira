@@ -648,7 +648,7 @@ api-remote-errors:
     not-allowed: You are not allowed to perform this video action.
     workflow:
       not-allowed: You are not allowed to inquire about workflow activity of this video.
-      active-acl: $t(manage.acl.workflow-active)
+      active-acl: $t(acl.workflow-active)
       active-metadata: $t(metadata-form.event-workflow-active)
   series:
     not-found: "Action failed: series not found."

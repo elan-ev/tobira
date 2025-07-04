@@ -15,6 +15,7 @@ import { VideoAccessAclMutation } from "./__generated__/VideoAccessAclMutation.g
 import { NoteWithTooltip } from "../../../ui";
 import { Link } from "../../../router";
 import { ManageSeriesAccessRoute } from "../Series/SeriesAccess";
+import { Inertable } from "../../../util";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -47,6 +48,7 @@ const updateVideoAcl = graphql`
         updateEventAcl(id: $id, acl: $acl) {
             ...on AuthorizedEvent {
                 acl { role actions info { label implies large } }
+                hasActiveWorkflows
             }
         }
     }
@@ -84,7 +86,7 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
         });
     };
 
-    return <>
+    return <Inertable isInert={event.hasActiveWorkflows || aclLockedToSeries || editingBlocked}>
         {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
             <Trans i18nKey="acl.workflow-active" />
         </Card>}
@@ -102,6 +104,6 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
             data,
             editingBlocked,
         }} />
-    </>;
+    </Inertable>;
 };
 
