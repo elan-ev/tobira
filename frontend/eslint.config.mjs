@@ -1,11 +1,19 @@
 import shared from "@opencast/eslint-config-ts-react";
 import tseslint from "typescript-eslint";
+import compat from "eslint-plugin-compat";
 
 export default [
     ...shared,
 
     {
+        plugins: { compat },
+        settings: {
+            lintAllEsApis: true,
+        },
         rules: {
+            // Check browser compatibility using browserslist config
+            "compat/compat": "error",
+
             // Tobira's frontend uses an indentation of 4 to match the backend. In
             // Rust, four spaces is the one style used by basically every code
             // base.

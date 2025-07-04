@@ -5,7 +5,7 @@
     "noEmit": true,
     "incremental": true,
 
-    "target": "es2020",
+    "target": "esnext",
     "module": "preserve",
     "resolveJsonModule": true,
     "esModuleInterop": true,
@@ -17,6 +17,5 @@
         "src/typings",
         "node_modules/@types"
     ]
-  },
-  "include": ["src", "tests", "playwright.config.ts"]
+  }
 }
