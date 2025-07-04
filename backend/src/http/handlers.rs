@@ -128,6 +128,13 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
                 .body(juniper::http::graphiql::graphiql_source("/graphql", None).into())
                 .unwrap()
         },
+        "/~graphql-playground" => {
+            register_req!(HttpReqCategory::Other);
+            Response::builder()
+                .header(header::CONTENT_TYPE, "text/html; charset=UTF-8")
+                .body(juniper::http::playground::playground_source("/graphql", None).into())
+                .unwrap()
+        },
 
         // Currently we just reply with our `index.html` to everything else.
         // That's of course not optimal because for many paths, our frontend
