@@ -574,15 +574,17 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
         <PlayerContextProvider>
-            {event.authorizedData
-                ? <InlinePlayer
-                    event={{ ...event, authorizedData: event.authorizedData }}
-                    css={{ margin: "-4px auto 0" }}
-                    onEventStateChange={rerender}
-                />
-                : <PreviewPlaceholder {...{ event, refetch }}/>
-            }
-            <Metadata {...{ event, realmPath }} />
+            <section aria-label={t("video.video-player")}>
+                {event.authorizedData
+                    ? <InlinePlayer
+                        event={{ ...event, authorizedData: event.authorizedData }}
+                        css={{ margin: "-4px auto 0" }}
+                        onEventStateChange={rerender}
+                    />
+                    : <PreviewPlaceholder {...{ event, refetch }}/>
+                }
+                <Metadata {...{ event, realmPath }} />
+            </section>
         </PlayerContextProvider>
 
         <div css={{ height: 80 }} />

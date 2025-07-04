@@ -314,7 +314,7 @@ const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
                 borderRadius: 4,
                 padding: "8px 16px",
             }}>
-                <PrettyDate date={props.startTime} isLive />
+                <PrettyDate date={props.startTime} isLive alwaysShowTime />
             </div>
         )}
     </PlayerPlaceholder>;

@@ -359,11 +359,13 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                         color: isDark ? COLORS.neutral90 : COLORS.neutral80,
                         fontSize: 20,
                         lineHeight: 1.3,
+                        maxWidth: "100%",
                     }}>{title}</h2>}
                     <div css={{
                         display: "flex",
                         flexDirection: "row",
                         flexGrow: 1,
+                        maxWidth: "100%",
                         [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
                             flexWrap: "wrap",
                         },
@@ -397,6 +399,9 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                             fontSize: 14,
                             gap: 16,
                             padding: 5,
+                            [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
+                                flexWrap: "wrap",
+                            },
                         }}>
                             {shareInfo && <VideoListShareButton {...shareInfo} />}
                             {showViewOptions && <>

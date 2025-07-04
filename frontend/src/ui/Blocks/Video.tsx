@@ -74,13 +74,15 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
     return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}
         <PlayerContextProvider>
-            {event.authorizedData && isSynced(event)
-                ? <InlinePlayer
-                    event={{ ...event, authorizedData: event.authorizedData }}
-                    css={{ margin: "-4px auto 0" }}
-                />
-                : <PreviewPlaceholder {...{ event, refetch }} />
-            }
+            <section aria-label={t("video.video-player")}>
+                {event.authorizedData && isSynced(event)
+                    ? <InlinePlayer
+                        event={{ ...event, authorizedData: event.authorizedData }}
+                        css={{ margin: "-4px auto 0" }}
+                    />
+                    : <PreviewPlaceholder {...{ event, refetch }} />
+                }
+            </section>
         </PlayerContextProvider>
 
         {showLink && <Link
