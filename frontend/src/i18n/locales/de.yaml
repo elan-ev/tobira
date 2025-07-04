@@ -34,6 +34,11 @@ general:
   seconds: Sekunden
   minutes: Minuten
   hours: Stunden
+  today-at: Heute um {{time}}
+  yesterday-at: Gestern um {{time}}
+  tomorrow-at: Morgen um {{time}}
+  weekday-at: '{{weekday}} um {{time}}'
+  date-at: '{{date}} um {{time}}'
   none: Keine
   title: Titel
 
@@ -149,14 +154,16 @@ video:
   live: Live
   upcoming: Anstehend
   ended: Beendet
+  ended-at: Beendet {{datetime}}
   license: Lizenz
   source: Quelle
   stream-ended: Dieser Stream ist beendet.
   stream-not-started-yet: Dieser Stream hat noch nicht begonnen.
+  created: Erstellt
   started: Gestartet
-  started-when: Gestartet {{duration}}
+  started-when: Gestartet {{datetime}}
   starts: Startet
-  starts-in: Startet {{duration}}
+  starts-in: Startet {{datetime}}
   description:
     show-more: ...mehr anzeigen
     show-less: Weniger anzeigen

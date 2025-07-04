@@ -75,7 +75,7 @@ import { ellipsisOverflowCss } from "../ui";
 import { realmBreadcrumbs } from "../util/realm";
 import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
-import { RelativeDate } from "../ui/time";
+import { preciseDateTime, preferredLocaleForLang, PrettyDate } from "../ui/time";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 import { CollapsibleDescription } from "../ui/metadata";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
@@ -1101,69 +1101,27 @@ type VideoDateProps = {
 const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
     const { t, i18n } = useTranslation();
 
-    const { created, updated, startTime, endTime, hasStarted, hasEnded } = getEventTimeInfo(event);
+    const { created, updated, startTime, endTime, hasEnded } = getEventTimeInfo(event);
 
-    const fullOptions = { dateStyle: "long", timeStyle: "short" } as const;
-    const createdFull = created.toLocaleString(i18n.language, fullOptions);
-    const startFull = startTime?.toLocaleString(i18n.language, fullOptions);
-    const endFull = endTime?.toLocaleString(i18n.language, fullOptions);
-    const updatedFull = updated.getTime() - created.getTime() > 5 * 60 * 1000
-        ? updated.toLocaleString(i18n.language, fullOptions)
-        : null;
+    const locale = preferredLocaleForLang(i18n.language);
+    const prettyDateProps = event.isLive && hasEnded
+        ? { date: endTime, prefixKind: "end" as const }
+        : { date: startTime ?? created };
+    const fields: [string, Date | null][] = [
+        [t("video.started"), startTime],
+        [t("video.ended"), endTime],
+        [t("video.created"), created],
+        [t("manage.table.updated"), updated],
+    ];
 
-    let inner;
-    let tooltip;
-    if (event.isLive && hasEnded) {
-        inner = <>
-            {t("video.ended") + ": "}
-            {endFull}
-        </>;
-    } else if (event.isLive) {
-        tooltip = <>
-            <i>{hasStarted
-                ? t("video.started")
-                : t("video.starts")
-            }
-            </i>: {startFull}
-            {endTime && <>
-                <br />
-                <i>{t("video.ends")}</i>: {endFull}
-            </>
-            }
-            {updatedFull && <>
-                <br/>
-                <i>{t("manage.table.updated")}</i>: {updatedFull}
-            </>}
-        </>;
-
-        inner = hasStarted
-            ? <div>
-                <RelativeDate date={startTime} isLive noTooltip />
-            </div>
-            : <div>
-                {t("video.upcoming") + ": "}
-                {startFull}
-            </div>;
-    } else {
-        const createdDate = created.toLocaleDateString(i18n.language, { dateStyle: "long" });
-        const startedDate = startTime
-            ? startTime !== endTime
-                && startTime?.toLocaleDateString(i18n.language, { dateStyle: "long" })
-            : null;
-
-        tooltip = <>
-            {startedDate
-                ? <><i>{t("video.started")}</i>: {startFull}</>
-                : <><i>{t("manage.table.columns.created")}</i>: {createdFull}</>
-            }
-            {updatedFull && <>
-                <br/>
-                <i>{t("manage.table.updated")}</i>: {updatedFull}
-            </>}
-        </>;
-
-        inner = <div>{startedDate ?? createdDate}</div>;
-    }
+    const tooltip = <table css={{}}>
+        <tbody>
+            {fields.map(([label, date], i) => date && <tr key={i}>
+                <td css={{ fontStyle: "italic", textAlign: "right" }}>{label}</td>
+                <td css={{ paddingLeft: 12 }}>{preciseDateTime(date, locale)}</td>
+            </tr>)}
+        </tbody>
+    </table>;
 
     return (
         <div css={{
@@ -1173,7 +1131,14 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             fontSize: 14,
         }}>
             <WithTooltip distance={0} tooltip={tooltip}>
-                {inner}
+                <div>
+                    <PrettyDate
+                        {...prettyDateProps}
+                        isLive={event.isLive}
+                        noTooltip
+                        alwaysShowTime
+                    />
+                </div>
             </WithTooltip>
         </div>
     );

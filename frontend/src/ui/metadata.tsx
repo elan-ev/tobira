@@ -18,7 +18,7 @@ import { Creators } from "./Video";
 import { Input, TextArea } from "./Input";
 import { Form } from "./Form";
 import { Inertable, OcEntity } from "../util";
-import { RelativeDate } from "./time";
+import { PrettyDate } from "./time";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -68,7 +68,7 @@ export const DateAndCreators: React.FC<DateAndCreatorsProps> = ({
     }}>
         {timestamp && <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
             <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
-            <RelativeDate date={new Date(timestamp)} isLive={isLive} />
+            <PrettyDate date={new Date(timestamp)} isLive={isLive} />
         </div>}
         <Creators creators={creators ?? null} css={{
             minWidth: 0,

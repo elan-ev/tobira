@@ -9,7 +9,7 @@ import { MAIN_PADDING } from "../../layout/Root";
 import { ExtraMetadata, useForceRerender } from "../../util";
 import { getEventTimeInfo } from "../../util/video";
 import { Spinner } from "@opencast/appkit";
-import { RelativeDate } from "../time";
+import { PrettyDate } from "../time";
 import { COLORS } from "../../color";
 
 
@@ -314,7 +314,7 @@ const LiveEventPlaceholder: React.FC<LiveEventPlaceholderProps> = props => {
                 borderRadius: 4,
                 padding: "8px 16px",
             }}>
-                <RelativeDate date={props.startTime} isLive />
+                <PrettyDate date={props.startTime} isLive />
             </div>
         )}
     </PlayerPlaceholder>;

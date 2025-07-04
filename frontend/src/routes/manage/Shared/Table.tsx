@@ -11,7 +11,7 @@ import {
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
-import { RelativeDate, relativeDate } from "../../../ui/time";
+import { PrettyDate, prettyDate } from "../../../ui/time";
 import { IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
 import { SmallDescription } from "../../../ui/metadata";
@@ -264,7 +264,7 @@ export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
 
     return <td css={{ fontSize: 14 }}>
         {parsedDate
-            ? <RelativeDate date={parsedDate} />
+            ? <PrettyDate date={parsedDate} />
             : <i css={greyColor}>
                 {t("manage.table.missing-date")}
             </i>
@@ -374,10 +374,9 @@ const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
     deletionDate,
 }) => {
     const isDark = useColorScheme().scheme === "dark";
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
-    const now = Date.now();
-    const [, relative] = relativeDate(deletionDate, now);
+    const [date] = prettyDate(deletionDate, new Date(), i18n);
 
     return (
         <div css={{
@@ -395,7 +394,7 @@ const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
             <IconWithTooltip
                 tooltip={t(`manage.table.deletion.tooltip.${
                     deletionFailed ? "failed" : "pending"
-                }`, { time: relative })}
+                }`, { time: date })}
                 mode={deletionFailed ? "warning" : "info"}
             />
         </div>
