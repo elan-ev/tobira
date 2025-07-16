@@ -33,6 +33,11 @@ general:
   seconds: seconds
   minutes: minutes
   hours: hours
+  today-at: Today at {{time}}
+  yesterday-at: Yesterday at {{time}}
+  tomorrow-at: Tomorrow at {{time}}
+  weekday-at: '{{weekday}} at {{time}}'
+  date-at: '{{date}} at {{time}}'
   none: None
   title: Title
 
@@ -152,9 +157,9 @@ video:
   stream-ended: This stream has ended.
   stream-not-started-yet: This stream has not started yet.
   started: Started
-  started-when: Started {{duration}}
+  started-when: Started {{datetime}}
   starts: Starts
-  starts-in: Starts {{duration}}
+  starts-in: Starts {{datetime}}
   description:
     show-more: ...show more
     show-less: Show less

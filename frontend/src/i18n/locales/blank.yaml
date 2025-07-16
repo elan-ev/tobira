@@ -33,6 +33,11 @@ general:
   seconds:
   minutes:
   hours:
+  today-at:
+  yesterday-at:
+  tomorrow-at:
+  weekday-at:
+  date-at:
   none:
   title:
 
