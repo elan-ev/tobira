@@ -22,6 +22,7 @@
     "defaults",
     "not ios < 15",
     "not op_mini all",
+    "not android >= 0",
     "not kaios < 3"
   ],
   "dependencies": {
