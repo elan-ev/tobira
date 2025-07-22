@@ -6,6 +6,7 @@
     "incremental": true,
 
     "target": "esnext",
+    "lib": ["esnext", "dom", "webworker"],
     "module": "preserve",
     "resolveJsonModule": true,
     "esModuleInterop": true,

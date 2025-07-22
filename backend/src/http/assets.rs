@@ -20,6 +20,8 @@ const EMBEDS: Embeds = reinda::embed! {
         "index.html",
         "bundle.*.js",
         "bundle.*.js.map",
+        "~sw.js",
+        "~sw.js.map",
 
         "1x1-black.png",
 
@@ -174,6 +176,8 @@ impl Assets {
         // JS bundle
         builder.add_embedded("", &EMBEDS["bundle.*.js"]);
         builder.add_embedded("", &EMBEDS["bundle.*.js.map"]);
+        builder.add_embedded("~sw.js", &EMBEDS["~sw.js"]);
+        builder.add_embedded("~sw.js.map", &EMBEDS["~sw.js.map"]);
 
         // Paella assets: no hashing for some files that Paella requests as
         // fixed path. But do hash icons and replace the path in the `theme.json`.
