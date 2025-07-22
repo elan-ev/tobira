@@ -8,6 +8,11 @@ import { checkInitialConsent } from "./ui/InitialConsent";
 import CONFIG from "./config";
 
 
+navigator.serviceWorker
+    .register("/~sw.js", { updateViaCache: "none", type: "module" })
+    // eslint-disable-next-line no-console
+    .catch(e => console.error("Failed to register service worker", e));
+
 const redirect = (target: string) => {
     const newUri = new URL(target, document.baseURI).href;
     // eslint-disable-next-line no-console
