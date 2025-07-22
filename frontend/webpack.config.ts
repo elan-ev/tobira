@@ -15,7 +15,14 @@ const OUT_PATH = path.join(__dirname, "build");
 const PAELLA_SKIN_PATH = path.join(__dirname, "node_modules", "paella-skins", "skins", "opencast");
 
 const config = (_env: unknown, argv: { mode: string }): Configuration => ({
-    entry: APP_PATH,
+    entry: {
+        main: APP_PATH,
+        sw: {
+            import: "./src/sw/index.ts",
+            filename: "~sw.js",
+            publicPath: "/",
+        },
+    },
     context: __dirname,
 
     output: {
@@ -124,6 +131,7 @@ const config = (_env: unknown, argv: { mode: string }): Configuration => ({
         },
         new HtmlWebpackPlugin({
             template: path.join(APP_PATH, "index.html"),
+            chunks: ["main"],
         }),
     ],
 
