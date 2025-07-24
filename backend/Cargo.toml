@@ -19,6 +19,7 @@ embed-in-debug = ["reinda/always-prod"]
 [dependencies]
 ahash = "0.8"
 anyhow = { version = "1.0.71", features = ["backtrace"] }
+aws-lc-rs = { version = "1.13.3", default-features = false, features = ["aws-lc-sys"] }
 base64 = "0.22.1"
 bstr = "1.4.0"
 bunt = "0.2.7"
@@ -60,8 +61,7 @@ prometheus-client = "0.23.1"
 rand = "0.9.1"
 regex = "1.7.1"
 reinda = "0.3"
-ring = "0.17.13"
-rustls = { version = "0.23.20", default-features = false, features = ["ring"] }
+rustls = "0.23.20"
 rustls-native-certs = "0.8.1"
 rustls-pemfile = "2.1.0"
 scc = "2.0.17"
