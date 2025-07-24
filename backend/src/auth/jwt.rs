@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use ring::{rand::{SecureRandom, SystemRandom}, signature::EcdsaKeyPair};
+use aws_lc_rs::{rand::{SecureRandom, SystemRandom}, signature::{self, EcdsaKeyPair}};
 use serde::Serialize;
 use serde_json::json;
 use std::{path::PathBuf, time::Duration};
@@ -142,27 +142,27 @@ impl JwtContext {
 
 impl JwtConfig {
     fn load_auth(&self) -> Result<JwtAuth> {
-        let rng = ring::rand::SystemRandom::new();
+        let rng = SystemRandom::new();
         if let Some(secret_key_path) = &self.secret_key {
             let pem_encoded = std::fs::read(secret_key_path)
                 .context("could not load secret key file")?;
             let (_label, pkcs8_bytes) = pem_rfc7468::decode_vec(&pem_encoded)
                 .context("secret key file is not a valid PEM encoded key")?;
-            JwtAuth::load_es(self.signing_algorithm, &pkcs8_bytes, &rng)
+            JwtAuth::load_es(self.signing_algorithm, &pkcs8_bytes)
         } else {
             let ring_algo = match self.signing_algorithm {
-                Algorithm::ES256 => &ring::signature::ECDSA_P256_SHA256_FIXED_SIGNING,
-                Algorithm::ES384 => &ring::signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+                Algorithm::ES256 => &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+                Algorithm::ES384 => &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
             };
 
             info!(
                 "No JWT key specified, generating key for algorithm {}",
                 self.signing_algorithm.to_str(),
             );
-            let pkcs8_bytes = ring::signature::EcdsaKeyPair::generate_pkcs8(ring_algo, &rng)
+            let pkcs8_bytes = EcdsaKeyPair::generate_pkcs8(ring_algo, &rng)
                 .map_err(|_| anyhow!("failed to generate JWT ECDSA key"))?;
 
-            JwtAuth::load_es(self.signing_algorithm, pkcs8_bytes.as_ref(), &rng)
+            JwtAuth::load_es(self.signing_algorithm, pkcs8_bytes.as_ref())
         }
     }
 }
@@ -176,15 +176,15 @@ struct JwtAuth {
 
 impl JwtAuth {
     /// Loads an elliptic curve key. `algo` has to be `ES256` or `ES384`!
-    fn load_es(algo: Algorithm, key: &[u8], rng: &dyn SecureRandom) -> Result<JwtAuth> {
+    fn load_es(algo: Algorithm, key: &[u8]) -> Result<JwtAuth> {
         use elliptic_curve::pkcs8::DecodePrivateKey;
 
         // Create a `ring` key pair that is used for signing.
         let ring_algo = match algo {
-            Algorithm::ES256 => &ring::signature::ECDSA_P256_SHA256_FIXED_SIGNING,
-            Algorithm::ES384 => &ring::signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+            Algorithm::ES256 => &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+            Algorithm::ES384 => &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
         };
-        let ring_key = EcdsaKeyPair::from_pkcs8(ring_algo, key, rng).map_err(|e| {
+        let ring_key = EcdsaKeyPair::from_pkcs8(ring_algo, key).map_err(|e| {
             anyhow!("`jwt.secret_key` is not a valid ECDSA keypair for the expected \
                 algorithm in PKCS8 format: {e}")
         })?;
