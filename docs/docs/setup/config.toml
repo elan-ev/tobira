@@ -303,7 +303,7 @@
 [auth.jwt]
 # Signing algorithm for JWTs.
 #
-# Valid values: "ES256", "ES384"
+# Valid values: "ES256", "ES384", "ED25519"
 #
 # Default value: "ES384"
 #signing_algorithm = "ES384"
