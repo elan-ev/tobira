@@ -32,6 +32,7 @@ type Config = {
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
+    paellaSettingsIcon: string;
     logos: LogoConfig;
     plyr: PlyrConfig;
     upload: UploadConfig;
