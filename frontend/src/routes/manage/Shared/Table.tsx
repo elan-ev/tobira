@@ -25,6 +25,7 @@ import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.grap
 import { useNotification } from "../../../ui/NotificationContext";
 import { OcEntity } from "../../../util";
 import { isSynced } from "../../../util";
+import { ThumbnailItemStatus } from "../../../ui/Video";
 
 
 type ItemVars = {
@@ -257,7 +258,6 @@ export const descriptionStyle = {
 
 // Used for both `EventRow` and `SeriesRow`.
 export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
-    const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const parsedDate = date && new Date(date);
     const greyColor = { color: isDark ? COLORS.neutral60 : COLORS.neutral50 };
@@ -265,9 +265,7 @@ export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
     return <td css={{ fontSize: 14 }}>
         {parsedDate
             ? <PrettyDate date={parsedDate} />
-            : <i css={greyColor}>
-                {t("manage.table.missing-date")}
-            </i>
+            : <i css={greyColor}>{"—"}</i>
         }
     </td>;
 };
@@ -284,7 +282,7 @@ type TableRowItem = {
 
 type TableRowProps<T extends TableRowItem> = {
     itemType: OcEntity;
-    thumbnail: (isPending?: boolean) => ReactNode;
+    thumbnail: (status: ThumbnailItemStatus) => ReactNode;
     link: string;
     item: T;
     customColumns?: ReactNode[];
@@ -301,6 +299,9 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
     const deletionTimestamp = item.tobiraDeletionTimestamp;
     const deletionIsPending = Boolean(deletionTimestamp);
     const deletionDate = new Date(deletionTimestamp ?? "");
+    const thumbnailStatus = deletionIsPending ? "deleted" : (
+        !isSynced(item) ? "waiting" : "ready"
+    );
 
     // This checks if the current time is later than the deletion timestamp + twice
     // the configured poll period to ensure at least one sync has taken place
@@ -314,8 +315,10 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
         {/* Thumbnail */}
         <td>
             {deletionIsPending
-                ? props.thumbnail(deletionIsPending)
-                : <Link to={props.link} css={{ ...thumbnailLinkStyle }}>{props.thumbnail()}</Link>
+                ? props.thumbnail(thumbnailStatus)
+                : <Link to={props.link} css={{ ...thumbnailLinkStyle }}>
+                    {props.thumbnail(thumbnailStatus)}
+                </Link>
             }
         </td>
         <td>

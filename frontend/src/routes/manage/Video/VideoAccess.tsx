@@ -16,6 +16,8 @@ import { NoteWithTooltip } from "../../../ui";
 import { Link } from "../../../router";
 import { ManageSeriesAccessRoute } from "../Series/SeriesAccess";
 import { Inertable } from "../../../util";
+import { isSynced } from "../../../util";
+import { aclMapToArray, NotReadyNote } from "../../util";
 
 
 export const ManageVideoAccessRoute = makeManageVideoRoute(
@@ -48,7 +50,7 @@ const updateVideoAcl = graphql`
         updateEventAcl(id: $id, acl: $acl) {
             ...on AuthorizedEvent {
                 acl { role actions info { label implies large } }
-                hasActiveWorkflows
+                workflowStatus
             }
         }
     }
@@ -63,20 +65,16 @@ type EventAclPageProps = {
 const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
     const [commit, inFlight] = useMutation<VideoAccessAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && !!event.series;
+    const workflowStatus = event.workflowStatus;
     const [editingBlocked, setEditingBlocked] = useState(
-        event.hasActiveWorkflows || aclLockedToSeries,
+        !isSynced(event) || workflowStatus !== "IDLE" || aclLockedToSeries,
     );
 
     const onSubmit = async ({ selections, saveModalRef, setCommitError }: SubmitAclProps) => {
         commit({
             variables: {
                 id: event.id,
-                acl: [...selections].map(
-                    ([role, { actions }]) => ({
-                        role,
-                        actions: [...actions],
-                    }),
-                ),
+                acl: aclMapToArray(selections),
             },
             onCompleted: () => currentRef(saveModalRef).done(),
             onError: error => {
@@ -86,10 +84,15 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
         });
     };
 
-    return <Inertable isInert={event.hasActiveWorkflows || aclLockedToSeries || editingBlocked}>
-        {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: 20 }}>
-            <Trans i18nKey="acl.workflow-active" />
-        </Card>}
+    return <Inertable isInert={workflowStatus !== "IDLE" || aclLockedToSeries || editingBlocked}>
+        {!isSynced(event)
+            ? <NotReadyNote kind="video" />
+            : workflowStatus !== "IDLE" && <Card kind="info" css={{ marginBottom: 20 }}>
+                <Trans i18nKey={`manage.video.workflow-status.${
+                    workflowStatus === "BUSY" ? "active" : "unknown"
+                }`} />
+            </Card>
+        }
         {aclLockedToSeries && (
             <Card kind="info" iconPos="left" css={{ fontSize: 14, marginBottom: 10 }}>
                 <Trans i18nKey="acl.locked-to-series">

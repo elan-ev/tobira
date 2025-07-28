@@ -20,7 +20,6 @@ import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 import { Link, useRouter } from "../../../router";
 import { useNotification } from "../../../ui/NotificationContext";
-import { NotReadyNote } from "../../util";
 import { preciseDateTime, preferredLocaleForLang } from "../../../ui/time";
 
 
@@ -37,7 +36,6 @@ type Item = OpencastEntity & {
 
 type PageProps<T> = {
     item: T;
-    kind: "video" | "series";
     pageTitle: ParseKeys;
     breadcrumb: {
         label: string;
@@ -48,7 +46,6 @@ type PageProps<T> = {
 
 export const DetailsPage = <T extends Item>({
     item,
-    kind,
     pageTitle,
     breadcrumb,
     sections,
@@ -64,12 +61,11 @@ export const DetailsPage = <T extends Item>({
         return <NotAuthorized />;
     }
 
-    return <>
+    return <div css={{ maxWidth: 750 }}>
         <Breadcrumbs path={breadcrumbs} tail={item.title} />
         <PageTitle title={t(pageTitle)} />
-        {!isSynced(item) && <NotReadyNote {...{ kind }} />}
         {sections(item).map((section, i) => <DetailsSection key={i}>{section}</DetailsSection>)}
-    </>;
+    </div>;
 };
 
 const DetailsSection: React.FC<PropsWithChildren> = ({ children }) => (

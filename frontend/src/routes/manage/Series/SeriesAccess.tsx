@@ -10,7 +10,7 @@ import { AccessEditor, AclPage, SubmitAclProps } from "../Shared/Access";
 import i18n from "../../../i18n";
 import { SeriesAccessAclMutation } from "./__generated__/SeriesAccessAclMutation.graphql";
 import { isSynced } from "../../../util";
-import { NotReadyNote } from "../../util";
+import { aclMapToArray, NotReadyNote } from "../../util";
 
 
 export const ManageSeriesAccessRoute = makeManageSeriesRoute(
@@ -49,12 +49,7 @@ const SeriesAclEditor: React.FC<SeriesAclPageProps> = ({ series, data }) => {
         commit({
             variables: {
                 id: series.id,
-                acl: [...selections].map(
-                    ([role, { actions }]) => ({
-                        role,
-                        actions: [...actions],
-                    }),
-                ),
+                acl: aclMapToArray(selections),
             },
             onCompleted: () => currentRef(saveModalRef).done(),
             onError: error => {

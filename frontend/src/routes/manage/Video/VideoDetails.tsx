@@ -8,7 +8,7 @@ import { NotAuthorized } from "../../../ui/error";
 import { isRealUser, useUser } from "../../../User";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
-import { translatedConfig } from "../../../util";
+import { Inertable, isSynced, translatedConfig } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
@@ -23,13 +23,13 @@ import {
 } from "../Shared/Details";
 import { VideoDetailsDeleteMutation } from "./__generated__/VideoDetailsDeleteMutation.graphql";
 import { VideoDetailsMetadataMutation } from "./__generated__/VideoDetailsMetadataMutation.graphql";
+import { NotReadyNote } from "../../util";
 
 
 export const ManageVideoDetailsRoute = makeManageVideoRoute(
     "details",
     "",
     authEvent => <DetailsPage
-        kind="video"
         pageTitle="video.details"
         item={{ ...authEvent, updated: authEvent.syncedData?.updated }}
         breadcrumb={{
@@ -37,6 +37,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
             link: ManageVideosRoute.url,
         }}
         sections={event => [
+            <VideoNoteSection key="video-note" {...{ event }} />,
             <UpdatedCreatedInfo key="created-info" item={{
                 ...event,
                 updated: event.syncedData?.updated,
@@ -58,9 +59,20 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
     { fetchWorkflowState: true },
 );
 
+const VideoNoteSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => !isSynced(event)
+    ? <NotReadyNote kind="video" />
+    : event.workflowStatus !== "IDLE" && <Card kind="info">
+        <Trans i18nKey={`manage.video.workflow-status.${
+            event.workflowStatus === "BUSY" ? "active" : "unknown"
+        }`} />
+    </Card>;
+
 const updateEventMetadata = graphql`
     mutation VideoDetailsMetadataMutation($id: ID!, $metadata: BasicMetadata!) {
-        updateEventMetadata(id: $id, metadata: $metadata) { id hasActiveWorkflows }
+        updateEventMetadata(id: $id, metadata: $metadata) {
+            id
+            workflowStatus
+        }
     }
 `;
 
@@ -81,42 +93,39 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
         return <NotAuthorized />;
     }
 
-    return <ButtonSection>
-        {user.canUseEditor && !event.isLive && event.canWrite && (
-            <ExternalLink
-                service="EDITOR"
-                event={event.id}
-                params={{
-                    id: event.opencastId,
-                    callbackUrl: document.location.href,
-                    callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
-                }}
-                fallback="button"
-                css={buttonStyle(config, "normal", isHighContrast)}
-            >
-                {t("manage.video.details.open-in-editor")}
-            </ExternalLink>
-        )}
-        <DeleteButton
-            item={event}
-            kind="video"
-            returnPath="/~manage/videos"
-            commit={commit}
-        />
-    </ButtonSection>;
+    return <Inertable isInert={!isSynced(event) || event.workflowStatus !== "IDLE"}>
+        <ButtonSection>
+            {user.canUseEditor && !event.isLive && event.canWrite && (
+                <ExternalLink
+                    service="EDITOR"
+                    event={event.id}
+                    params={{
+                        id: event.opencastId,
+                        callbackUrl: document.location.href,
+                        callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
+                    }}
+                    fallback="button"
+                    css={buttonStyle(config, "normal", isHighContrast)}
+                >
+                    {t("manage.video.details.open-in-editor")}
+                </ExternalLink>
+            )}
+            <DeleteButton
+                item={event}
+                kind="video"
+                returnPath="/~manage/videos"
+                commit={commit}
+            />
+        </ButtonSection>
+    </Inertable>;
 };
 
 const VideoMetadataSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
     const [commit, inFlight] = useMutation<VideoDetailsMetadataMutation>(updateEventMetadata);
 
-    return <>
-        {event.hasActiveWorkflows && <Card kind="info" css={{ marginBottom: -14 }}>
-            <Trans i18nKey="manage.metadata-form.event-workflow-active" />
-        </Card>}
-        <MetadataSection
-            disabled={event.hasActiveWorkflows}
-            {...{ commit, inFlight }}
-            item={event}
-        />
-    </>;
+    return <MetadataSection
+        disabled={event.workflowStatus !== "IDLE"}
+        {...{ commit, inFlight }}
+        item={event}
+    />;
 };
