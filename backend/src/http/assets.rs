@@ -165,11 +165,28 @@ impl Assets {
         builder.add_embedded("", &EMBEDS["bundle.*.js"]);
         builder.add_embedded("", &EMBEDS["bundle.*.js.map"]);
 
-        // Paella assets: no hashing as Paella requests these fixed paths.
+        // Paella assets: no hashing for some files that Paella requests as
+        // fixed path. But do hash icons and replace the path in the `theme.json`.
         builder.add_embedded("1x1-black.png", &EMBEDS["1x1-black.png"]);
-        builder.add_embedded("paella/icons/", &EMBEDS["paella/icons/*.svg"]);
+        let icon_paths = builder.add_embedded("paella/icons/", &EMBEDS["paella/icons/*.svg"])
+            .with_hash()
+            .http_paths();
         builder.add_embedded("paella/theme.css", &EMBEDS["paella/theme.css"]);
-        builder.add_embedded("paella/theme.json", &EMBEDS["paella/theme.json"]);
+        builder.add_embedded("paella/theme.json", &EMBEDS["paella/theme.json"])
+            // We cannot use `with_path_fixup` here, as the paths are without
+            // the `paella` prefix and just relative to it.
+            .with_modifier(icon_paths, |original, ctx| {
+                reinda::util::replace_many_with(
+                    &original,
+                    ctx.dependencies().iter().map(|p| p.strip_prefix("paella").unwrap()),
+                    |idx, _, out| {
+                        let replacement = ctx.resolve_path(ctx.dependencies()[idx].as_ref())
+                            .strip_prefix("paella")
+                            .unwrap();
+                        out.extend_from_slice(replacement.as_bytes());
+                    },
+                ).into()
+            });
 
 
         // Prepare all assets
