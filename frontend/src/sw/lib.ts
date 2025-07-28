@@ -57,6 +57,18 @@ type FullConfig = Required<Config>;
 // For correct TS typing
 declare let self: ServiceWorkerGlobalScope;
 
+// Declare experimental APIs not yet supported by all browsers.
+declare const URLPattern: {
+    new(input: object): unknown;
+} | undefined;
+type InstallEventExt = ExtendableEvent & {
+    addRoutes?: (routes: Array<{
+        condition: object;
+        source: "network" | "fetch-event";
+    }>) => void;
+};
+
+
 /**
  * Sets up the service worker to intercept & authenticate OC requests. Usually,
  * you only have to call this in your service worker. Adds the `install`,
@@ -68,8 +80,45 @@ export const setUpServiceWorker = (configIn: Config) => {
 
     // Make sure a downloaded service worker is immediately activated and starts
     // controlling all clients (pages).
-    self.addEventListener("install", () => self.skipWaiting());
-    self.addEventListener("activate", (e: ExtendableEvent) => e.waitUntil(self.clients.claim()));
+    self.addEventListener("install", (event: InstallEventExt) => {
+        ctx.log("on 'install'");
+        self.skipWaiting();
+
+        if (event.addRoutes && URLPattern) {
+            ctx.log("static routing supported: registering routes");
+
+            // We only want to only intercept specific requests and default to
+            // "network". Earlier rules have higher priority, so we first define
+            // what requests to intercept and then have catch-all.
+            event.addRoutes([
+                {
+                    condition: {
+                        // As far as I can tell, there is no support for "alternatives" in
+                        // the URL pattern API, so we manually construct all possible
+                        // origin + prefix combinations. A single regex with that knowledge
+                        // could be faster, but it's fine for now.
+                        or: ctx.config.trustedOcOrigins.flatMap(origin => (
+                            ctx.config.pathPrefixes.map(prefix => ({
+                                urlPattern: `${origin}${prefix}*`,
+                            }))
+                        )),
+                    },
+                    source: "fetch-event",
+                },
+                {
+                    condition: {
+                        urlPattern: new URLPattern({}),
+                    },
+                    source: "network",
+                },
+            ]);
+        }
+    });
+
+    self.addEventListener("activate", e => {
+        ctx.log("on 'activate'");
+        e.waitUntil(self.clients.claim());
+    });
 
     self.addEventListener("fetch", e => onFetchImpl(e, ctx));
 };
