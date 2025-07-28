@@ -65,6 +65,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 fixedDuration = 1;
             }
 
+            // We add numbers to the labels if there would otherwise be two same labels.
+            const captionNumbering = event.authorizedData.captions.length
+                !== new Set(event.authorizedData.captions.map(({ lang }) => lang ?? null)).size;
             const manifest: Manifest = {
                 metadata: {
                     title: event.title,
@@ -95,7 +98,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     // improved in the future, hopefully by getting better information.
                     text: t("video.caption")
                         + (lang ? ` (${lang})` : "")
-                        + (event.authorizedData.captions.length > 1 ? ` [${index + 1}]` : ""),
+                        + (captionNumbering ? ` [${index + 1}]` : ""),
                 })),
                 frameList: event.authorizedData.segments.map(segment => {
                     const time = segment.startTime / 1000;
