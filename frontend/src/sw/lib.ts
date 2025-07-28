@@ -9,11 +9,13 @@ export type Config = {
 
     /**
      * List of possible path prefixes that should be handled. For most Opencast
-     * systems, the default `["/static"]` is fine.
+     * systems, the default `["/static/"]` is fine.
      *
      * This corresponds to `org.opencastproject.download.url` in `custom.properties`
      * or `org.opencastproject.distribution.aws.s3.distribution.base` in
      * `org.opencastproject.distribution.aws.s3.AwsS3DistributionServiceImpl.cfg`.
+     *
+     * Must start and end with `/`.
      */
     pathPrefixes?: string[];
 
@@ -38,12 +40,16 @@ export type Config = {
      * thus the default is `true`.
      */
     cors?: boolean;
+
+    /** If `true`, this library emits debugging logs via `console.debug`. */
+    debugLog?: boolean;
 };
 
 /** Configuration defaults. */
 export const DEFAULT_CONFIG = {
-    pathPrefixes: ["/static"],
+    pathPrefixes: ["/static/"],
     cors: true,
+    debugLog: false,
 } satisfies Partial<Config>;
 
 type FullConfig = Required<Config>;
@@ -58,45 +64,32 @@ declare let self: ServiceWorkerGlobalScope;
  * those handlers, use `onFetch`.
  */
 export const setUpServiceWorker = (configIn: Config) => {
-    const config: FullConfig = { ...DEFAULT_CONFIG, ...configIn };
+    const ctx = new Context(configIn);
 
     // Make sure a downloaded service worker is immediately activated and starts
     // controlling all clients (pages).
     self.addEventListener("install", () => self.skipWaiting());
     self.addEventListener("activate", (e: ExtendableEvent) => e.waitUntil(self.clients.claim()));
 
-    const trustedOcOrigins = new Set(config.trustedOcOrigins);
-    self.addEventListener("fetch", e => onFetchImpl(e, trustedOcOrigins, config));
+    self.addEventListener("fetch", e => onFetchImpl(e, ctx));
 };
 
-/**
- * The main `fetch` handler. You only need to use that directly if you need more
- * control than `setupServiceWorker` gives you.
- */
-export const onFetch = (event: FetchEvent, configIn: Config) => {
-    const config: FullConfig = { ...DEFAULT_CONFIG, ...configIn };
-    onFetchImpl(event, new Set(config.trustedOcOrigins), config);
-};
-
-const onFetchImpl = (
-    event: FetchEvent,
-    trustedOcOrigins: Set<string>,
-    config: FullConfig,
-) => {
+const onFetchImpl = (event: FetchEvent, ctx: Context) => {
+    ctx.log("on 'fetch' for ", event.request.method, event.request.url);
     const url = new URL(event.request.url);
-    if (!trustedOcOrigins.has(url.origin)) {
+    if (!ctx.trustedOcOrigins.has(url.origin)) {
         return;
     }
 
     // If the path is not one we recognize, we don't change the request.
-    const parsed = parsePath(url.pathname, config);
+    const parsed = parsePath(url.pathname, ctx.config);
     if (!parsed) {
         return;
     }
 
     // Inject JWT
     event.respondWith((async () => {
-        const jwts = await config.getJwts([parsed.eventId]);
+        const jwts = await ctx.config.getJwts([parsed.eventId]);
         const jwt = jwts.get(parsed.eventId);
 
         // If we get a JWT for the event, we inject it into the request.
@@ -105,7 +98,7 @@ const onFetchImpl = (
             req = new Request(event.request, {
                 // We have to use CORS as we set the `Authorization` header for
                 // cross origin requests.
-                ...config.cors && { mode: "cors" },
+                ...ctx.config.cors && { mode: "cors" },
                 headers: {
                     ...event.request.headers,
                     "Authorization": `Bearer ${jwt}`,
@@ -117,6 +110,26 @@ const onFetchImpl = (
 };
 
 
+class Context {
+    public config: FullConfig;
+    public trustedOcOrigins: Set<string>;
+    public log: (s: string, ...rest: unknown[]) => void;
+
+    public constructor(configIn: Config) {
+        this.config = { ...DEFAULT_CONFIG, ...configIn };
+
+        // Check config
+        if (this.config.pathPrefixes.some(p => !p.startsWith("/") || !p.endsWith("/"))) {
+            throw new Error("config error: pathPrefixes must start and end with '/'");
+        }
+
+        this.trustedOcOrigins = new Set(this.config.trustedOcOrigins);
+        this.log = this.config.debugLog
+            // eslint-disable-next-line no-console
+            ? (s: string, ...rest: unknown[]) => console.debug("[TODO] " + s, ...rest)
+            : (..._: unknown[]) => {};
+    }
+}
 
 type ParsedPath = {
     prefix: string;
