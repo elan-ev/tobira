@@ -17,6 +17,11 @@ pub(crate) struct AuthConfig {
     #[config(default = "none")]
     pub(crate) source: AuthSource,
 
+    /// Whether to hide the login button in the header. Useful when only admins
+    /// are supposed to log into Tobira by visiting the login page directly.
+    #[config(default = false)]
+    pub(crate) hide_login_button: bool,
+
     /// Link of the login button. If not set, the login button internally
     /// (not via `<a>`, but through JavaScript) links to Tobira's own login page.
     pub(crate) login_link: Option<String>,

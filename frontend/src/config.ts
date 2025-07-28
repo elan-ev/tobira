@@ -52,6 +52,7 @@ type InitialConsent = {
 
 type AuthConfig = {
     usesTobiraSessions: boolean;
+    hideLoginButton: boolean;
     loginLink: string | null;
     logoutLink: string | null;
     userIdLabel: TranslatedString | null;
