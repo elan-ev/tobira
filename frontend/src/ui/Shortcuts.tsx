@@ -10,7 +10,7 @@ import {
     LuArrowUp,
 } from "react-icons/lu";
 import { match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
-import { ParseKeys, TOptions } from "i18next";
+import { DefaultNamespace, Namespace, ParseKeys, TOptions } from "i18next";
 
 import { Modal, ModalHandle } from "./Modal";
 import { COLORS } from "../color";
@@ -19,9 +19,12 @@ import { SKIP_INTERVAL } from "./player/consts";
 import { Paella } from "paella-core";
 
 
-export type ShortcutProps = {
+export type ShortcutProps<
+  Ns extends Namespace = DefaultNamespace,
+  Opts extends TOptions = Record<string, unknown>
+> = {
     keys: string,
-    translation: ParseKeys | { key: ParseKeys; options?: TOptions },
+    translation: ParseKeys<Ns, Opts> | { key: ParseKeys<Ns, Opts>; options?: Opts };
     playerCallback?: (activePlayer: Paella) => HotkeyCallback,
     options?: Options,
 }
