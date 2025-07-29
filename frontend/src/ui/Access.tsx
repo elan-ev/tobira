@@ -196,7 +196,9 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const { change, knownGroups, groupDag, permissionLevels, ownerDisplayName } = useAclContext();
+    const {
+        change, knownGroups, groupDag, permissionLevels, ownerDisplayName, itemType,
+    } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
     const userIsOwner = isRealUser(user) && user.displayName === ownerDisplayName;
     const [error, setError] = useState<ReactNode>(null);
@@ -251,6 +253,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
     const userIsGlobalPageAdmin = isRealUser(user)
         && user.roles.includes(COMMON_ROLES.TOBIRA_GLOBAL_PAGE_ADMIN);
     const showGlobalPageAdminEntry = kind === "group"
+        && itemType === "realm"
         && !entries.some(e => e.role === COMMON_ROLES.TOBIRA_GLOBAL_PAGE_ADMIN)
         && userIsGlobalPageAdmin;
 
