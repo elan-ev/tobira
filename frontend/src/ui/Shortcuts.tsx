@@ -191,63 +191,65 @@ export const ShortcutsOverview: React.FC<{ modalRef: React.RefObject<ModalHandle
     const { t } = useTranslation();
     const groups: (keyof typeof SHORTCUTS)[] = ["general", "player"];
 
-    return <Modal ref={modalRef} title={t("shortcuts.title")} closeOnOutsideClick css={{
-        maxWidth: 1000,
-        "& > div": {
-            maxHeight: "80vh",
-            overflow: "auto",
-        },
-    }}>
-        {groups.map(group => (
-            <section key={group} css={{
-                margin: "32px 0",
-                ":first-of-type": {
-                    marginTop: 16,
-                },
-            }}>
-                <h2 css={{ fontSize: 18, marginBottom: 8 }}>
-                    {t(`shortcuts.${group}.title`)}
-                </h2>
-                <div css={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                    {Object.entries(SHORTCUTS[group]).map((
-                        [name, shortcut]: [string, ShortcutProps],
-                    ) => <div
-                        key={group + name}
-                        css={{
-                            width: "calc(33.33% - 24px / 3)",
-                            [screenWidthAtMost(1080)]: {
-                                width: "calc(50% - 12px / 2)",
-                            },
-                            [screenWidthAtMost(720)]: {
-                                width: "100%",
-                            },
-                            backgroundColor: COLORS.neutral10,
-                            borderRadius: 4,
-                            padding: "10px 16px",
-                            display: "inline-flex",
-                            flexDirection: "column",
-                            alignItems: "start",
-                            gap: 8,
-                        }}
-                    >
-                        <div css={{ overflowWrap: "anywhere" }}>
-                            {typeof shortcut.translation === "string"
-                                ? t(shortcut.translation)
-                                : t(shortcut.translation.key, shortcut.translation.options)}
-                        </div>
-                        <div css={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            {shortcut.keys.split(";").map((combination: string, i: number) =>
-                                <React.Fragment key={i}>
-                                    {i > 0 && t("shortcuts.sequence-separator")}
-                                    <ShortcutKeys shortcut={combination.trim()} />
-                                </React.Fragment>)
-                            }
-                        </div>
-                    </div>)}
-                </div>
-            </section>
-        ))}
-    </Modal>;
+    return (
+        <Modal ref={modalRef} title={t("shortcuts.title")} closeOnOutsideClick css={{
+            maxWidth: 1000,
+            "& > div": {
+                maxHeight: "80vh",
+                overflow: "auto",
+            },
+        }}>
+            {groups.map(group => (
+                <section key={group} css={{
+                    margin: "32px 0",
+                    ":first-of-type": {
+                        marginTop: 16,
+                    },
+                }}>
+                    <h2 css={{ fontSize: 18, marginBottom: 8 }}>
+                        {t(`shortcuts.${group}.title`)}
+                    </h2>
+                    <div css={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                        {Object.entries(SHORTCUTS[group]).map((
+                            [name, shortcut]: [string, ShortcutProps],
+                        ) => <div
+                            key={group + name}
+                            css={{
+                                width: "calc(33.33% - 24px / 3)",
+                                [screenWidthAtMost(1000)]: {
+                                    width: "calc(50% - 12px / 2)",
+                                },
+                                [screenWidthAtMost(720)]: {
+                                    width: "100%",
+                                },
+                                backgroundColor: COLORS.neutral10,
+                                borderRadius: 4,
+                                padding: "10px 16px",
+                                display: "inline-flex",
+                                flexDirection: "column",
+                                alignItems: "start",
+                                gap: 8,
+                            }}
+                        >
+                            <div css={{ overflowWrap: "anywhere" }}>
+                                {typeof shortcut.translation === "string"
+                                    ? t(shortcut.translation)
+                                    : t(shortcut.translation.key, shortcut.translation.options)}
+                            </div>
+                            <div css={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                {shortcut.keys.split(";").map((combination: string, i: number) =>
+                                    <React.Fragment key={i}>
+                                        {i > 0 && t("shortcuts.sequence-separator")}
+                                        <ShortcutKeys shortcut={combination.trim()} />
+                                    </React.Fragment>)
+                                }
+                            </div>
+                        </div>)}
+                    </div>
+                </section>
+            ))}
+        </Modal>
+    );
 };
 
 
