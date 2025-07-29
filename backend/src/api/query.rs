@@ -5,7 +5,7 @@ use crate::auth::{AuthState, User};
 
 use super::{
     err::ApiResult,
-    jwt::{jwt, JwtService},
+    jwt::{service_jwt, JwtService},
     model::{
         self,
         admin::AdminInfo,
@@ -97,13 +97,13 @@ impl Query {
     /// Returns a new JWT that can be used to authenticate against Opencast for
     /// using the given service. For `service = Editor`, `event` has to be
     /// specified.
-    async fn jwt(
+    async fn service_jwt(
         service: JwtService,
         event: Option<Id>,
         opencast_id: Option<String>,
         context: &Context,
     ) -> ApiResult<String> {
-        jwt(service, event, opencast_id, context).await
+        service_jwt(service, event, opencast_id, context).await
     }
 
     /// Retrieve a node by globally unique ID. Mostly useful for relay.
