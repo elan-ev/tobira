@@ -10,18 +10,18 @@ import {
     LuArrowUp,
 } from "react-icons/lu";
 import { match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
-import { ParseKeys, TOptions } from "i18next";
 
 import { Modal, ModalHandle } from "./Modal";
 import { COLORS } from "../color";
 import { adjustSpeed, jumpFrame } from "./player/PlayerShortcuts";
 import { SKIP_INTERVAL } from "./player/consts";
 import { Paella } from "paella-core";
+import { TranslationKey } from "../i18n";
 
 
 export type ShortcutProps = {
     keys: string,
-    translation: ParseKeys | { key: ParseKeys; options?: TOptions },
+    translation: TranslationKey | { key: TranslationKey; options?: Record<string, unknown> };
     playerCallback?: (activePlayer: Paella) => HotkeyCallback,
     options?: Options,
 }
