@@ -14,6 +14,7 @@ import { timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
 import CONFIG from "../../config";
+import { SKIP_INTERVAL } from "./consts";
 
 
 type PaellaPlayerProps = {
@@ -475,7 +476,7 @@ const PAELLA_CONFIG = {
             enabled: true,
             side: "left",
             order: 2,
-            time: 10,
+            time: SKIP_INTERVAL,
             suffix: false,
             tabIndex: 2,
         },
@@ -483,7 +484,7 @@ const PAELLA_CONFIG = {
             enabled: true,
             side: "left",
             order: 3,
-            time: 10,
+            time: SKIP_INTERVAL,
             suffix: false,
             tabIndex: 3,
         },
@@ -557,9 +558,9 @@ const PAELLA_CONFIG = {
 
         // Data plugin
         "es.upv.paella.localStorageDataPlugin": {
-            "enabled": true,
-            "order": 0,
-            "context": ["default", "trimming"],
+            enabled: true,
+            order: 0,
+            context: ["default", "trimming"],
         },
 
         // Let admin provided config add and override entries.
