@@ -7,6 +7,7 @@ import getUserTrackingPluginsContext from "paella-user-tracking";
 import getSlidePluginsContext from "paella-slide-plugins";
 import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
+import { useHotkeysContext } from "react-hotkeys-hook";
 
 import { isHlsTrack, PlayerEvent, Track } from ".";
 import { SPEEDS } from "./consts";
@@ -31,6 +32,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     const ref = useRef<HTMLDivElement>(null);
     const { paella, setPlayerIsLoaded } = usePlayerContext();
     const { players, register, unregister, setActivePlayer } = usePlayerGroupContext();
+    const { enableScope, disableScope } = useHotkeysContext();
 
     useEffect(() => {
         // If the ref is not set yet (which should not usually happen), we do
@@ -146,13 +148,13 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
 
             player.bindEvent("paella:playerLoaded", () => {
                 setPlayerIsLoaded(true);
+                enableScope("player");
                 register(player);
                 const time = new URL(window.location.href).searchParams.get("t");
                 if (!event.isLive && time) {
-                        player.videoContainer.setCurrentTime(timeStringToSeconds(time));
-                    }
-                });
-            }
+                    player.videoContainer.setCurrentTime(timeStringToSeconds(time));
+                }
+            });
 
             player.bindEvent("paella:play", () => {
                 setActivePlayer(player);
@@ -175,6 +177,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             paellaSnapshot.loadPromise.then(() => {
                 paellaSnapshot.player.unload();
             });
+            disableScope("player");
         };
     }, [event, t]);
 

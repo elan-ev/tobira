@@ -59,6 +59,7 @@ export const SHORTCUTS = {
                 }
             },
             options: {
+                scopes: ["player"],
                 ignoreEventWhen(e) {
                     if (e.target instanceof HTMLButtonElement
                         || e.target instanceof HTMLInputElement
