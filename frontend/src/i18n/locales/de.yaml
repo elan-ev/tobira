@@ -417,6 +417,18 @@ acl:
       vornehmen können, und die Seite kann von Ihnen nicht mehr gelöscht werden.
     confirm: Bestätigen
 
+shortcuts:
+  title: Tastenkürzel
+  sequence-separator: oder
+  general:
+    title: Allgemein
+    show-overview: Diese Übersicht anzeigen
+    close-modal: Dialog schließen
+    tab: Durch Elemente navigieren
+    search: Suchfeld fokussieren
+  keys:
+    escape: Esc
+
 manage:
   dashboard:
     title: Dashboard

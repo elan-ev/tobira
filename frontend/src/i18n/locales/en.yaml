@@ -393,6 +393,18 @@ acl:
       Without these, you can no longer edit these permissions, change the realm path, or delete the page.
     confirm: Confirm
 
+shortcuts:
+  title: Shortcuts
+  sequence-separator: or
+  general:
+    title: General
+    show-overview: Show this overview
+    close-modal: Close modal
+    tab: Navigate through elements
+    search: Focus search input
+  keys:
+    escape: Esc
+
 manage:
   dashboard:
     title: Dashboard
