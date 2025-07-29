@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
@@ -16,6 +16,7 @@ import { currentRef } from "../../util";
 import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
 import { useUser } from "../../User";
+import { SHORTCUTS, useShortcut } from "../../ui/Shortcuts";
 
 
 type SearchFieldProps = {
@@ -33,35 +34,20 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
     // initial-loading phase is done.
     const disabled = useUser() === "unknown";
 
-    // Register global shortcut to focus search bar
-    useEffect(() => {
-        const handleShortcut = (ev: KeyboardEvent) => {
-            // Clear input field. See comment inside `handleNavigation` function
-            // in `routes/Search.tsx` for explanation. I'd rather do this here than
-            // needing to pass the input ref.
-            if (ev.key === "Escape" && ref.current) {
-                ref.current.value = "";
-            }
-            // If any element is focussed that could receive character input, we
-            // don't do anything.
-            if (/^input|textarea|select|button$/i.test(document.activeElement?.tagName ?? "")) {
-                return;
-            }
-
-            // With ctrl and meta key, this could be bound to some other
-            // shortcut (ctrl+s) that we want to ignore.
-            if (ev.ctrlKey || ev.metaKey) {
-                return;
-            }
-
-            if (ev.key === "s" || ev.key === "S" || ev.key === "/") {
-                ref.current?.focus();
-            }
-        };
-
-        document.addEventListener("keyup", handleShortcut);
-        return () => document.removeEventListener("keyup", handleShortcut);
-    }, []);
+    useShortcut(
+        SHORTCUTS.general.search.keys,
+        () => ref.current?.focus(),
+        {
+            preventDefault: true,
+            // Will cause infinite rerenders if not memoized, hence the `useCallback`.
+            ignoreEventWhen: useCallback(
+                () => /^input|textarea|select|button$/i.test(document.activeElement?.tagName ?? ""),
+                [],
+            ),
+            useKey: true,
+            ignoreModifiers: true,
+        },
+    );
 
     const height = 42;
     const spinnerSize = 24;

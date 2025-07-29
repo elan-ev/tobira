@@ -394,6 +394,18 @@ player:
     title: Options
     label: Show options
 
+shortcuts:
+  title: Shortcuts
+  sequence-separator: or
+  general:
+    title: General
+    show-overview: Show this overview
+    close-modal: Close modal
+    tab: Navigate through elements
+    search: Focus search input
+  keys:
+    escape: Esc
+
 manage:
   dashboard:
     title: Dashboard
