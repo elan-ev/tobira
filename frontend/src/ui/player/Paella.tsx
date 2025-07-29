@@ -15,6 +15,7 @@ import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
 import CONFIG from "../../config";
 import i18n from "../../i18n";
+import { SKIP_INTERVAL } from "./consts";
 
 
 type PaellaPlayerProps = {
@@ -486,7 +487,7 @@ const PAELLA_CONFIG = {
             enabled: true,
             side: "left",
             order: 2,
-            time: 10,
+            time: SKIP_INTERVAL,
             suffix: false,
             tabIndex: 2,
         },
@@ -494,7 +495,7 @@ const PAELLA_CONFIG = {
             enabled: true,
             side: "left",
             order: 3,
-            time: 10,
+            time: SKIP_INTERVAL,
             suffix: false,
             tabIndex: 3,
         },

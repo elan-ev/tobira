@@ -1,17 +1,29 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Options, useHotkeys, HotkeyCallback } from "react-hotkeys-hook";
-import { LuArrowRightToLine } from "react-icons/lu";
+import {
+    LuArrowBigUp,
+    LuArrowLeft,
+    LuArrowRight,
+    LuArrowRightToLine,
+    LuArrowDown,
+    LuArrowUp,
+} from "react-icons/lu";
 import { match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
-import { ParseKeys } from "i18next";
+import { ParseKeys, TOptions } from "i18next";
 
 import { Modal, ModalHandle } from "./Modal";
 import { COLORS } from "../color";
+import { adjustSpeed, jumpFrame } from "./player/PlayerShortcuts";
+import { SKIP_INTERVAL } from "./player/consts";
+import { Paella } from "paella-core";
 
 
 export type ShortcutProps = {
     keys: string,
-    translation: ParseKeys,
+    translation: ParseKeys | { key: ParseKeys; options?: TOptions },
+    playerCallback?: (activePlayer: Paella) => HotkeyCallback,
+    options?: Options,
 }
 
 export const SHORTCUTS = {
@@ -32,6 +44,142 @@ export const SHORTCUTS = {
             keys: "s; /",
             translation: "shortcuts.general.search",
         },
+        // Todo: add other shortcuts, i.e. for language selection and color scheme?
+    },
+    player: {
+        play: {
+            keys: "k; space",
+            translation: "shortcuts.player.play",
+            playerCallback: player => async () => {
+                const isPaused = await player.videoContainer.paused();
+                if (isPaused) {
+                    await player.videoContainer.play();
+                } else {
+                    await player.videoContainer.pause();
+                }
+            },
+            options: {
+                // Don't trigger when a button is focused. This way, users can still
+                // use the space bar to control other elements by default.
+                ignoreEventWhen: e => (e.key !== "k" && (
+                    e.target instanceof HTMLButtonElement
+                        || e.target instanceof HTMLInputElement
+                )),
+                // But still disable scrolling with space.
+                preventDefault: e => !(e.key !== "k" && (
+                    e.target instanceof HTMLButtonElement
+                        || e.target instanceof HTMLInputElement
+                )),
+            },
+        },
+        mute: {
+            keys: "m",
+            translation: "shortcuts.player.mute",
+            playerCallback: player => async () => {
+                const vol = await player.videoContainer.volume();
+                let newVol = 0;
+                if (vol > 0) {
+                    player.videoContainer.lastVolume = vol;
+                    newVol = 0;
+                } else {
+                    newVol = player.videoContainer.lastVolume || 1;
+                }
+
+                await player.videoContainer.setVolume(newVol);
+            },
+        },
+        captions: {
+            keys: "c",
+            translation: "shortcuts.player.captions",
+            playerCallback: player => () => {
+                if (player.captionsCanvas.isVisible) {
+                    // TODO: cycle through captions before disabling?
+                    player.captionsCanvas.disableCaptions();
+                } else {
+                    const availableCaptions = player.captionsCanvas.captions;
+                    if (availableCaptions && availableCaptions.length > 0) {
+                        player.captionsCanvas.enableCaptions({ index: 0 });
+                    }
+                }
+            },
+        },
+        fullscreen: {
+            keys: "f",
+            translation: "shortcuts.player.fullscreen",
+            playerCallback: player => async () => {
+                if (player.isFullscreen) {
+                    await player.exitFullscreen();
+                } else {
+                    await player.enterFullscreen();
+                }
+            },
+        },
+        rewind: {
+            keys: "j; left",
+            translation: {
+                key: "shortcuts.player.rewind",
+                options: { seconds: SKIP_INTERVAL },
+            },
+            playerCallback: player => async () => {
+                const currentTime = await player.videoContainer.currentTime();
+                await player.videoContainer.setCurrentTime(
+                    Math.max(0, currentTime - SKIP_INTERVAL),
+                );
+            },
+        },
+        fastForward: {
+            keys: "l; right",
+            translation: {
+                key: "shortcuts.player.fast-forward",
+                options: { seconds: SKIP_INTERVAL },
+            },
+            playerCallback: player => async () => {
+                const currentTime = await player.videoContainer.currentTime();
+                await player.videoContainer.setCurrentTime(currentTime + SKIP_INTERVAL);
+            },
+        },
+        frameBackward: {
+            keys: "comma",
+            translation: "shortcuts.player.frame-backward",
+            playerCallback: player => async () => await jumpFrame(player, -1),
+        },
+        frameForward: {
+            keys: "period",
+            translation: "shortcuts.player.frame-forward",
+            playerCallback: player => async () => await jumpFrame(player, 1),
+        },
+        volumeDown: {
+            keys: "shift+down",
+            translation: "shortcuts.player.volume-down",
+            playerCallback: player => async () => {
+                const currentVolume = await player.videoContainer.volume();
+                await player.videoContainer.setVolume(
+                    Math.max(0, currentVolume - 0.1),
+                );
+            },
+            options: { preventDefault: true },
+        },
+        volumeUp: {
+            keys: "shift+up",
+            translation: "shortcuts.player.volume-up",
+            playerCallback: player => async () => {
+                const currentVolume = await player.videoContainer.volume();
+                await player.videoContainer.setVolume(
+                    Math.min(1, currentVolume + 0.1),
+                );
+            },
+            options: { preventDefault: true },
+        },
+        slowDown: {
+            keys: "shift+comma",
+            translation: "shortcuts.player.slow-down",
+            playerCallback: player => async () => await adjustSpeed(player, -1),
+        },
+        speedUp: {
+            keys: "shift+period",
+            translation: "shortcuts.player.speed-up",
+            playerCallback: player => async () => await adjustSpeed(player, 1),
+        },
     },
 } as const satisfies Record<string, Record<string, ShortcutProps>>;
 
@@ -40,7 +188,8 @@ export const ShortcutsOverview: React.FC<{ modalRef: React.RefObject<ModalHandle
     modalRef,
 }) => {
     const { t } = useTranslation();
-    const groups: (keyof typeof SHORTCUTS)[] = ["general"];
+    const groups: (keyof typeof SHORTCUTS)[] = ["general", "player"];
+
     return <Modal ref={modalRef} title={t("shortcuts.title")} closeOnOutsideClick css={{
         maxWidth: 1000,
         "& > div": {
@@ -81,7 +230,9 @@ export const ShortcutsOverview: React.FC<{ modalRef: React.RefObject<ModalHandle
                         }}
                     >
                         <div css={{ overflowWrap: "anywhere" }}>
-                            {t(shortcut.translation)}
+                            {typeof shortcut.translation === "string"
+                                ? t(shortcut.translation)
+                                : t(shortcut.translation.key, shortcut.translation.options)}
                         </div>
                         <div css={{ display: "flex", gap: 8, alignItems: "center" }}>
                             {shortcut.keys.split(";").map((combination: string, i: number) =>
@@ -106,6 +257,14 @@ const ShortcutKeys: React.FC<{ shortcut: string }> = ({ shortcut }) => {
         {shortcut.split("+").map((key, i) => {
             const child = match(key, {
                 "escape": () => <>{t("shortcuts.keys.escape")}</>,
+                "space": () => <>{t("shortcuts.keys.space")}</>,
+                "period": () => <>.</>,
+                "comma": () => <>,</>,
+                "up": () => <LuArrowUp size={20} title={key} />,
+                "down": () => <LuArrowDown size={20} title={key} />,
+                "left": () => <LuArrowLeft title={key} />,
+                "right": () => <LuArrowRight title={key} />,
+                "shift": () => <LuArrowBigUp size={20} title={key} />,
                 "tab": () => <LuArrowRightToLine size={20} title={key} />,
             }) ?? <>{key}</>;
             return (

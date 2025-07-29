@@ -403,8 +403,23 @@ shortcuts:
     close-modal: Close modal
     tab: Navigate through elements
     search: Focus search input
+  player:
+    title: Video player
+    play: Play/pause
+    mute: Mute/unmute
+    captions: Toggle captions
+    fullscreen: Toggle fullscreen
+    rewind: Rewind {{seconds}} seconds
+    fast-forward: Skip {{seconds}} seconds
+    frame-backward: Go back one frame
+    frame-forward: Go forward one frame
+    volume-down: Decrease volume
+    volume-up: Increase volume
+    slow-down: Decrease playback speed
+    speed-up: Increase playback speed
   keys:
     escape: Esc
+    space: Spacebar
 
 manage:
   dashboard:

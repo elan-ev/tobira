@@ -28,6 +28,12 @@ declare module "paella-core" {
         public skin: Skin;
 
         public unload(): Promise<void>;
+
+        public isFullscreen: boolean;
+        public enterFullscreen(): Promise<void>;
+        public exitFullscreen(): Promise<void>;
+
+        public captionsCanvas: CaptionsCanvas;
     }
 
     export interface InitParams {
@@ -71,9 +77,24 @@ declare module "paella-core" {
     }
 
     export interface VideoContainer {
+        lastVolume: number;
+
         setCurrentTime: (t: number) => Promise<void>;
         currentTime: () => Promise<number>;
-        pause: () => void;
+        pause: () => Promise<void>;
+        play: () => Promise<void>;
+        paused: () => Promise<boolean>;
+        volume: () => Promise<number>;
+        setVolume: (volume: number) => Promise<void>;
+        playbackRate: () => Promise<number>;
+        setPlaybackRate: (rate: number) => Promise<void>;
+    }
+
+    interface CaptionsCanvas {
+        isVisible: boolean;
+        captions: Caption[];
+        disableCaptions: () => void;
+        enableCaptions: (searchOptions: { label?: string; index?: number; lang?: string }) => void;
     }
 
     export type PluginConfig = Record<string, unknown> & {

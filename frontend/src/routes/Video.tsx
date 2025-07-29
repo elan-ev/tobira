@@ -91,6 +91,7 @@ import {
     VideoPageAuthorizedData$data, VideoPageAuthorizedData$key,
 } from "./__generated__/VideoPageAuthorizedData.graphql";
 import { QrCodeButton, ShareButton } from "../ui/ShareButton";
+import { PlayerShortcuts } from "../ui/player/PlayerShortcuts";
 
 
 // ===========================================================================================
@@ -574,6 +575,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
         <Breadcrumbs path={breadcrumbs} tail={event.title} />
         <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
         <PlayerContextProvider>
+            <VideoPageShortcuts />
             <section aria-label={t("video.video-player")}>
                 {event.authorizedData
                     ? <InlinePlayer
@@ -1249,4 +1251,10 @@ const isValidLink = (s: string): boolean => {
     }
 
     return true;
+};
+
+const VideoPageShortcuts: React.FC = () => {
+    const { paella } = usePlayerContext();
+    const player = paella.current?.player ?? null;
+    return <PlayerShortcuts activePlayer={{ current: player }} />;
 };
