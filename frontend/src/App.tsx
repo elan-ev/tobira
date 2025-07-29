@@ -1,7 +1,9 @@
 import React, { ReactNode, StrictMode, Suspense } from "react";
+import { HotkeysProvider } from "react-hotkeys-hook";
 import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
+
 
 import { GlobalErrorBoundary } from "./util/err";
 import { environment } from "./relay";
@@ -37,21 +39,23 @@ export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
                     <GlobalStyle />
                     <GlobalErrorBoundary>
                         <RelayEnvironmentProvider {...{ environment }}>
-                            <DevConfig>
-                                <Router initialRoute={initialRoute}>
-                                    <GraphQLErrorBoundary>
-                                        <MenuProvider>
-                                            <NotificationProvider>
-                                                <LoadingIndicator />
-                                                <InitialConsent {...{ consentGiven }} />
-                                                <Suspense fallback={<InitialLoading />}>
-                                                    <ActiveRoute />
-                                                </Suspense>
-                                            </NotificationProvider>
-                                        </MenuProvider>
-                                    </GraphQLErrorBoundary>
-                                </Router>
-                            </DevConfig>
+                            <HotkeysProvider initiallyActiveScopes={["general"]}>
+                                <DevConfig>
+                                    <Router initialRoute={initialRoute}>
+                                        <GraphQLErrorBoundary>
+                                            <MenuProvider>
+                                                <NotificationProvider>
+                                                    <LoadingIndicator />
+                                                    <InitialConsent {...{ consentGiven }} />
+                                                    <Suspense fallback={<InitialLoading />}>
+                                                        <ActiveRoute />
+                                                    </Suspense>
+                                                </NotificationProvider>
+                                            </MenuProvider>
+                                        </GraphQLErrorBoundary>
+                                    </Router>
+                                </DevConfig>
+                            </HotkeysProvider>
                         </RelayEnvironmentProvider>
                     </GlobalErrorBoundary>
                 </AppkitConfigProvider>

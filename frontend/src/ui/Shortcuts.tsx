@@ -59,6 +59,7 @@ export const SHORTCUTS = {
                 }
             },
             options: {
+                scopes: ["player"],
                 // Don't trigger when a button is focused. This way, users can still
                 // use the space bar to control other elements by default.
                 ignoreEventWhen: e => (e.key !== "k" && (
