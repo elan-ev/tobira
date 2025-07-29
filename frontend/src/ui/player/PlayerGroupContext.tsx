@@ -1,34 +1,60 @@
 import { Paella } from "paella-core";
-import React, { createContext, useContext, PropsWithChildren } from "react";
+import React, {
+    createContext,
+    useContext,
+    PropsWithChildren,
+    useRef,
+} from "react";
+
 
 type PlayerGroupContext = {
-    players: Set<Paella> | null;
+    players: React.MutableRefObject<Set<Paella>>;
+    activePlayer: React.MutableRefObject<Paella | null>;
+    setActivePlayer: (player: Paella) => void;
     register: (player: Paella) => void;
     unregister: (player: Paella) => void;
 }
 
 const PlayerGroupContext = createContext<PlayerGroupContext>({
-    players: null,
+    players: { current: new Set<Paella>() },
+    activePlayer: { current: null },
+    setActivePlayer: () => {},
     register: () => {},
     unregister: () => {},
 });
 
 export const PlayerGroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
-    const players = new Set<Paella>(null);
+    const players = useRef(new Set<Paella>());
+    const activePlayer = useRef<Paella | null>(null);
 
     const register = (player: Paella) => {
-        players.add(player);
+        players.current.add(player);
+        if (!activePlayer.current) {
+            activePlayer.current = player;
+        }
     };
 
     const unregister = (player: Paella) => {
-        players.delete(player);
+        players.current.delete(player);
+        if (activePlayer.current === player) {
+            activePlayer.current = players.current.size > 0 ? [...players.current][0] : null;
+        }
     };
 
-    return (
-        <PlayerGroupContext.Provider value={{ players, register, unregister }}>
-            {children}
-        </PlayerGroupContext.Provider>
-    );
+    const setActivePlayer = (player: Paella) => {
+        activePlayer.current = player;
+    };
+
+
+    return <PlayerGroupContext.Provider value={{
+        players,
+        activePlayer,
+        setActivePlayer,
+        register,
+        unregister,
+    }}>
+        {children}
+    </PlayerGroupContext.Provider>;
 };
 
 export const usePlayerGroupContext = () => useContext(PlayerGroupContext);
