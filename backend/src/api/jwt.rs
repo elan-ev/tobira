@@ -11,7 +11,7 @@ use crate::{
 use super::{err::ApiResult, Context, Id};
 
 
-pub(crate) async fn jwt(
+pub(crate) async fn service_jwt(
     service: JwtService,
     event: Option<Id>,
     opencast_id: Option<String>,
