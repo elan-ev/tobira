@@ -1,3 +1,13 @@
+// Some types for better code readability.
+type Seconds = number;
+
+/** An Opencast event ID */
+type EventId = string;
+/** Timestamp in seconds (since UNIX epoch) */
+type Timestamp = number;
+/** A full JWT */
+type Jwt = string;
+
 export type Config = {
     /**
      * All origins that serve static Opencast files. Requests with different
@@ -31,7 +41,16 @@ export type Config = {
      * don't include a JWT for that event. The function takes multiple event IDs
      * to allow batching (to reduce number of API requests).
      */
-    getJwts: (eventsIds: string[]) => Promise<Map<string, string>>;
+    getJwts: (eventsIds: EventId[]) => Promise<Map<EventId, Jwt>>;
+
+    /**
+     * Minimum time (in seconds) that JWTs still have to be valid for in order
+     * for them to be used. JWTs with `exp - cacheMinTokenTimeLeft` in the past
+     * are considered stale. Needs to be shorter than the total JWT validity
+     * time (configured in the JWT generator), otherwise cached JWTs are never
+     * used.
+     */
+    cacheMinTokenTimeLeft?: Seconds;
 
     /**
      * Whether modified requests should use `mode: "cors"`. This is required
@@ -49,6 +68,7 @@ export type Config = {
 export const DEFAULT_CONFIG = {
     pathPrefixes: ["/static/"],
     cors: true,
+    cacheMinTokenTimeLeft: 5,
     debugLog: false,
 } satisfies Partial<Config>;
 
@@ -120,10 +140,11 @@ export const setUpServiceWorker = (configIn: Config) => {
         e.waitUntil(self.clients.claim());
     });
 
-    self.addEventListener("fetch", e => onFetchImpl(e, ctx));
+    self.addEventListener("fetch", e => onFetch(e, ctx));
 };
 
-const onFetchImpl = (event: FetchEvent, ctx: Context) => {
+
+const onFetch = (event: FetchEvent, ctx: Context) => {
     ctx.log("on 'fetch' for ", event.request.method, event.request.url);
     const url = new URL(event.request.url);
     if (!ctx.trustedOcOrigins.has(url.origin)) {
@@ -138,8 +159,19 @@ const onFetchImpl = (event: FetchEvent, ctx: Context) => {
 
     // Inject JWT
     event.respondWith((async () => {
-        const jwts = await ctx.config.getJwts([parsed.eventId]);
-        const jwt = jwts.get(parsed.eventId);
+        const cachedJwt = ctx.cache.get(parsed.eventId);
+        let jwt;
+        if (cachedJwt) {
+            ctx.log("using cached JWT for", parsed.eventId);
+            jwt = cachedJwt;
+        } else {
+            ctx.log("fetching JWT for", parsed.eventId);
+            const jwts = await ctx.config.getJwts([parsed.eventId]);
+            jwt = jwts.get(parsed.eventId) ?? null;
+            if (jwt) {
+                ctx.cache.add(parsed.eventId, jwt);
+            }
+        }
 
         // If we get a JWT for the event, we inject it into the request.
         let req = event.request;
@@ -163,6 +195,7 @@ class Context {
     public config: FullConfig;
     public trustedOcOrigins: Set<string>;
     public log: (s: string, ...rest: unknown[]) => void;
+    public cache: Cache;
 
     public constructor(configIn: Config) {
         this.config = { ...DEFAULT_CONFIG, ...configIn };
@@ -172,6 +205,7 @@ class Context {
             throw new Error("config error: pathPrefixes must start and end with '/'");
         }
 
+        this.cache = new Cache(this.config);
         this.trustedOcOrigins = new Set(this.config.trustedOcOrigins);
         this.log = this.config.debugLog
             // eslint-disable-next-line no-console
@@ -179,6 +213,87 @@ class Context {
             : (..._: unknown[]) => {};
     }
 }
+
+
+/** Caching JWTs for reuse while they are still fresh enough. */
+class Cache {
+    private cacheMinTokenTimeLeft: Seconds;
+    private tokens: Map<EventId, {
+        exp: Timestamp;
+        token: Jwt;
+    }> = new Map();
+    private purgePlanned = false;
+
+    public constructor(config: FullConfig) {
+        this.cacheMinTokenTimeLeft = config.cacheMinTokenTimeLeft;
+    }
+
+    public get(eventId: EventId): Jwt | null {
+        const entry = this.tokens.get(eventId);
+        if (!entry) {
+            return null;
+        }
+        if (entry.exp < Date.now() / 1000 + this.cacheMinTokenTimeLeft) {
+            this.tokens.delete(eventId);
+            return null;
+        }
+        return entry.token;
+    }
+
+    public add(eventId: EventId, token: Jwt) {
+        const exp = expOfJwt(token);
+        const entry = this.tokens.get(eventId);
+        if (entry) {
+            if (entry.exp < exp) {
+                entry.exp = exp;
+                entry.token = token;
+            }
+        } else {
+            this.tokens.set(eventId, { exp, token });
+        }
+        this.planPurge();
+    }
+
+    private planPurge() {
+        if (!this.purgePlanned) {
+            this.purgePlanned = true;
+            const nextExp = Math.min(...this.tokens.values().map(entry => entry.exp));
+            const msTillStale = 1000 * (nextExp - Date.now() / 1000 - this.cacheMinTokenTimeLeft);
+            setTimeout(() => {
+                this.purgeStaleEntries();
+                this.purgePlanned = false;
+                if (this.tokens.size > 0) {
+                    this.planPurge();
+                }
+            }, msTillStale + 500); // Just add 500ms as buffer
+        }
+    }
+
+    private purgeStaleEntries() {
+        const minExp = Date.now() / 1000 + this.cacheMinTokenTimeLeft;
+        for (const [key, entry] of this.tokens.entries()) {
+            if (entry.exp < minExp) {
+                this.tokens.delete(key);
+            }
+        }
+    }
+}
+
+/** Extracts the `exp` claim from a JWT, throwing an error if it's not valid. */
+const expOfJwt = (jwt: Jwt): Timestamp => {
+    // `btoa` uses a different alphabet than JWT, so we need to adjust it.
+    const base64 = jwt.split(".")[1].replaceAll("-", "+").replaceAll("_", "/");
+
+    const binString = atob(base64);
+    const bytes = Uint8Array.from(binString, m => m.codePointAt(0)!);
+    const utf8Json = new TextDecoder().decode(bytes);
+    const payload = JSON.parse(utf8Json);
+
+    if (!("exp" in payload) || typeof payload.exp !== "number") {
+        throw new Error("JWT does not have valid 'exp' claim");
+    }
+    return payload.exp;
+};
 
 type ParsedPath = {
     prefix: string;
