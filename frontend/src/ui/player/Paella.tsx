@@ -31,7 +31,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     const { t, i18n } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const { paella, setPlayerIsLoaded } = usePlayerContext();
-    const { players, register, unregister } = usePlayerGroupContext();
+    const { players, register, unregister, setActivePlayer } = usePlayerGroupContext();
 
     useEffect(() => {
         // If the ref is not set yet (which should not usually happen), we do
@@ -153,25 +153,24 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             });
 
 
-            if (!event.isLive) {
+            player.bindEvent("paella:playerLoaded", () => {
+                setPlayerIsLoaded(true);
+                register(player);
                 const time = new URL(window.location.href).searchParams.get("t");
-                player.bindEvent("paella:playerLoaded", () => {
-                    setPlayerIsLoaded(true);
-                    if (time) {
+                if (!event.isLive && time) {
                         player.videoContainer.setCurrentTime(timeStringToSeconds(time));
                     }
                 });
             }
 
             player.bindEvent("paella:play", () => {
-                players?.forEach(playerInstance => {
+                setActivePlayer(player);
+                players.forEach((playerInstance: Paella) => {
                     if (playerInstance && playerInstance !== player) {
                         playerInstance.videoContainer.pause();
                     }
                 });
             });
-
-            register(player);
 
             const loadPromise = player.skin.loadSkin("/~assets/paella/theme.json")
                 .then(() => player.loadManifest());
