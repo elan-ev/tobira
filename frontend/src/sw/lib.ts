@@ -1,4 +1,5 @@
 // Some types for better code readability.
+type Milliseconds = number;
 type Seconds = number;
 
 /** An Opencast event ID */
@@ -8,6 +9,7 @@ type Timestamp = number;
 /** A full JWT */
 type Jwt = string;
 
+/** Configuration. See `DEFAULT_CONFIG` for default values! */
 export type Config = {
     /**
      * All origins that serve static Opencast files. Requests with different
@@ -53,6 +55,15 @@ export type Config = {
     cacheMinTokenTimeLeft?: Seconds;
 
     /**
+     * Number of milliseconds to wait for other requests in order to batch
+     * multiple "get JWT for event" operations. Defaults to a small number, just
+     * big enough to batch requests that occur basically at the same time (e.g.
+     * on page load or scrolling multiple loading="lazy" images into view). Set
+     * to 0 to disable batching.
+     */
+    batchWindow?: Milliseconds;
+
+    /**
      * Whether modified requests should use `mode: "cors"`. This is required
      * when they are cross origin (i.e. different domain). If you can disable
      * it, do it as it saves some requests. But for most it's likely required,
@@ -69,6 +80,7 @@ export const DEFAULT_CONFIG = {
     pathPrefixes: ["/static/"],
     cors: true,
     cacheMinTokenTimeLeft: 5,
+    batchWindow: 3,
     debugLog: false,
 } satisfies Partial<Config>;
 
@@ -165,9 +177,7 @@ const onFetch = (event: FetchEvent, ctx: Context) => {
             ctx.log("using cached JWT for", parsed.eventId);
             jwt = cachedJwt;
         } else {
-            ctx.log("fetching JWT for", parsed.eventId);
-            const jwts = await ctx.config.getJwts([parsed.eventId]);
-            jwt = jwts.get(parsed.eventId) ?? null;
+            jwt = await ctx.getJwt(parsed.eventId);
             if (jwt) {
                 ctx.cache.add(parsed.eventId, jwt);
             }
@@ -185,6 +195,8 @@ const onFetch = (event: FetchEvent, ctx: Context) => {
                     "Authorization": `Bearer ${jwt}`,
                 },
             });
+        } else {
+            ctx.log("No JWT for request for", req.url);
         }
         return fetch(req);
     })());
@@ -196,6 +208,10 @@ class Context {
     public trustedOcOrigins: Set<string>;
     public log: (s: string, ...rest: unknown[]) => void;
     public cache: Cache;
+    public batch: null | {
+        task: Promise<Map<EventId, Jwt>>;
+        eventIds: EventId[];
+    } = null;
 
     public constructor(configIn: Config) {
         this.config = { ...DEFAULT_CONFIG, ...configIn };
@@ -204,6 +220,12 @@ class Context {
         if (this.config.pathPrefixes.some(p => !p.startsWith("/") || !p.endsWith("/"))) {
             throw new Error("config error: pathPrefixes must start and end with '/'");
         }
+        if (this.config.batchWindow < 0.0) {
+            throw new Error("config error: `batchWindow` must not be negative");
+        }
+        if (Number.isNaN(this.config.batchWindow) || !Number.isFinite((this.config.batchWindow))) {
+            throw new Error("config error: `batchWindow` must be finite and not NaN");
+        }
 
         this.cache = new Cache(this.config);
         this.trustedOcOrigins = new Set(this.config.trustedOcOrigins);
@@ -211,6 +233,48 @@ class Context {
             // eslint-disable-next-line no-console
             ? (s: string, ...rest: unknown[]) => console.debug("[TODO] " + s, ...rest)
             : (..._: unknown[]) => {};
+    }
+
+    /** Gets a JWT for the event, potentially batching multiple requests. */
+    public async getJwt(eventId: EventId): Promise<Jwt | null> {
+        let jwts;
+        if (this.config.batchWindow <= 0) {
+            // If batching is disabled, just immediately fetch.
+            this.log("batching disabled, immediately fetching JWT for", eventId);
+            jwts = await this.config.getJwts([eventId]);
+        } else {
+            let batch = this.batch;
+            if (batch) {
+                this.log("adding to batch:", eventId);
+                batch.eventIds.push(eventId);
+            } else {
+                this.log("starting new batch with", eventId);
+                const eventIds = [eventId];
+                batch = this.batch = {
+                    eventIds,
+                    // The promise is simply a sleep for `batchWindow` and then
+                    // a fetch.
+                    task: new Promise(resolve => {
+                        setTimeout(() => {
+                            this.log(`fetching batch with ${eventIds.length} events`);
+                            // Reset the batch right before we're starting the
+                            // fetch so that a new batch can be started. Otherwise,
+                            // event IDs added to the batch would be ignored.
+                            this.batch = null;
+                            this.config.getJwts(eventIds).then(jwts => {
+                                resolve(jwts);
+                            });
+                        }, this.config.batchWindow);
+                    }),
+                };
+            }
+
+            // Awaiting batch task. Meaning all concurrent executions waiting on
+            // it will wake up at the same time.
+            jwts = await batch.task;
+        }
+
+        return jwts.get(eventId) ?? null;
     }
 }
 
