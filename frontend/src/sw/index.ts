@@ -40,5 +40,11 @@ const fetchJwts = async (eventIds: Set<EventId>): Promise<Map<string, string>> =
 
 setUpServiceWorker({
     getJwts: fetchJwts,
-    trustedOcOrigins: ["http://localhost:4050"], // TODO
+    // TODO
+    trustedOcOrigins: [
+        "http://localhost:4050",
+        "http://localhost:8080",
+        "https://tobira-test-oc.ethz.ch",
+    ],
+    debugLog: true,
 });

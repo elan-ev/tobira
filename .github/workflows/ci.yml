@@ -37,7 +37,7 @@ jobs:
         printf -- "--target=x86_64-unknown-linux-musl " >> .cargo-flags
         target_dir="${target_dir}/x86_64-unknown-linux-musl"
 
-        if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/main" ]; then
+        if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/jwt-static-files" ]; then
           printf -- "--profile=release-ci" >> .cargo-flags
           printf -- "release" >> .cache-key
           echo "ci_targetdir=${target_dir}/release-ci" >> $GITHUB_ENV
