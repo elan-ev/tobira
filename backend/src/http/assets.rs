@@ -176,7 +176,12 @@ impl Assets {
         // JS bundle
         builder.add_embedded("", &EMBEDS["bundle.*.js"]);
         builder.add_embedded("", &EMBEDS["bundle.*.js.map"]);
-        builder.add_embedded("~sw.js", &EMBEDS["~sw.js"]);
+        builder.add_embedded("~sw.js", &EMBEDS["~sw.js"]).with_modifier::<_, _, String>([], {
+            let replacement = serde_json::to_string(&config.opencast.trusted_hosts()).unwrap();
+            move |original, _| {
+                original.replacen("MAGIC_REPLACE_TRUSTED_ORIGINS_SW", &replacement, 1).into()
+            }
+        });
         builder.add_embedded("~sw.js.map", &EMBEDS["~sw.js.map"]);
 
         // Paella assets: no hashing for some files that Paella requests as

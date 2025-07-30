@@ -1,4 +1,4 @@
-use std::{str::FromStr, fmt};
+use std::{fmt, str::FromStr};
 
 use hyper::Uri;
 use base64::Engine as _;
@@ -128,6 +128,15 @@ impl OpencastConfig {
         let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
         let auth_header = format!("Basic {}", encoded_credentials);
         SecretString::new(auth_header.into())
+    }
+
+    pub(crate) fn trusted_hosts(&self) -> Vec<HttpHost> {
+        self.other_hosts.iter()
+            .chain(self.host.as_ref())
+            .chain(self.sync_node.as_ref())
+            .chain(self.upload_node.as_ref())
+            .cloned()
+            .collect()
     }
 
     fn unwrap_host(&self) -> &HttpHost {
