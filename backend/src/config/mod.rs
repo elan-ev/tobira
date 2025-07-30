@@ -3,7 +3,7 @@ use std::{
 };
 use confique::Config as _;
 use hyper::Uri;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::prelude::*;
@@ -280,8 +280,8 @@ pub(crate) fn parse_normal_http_uri(src: &str) -> Result<Uri> {
 }
 
 
-#[derive(Clone, Deserialize)]
-#[serde(try_from = "String")]
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(try_from = "String", into = "String")]
 pub(crate) struct HttpHost {
     pub(crate) scheme: hyper::http::uri::Scheme,
     pub(crate) authority: hyper::http::uri::Authority,
@@ -309,6 +309,12 @@ impl fmt::Display for HttpHost {
 impl fmt::Debug for HttpHost {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, f)
+    }
+}
+
+impl From<HttpHost> for String {
+    fn from(value: HttpHost) -> Self {
+        value.to_string()
     }
 }
 

@@ -307,13 +307,7 @@ struct Context {
 impl Context {
     fn new(config: &Config) -> Result<Self> {
         let is_uri_allowed = {
-            let oc = &config.opencast;
-            let allowed_hosts = [&oc.host, &oc.sync_node, &oc.upload_node]
-                .into_iter()
-                .cloned()
-                .flatten()
-                .chain(config.opencast.other_hosts.iter().cloned())
-                .collect::<Arc<[_]>>();
+            let allowed_hosts: Arc<[_]> = config.opencast.trusted_hosts().into();
             Arc::new(move |url: &Url| {
                 allowed_hosts.iter().any(|allowed| {
                     url.scheme() == &allowed.scheme
