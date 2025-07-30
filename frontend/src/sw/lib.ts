@@ -1,13 +1,13 @@
 // Some types for better code readability.
-type Milliseconds = number;
-type Seconds = number;
+export type Milliseconds = number;
+export type Seconds = number;
 
 /** An Opencast event ID */
-type EventId = string;
+export type EventId = string;
 /** Timestamp in seconds (since UNIX epoch) */
-type Timestamp = number;
+export type Timestamp = number;
 /** A full JWT */
-type Jwt = string;
+export type Jwt = string;
 
 /** Configuration. See `DEFAULT_CONFIG` for default values! */
 export type Config = {
@@ -43,7 +43,7 @@ export type Config = {
      * don't include a JWT for that event. The function takes multiple event IDs
      * to allow batching (to reduce number of API requests).
      */
-    getJwts: (eventsIds: EventId[]) => Promise<Map<EventId, Jwt>>;
+    getJwts: (eventsIds: Set<EventId>) => Promise<Map<EventId, Jwt>>;
 
     /**
      * Minimum time (in seconds) that JWTs still have to be valid for in order
@@ -210,7 +210,7 @@ class Context {
     public cache: Cache;
     public batch: null | {
         task: Promise<Map<EventId, Jwt>>;
-        eventIds: EventId[];
+        eventIds: Set<EventId>;
     } = null;
 
     public constructor(configIn: Config) {
@@ -241,22 +241,22 @@ class Context {
         if (this.config.batchWindow <= 0) {
             // If batching is disabled, just immediately fetch.
             this.log("batching disabled, immediately fetching JWT for", eventId);
-            jwts = await this.getJwtsCallback([eventId]);
+            jwts = await this.getJwtsCallback(new Set([eventId]));
         } else {
             let batch = this.batch;
             if (batch) {
                 this.log("adding to batch:", eventId);
-                batch.eventIds.push(eventId);
+                batch.eventIds.add(eventId);
             } else {
                 this.log("starting new batch with", eventId);
-                const eventIds = [eventId];
+                const eventIds = new Set([eventId]);
                 batch = this.batch = {
                     eventIds,
                     // The promise is simply a sleep for `batchWindow` and then
                     // a fetch.
                     task: new Promise(resolve => {
                         setTimeout(() => {
-                            this.log(`fetching batch with ${eventIds.length} events`);
+                            this.log(`fetching batch with ${eventIds.size} events`);
                             // Reset the batch right before we're starting the
                             // fetch so that a new batch can be started. Otherwise,
                             // event IDs added to the batch would be ignored.
@@ -277,7 +277,7 @@ class Context {
         return jwts.get(eventId) ?? null;
     }
 
-    private async getJwtsCallback(eventIds: EventId[]): Promise<Map<EventId, Jwt>> {
+    private async getJwtsCallback(eventIds: Set<EventId>): Promise<Map<EventId, Jwt>> {
         try {
             return await this.config.getJwts(eventIds);
         } catch (e) {

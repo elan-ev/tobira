@@ -1,6 +1,6 @@
-import { setUpServiceWorker } from "./lib";
+import { EventId, setUpServiceWorker } from "./lib";
 
-const fetchJwts = async (eventIds: string[]): Promise<Map<string, string>> => {
+const fetchJwts = async (eventIds: Set<EventId>): Promise<Map<string, string>> => {
     // We don't use relay here, as it's straight forward to do maually and we
     // don't need to pull in a big dependency for this.
     const response = await fetch("/graphql", {
@@ -11,7 +11,7 @@ const fetchJwts = async (eventIds: string[]): Promise<Map<string, string>> => {
         body: JSON.stringify({
             query: "query($events: [String!]!) { eventReadJwts(events:$events) { event jwt } }",
             variables: {
-                events: eventIds,
+                events: [...eventIds.keys()],
             },
         }),
     });
