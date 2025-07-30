@@ -5,7 +5,7 @@ use crate::auth::{AuthContext, User};
 
 use super::{
     err::ApiResult,
-    jwt::{service_jwt, JwtService},
+    jwt::{event_read_jwts, EventJwt, service_jwt, JwtService},
     model::{
         event::{AuthorizedEvent, Event},
         known_roles::{self, KnownGroup, KnownUsersSearchOutcome},
@@ -90,6 +90,13 @@ impl Query {
             AuthContext::User(user) => Some(user),
             _ => None,
         }
+    }
+
+    /// Returns one JWT for each given event (by Opencast IDs), granting the
+    /// bearer read access to that event. Events that the user is not allowed
+    /// to read will not appear in the resulting list.
+    async fn event_read_jwts(events: Vec<String>, context: &Context) -> ApiResult<Vec<EventJwt>> {
+        event_read_jwts(events, context).await
     }
 
     /// Returns a new JWT that can be used to authenticate against Opencast for
