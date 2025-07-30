@@ -44,4 +44,5 @@ setUpServiceWorker({
     getJwts: fetchJwts,
     // This value is replaced by the backend with values from the config.
     trustedOcOrigins: MAGIC_REPLACE_TRUSTED_ORIGINS_SW,
+    debugLog: true,
 });
