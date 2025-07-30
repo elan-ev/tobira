@@ -85,6 +85,7 @@ type OpencastConfig = {
     uploadNode: string;
     studioUrl: string;
     editorUrl: string;
+    trustedHosts: string[];
 };
 
 type VersionInfo = {

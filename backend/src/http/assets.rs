@@ -329,6 +329,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
             "uploadNode": config.opencast.upload_node().to_string(),
             "studioUrl": config.opencast.studio_url().to_string(),
             "editorUrl": config.opencast.editor_url().to_string(),
+            "trustedHosts": config.opencast.trusted_hosts(),
         },
         "logos": logo_entries,
         "favicon": FAVICON_FILE,
