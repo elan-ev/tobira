@@ -1,7 +1,7 @@
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
 use bytes::Bytes;
 use aws_lc_rs::{rand::{SecureRandom, SystemRandom}, signature::{self, EcdsaKeyPair, Ed25519KeyPair, KeyPair}};
-use serde::Serialize;
+use serde::{ser::SerializeMap, Serialize};
 use serde_json::json;
 use std::{path::PathBuf, time::Duration};
 
@@ -48,23 +48,48 @@ impl Algorithm {
             Algorithm::ED25519 => "EdDSA",
         }
     }
+
+    /// Returns the length of the signature in bytes
+    fn signature_len(&self) -> usize {
+        match self {
+            Algorithm::ES256 => 64, // Two SHA-256 outputs
+            Algorithm::ES384 => 96, // Two SHA-384 outputs
+            Algorithm::ED25519 => 64, // One SHA-512 output
+        }
+    }
 }
 
 /// Context for JWT operations that persists for runtime of Tobira.
 pub(crate) struct JwtContext {
     rng: SystemRandom,
     auth: JwtAuth,
+    #[allow(dead_code)]
     config: JwtConfig,
+
+    // Pre-calculated to make signing faster.
+    encoded_header: String,
+    expiration_time: chrono::Duration,
 }
 
 impl JwtContext {
     pub(crate) fn new(config: &JwtConfig) -> Result<Self> {
         let auth = JwtAuth::load(config).context("failed to load `jwt.secret_key`")?;
 
+        // Already encode header as it is the same for all JWTs
+        let header = json!({
+            "typ": "JWT",
+            "alg": config.signing_algorithm.jwt_alg_field(),
+        });
+        let header_json = serde_json::to_string(&header).expect("failed to serialize JWT header");
+        let encoded_header = BASE64_URL_SAFE_NO_PAD.encode(header_json);
+
         Ok(Self {
             rng: SystemRandom::new(),
             auth,
             config: config.clone(),
+            encoded_header,
+            expiration_time: chrono::Duration::from_std(config.expiration_time)
+                .expect("failed to convert from std Duration to chrono::Duration"),
         })
     }
 
@@ -74,7 +99,11 @@ impl JwtContext {
     }
 
     /// Creates a new JWT.
-    pub(crate) fn new_token(&self, user: Option<&User>, auth_claims: impl Serialize) -> String {
+    pub(crate) fn service_token(
+        &self,
+        user: &User,
+        auth_claims: impl Serialize,
+    ) -> String {
         #[derive(Serialize)]
         struct UserInfo<'a> {
             sub: &'a str,
@@ -88,57 +117,93 @@ impl JwtContext {
 
         #[derive(Serialize)]
         struct Payload<'a, A: Serialize> {
-            exp: i64,
-            #[serde(flatten, skip_serializing_if = "Option::is_none")]
-            user: Option<UserInfo<'a>>,
+            #[serde(flatten)]
+            user: UserInfo<'a>,
             #[serde(flatten)]
             auth_claims: A,
         }
 
-        let exp = chrono::offset::Utc::now()
-            + chrono::Duration::from_std(self.config.expiration_time)
-                .expect("failed to convert from std Duration to chrono::Duration");
-
-        let payload = Payload {
-            exp: exp.timestamp(),
-            user: user.map(|user| UserInfo {
+        self.generate(Payload {
+            user: UserInfo {
                 sub: &user.username,
                 username: &user.username,
                 name: &user.display_name,
                 email: user.email.as_deref(),
-            }),
+            },
             auth_claims,
-        };
+        })
+    }
 
-        self.encode(&payload)
+    /// Generates a JWT giving read access to a single event.
+    pub(crate) fn event_read_token(&self, event_id: &str) -> String {
+        struct EventReadAccess<'a>(&'a str);
+        impl Serialize for EventReadAccess<'_> {
+            fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                let mut map = serializer.serialize_map(Some(1))?;
+                map.serialize_entry("oc", &Inner(self.0))?;
+                map.end()
+            }
+        }
+        struct Inner<'a>(&'a str);
+        impl Serialize for Inner<'_> {
+            fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                let key = format!("e:{}", self.0);
+                let mut map = serializer.serialize_map(Some(1))?;
+                map.serialize_entry(&key, &["read"])?;
+                map.end()
+            }
+        }
+
+        self.generate(EventReadAccess(event_id))
+    }
+
+    /// Generates a new JWT with the given payload. The `exp` is claim is added
+    /// to the payload and should not be contained in `payload` already.
+    fn generate(&self, payload: impl Serialize) -> String {
+        #[derive(Serialize)]
+        struct Payload<P: Serialize> {
+            exp: i64,
+            #[serde(flatten)]
+            payload: P,
+        }
+
+        self.encode(&Payload {
+            exp: (chrono::offset::Utc::now() + self.expiration_time).timestamp(),
+            payload,
+        })
     }
 
     /// Encodes the given payload as JWT.
     fn encode(&self, payload: &impl Serialize) -> String {
-        let header = json!({
-            "typ": "JWT",
-            "alg": self.config.signing_algorithm.jwt_alg_field(),
-        });
+        let base64_len = |bytes: usize| (bytes * 4).div_ceil(3);
 
-        let mut jwt = String::new();
-
-        let encode = |data: &[u8], buf: &mut String| {
-            use base64::Engine;
-            base64::engine::general_purpose::URL_SAFE_NO_PAD.encode_string(data, buf);
-        };
-
-        // Encode header and payload
-        let header_json = serde_json::to_string(&header).expect("failed to serialize JWT header");
         let payload_json = serde_json::to_string(payload).expect("failed to serialize JWT payload");
-        encode(header_json.as_bytes(), &mut jwt);
+
+        // Prepare string with the right size
+        let signature_len = self.config.signing_algorithm.signature_len();
+        let jwt_len = self.encoded_header.len()
+            + 1
+            + base64_len(payload_json.len())
+            + 1
+            + base64_len(signature_len);
+        let mut jwt = String::with_capacity(jwt_len);
+
+        // Header & Payload
+        jwt.push_str(&self.encoded_header);
         jwt.push('.');
-        encode(payload_json.as_bytes(), &mut jwt);
+        BASE64_URL_SAFE_NO_PAD.encode_string(payload_json, &mut jwt);
 
         // Sign and and append signature
-        let mut signature = Vec::new();
+        let mut signature = Vec::with_capacity(signature_len);
         self.auth.signer.sign(&self.rng, jwt.as_bytes(), &mut signature);
         jwt.push('.');
-        encode(&signature, &mut jwt);
+        BASE64_URL_SAFE_NO_PAD.encode_string(&signature, &mut jwt);
 
         jwt
     }
