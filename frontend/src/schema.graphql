@@ -435,6 +435,11 @@ type EventConnection {
   totalCount: Int!
 }
 
+type EventJwt {
+  event: String!
+  jwt: String!
+}
+
 type EventSearchResults {
   items: [SearchEvent!]!
   totalHits: Int!
@@ -694,6 +699,12 @@ type Query {
   playlistById(id: ID!): Playlist
   "Returns the current user."
   currentUser: User
+  """
+    Returns one JWT for each given event (by Opencast IDs), granting the
+    bearer read access to that event. Events that the user is not allowed
+    to read will not appear in the resulting list.
+  """
+  eventReadJwts(events: [String!]!): [EventJwt!]!
   """
     Returns a new JWT that can be used to authenticate against Opencast for
     using the given service. For `service = Editor`, `event` has to be

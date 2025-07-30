@@ -426,12 +426,7 @@ impl AuthorizedEvent {
             return None;
         }
 
-        let key = format!("e:{}", self.opencast_id);
-        let jwt = context.jwt.new_token(None, serde_json::json!({
-            "oc": {
-                key: ["read"],
-            },
-        }));
+        let jwt = context.jwt.event_read_token(&self.opencast_id);
 
         Some(jwt)
     }
