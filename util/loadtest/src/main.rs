@@ -16,6 +16,9 @@ async fn main() -> Result<(), GooseError> {
         .register_scenario(scenario!("Single event JWT")
             .register_transaction(transaction!(loadtest_single_jwt))
         )
+        .register_scenario(scenario!("Multi event JWTs")
+            .register_transaction(transaction!(loadtest_multi_jwt))
+        )
         .execute()
         .await?;
 
@@ -41,6 +44,10 @@ async fn loadtest_single_jwt(user: &mut GooseUser) -> TransactionResult {
     send_gql_request(user, GQL_QUERY_SINGLE_JWT).await
 }
 
+async fn loadtest_multi_jwt(user: &mut GooseUser) -> TransactionResult {
+    send_gql_request(user, GQL_QUERY_MUTLI_JWT).await
+}
+
 async fn send_gql_request(user: &mut GooseUser, body: &'static str) -> TransactionResult {
     let request_builder = user.get_request_builder(&GooseMethod::Post, "graphql")?
         .body(body)
@@ -56,3 +63,4 @@ async fn send_gql_request(user: &mut GooseUser, body: &'static str) -> Transacti
 const GQL_QUERY_INDEX: &str = include_str!("gql_index.json");
 const GQL_QUERY_VIDEO: &str = include_str!("gql_video.json");
 const GQL_QUERY_SINGLE_JWT: &str = include_str!("gql_single_jwt.json");
+const GQL_QUERY_MUTLI_JWT: &str = include_str!("gql_multi_jwt.json");
