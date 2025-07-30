@@ -241,7 +241,7 @@ class Context {
         if (this.config.batchWindow <= 0) {
             // If batching is disabled, just immediately fetch.
             this.log("batching disabled, immediately fetching JWT for", eventId);
-            jwts = await this.config.getJwts([eventId]);
+            jwts = await this.getJwtsCallback([eventId]);
         } else {
             let batch = this.batch;
             if (batch) {
@@ -261,7 +261,7 @@ class Context {
                             // fetch so that a new batch can be started. Otherwise,
                             // event IDs added to the batch would be ignored.
                             this.batch = null;
-                            this.config.getJwts(eventIds).then(jwts => {
+                            this.getJwtsCallback(eventIds).then(jwts => {
                                 resolve(jwts);
                             });
                         }, this.config.batchWindow);
@@ -275,6 +275,16 @@ class Context {
         }
 
         return jwts.get(eventId) ?? null;
+    }
+
+    private async getJwtsCallback(eventIds: EventId[]): Promise<Map<EventId, Jwt>> {
+        try {
+            return await this.config.getJwts(eventIds);
+        } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error("'getJwts' callback errored!", e);
+            return new Map();
+        }
     }
 }
 
