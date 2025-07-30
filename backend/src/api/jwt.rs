@@ -1,15 +1,35 @@
-use juniper::GraphQLEnum;
+use juniper::{GraphQLEnum, GraphQLObject};
 use serde_json::json;
 
 use crate::{
     api::err::{invalid_input, not_authorized},
     auth::AuthState,
     db::util::select,
-    prelude::HasRoles,
+    prelude::*,
 };
 
 use super::{err::ApiResult, Context, Id};
 
+pub(crate) async fn event_read_jwts(
+    events: Vec<String>,
+    context: &Context,
+) -> ApiResult<Vec<EventJwt>> {
+    let sql = "select opencast_id \
+        from events \
+        where (read_roles || array['ROLE_ADMIN']) && $1 and opencast_id = any($2)\
+    ";
+
+    context.db.query_raw(sql, dbargs![&context.auth.roles_vec(), &events])
+        .await?
+        .map_ok(|row| {
+            let opencast_id = row.get::<_, String>(0);
+            let jwt = context.jwt.event_read_token(&opencast_id);
+            EventJwt { jwt, event: opencast_id }
+        })
+        .try_collect::<Vec<_>>()
+        .await?
+        .pipe(Ok)
+}
 
 pub(crate) async fn service_jwt(
     service: JwtService,
@@ -54,14 +74,14 @@ pub(crate) async fn service_jwt(
                 json!({ "roles": ["ROLE_STUDIO"] })
             };
 
-            Ok(context.jwt.new_token(Some(&user), payload))
+            Ok(context.jwt.service_token(&user, payload))
         }
 
         JwtService::Studio => {
             if !user.can_use_studio(&context.config.auth) {
                 deny!("use Studio");
             }
-            Ok(context.jwt.new_token(Some(&user), json!({
+            Ok(context.jwt.service_token(&user, json!({
                 "roles": ["ROLE_STUDIO"],
             })))
         }
@@ -93,7 +113,7 @@ pub(crate) async fn service_jwt(
             }
 
             let key = format!("e:{opencast_id}");
-            Ok(context.jwt.new_token(Some(&user), json!({
+            Ok(context.jwt.service_token(&user, json!({
                 "oc": {
                     key: ["read", "write"],
                 },
@@ -108,4 +128,10 @@ pub(crate) enum JwtService {
     Upload,
     Studio,
     Editor,
+}
+
+#[derive(GraphQLObject)]
+pub struct EventJwt {
+    event: String,
+    jwt: String,
 }
