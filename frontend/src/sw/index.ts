@@ -1,35 +1,41 @@
 import { setUpServiceWorker } from "./lib";
 
-// TODO: batch this
 const fetchJwts = async (eventIds: string[]): Promise<Map<string, string>> => {
-    const out = new Map();
-    for (const eventId of eventIds) {
-        const jwt = await jwtForEvent(eventId);
-        out.set(eventId, jwt);
-    }
-    return out;
-};
-
-/** Fetch JWT for the given Opencast event ID from the API. */
-const jwtForEvent = async (eventId: string): Promise<string | null> => {
-    const body = JSON.stringify({
-        query: "query($ev: String!) { eventByOpencastId(id:$ev) { ...on AuthorizedEvent { jwt } }}",
-        variables: {
-            ev: eventId,
-        },
-    });
+    // We don't use relay here, as it's straight forward to do maually and we
+    // don't need to pull in a big dependency for this.
     const response = await fetch("/graphql", {
         method: "POST",
-        body,
         headers: {
             "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+            query: "query($events: [String!]!) { eventReadJwts(events:$events) { event jwt } }",
+            variables: {
+                events: eventIds,
+            },
+        }),
     });
     if (response.status !== 200) {
-        return null;
+        throw new Error("unexpected non-200 response from API");
     }
     const data = await response.json();
-    return data?.data?.eventByOpencastId?.jwt;
+
+    // Read & convert data, making sure it has the expected format
+    const arr = data?.data?.eventReadJwts;
+    if (!arr || !Array.isArray(arr)) {
+        throw new Error("unexpected API response data");
+    }
+    const entries = arr.map(elem => {
+        if (typeof elem === "object") {
+            const { jwt, event } = elem;
+            if (typeof jwt === "string" && typeof event === "string") {
+                return [event, jwt] as const;
+            }
+        }
+        throw new Error("unexpected API response data (invalid element)");
+    });
+
+    return new Map(entries);
 };
 
 setUpServiceWorker({
