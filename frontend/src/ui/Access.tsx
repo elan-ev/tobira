@@ -688,15 +688,22 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
             label={t("acl.table.permissions.title")}
             triggerContent={<>{t(`acl.table.permissions.${currentActionOption}`)}</>}
             triggerStyles={{
+                display: "flex",
                 width: "100%",
-                gap: 0,
-                padding: "0 4px 0 8px",
+                height: "auto",
+                minHeight: 31,
+                lineHeight: 1.1,
+                whiteSpace: "normal",
+                gap: 4,
+                padding: "4px 4px 4px 8px",
+                alignItems: "center",
                 justifyContent: "space-between",
+                textAlign: "left",
                 ":hover, :focus-visible": { backgroundColor: COLORS.neutral20 },
-                svg: { marginTop: 2, color: COLORS.neutral60 },
-                [screenWidthAtMost(480)]: {
-                    whiteSpace: "normal",
-                    textAlign: "left",
+                svg: {
+                    position: "relative",
+                    top: 1,
+                    color: COLORS.neutral60,
                 },
             }}
             list={
