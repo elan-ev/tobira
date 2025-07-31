@@ -358,7 +358,7 @@ const PAELLA_CONFIG = {
             enabled: true,
             groupName: "optionsContainer",
             description: "Options",
-            icon: "icons/settings.svg",
+            icon: CONFIG.paellaSettingsIcon.replace(/^\/~assets\/paella/, ""),
             order: 6,
             side: "right",
             tabIndex: 6,

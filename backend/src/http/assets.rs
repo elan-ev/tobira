@@ -37,6 +37,7 @@ const EMBEDS: Embeds = reinda::embed! {
 const INDEX_FILE: &str = "index.html";
 const FAVICON_FILE: &str = "favicon.svg";
 const FONTS_CSS_FILE: &str = "fonts.css";
+const PAELLA_SETTINGS_ICON: &str = "paella/icons/settings.svg";
 
 pub(crate) struct Assets {
     assets: reinda::Assets,
@@ -69,7 +70,7 @@ impl Assets {
         // potentially hashed). We also insert other variables and code.
         let deps = logo_files.into_iter()
             .map(|(http_path, _)| http_path)
-            .chain([FAVICON_FILE, FONTS_CSS_FILE].map(ToString::to_string));
+            .chain([FAVICON_FILE, FONTS_CSS_FILE, PAELLA_SETTINGS_ICON].map(ToString::to_string));
 
         builder.add_embedded(INDEX_FILE, &EMBEDS[INDEX_FILE]).with_modifier(deps, {
             let frontend_config = frontend_config(config);
@@ -78,11 +79,19 @@ impl Assets {
             let matomo_code = config.matomo.js_code().unwrap_or_default();
 
             move |original, ctx| {
+                // Fixup paths in frontend config.
+                // TODO: kind of ugly reaching into the JSON. But if we would
+                // generate the frontend_config in this callback, we would need
+                // to clone the config.
                 let mut frontend_config = frontend_config.clone();
-                for logo in frontend_config["logos"].as_array_mut().expect("logos is not an array") {
-                    let original_path = logo["path"].as_str().unwrap();
+                let fix_path = |v: &mut serde_json::Value| {
+                    let original_path = v.as_str().unwrap();
                     let resolved = ctx.resolve_path(original_path);
-                    logo["path"] = format!("/~assets/{}", resolved).into();
+                    *v = format!("/~assets/{resolved}").into();
+                };
+                fix_path(&mut frontend_config["paellaSettingsIcon"]);
+                for logo in frontend_config["logos"].as_array_mut().expect("logos is not an array") {
+                    fix_path(&mut logo["path"]);
                 }
 
                 let frontend_config = if cfg!(debug_assertions) {
@@ -165,11 +174,28 @@ impl Assets {
         builder.add_embedded("", &EMBEDS["bundle.*.js"]);
         builder.add_embedded("", &EMBEDS["bundle.*.js.map"]);
 
-        // Paella assets: no hashing as Paella requests these fixed paths.
+        // Paella assets: no hashing for some files that Paella requests as
+        // fixed path. But do hash icons and replace the path in the `theme.json`.
         builder.add_embedded("1x1-black.png", &EMBEDS["1x1-black.png"]);
-        builder.add_embedded("paella/icons/", &EMBEDS["paella/icons/*.svg"]);
+        let icon_paths = builder.add_embedded("paella/icons/", &EMBEDS["paella/icons/*.svg"])
+            .with_hash()
+            .http_paths();
         builder.add_embedded("paella/theme.css", &EMBEDS["paella/theme.css"]);
-        builder.add_embedded("paella/theme.json", &EMBEDS["paella/theme.json"]);
+        builder.add_embedded("paella/theme.json", &EMBEDS["paella/theme.json"])
+            // We cannot use `with_path_fixup` here, as the paths are without
+            // the `paella` prefix and just relative to it.
+            .with_modifier(icon_paths, |original, ctx| {
+                reinda::util::replace_many_with(
+                    &original,
+                    ctx.dependencies().iter().map(|p| p.strip_prefix("paella").unwrap()),
+                    |idx, _, out| {
+                        let replacement = ctx.resolve_path(ctx.dependencies()[idx].as_ref())
+                            .strip_prefix("paella")
+                            .unwrap();
+                        out.extend_from_slice(replacement.as_bytes());
+                    },
+                ).into()
+            });
 
 
         // Prepare all assets
@@ -290,6 +316,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         "footerLinks": config.general.footer_links,
         "metadataLabels": config.general.metadata,
         "paellaPluginConfig": config.player.paella_plugin_config,
+        "paellaSettingsIcon": PAELLA_SETTINGS_ICON,
         "opencast": {
             "presentationNode": config.opencast.sync_node().to_string(),
             "uploadNode": config.opencast.upload_node().to_string(),
