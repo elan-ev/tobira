@@ -293,6 +293,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         },
         "auth": {
             "usesTobiraSessions": config.auth.source == AuthSource::TobiraSession,
+            "hideLoginButton": config.auth.hide_login_button,
             "loginLink": config.auth.login_link,
             "logoutLink": config.auth.logout_link,
             "userIdLabel": config.auth.login_page.user_id_label,

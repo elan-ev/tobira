@@ -225,6 +225,12 @@
 # Default value: "none"
 #source = "none"
 
+# Whether to hide the login button in the header. Useful when only admins
+# are supposed to log into Tobira by visiting the login page directly.
+#
+# Default value: false
+#hide_login_button = false
+
 # Link of the login button. If not set, the login button internally
 # (not via `<a>`, but through JavaScript) links to Tobira's own login page.
 #login_link =

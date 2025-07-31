@@ -46,12 +46,14 @@ export const UserBox: React.FC = () => {
 
     let boxContent;
     if (user === "unknown") {
-        boxContent = <Spinner css={iconCss} />;
+        // If the login button is hidden, then almost no user logs in, so
+        // showing a brief spinner is annoying.
+        boxContent = CONFIG.auth.hideLoginButton ? null : <Spinner css={iconCss} />;
     } else if (user === "error") {
         // TODO: tooltip
         boxContent = <LuTriangleAlert css={iconCss} />;
     } else if (user === "none") {
-        boxContent = <LoggedOut />;
+        boxContent = CONFIG.auth.hideLoginButton ? null : <LoggedOut />;
     } else {
         boxContent = <LoggedIn {...{ t, user }} />;
     }
