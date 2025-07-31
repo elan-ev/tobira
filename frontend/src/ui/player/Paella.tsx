@@ -7,6 +7,7 @@ import getUserTrackingPluginsContext from "paella-user-tracking";
 import getSlidePluginsContext from "paella-slide-plugins";
 import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
+import { useHotkeysContext } from "react-hotkeys-hook";
 
 import { isHlsTrack, PlayerEvent, Track } from ".";
 import { SPEEDS } from "./consts";
@@ -14,6 +15,7 @@ import { timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
 import CONFIG from "../../config";
+import { SKIP_INTERVAL } from "./consts";
 
 
 type PaellaPlayerProps = {
@@ -29,7 +31,8 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     const { t, i18n } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const { paella, setPlayerIsLoaded } = usePlayerContext();
-    const { players, register, unregister } = usePlayerGroupContext();
+    const { players, register, unregister, setActivePlayer } = usePlayerGroupContext();
+    const { enableScope, disableScope } = useHotkeysContext();
 
     useEffect(() => {
         // If the ref is not set yet (which should not usually happen), we do
@@ -146,25 +149,24 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             });
 
 
-            if (!event.isLive) {
+            player.bindEvent("paella:playerLoaded", () => {
+                setPlayerIsLoaded(true);
+                enableScope("player");
+                register(player);
                 const time = new URL(window.location.href).searchParams.get("t");
-                player.bindEvent("paella:playerLoaded", () => {
-                    setPlayerIsLoaded(true);
-                    if (time) {
-                        player.videoContainer.setCurrentTime(timeStringToSeconds(time));
-                    }
-                });
-            }
+                if (!event.isLive && time) {
+                    player.videoContainer.setCurrentTime(timeStringToSeconds(time));
+                }
+            });
 
             player.bindEvent("paella:play", () => {
-                players?.forEach(playerInstance => {
+                setActivePlayer(player);
+                players.current.forEach((playerInstance: Paella) => {
                     if (playerInstance && playerInstance !== player) {
                         playerInstance.videoContainer.pause();
                     }
                 });
             });
-
-            register(player);
 
             const loadPromise = player.skin.loadSkin("/~assets/paella/theme.json")
                 .then(() => player.loadManifest());
@@ -174,10 +176,8 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
         const paellaSnapshot = paella.current;
         return () => {
             unregister(paellaSnapshot.player);
-            paella.current = undefined;
-            paellaSnapshot.loadPromise.then(() => {
-                paellaSnapshot.player.unload();
-            });
+            paellaSnapshot.player.unload();
+            disableScope("player");
         };
     }, [event, t]);
 
@@ -478,7 +478,7 @@ const PAELLA_CONFIG = {
             enabled: true,
             side: "left",
             order: 2,
-            time: 10,
+            time: SKIP_INTERVAL,
             suffix: false,
             tabIndex: 2,
         },
@@ -486,7 +486,7 @@ const PAELLA_CONFIG = {
             enabled: true,
             side: "left",
             order: 3,
-            time: 10,
+            time: SKIP_INTERVAL,
             suffix: false,
             tabIndex: 3,
         },
@@ -560,9 +560,9 @@ const PAELLA_CONFIG = {
 
         // Data plugin
         "es.upv.paella.localStorageDataPlugin": {
-            "enabled": true,
-            "order": 0,
-            "context": ["default", "trimming"],
+            enabled: true,
+            order: 0,
+            context: ["default", "trimming"],
         },
 
         // Let admin provided config add and override entries.
