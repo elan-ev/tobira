@@ -6,7 +6,7 @@ users_searchable = true
 [general.metadata]
 dcterms.source = "builtin:source"
 dcterms.license = "builtin:license"
-dcterms.spatial = { default = "Location", de = "Ort", it = "Luogo" }
+dcterms.spatial = { default = "Location", de = "Ort", it = "Luogo", fr = "Lieu" }
 
 [db]
 database = "tobira-{{ id }}"
