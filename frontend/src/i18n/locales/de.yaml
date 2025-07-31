@@ -350,7 +350,7 @@ acl:
     admins: Administration
     everyone: Alle
     logged-in-users: Eingeloggte Nutzende
-    global-page-admins: Globale Seitenadministration
+    global-page-admins: "Globale Seiten\u00ADadministration"
   table:
     group: Gruppe
     user: Person
