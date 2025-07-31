@@ -86,7 +86,7 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
 
     return <div css={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: 1040 }}>
-        <Inertable isInert={editingBlocked}>
+        <Inertable isInert={editingBlocked || inFlight}>
             <AclSelector
                 itemType={itemType}
                 acl={selections}

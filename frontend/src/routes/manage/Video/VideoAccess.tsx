@@ -1,6 +1,5 @@
 import { Trans, useTranslation } from "react-i18next";
 import { Card, currentRef } from "@opencast/appkit";
-import { useState } from "react";
 import { graphql, useMutation } from "react-relay";
 
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
@@ -15,7 +14,6 @@ import { VideoAccessAclMutation } from "./__generated__/VideoAccessAclMutation.g
 import { NoteWithTooltip } from "../../../ui";
 import { Link } from "../../../router";
 import { ManageSeriesAccessRoute } from "../Series/SeriesAccess";
-import { Inertable } from "../../../util";
 import { isSynced } from "../../../util";
 import { aclMapToArray, NotReadyNote } from "../../util";
 
@@ -66,9 +64,8 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
     const [commit, inFlight] = useMutation<VideoAccessAclMutation>(updateVideoAcl);
     const aclLockedToSeries = CONFIG.lockAclToSeries && !!event.series;
     const workflowStatus = event.workflowStatus;
-    const [editingBlocked, setEditingBlocked] = useState(
-        !isSynced(event) || workflowStatus !== "IDLE" || aclLockedToSeries,
-    );
+
+    const editingBlocked = !isSynced(event) || workflowStatus !== "IDLE" || aclLockedToSeries;
 
     const onSubmit = async ({ selections, saveModalRef, setCommitError }: SubmitAclProps) => {
         commit({
@@ -77,14 +74,11 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
                 acl: aclMapToArray(selections),
             },
             onCompleted: () => currentRef(saveModalRef).done(),
-            onError: error => {
-                setEditingBlocked(true);
-                setCommitError(displayCommitError(error));
-            },
+            onError: error => setCommitError(displayCommitError(error)),
         });
     };
 
-    return <Inertable isInert={workflowStatus !== "IDLE" || aclLockedToSeries || editingBlocked}>
+    return <>
         {!isSynced(event)
             ? <NotReadyNote kind="video" />
             : workflowStatus !== "IDLE" && <Card kind="info" css={{ marginBottom: 20 }}>
@@ -107,6 +101,6 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
             data,
             editingBlocked,
         }} />
-    </Inertable>;
+    </>;
 };
 
