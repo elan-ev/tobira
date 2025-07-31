@@ -5,10 +5,12 @@ import LanguageDetector from "i18next-browser-languagedetector";
 
 import enTranslations from "./locales/en.yaml";
 import deTranslations from "./locales/de.yaml";
+import itTranslations from "./locales/it.yaml";
 
 export const languages = {
     en: { translation: enTranslations as ResourceLanguage },
     de: { translation: deTranslations as ResourceLanguage },
+    it: { translation: itTranslations as ResourceLanguage },
 };
 
 // TODO: wait for `init` to complete before rendering?
