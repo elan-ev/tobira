@@ -68,6 +68,8 @@ pub(crate) enum LangKey {
     Default,
     En,
     De,
+    It,
+    Fr,
 }
 
 impl fmt::Display for LangKey {
@@ -82,6 +84,8 @@ impl AsRef<str> for LangKey {
             LangKey::Default => "default",
             LangKey::En => "en",
             LangKey::De => "de",
+            LangKey::It => "it",
+            LangKey::Fr => "fr",
         }
     }
 }
