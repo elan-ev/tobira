@@ -44,6 +44,7 @@ import { useNavBlocker } from "../routes/util";
 import { currentRef, OcEntity } from "../util";
 import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
 import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
+import { languages } from "../i18n";
 
 
 
@@ -956,7 +957,7 @@ const insertBuiltinRoleInfo = (
     const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => ({
         default: i18n.t(key, { lng: "en" }),
         ...Object.fromEntries(
-            i18n.languages
+            Object.keys(languages)
                 .filter(lng => i18n.exists(key, { lng }))
                 .map(lng => [lng, i18n.t(key, { lng })]),
         ),
