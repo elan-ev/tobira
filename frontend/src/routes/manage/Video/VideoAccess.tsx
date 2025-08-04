@@ -22,7 +22,7 @@ export const ManageVideoAccessRoute = makeManageVideoRoute(
     "acl",
     "/access",
     (event, data) => (
-        <AclPage note={<UnlistedNote />} breadcrumbTails={[
+        <AclPage note={event.hostRealms.length < 1 && <UnlistedNote />} breadcrumbTails={[
             { label: i18n.t("manage.video.table"), link: ManageVideosRoute.url },
             { label: event.title, link: ManageVideoDetailsRoute.url({ videoId: event.id }) },
         ]}>
