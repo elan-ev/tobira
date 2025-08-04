@@ -369,7 +369,7 @@ acl:
       write: Lesen und schreiben
       moderate: Moderation
       admin: Seitenadmin
-      unknown: Unbekanntes Berechtigungsschema
+      unknown: "Unbekanntes Berechtigungs\u00ADschema"
       unknown-description: Dieses Berechtigungsschema ist nicht bekannt.
       video-read-description_one: Kann das Video anschauen und Metadaten sehen.
       video-read-description_other: Können das Video anschauen und Metadaten sehen.

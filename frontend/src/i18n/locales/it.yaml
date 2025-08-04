@@ -1,0 +1,721 @@
+general:
+  language:
+    language_one: Lingua
+    language_other: Lingue
+    name: Italiano
+    selection: Scelta lingua, Italiano selezionato
+  loading: Caricamento...
+  home: Pagina principale
+  homepage: Pagina principale
+  page: Pagina
+  password: Password
+  leave-page-confirmation: Lasciare la pagina? Le modifiche apportate potrebbero non essere salvate!
+  action:
+    close: Chiudere
+    cancel: Annullare
+    save: Salvare
+    back: Indietro
+    share: Condividere
+    are-you-sure: È sicuro?
+    cannot-be-undone: Questa azione <strong>non</strong> può essere annullata!
+  version-information: Versione
+  logo-alt: Pagina principale di "{{title}}“
+  no-root-children: Ancora nessuna pagina
+  failed-to-load-thumbnail: Impossibile caricare l'anteprima
+  'yes': Sì
+  'no': 'No'
+  form:
+    this-field-is-required: Questo campo è necessario
+    select:
+      no-options: Nessuna opzione
+      select-option: Selezionare l'opzione
+  no-description: Nessuna descrizione
+  seconds: secondi
+  minutes: minuti
+  hours: ore
+  today-at: Oggi alle {{time}}
+  yesterday-at: Ieri alle {{time}}
+  tomorrow-at: Domani alle {{time}}
+  weekday-at: '{{weekday}} alle {{time}}'
+  date-at: |
+    {{date}} alle {{time}}
+  none: Nessuno
+  title: Titolo
+
+welcome:
+  title: Benvenuti su Tobira!
+  body: >
+    Sembra che la pagina principale sia ancora vuota. Per aggiungere contenuti a
+    questa pagina o per aggiungere altre pagine, è necessario accedere con un
+    account dotato di privilegi sufficienti. Successivamente, è possibile
+    utilizzare i pulsanti a sinistra per modificare le pagine di questo portale
+    video.
+
+errors:
+  not-your-fault: Probabilmente non è colpa vostra. Potete riprovare più tardi.
+  unexpected-response: 'Errore interno dell''applicazione: risposta inattesa dal server.'
+  unexpected-server-error: 'Errore interno dell''applicazione: errore inatteso del server.'
+  network-error: Il server non è stato raggiunto a causa di un errore di rete.
+  not-authorized: Lei non è autorizzato.
+  not-authorized-to-view-page: Lei non è autorizzato a vedere questa pagina.
+  might-need-to-login: Potrebbe essere necessario effettuare il login.
+  might-need-to-login-link: Potrebbe essere necessario <1>effettuare il login</1>.
+  invalid-input: Inserimento non valido.
+  opencast-unavailable: Opencast non è attualmente disponibile.
+  opencast-error: Opencast ha fornito una risposta inaspettata.
+  internal-server-error: Errore interno del server (qualcosa non va nel server).
+  are-you-connected-to-internet: È connesso a Internet?
+  unknown: Errore sconosciuto.
+  detailed-error-info: Informazioni dettagliate sugli errori per gli sviluppatori
+  embedded: Si è verificato un errore nell'applicazione incorporata.
+
+not-found:
+  page-not-found: Pagina non trovata
+  video-not-found: Video non trovato
+  series-not-found: Serie non trovata
+  playlist-not-found: Playlist non trovata
+  page-explanation: >
+    La pagina che si desidera visitare non esiste. Potrebbe essere stata rimossa
+    o rinominata.
+  video-explanation: >
+    Il video che si desidera guardare non esiste. Potrebbe essere stato rimosso
+    o spostato.
+  series-explanation: >
+    La serie che si desidera visitare non esiste. Potrebbe essere stata rimossa
+    o spostata.
+  playlist-explanation: >
+    La playlist che si desidera visitare non esiste. Potrebbe essere stata
+    rimossa o spostata.
+  url-typo: >
+    Se l'indirizzo/URL è stato inserito manualmente, controllare che non vi
+    siano errori di ortografia.
+  actions: >
+    Si può provare a visitare <1>la pagina principale</1> o a usare la barra di
+    ricerca per trovare la pagina desiderata.
+
+invalid-url:
+  title: Indirizzo non valido
+  description: >
+    L'URL inserito non è valido. Se l'avete digitato manualmente, verificate di
+    non aver commesso errori di ortografia o inserito caratteri non validi. Se
+    invece avete seguito un link, contattate l'autorità competente per la
+    pubblicazione del link.
+
+about-tobira:
+  title: Informazioni su Tobira
+  body: >
+    Questo portale video è gestito da Tobira, un software di portale video per
+    Opencast. Consente agli utenti di sfogliare, guardare e organizzare tutti i
+    video e le serie dell'istanza Opencast collegata. Tobira, come Opencast, è
+    un software open source gratuito. Per ulteriori informazioni e per segnalare
+    eventuali bug, visitare <1>il suo repository GitHub</1>.
+
+main-menu:
+  label: Menu
+  color-scheme:
+    label: Schema cromatico
+    auto: Auto
+    light: Chiaro
+    dark: Scuro
+
+user:
+  login: Accedere
+  logout: Disconnettersi
+  settings: Impostazioni utente
+  manage: Gestire
+
+login-page:
+  heading: Accesso
+  user-id: ID utente
+  bad-credentials: 'Accesso fallito: credenziali non valide.'
+  unexpected-response: $t(errors.unexpected-response) $t(errors.not-your-fault)
+  already-logged-in: L'utente ha già effettuato l'accesso.
+
+video:
+  singular: Video
+  plural: Video
+  video-page: 'Pagina video: “{{video}}”'
+  video-player: Videolettore
+  duration: Durata
+  details: Dettagli video
+  part-of-series: Parte della serie
+  more-from-series: Altro da "{{series}}“
+  more-from-playlist: Altro da "{{playlist}}”
+  deleted-block: Il video a cui si fa riferimento è stato cancellato.
+  not-allowed-block: Non è consentito visualizzare il video qui incorporato.
+  preview-only: Per guardare questo video sono necessarie ulteriori autorizzazioni.
+  not-ready:
+    title: Video non ancora elaborato
+    text: >
+      Questo video non è ancora stato elaborato completamente. Dovrebbe avvenire
+      automaticamente a breve. Riprovare tra qualche minuto.
+    label: non elaborato
+  thumbnail-for: Anteprima per "{{video}}“
+  live: In diretta
+  upcoming: Prossimamente
+  ended: Terminato
+  license: Licenza
+  source: Fonte
+  stream-ended: Questo stream è terminato.
+  stream-not-started-yet: Questo stream non è ancora iniziato.
+  started: Iniziato
+  started-when: Iniziato {{datetime}}
+  starts: Inizio
+  starts-in: Inizio {{datetime}}
+  description:
+    show-more: ...mostra di più
+    show-less: Mostra di meno
+  caption: Didascalia
+  download:
+    title: Download
+    presenter: Video (relatore/relatrice)
+    slides: Video (presentazione)
+    info: >
+      Qui è possibile scaricare il/i video in diversi formati/qualità (clic
+      destro - Salva con nome).
+  extra-buttons: Ulteriori azioni video
+  start: Inizio
+  end: Fine
+  ends: Finito
+  password:
+    heading: Video protetto
+    sub-heading: L'accesso a questo video è limitato.
+    no-preview-permission: $t(api-remote-errors.view.event)
+    body: >
+      Inserire il nome utente e la password ricevuti per accedere a questo
+      video; si prega di notare che non si tratta delle proprie credenziali di
+      accesso.
+    label:
+      id: Identificativo
+      submit: Verifica
+    invalid-credentials: Credenziali non valide.
+
+series:
+  singular: Serie
+  plural: Serie
+  series-page: Pagina serie “{{series}}”
+  deleted-block: La serie a cui si fa riferimento è stata cancellata.
+  entry-of-series-thumbnail: Anteprima per la voce “{{series}}”
+  not-ready:
+    title: Serie non ancora sincronizzata
+    text: >
+      I dati della serie richiesta non sono ancora stati trasferiti
+      completamente. Questo dovrebbe avvenire automaticamente a breve. Riprovare
+      tra qualche minuto.
+    label: non sincronizzata
+
+playlist:
+  singular: Playlist
+  deleted-block: La playlist a cui si fa riferimento è stata cancellata.
+  not-allowed: Non è autorizzato a visualizzare questa playlist.
+  not-allowed-block: Non è autorizzato a visualizzare la playlist incorporata qui.
+
+share:
+  share-direct-link: Condividi tramite link diretto
+  link: Link
+  embed: Incorpora
+  rss: RSS
+  show-qr-code: Mostra QR Code
+  copy-link: Copia il link negli appunti
+  copy-rss: Copia il link RSS negli appunti
+  copy-embed-code: Copia il codice incorporato negli appunti
+  copy-direct-link-to-clipboard: Copia il link del video negli appunti
+  set-time: 'Iniziare da:'
+  set-time-label: 'Imposta l''ora di inizio del video. Ora attuale: {{time}}.'
+  set-time-unit: Imposta {{unit}}
+
+video-list-block:
+  upcoming-live-streams: Prossimi live stream ({{count}})
+  unauthorized: Autorizzazioni mancanti
+  hidden-items:
+    unauthorized_one: Un video richiede ulteriori autorizzazioni per essere visualizzato.
+    unauthorized_other: >
+      {{count}} video richiedono ulteriori autorizzazioni per essere
+      visualizzati.
+    missing_one: Manca un video.
+    missing_other: Mancano {{count}} video.
+
+  settings:
+    order: Ordine
+    order-label: Scegliere l'ordine dei video
+    original: Ordine della playlist
+    new-to-old: Prima i più recenti
+    old-to-new: Prima i più vecchi
+    a-z: Dalla A alla Z
+    z-a: Dalla Z alla A
+    layout: Disposizione
+    layout-label: Modifica della disposizione del blocco
+    gallery: Galleria
+    slider: Slider
+    list: Lista
+  slider:
+    scroll-left: Scorrere a sinistra
+    scroll-right: Scorrere a destra
+
+realm:
+  page-settings: Impostazioni pagina
+  edit-page-content: Modifica contenuto pagina
+  add-sub-page: Aggiungi sottopagina
+  missing-name: Nome mancante
+  user-realm:
+    my-page: La mia pagina
+    note-label: Pagina utente
+    note-body: >
+      Questa è una pagina utente personale gestita da {{user}}. L'utente è
+      responsabile di tutti i contenuti.
+    create:
+      title: Creare la propria pagina
+      currently-none: Attualmente non avete una pagina personale.
+      what-you-can-do: >
+        Sulla vostra pagina personale, potete disporre liberamente video, testo
+        e altri elementi. In questo modo è possibile presentare e condividere
+        meglio i propri contenuti. Potete anche creare delle sottopagine per
+        creare il vostro piccolo portale video.
+      available-at: 'La vostra pagina sarà disponibile su:'
+      find-and-delete: >
+        Chiunque abbia questo link o conosca il vostro nome utente può visitare
+        la vostra pagina. Tuttavia, non apparirà da nessuna parte nella
+        navigazione principale di questo portale video. È sempre possibile
+        cancellare la pagina in un secondo momento, se si cambia idea.
+
+search:
+  input-label: Cerca
+  title: Risultati della ricerca per <i>{{query}}</i> ({{count}} successi)
+  no-query: Risultati della ricerca
+  no-results: Nessun risultato
+  too-few-characters: Digitare più caratteri per avviare la ricerca.
+  unavailable: La ricerca non è attualmente disponibile. Riprovare più tardi.
+  clear: Cancella l'input di ricerca
+  select-time-frame: Selezionare il periodo di tempo
+  clear-time-frame: Cancella il periodo di tempo
+  filter:
+    all: Tutti
+    event: $t(video.plural)
+    realm: Pagine
+    series: $t(series.plural)
+
+upload:
+  title: Caricare video
+  drop-to-upload: Trascina e rilascia il file video da caricare
+  not-authorized: Non hai l'autorizzazione a caricare video.
+  specified-series-not-found: Serie specificata non trovata.
+  missing-series-write-permission: Non hai l'autorizzazione a caricare in questa serie.
+  select-files: Seleziona file
+  reselect: Seleziona di nuovo il file
+  too-many-files: >
+    Sono stati selezionati troppi file. Attualmente è supportato solo un singolo
+    file.
+  not-a-file: Hai rilasciato qualcosa che non è un file.
+  not-video-or-audio: È possibile caricare solo video e audio.
+  starting: Caricamento iniziato...
+  finishing: Caricamento in conclusione...
+  waiting-for-metadata: Salvare le informazioni del video per completare il caricamento
+  cancel: Annulla caricamento
+  upload-cancelled: Il caricamento é stato annullato.
+  still-uploading: >
+    Il video è ancora in fase di caricamento. Non chiudere questa pagina prima
+    che il caricamento sia terminato.
+  time-estimate:
+    a-few-seconds: pochi secondi
+    a-minute: un minuto
+    an-hour: un'ora
+    time-left: '{{time}} rimanenti'
+  finished: >
+    Il video è stato caricato correttamente ed è in fase di elaborazione. Potrà
+    essere guardato non appena l'elaborazione sarà terminata. Ora è possibile
+    chiudere questa pagina.
+  metadata:
+    save: Salvare e terminare
+    note-writable-series: >
+      I video possono essere caricati solo nelle serie per le quali si dispone
+      dell'accesso in scrittura. Pertanto, le altre serie non sono elencate come
+      selezionabili qui.
+  errors:
+    failed-to-upload: Impossibile caricare il video.
+    opencast-server-error: Errore del server Opencast (risposta inattesa).
+    opencast-unreachable: 'Errore di rete: Impossibile raggiungere Opencast.'
+    jwt-invalid: >
+      Errore interno di autenticazione incrociata: Opencast non ha autorizzato
+      il caricamento.
+    failed-fetching-series-acl: Impossibile recuperare le autorizzazioni di accesso per le serie.
+
+acl:
+  title: Politica di accesso
+  authorized-groups: Gruppi autorizzati
+  authorized-users: Utenti autorizzati
+  editing-disabled: La modifica dei criteri di accesso è disabilitata.
+  locked-to-series: >
+    La politica di accesso di questo video è determinata dalla sua <1>serie</1>
+    e non può essere modificata.
+  users-no-options:
+    initial-searchable: >
+      Digitare per cercare gli utenti per nome (o inserire l'email/nome utente
+      esatto)
+    none-found-searchable: Nessun utente trovato
+    initial-not-searchable: >
+      Digitare per cercare gli utenti per nome (o inserire l'email/nome utente
+      esatto)
+    none-found-not-searchable: Nessun utente con quel nome utente/email trovato
+  select:
+    groups: Aggiungi gruppi
+    users: Aggiungi persone
+    create: Crea {{item}}
+  groups:
+    admins: Amministratori
+    everyone: Tutti
+    logged-in-users: Utenti connessi
+    global-page-admins: Amministratori globali di pagine
+  table:
+    group: Gruppo
+    user: Persona
+    yourself: Tu
+    admin-user: Admin
+    unknown-user-note: sconosciuto
+    no-entries: Nessuna voce
+    subset-warning: 'Questa selezione è già inclusa nei seguenti gruppi: {{groups}}.'
+    inherited: 'Autorizzazioni ereditate:'
+    inherited-tooltip: >
+      Le seguenti autorizzazioni sono state concesse in una pagina di livello
+      superiore e sono ereditate da tutte le sottopagine.
+    permissions:
+      title: Autorizzazioni
+      read: Leggere
+      write: Leggere e scrivere
+      moderate: Moderatore
+      admin: Amministratore pagina
+      unknown: Autorizzazione sconosciuta
+      unknown-description: Questa autorizzazione non è conosciuta
+      video-read-description: —
+      video-read-description_one: Può guardare il video e vedere i metadati.
+      video-read-description_other: Possono guardare il video e vedere i metadati.
+      video-write-description: —
+      video-write-description_one: Può anche modificare ed eliminare il video, i metadati e altri dettagli.
+      video-write-description_other: >
+        Possono anche modificare ed eliminare il video, i metadati e altri
+        dettagli.
+      series-read-description: Utilizzabile come modello per i video di questa serie.
+      series-write-description: —
+      series-write-description_one: >
+        Può cancellare la serie, modificare i metadati e aggiungere o rimuovere
+        video.
+      series-write-description_other: >
+        Possono cancellare la serie, modificare i metadati e aggiungere o
+        rimuovere video.
+      realm-moderate-description: —
+      realm-moderate-description_one: >
+        Può modificare il contenuto, aggiungere sottopagine e cambiare il nome e
+        l'ordine delle sottopagine.
+      realm-moderate-description_other: >
+        Possono modificare il contenuto, aggiungere sottopagine e cambiare il
+        nome e l'ordine delle sottopagine.
+      realm-admin-description: —
+      realm-admin-description_one: Può moderare, cancellare pagine e modificare le autorizzazioni.
+      realm-admin-description_other: Possono moderare, cancellare pagine e modificare le autorizzazioni.
+      write-access: accesso in scrittura
+      moderate-access: diritti di moderazione
+      admin-access: pagina diritti-amministratore
+      large-group-warning: State dando {{val}} a un gruppo numeroso. È una cosa intenzionale?
+  unlisted:
+    note: Questo video non è in elenco.
+    explanation: >
+      Un video non elencato può essere trovato solo condividendo il suo link
+      diretto o tramite la sua serie.
+  reset-modal:
+    label: Ripristinare
+    title: Ripristinare le modifiche?
+    body: Le modifiche apportate verranno ripristinate.
+  save-modal:
+    title: Rimuovere l'accesso personale?
+    disclaimer-write: >
+      La selezione corrente rimuove l'accesso alla scrittura. In caso contrario,
+      si perderà la possibilità di apportare ulteriori modifiche.
+    disclaimer-admin: >
+      La selezione corrente rimuoverà i diritti di amministrazione della pagina.
+      Senza di essi, non è più possibile modificare i permessi, cambiare il
+      percorso del regno o cancellare la pagina.
+    confirm: Confermare
+
+manage:
+  dashboard:
+    title: Dashboard
+    studio-title: Registrare video
+    manage-pages-title: Gestire pagine
+    manage-pages-body: >
+      Per rinominare, modificare e cancellare le pagine, navigare nella pagina
+      in questione. Se si è effettuato l'accesso e si dispone dei permessi
+      necessari, appariranno i pulsanti di gestione della pagina.
+
+  video:
+    table: I miei video
+    details:
+      delete: Cancellare il video
+      confirm-delete: Cancellare il video?
+      open-in-editor: Aprire nell'editor video
+      referencing-pages-explanation: 'Questo video è citato nelle pagine seguenti:'
+      no-referencing-pages: Nessuna pagina fa riferimento a questo video.
+    technical-details:
+      title: Dettagli tecnici
+      tracks: Tracce video/audio
+      video: $t(video.singular)
+      audio: Audio
+      unknown-mimetype: Tipo MIME sconosciuto
+      opencast-id: Opencast-ID
+      copy-oc-id-to-clipboard: Opencast-ID copiato negli appunti
+      further-info: Ulteriori informazioni
+      synced: Sincronizzato?
+      part-of: 'Parte di:'
+      is-live: Live?
+    workflow-status:
+      active: Il video è in fase di elaborazione in background. Riprovare più tardi.
+      unknown: >
+        Lo stato di questo video su Opencast è sconosciuto, per questo motivo
+        non può essere modificato. <br /> Si prega di riprovare più tardi.
+
+  series:
+    created-note: La serie è stata creata.
+    table:
+      title: Le mie serie
+      create: Creare serie
+    details:
+      title: Dettagli serie
+      delete: Cancellare serie
+      confirm-delete: Cancellare serie?
+      referencing-pages-explanation: 'Questa serie è citata nelle pagine seguenti:'
+      no-referencing-pages: Nessuna pagina fa riferimento a questa serie.
+      delete-note: >
+        I video di questa serie non verranno eliminati. Rimarranno nel sistema e
+        potranno essere aggiunti a un'altra serie.
+      edit-note: >
+        Potete caricare nuovi video come parte di questa serie e aggiungere o
+        rimuovere i video esistenti per i quali avete accesso in scrittura. È
+        possibile aggiungere solo video che non fanno parte di altre serie. La
+        rimozione di un video da questo elenco non elimina il video stesso, ma
+        lo rimuove semplicemente da questa serie.
+
+  video-list:
+    no-content: Nessun video
+    no-of-videos_one: '{{count}} video'
+    no-of-videos_other: '{{count}} video'
+    edit:
+      add-video: Aggiungere video
+      to-be-added: sarà aggiunto
+      remove: Rimuovere
+      to-be-removed: sarà rimosso
+      cannot-be-removed: 'Non può essere rimosso: Manca l''accesso in scrittura'
+      undo: Annulla
+      save: Salvare le modifiche
+      error: Non è stato possibile aggiornare il contenuto della serie.
+
+  details:
+    referencing-pages: Pagine di riferimento
+
+  metadata-form:
+    description: Descrizione
+    required: richiesto
+    save: Salva metadati
+    errors:
+      field-required: Questo campo è obbligatorio (non può essere vuoto).
+
+  table:
+    page-showing-ids: '{{start}}–{{end}} di {{total}}'
+    navigation:
+      first: Prima pagina
+      previous: 'Pagina precedente '
+      next: Pagina successiva
+      last: Ultima pagina
+    columns:
+      description: Ordina per {{title}}, {{direction}}
+      ascending: crescente
+      descending: decrescente
+      created: Creato
+      updated: Aggiornato
+    no-series-title: Titolo mancante
+    no-entries-found: Nessuna voce trovata.
+    missing-date: Sconosciuto
+    updated: Ultimo aggiornamento
+    deletion:
+      failed: Cancellazione non riuscita.
+      failed-maybe: Cancellazione possibilmente non riuscita.
+      pending: Cancellazione in programma.
+      in-progress: '"{{itemTitle}}“  sarà cancellato.'
+      tooltip:
+        failed: >
+          La cancellazione di questa voce è stata richiesta {{time}} ma non è
+          ancora avvenuta, quindi potrebbe essere fallita.
+        pending: >
+          La cancellazione di questa voce è stata richiesta in Opencast e sarà
+          rimossa da questo elenco in caso di successo.
+
+  realm:
+    invalid-path: >
+      Errore: percorso non valido della pagina. La pagina è stata cancellata o
+      il suo percorso è stato modificato?
+    heading: Impostazioni della pagina “{{realm}}”
+    heading-root: Impostazioni della pagina principale
+    descendants-count: Questa pagina ha {{count}} sottopagine dirette e indirette.
+    view-page: Vai alla pagina
+    permissions: Gestire le autorizzazioni
+    name-must-not-be-empty: Il nome non deve essere vuoto.
+    path-must-not-be-empty: Il segmento di percorso non deve essere vuoto.
+    path-too-short: Il segmento di percorso deve essere lungo almeno due caratteri.
+    no-control-in-path: I segmenti di percorso non possono includere caratteri di controllo.
+    no-space-in-path: I segmenti di percorso non possono includere caratteri di spazi bianchi.
+    illegal-chars-in-path: >
+      Il segmento di percorso non può includere i seguenti caratteri:
+      {{illegalChars}}
+    reserved-char-in-path: >
+      Il segmento di percorso non può iniziare con i seguenti caratteri:
+      {{reservedChars}}
+    general:
+      page-name: Nome della pagina
+      name-directly: Nominare direttamente
+      name-directly-description: Impostare un nome fisso per questa pagina.
+      name-from-block: Derivare il nome da un video o da una serie
+      name-from-block-description: >
+        Collegare un elemento video/serie da questa pagina: il nome della pagina
+        sarà sempre il titolo dell'elemento collegato.
+      no-name: Omettere nome
+      no-blocks: In questa pagina non ci sono video/serie collegabili.
+      rename-failed: Impossibile modificare il nome.
+    children:
+      heading: Ordine delle sottopagine
+      sort-alphabetically-asc: Ordinamento alfabetico crescente
+      sort-alphabetically-desc: Ordinamento alfabetico decrescente
+      order-manually: Ordinare manualmente (le nuove sottopagine saranno aggiunte alla fine)
+      failed: La modifica dell'ordine non è riuscita.
+      move-up: Sposta verso l'alto
+      move-down: Sposta verso il basso
+    danger-zone:
+      heading: Zona di pericolo
+      root-note: >
+        La pagina principale non può essere cancellata o spostata, né il suo
+        percorso può essere modificato.
+      change-path:
+        heading: Cambia percorso
+        button: Cambia il segmento di percorso
+        failed: La modifica del percorso non è riuscita.
+        cannot-user-realm: Il percorso della pagina personale non può essere modificato.
+        warning: >
+          Importante: la modifica del percorso di questa pagina invalida tutti i
+          collegamenti a questa pagina, a tutte le sottopagine dirette o
+          indirette e a tutti i video collegati a una qualsiasi di queste
+          pagine. I vecchi link, ad esempio nei segnalibri del browser personale
+          o pubblicati da qualche parte, non funzioneranno più.
+      delete:
+        title: Cancellare pagina
+        button: >
+          Eliminare questa pagina e le <strong>{{numSubPages}}</strong>
+          sottopagine
+        confirm-removal: Cancellare pagina?
+        failed: L'eliminazione della pagina non è riuscita.
+        warning: >
+          L'eliminazione di questa pagina cancellerà automaticamente anche tutte
+          le sottopagine dirette e indirette, nonché tutti i contenuti di queste
+          pagine. Questo non può essere annullato!
+    content:
+      heading: Modifica pagina “{{realm}}”
+      heading-root: Modifica pagina principale
+      view-page: Mostra pagina
+      add: Inserire un nuovo blocco qui
+      add-popup-title: Aggiungere nuovo
+      add-title: $t(general.title)
+      add-text: Testo
+      add-series: $t(series.singular)
+      add-video: $t(video.singular)
+      add-playlist: $t(playlist.singular)
+      move-down: Spostare blocco verso il basso
+      move-up: Spostare blocco verso l'alto
+      edit: Modificare il blocco
+      remove: Rimuovere il blocco
+      confirm-removal: Rimuovere il blocco?
+      cannot-remove-block: Rimozione del blocco non possibile
+      cannot-remove-name-source-block: >
+        La rimozione non è possibile perché la pagina corrente deriva il suo
+        nome da questo blocco. Per rimuovere questo blocco, modificare il nome
+        della pagina nelle impostazioni della pagina.
+
+  add-child:
+    heading: Aggiungere pagina
+    path-segment: Segmento di percorso
+    below-this-parent: La nuova pagina verrà aggiunta sotto <strong>“{{parent}}”</strong>.
+    below-root: La nuova pagina verrà aggiunta direttamente sotto la pagina principale.
+    button-create-page: Creare pagina
+    failed-to-add: La pagina non può essere creata.
+    page-name-info: >
+      Il nome della pagina viene visualizzato nel menu di navigazione e come
+      titolo della pagina stessa. È possibile modificare il nome della pagina in
+      qualsiasi momento.
+    path-segment-info: >
+      Il segmento del percorso appare nell'URL/link alla nuova pagina. Cerca di
+      mantenerlo piuttosto breve e non ripetere informazioni già contenute nei
+      segmenti del percorso precedenti. Si consiglia di evitare di modificare il
+      segmento del percorso in un secondo momento. <br /> I segmenti del
+      percorso non devono contenere spazi vuoti né <code>{{illegalChars}}</code>
+      e non devono iniziare con <code>{{reservedChars}}</code>.
+
+  block:
+    text: >
+      Qui si può aggiungere il contenuto del testo. È anche possibile utilizzare
+      Markdown.
+    series:
+      invalid: Si prega di selezionare una serie
+      findable-series-note: >
+        È possibile selezionare solo le serie elencate o alle quali si ha
+        accesso in scrittura.
+    playlist:
+      invalid: Si prega di selezionare una playlist
+      findable-playlist-note: >
+        È possibile selezionare solo le playlist elencate o alle quali si ha
+        accesso in scrittura.
+    event:
+      invalid: Si prega di selezionare un video
+      findable-events-note: >
+        È possibile selezionare solo i video elencati o ai quali si ha accesso
+        in scrittura.
+      no-read-access-to-current: >
+        Non avete accesso in lettura al video a cui si fa riferimento in questo
+        momento.
+    options:
+      show-title: Mostra titolo
+      show-link: Mostra il link alla pagina del video
+      show-description: Mostra descrizione e metadati
+    metadata: Metadati
+    cancel: Scartare
+    confirm-cancel: Scartare le modifiche?
+    cancel-warning: Le modifiche non sono ancora state salvate!
+    removing-failed: Rimozione non riuscita.
+    moving-failed: Spostamento non riuscito.
+    saving-failed: Il salvataggio delle modifiche non è riuscito.
+
+embed:
+  not-supported: Questa pagina non può essere incorporata.
+
+# These errors map the `key` field of an API error response to a nice message.
+api-remote-errors:
+  view:
+    event: Non sei autorizzato a vedere questo video.
+  mutation:
+    not-logged-in: Per eseguire questa azione è necessario aver effettuato il login.
+  realm:
+    path-is-reserved: Il percorso scelto è riservato e non può essere utilizzato per le pagine.
+    path-collision: Una pagina con questo percorso esiste già.
+    no-moderator-rights: Non è consentito modificare questa pagina.
+    no-page-admin-rights: Non è consentito eseguire questa azione.
+    cannot-create-user-realm: Non è consentito creare una propria pagina.
+    user-realm-already-exists: La pagina personale esiste già.
+    username-not-valid-as-path: >
+      Il nome utente “{{username}}” contiene caratteri non consentiti nei
+      percorsi delle pagine, pertanto non è possibile creare una propria pagina.
+      Contattare un amministratore di sistema per ulteriore assistenza.
+  event:
+    not-found: 'Azione fallita: video non trovato.'
+    not-allowed: Non è permesso eseguire questa azione video.
+    workflow-status:
+      not-allowed: >
+        Non è consentito chiedere informazioni sull'attività del workflow di
+        questo video.
+      active: $t(manage.video.workflow-status.active)
+      unknown: $t(manage.video.workflow-status.unknown)
+  series:
+    not-found: 'Azione fallita: serie non trovata'
+    not-allowed: Non siete autorizzati a eseguire questa azione in serie.

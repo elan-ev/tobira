@@ -44,6 +44,7 @@ import { useNavBlocker } from "../routes/util";
 import { currentRef, OcEntity } from "../util";
 import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
 import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
+import { languages } from "../i18n";
 
 
 
@@ -691,15 +692,22 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
             label={t("acl.table.permissions.title")}
             triggerContent={<>{t(`acl.table.permissions.${currentActionOption}`)}</>}
             triggerStyles={{
+                display: "flex",
                 width: "100%",
-                gap: 0,
-                padding: "0 4px 0 8px",
+                height: "auto",
+                minHeight: 31,
+                lineHeight: 1.1,
+                whiteSpace: "normal",
+                gap: 4,
+                padding: "4px 4px 4px 8px",
+                alignItems: "center",
                 justifyContent: "space-between",
+                textAlign: "left",
                 ":hover, :focus-visible": { backgroundColor: COLORS.neutral20 },
-                svg: { marginTop: 2, color: COLORS.neutral60 },
-                [screenWidthAtMost(480)]: {
-                    whiteSpace: "normal",
-                    textAlign: "left",
+                svg: {
+                    position: "relative",
+                    top: 1,
+                    color: COLORS.neutral60,
                 },
             }}
             list={
@@ -952,7 +960,7 @@ const insertBuiltinRoleInfo = (
     const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => ({
         default: i18n.t(key, { lng: "en" }),
         ...Object.fromEntries(
-            i18n.languages
+            Object.keys(languages)
                 .filter(lng => i18n.exists(key, { lng }))
                 .map(lng => [lng, i18n.t(key, { lng })]),
         ),
