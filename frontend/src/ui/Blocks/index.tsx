@@ -12,7 +12,8 @@ import { TitleBlock } from "./Title";
 import { TextBlockByQuery } from "./Text";
 import { SeriesBlockFromBlock } from "./Series";
 import { VideoBlock } from "./Video";
-import { PlayerGroupProvider } from "../player/PlayerGroupContext";
+import { PlayerGroupProvider, usePlayerGroupContext } from "../player/PlayerGroupContext";
+import { PlayerShortcuts } from "../player/PlayerShortcuts";
 import { PlaylistBlockFromBlock } from "./Playlist";
 import { COLORS } from "../../color";
 
@@ -43,6 +44,7 @@ export const Blocks: React.FC<BlocksProps> = ({ realm }) => {
             rowGap: 32,
         }}>
             <PlayerGroupProvider>
+                <PlayerGroupShortcuts />
                 {realmWithBlocks.blocks.map(
                     block => <Block key={block.id} realm={realmWithBlocks} block={block} />,
                 )}
@@ -50,6 +52,12 @@ export const Blocks: React.FC<BlocksProps> = ({ realm }) => {
         </div>
     );
 };
+
+const PlayerGroupShortcuts: React.FC = () => {
+    const { activePlayer } = usePlayerGroupContext();
+    return <PlayerShortcuts activePlayer={activePlayer} />;
+};
+
 
 type BlockProps = {
     realm: BlocksRealmData$key;

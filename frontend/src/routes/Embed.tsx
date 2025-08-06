@@ -18,8 +18,9 @@ import { b64regex } from "./util";
 import { EmbedQuery } from "./__generated__/EmbedQuery.graphql";
 import { EmbedDirectOpencastQuery } from "./__generated__/EmbedDirectOpencastQuery.graphql";
 import { EmbedEventData$key } from "./__generated__/EmbedEventData.graphql";
-import { PlayerContextProvider } from "../ui/player/PlayerContext";
+import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 import { PreviewPlaceholder, useEventWithAuthData } from "./Video";
+import { PlayerShortcuts } from "../ui/player/PlayerShortcuts";
 
 export const EmbedVideoRoute = makeRoute({
     url: ({ videoId }: { videoId: string }) => `/~embed/!v/${keyOfId(videoId)}`,
@@ -95,6 +96,7 @@ const matchedEmbedRoute = (
             </PlayerPlaceholder>
         }>
             <PlayerContextProvider>
+                <EmbedPageShortcuts />
                 <Embed query={query} queryRef={queryRef} />
             </PlayerContextProvider>
         </Suspense>
@@ -198,6 +200,12 @@ export const BlockEmbedRoute = makeRoute({
         };
     },
 });
+
+const EmbedPageShortcuts: React.FC = () => {
+    const { paella } = usePlayerContext();
+    const player = paella.current?.player ?? null;
+    return <PlayerShortcuts activePlayer={{ current: player }} />;
+};
 
 class ErrorBoundary extends GlobalErrorBoundary {
     public render(): ReactNode {
