@@ -97,7 +97,7 @@ export const UpdatedCreatedInfo: React.FC<UpdatedCreatedInfoProps> = ({ item }) 
             {created && (
                 <span css={{ "&:not(:last-child):after": { content: "'•'", margin: "0 12px" } }}>
                     <DateValue
-                        label={t("manage.table.columns.created")}
+                        label={t("manage.table.sorting.created")}
                         date={preciseDateTime(new Date(created), locale)}
                     />
                 </span>

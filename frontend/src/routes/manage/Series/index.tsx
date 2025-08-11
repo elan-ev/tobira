@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { LuCirclePlus } from "react-icons/lu";
+import { LuCalendar, LuCirclePlus, LuFilm } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { match } from "@opencast/appkit";
 
@@ -9,13 +9,7 @@ import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
-import {
-    ColumnProps,
-    createQueryParamsParser,
-    DateColumn,
-    ManageItems,
-    TableRow,
-} from "../Shared/Table";
+import { createQueryParamsParser, ListItem, ManageItems } from "../Shared/Table";
 import {
     SeriesManageQuery,
     SeriesManageQuery$data,
@@ -26,6 +20,8 @@ import { SeriesThumbnail } from "./Shared";
 import { CREATE_SERIES_PATH } from "./Create";
 import { LinkButton } from "../../../ui/LinkButton";
 import { isRealUser, useUser } from "../../../User";
+import { COLORS } from "../../../color";
+import { PrettyDate } from "../../../ui/time";
 
 
 export const PATH = "/~manage/series" as const;
@@ -51,8 +47,8 @@ export const ManageSeriesRoute = makeRoute({
                         vars={vars}
                         connection={data.currentUser.mySeries}
                         titleKey="manage.series.table.title"
-                        additionalColumns={seriesColumns}
-                        RenderRow={SeriesRow}
+                        additionalSortOptions={[{ key: "EVENT_COUNT", label: "video.plural" }]}
+                        RenderItem={SeriesItem}
                     >
                         <CreateSeriesLink />
                     </ManageItems>
@@ -85,6 +81,7 @@ const query = graphql`
                     state
                     numVideos
                     thumbnailStack { thumbnails { url live audioOnly }}
+                    hostRealms { id }
                 }
             }
         }
@@ -108,35 +105,49 @@ export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]
 export type Series = SeriesConnection["items"];
 export type SingleSeries = Series[number];
 
-const seriesColumns: ColumnProps<SingleSeries>[] = [
-    {
-        key: "EVENT_COUNT",
-        label: "video.plural",
-        headerWidth: 112,
-        column: ({ item }) => <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.video-list.no-of-videos", { count: item.numVideos })}
-        </td>,
-    },
-    {
-        key: "UPDATED",
-        label: "manage.table.columns.updated",
-        column: ({ item }) => <DateColumn date={item.updated} />,
-    },
-    {
-        key: "CREATED",
-        label: "manage.table.columns.created",
-        column: ({ item }) => <DateColumn date={item.created} />,
-    },
-];
-
-
-const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
+const SeriesItem: React.FC<{ item: SingleSeries }> = ({ item }) => <ListItem
     itemType="series"
     item={item}
-    thumbnail={status => <SeriesThumbnail series={item} seriesStatus={status} />}
     link={`${PATH}/${keyOfId(item.id)}`}
-    customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
+    thumbnail={status => <SeriesThumbnail series={item} seriesStatus={status} />}
+    dateAndAdditionalInfo={<DateAndCount
+        timestamp={item.created ?? undefined}
+        count={item.numVideos}
+    />}
 />;
+
+
+type DateAndCountProps = {
+    timestamp?: string;
+    count: number;
+    className?: string;
+};
+
+const DateAndCount: React.FC<DateAndCountProps> = ({
+    timestamp, count, className,
+}) => (
+    <div {...{ className }} css={{
+        display: "inline-flex",
+        color: COLORS.neutral80,
+        fontSize: 12,
+        gap: 24,
+        whiteSpace: "nowrap",
+    }}>
+        {timestamp && <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
+            <PrettyDate date={new Date(timestamp)} />
+        </div>}
+        <div css={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+        }}>
+            <LuFilm css={{ fontSize: 15, color: COLORS.neutral60, flexShrink: 0 }} />
+            {i18n.t("manage.video-list.no-of-videos", { count })}
+        </div>
+    </div>
+);
 
 
 

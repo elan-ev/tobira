@@ -11,10 +11,11 @@ type FloatingBaseMenuProps = {
     list: ReactElement;
     label: string;
     triggerStyles?: CSSObject;
+    icon?: ReactElement;
 };
 
 export const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMenuProps>(
-    ({ triggerContent, list, label, triggerStyles }, ref) => (
+    ({ triggerContent, list, label, triggerStyles, icon }, ref) => (
         <FloatingContainer
             ref={ref}
             placement="bottom"
@@ -39,7 +40,7 @@ export const FloatingBaseMenu = React.forwardRef<FloatingHandle, FloatingBaseMen
                     ...triggerStyles,
                 }}>
                     {triggerContent}
-                    <LuChevronDown css={{ fontSize: 20, flexShrink: 0 }} />
+                    {icon ?? <LuChevronDown css={{ fontSize: 20, flexShrink: 0 }} />}
                 </ProtoButton>
             </FloatingTrigger>
             {list}
