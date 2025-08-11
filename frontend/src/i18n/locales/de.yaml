@@ -501,12 +501,18 @@ manage:
       previous: Vorherige Seite
       next: Nächste Seite
       last: Letzte Seite
-    columns:
+    sorting:
+      label: Einträge sortieren
+      sort-by: Sortieren nach
+      order: Anordnung
       description: 'Sortieren nach {{title}}, {{direction}}'
       ascending: aufsteigend
       descending: absteigend
+      ascending-cap: Aufsteigend
+      descending-cap: Absteigend
       created: Erstellt
       updated: Aktualisiert
+      unknown: Unbekannte Sortierung
     no-series-title: Fehlender Titel
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt
