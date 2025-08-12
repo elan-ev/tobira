@@ -14,7 +14,9 @@ import { NotAuthorized } from "../../../ui/error";
 import { CopyableInput, TimeInputWithCheckbox } from "../../../ui/Input";
 import { MetadataFields, MetadataForm, SubmitButtonWithStatus } from "../../../ui/metadata";
 import { useUser, isRealUser } from "../../../User";
-import { OcEntity, Inertable, isSynced, OpencastEntity, secondsToTimeString } from "../../../util";
+import {
+    OcEntity, Inertable, isSynced, OpencastEntity, secondsToTimeString, keyOfId,
+} from "../../../util";
 import { PAGE_WIDTH } from "./Nav";
 import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
@@ -146,6 +148,17 @@ export const DirectLink: React.FC<UrlProps> = ({ url, withTimestamp }) => {
     </div>;
 };
 
+export const RssLink: React.FC<{ seriesId: string }> = ({ seriesId }) => {
+    const { t } = useTranslation();
+    const rssUrl = document.location.origin + `/~rss/series/${keyOfId(seriesId)}`;
+
+    return <>
+        <div css={{ marginBottom: 4 }}>
+            {t("share.share-rss-link") + ":"}
+        </div>
+        <CopyableInput label={t("share.copy-rss")} value={rssUrl} css={{ fontSize: 14 }} />
+    </>;
+};
 
 type MetadataInput = {
     title: string;
