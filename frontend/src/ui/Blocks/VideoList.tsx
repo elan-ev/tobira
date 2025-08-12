@@ -421,31 +421,36 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
 type VideoListShareButtonProps = {
     shareUrl: string;
     rssUrl: string;
+    className?: string;
 };
 
-const VideoListShareButton: React.FC<VideoListShareButtonProps> = props => {
+export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
+    shareUrl, rssUrl, className,
+}) => {
     const { t } = useTranslation();
-    const shareUrl = document.location.origin + props.shareUrl;
-    const rssUrl = document.location.origin + props.rssUrl;
+
+    const directLinkUrl = document.location.origin + shareUrl;
+    const rssLinkUrl = document.location.origin + rssUrl;
+
     const tabs = {
         "main": {
             label: t("share.link"),
             Icon: LuLink,
             render: () => <>
-                <CopyableInput label={t("share.copy-link")} value={shareUrl} />
-                <QrCodeButton target={shareUrl} label={t("share.link")} />
+                <CopyableInput label={t("share.copy-link")} value={directLinkUrl} />
+                <QrCodeButton label={t("share.link")} target={directLinkUrl} />
             </>,
         },
         "rss": {
             label: t("share.rss"),
             Icon: LuRss,
             render: () => <>
-                <CopyableInput label={t("share.copy-rss")} value={rssUrl} />
-                <QrCodeButton target={rssUrl} label={t("share.rss")} />
+                <CopyableInput label={t("share.copy-rss")} value={rssLinkUrl} />
+                <QrCodeButton label={t("share.rss")} target={rssLinkUrl} />
             </>,
         },
     };
-    return <ShareButton height={180} {...{ tabs }} css={{
+    return <ShareButton height={180} {...{ tabs, className }} css={{
         padding: 12,
         height: 31,
         borderRadius: 4,
