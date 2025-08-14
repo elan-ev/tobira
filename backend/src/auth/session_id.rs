@@ -55,7 +55,7 @@ impl SessionId {
 
     /// Returns a cookie for a `set-cookie` header in order to store the session
     /// ID in the client's cookie jar.
-    pub(crate) fn set_cookie(&self, session_duration: Duration) -> Cookie {
+    pub(crate) fn set_cookie(&self, session_duration: Duration) -> Cookie<'_> {
         Cookie::build((SESSION_COOKIE, base64encode(self.0.expose_secret())))
 
             // Only send via HTTPS as it contains sensitive information.
