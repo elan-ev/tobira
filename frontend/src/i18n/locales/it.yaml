@@ -523,6 +523,8 @@ manage:
       previous: 'Pagina precedente '
       next: Pagina successiva
       last: Ultima pagina
+    filter:
+      by-title: Filtrare per titolo
     sorting:
       label: Ordinare le voci
       sort-by: Ordinare per

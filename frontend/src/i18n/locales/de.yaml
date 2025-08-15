@@ -501,6 +501,8 @@ manage:
       previous: Vorherige Seite
       next: Nächste Seite
       last: Letzte Seite
+    filter:
+      by-title: Nach Titel filtern
     sorting:
       label: Einträge sortieren
       sort-by: Sortieren nach

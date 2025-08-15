@@ -177,6 +177,7 @@ pub(crate) async fn load_writable_for_user<T, C>(
     parts: ConnectionQueryParts,
     selection: impl std::fmt::Display,
     mut from_row: impl FnMut(&Row) -> T,
+    filter: Option<SearchFilter>,
 ) -> ApiResult<Connection<T>>
 where
     C: ToSqlColumn,
@@ -206,11 +207,17 @@ where
         user_roles = context.auth.roles_vec();
     };
 
-    // Retrieve total number of items. This can be done in the query below, but
-    // the added complexity is really not worth it.
+    // Retrieve total number of items, considering possible filters.
+    // Todo: consider stop words
+    let title_filter: Option<String> = filter.and_then(|f| f.title.map(|s| format!("%{}%", s)));
+
     let total_count = context.db.query_one(
-        &format!("select count(*) from {table_alias} {acl_filter}"),
-        &[&user_roles],
+        &format!(
+            "select count(*) \
+                from {table_alias} \
+                {acl_filter} and ($2::text is null or {table}.title ilike $2::text)",
+            ),
+        &[&user_roles, &title_filter],
     ).await?.get::<_, i64>(0);
     let total_count = total_count.try_into().expect("more than 2^31 items?!");
 
@@ -218,9 +225,9 @@ where
         "select {selection}, count(*) over() as total_count \
             from {table_alias} \
             {join_clause} \
-            {acl_filter} \
+            {acl_filter} and ($2::text is null or {table}.title ilike $2::text) \
             order by {sort_column} {sort_order}, {table}.id {sort_order} \
-            limit $2 offset $3 \
+            limit $3 offset $4 \
         ",
         join_clause = parts.join_clause,
         sort_order = order.direction.to_sql(),
@@ -230,7 +237,7 @@ where
     // Execute query
     let items = context.db.query_mapped(
         &query,
-        dbargs![&user_roles, &(limit as i64), &(offset as i64)],
+        dbargs![&user_roles, &title_filter, &(limit as i64), &(offset as i64)],
         |row| from_row(&row),
     ).await?;
 
@@ -301,4 +308,9 @@ pub(crate) fn convert_acl_input(entries: Vec<AclInputEntry>) -> AclForDB {
 pub(crate) struct BasicMetadata {
     pub(crate) title: String,
     pub(crate) description: Option<String>,
+}
+
+#[derive(GraphQLInputObject)]
+pub(crate) struct SearchFilter {
+    pub(crate) title: Option<String>,
 }

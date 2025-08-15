@@ -34,7 +34,13 @@ export const ManageSeriesRoute = makeRoute({
         }
 
         const vars = queryParamsToSeriesVars(url.searchParams);
-        const queryRef = loadQuery<SeriesManageQuery>(query, vars);
+        const titleFilter = vars.filters?.title ?? null;
+        const queryVars = {
+            ...vars,
+            // Todo: Adjust when more filter options are added
+            filter: titleFilter ? { title: titleFilter } : null,
+        };
+        const queryRef = loadQuery<SeriesManageQuery>(query, queryVars);
 
         return {
             render: () => <RootLoader
@@ -48,10 +54,9 @@ export const ManageSeriesRoute = makeRoute({
                         connection={data.currentUser.mySeries}
                         titleKey="manage.series.table.title"
                         additionalSortOptions={[{ key: "EVENT_COUNT", label: "video.plural" }]}
+                        additionalControls={[<CreateSeriesLink key="create-series-button" />]}
                         RenderItem={SeriesItem}
-                    >
-                        <CreateSeriesLink />
-                    </ManageItems>
+                    />
                 }
             />,
             dispose: () => queryRef.dispose(),
@@ -64,10 +69,11 @@ const query = graphql`
         $order: SeriesSortOrder!,
         $offset: Int!,
         $limit: Int!,
+        $filter: SearchFilter,
     ) {
         ...UserData
         currentUser {
-            mySeries(order: $order, offset: $offset, limit: $limit) {
+            mySeries(order: $order, offset: $offset, limit: $limit, filter: $filter) {
                 __typename
                 totalCount
                 pageInfo { hasNextPage hasPrevPage }

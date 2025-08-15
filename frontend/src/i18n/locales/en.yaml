@@ -477,6 +477,8 @@ manage:
       previous: Previous page
       next: Next page
       last: Last page
+    filter:
+      by-title: Filter by title
     sorting:
       label: Sort entries
       sort-by: Sort by

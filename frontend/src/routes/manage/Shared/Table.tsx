@@ -1,10 +1,8 @@
 import {
-    Card, Floating, FloatingHandle, match, screenWidthAbove,
+    Card, currentRef, Floating, FloatingHandle, match, ProtoButton, screenWidthAbove,
     screenWidthAtMost, useColorScheme, useFloatingItemProps,
 } from "@opencast/appkit";
-import {
-    useRef, ReactNode, ComponentType, PropsWithChildren, useId,
-} from "react";
+import { useRef, ReactNode, ComponentType, useId } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -12,13 +10,15 @@ import {
     LuArrowUpWideNarrow,
     LuChevronLeft,
     LuChevronRight,
+    LuX,
 } from "react-icons/lu";
+import { HiOutlineSearch } from "react-icons/hi";
 import { css } from "@emotion/react";
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { prettyDate } from "../../../ui/time";
-import { ellipsisOverflowCss, IconWithTooltip } from "../../../ui";
+import { ellipsisOverflowCss, focusStyle, IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
 import { SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
@@ -43,6 +43,7 @@ type ItemVars = {
         direction: SortDirection;
     };
     page: number;
+    filters: Record<string, string>;
 };
 
 export type SharedManageProps<T> = {
@@ -66,9 +67,10 @@ type SortingProps<T> = {
     label: ParseKeys;
 }
 
-type ManageItemProps<T> = PropsWithChildren & SharedTableProps<T> & {
+type ManageItemProps<T> = SharedTableProps<T> & {
     titleKey: ParseKeys;
-    additionalSortOptions: SortingProps<SortColumn>[];
+    additionalSortOptions?: SortingProps<SortColumn>[];
+    additionalControls?: ReactNode[];
 }
 
 const LIMIT = 15;
@@ -77,9 +79,9 @@ export const ManageItems = <T extends Item>({
     connection,
     vars,
     titleKey,
-    children,
     RenderItem,
-    additionalSortOptions,
+    additionalSortOptions = [],
+    additionalControls = [],
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
     const { Notification } = useNotification();
@@ -166,9 +168,12 @@ export const ManageItems = <T extends Item>({
                 </div>
             </div>
 
-            <div css={{ marginBottom: 0, display: "flex", justifyContent: "space-between" }}>
-                {/* TODO: search field for filtering */}
-                {children}
+            <div css={{ display: "flex", justifyContent: "space-between", margin: "0 0 16px 8px" }}>
+                {additionalControls}
+            </div>
+
+            <div css={{ marginLeft: 8, display: "flex", justifyContent: "space-between" }}>
+                <SearchField {...{ vars }} />
                 <div css={{ display: "flex", gap: 16, marginLeft: "auto" }}>
                     {/* TODO: additional dedicated filter menus (i.e. for date) */}
                     <FloatingBaseMenu
@@ -198,6 +203,120 @@ export const ManageItems = <T extends Item>({
         </div>
     );
 };
+
+const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+    const { t } = useTranslation();
+    const ref = useRef<HTMLInputElement>(null);
+    const router = useRouter();
+
+
+    const search = (q: string) => {
+        router.goto(varsToLink({
+            order: {
+                column: vars.order.column,
+                direction: vars.order.direction,
+            },
+            page: vars.page,
+            filters: { title: q },
+        }));
+
+    };
+
+    return (
+        // Todo: deduplicate some of this, overlaps with main search field.
+        <div css={{
+            position: "relative",
+            flex: 1,
+            maxWidth: 372,
+        }}>
+            <HiOutlineSearch css={{
+                position: "absolute",
+                height: "100%",
+                left: 11,
+                fontSize: 23,
+                color: COLORS.neutral60,
+            }} />
+            <form onSubmit={event => {
+                event.preventDefault();
+                search(currentRef(ref).value);
+
+                // Hide mobile keyboard on enter. The mobile keyboard hides lots
+                // of results and intuitively, pressing "enter" on it should
+                // close the keyboard. We don't want to remove focus for
+                // desktop users though, since that doesn't do any good. The
+                // check is not perfect but should actually detect virtual
+                // keyboard very reliably.
+                const visualHeight = window.visualViewport?.height;
+                if (visualHeight && visualHeight < window.innerHeight) {
+                    ref.current?.blur();
+                }
+            }}>
+                <label css={{ display: "flex" }}>
+                    <span css={{ display: "none" }}>{t("search.input-label")}</span>
+                    <input
+                        ref={ref}
+                        type="text"
+                        placeholder={t("manage.table.filter.by-title")}
+                        defaultValue={vars.filters.title}
+                        css={{
+                            flex: 1,
+                            color: COLORS.neutral60,
+                            backgroundColor: COLORS.neutral05,
+                            border: `1px solid ${COLORS.neutral40}`,
+                            borderRadius: 4,
+                            minWidth: 50,
+                            height: 42,
+                            paddingLeft: 42,
+                            paddingRight: 12,
+                            ":hover": {
+                                borderColor: COLORS.neutral25,
+                                outline: `2.5px solid ${COLORS.neutral25}`,
+                                outlineOffset: -1,
+                            },
+                            ":focus-visible": { borderColor: COLORS.focus },
+                            ...focusStyle({ offset: -1 }),
+                            "&::placeholder": {
+                                color: COLORS.neutral60,
+                                opacity: 1,
+                            },
+                        }}
+                    />
+                </label>
+            </form>
+            <ProtoButton
+                aria-label={t("search.clear")}
+                // Just clear the search input
+                onClick={() => {
+                    const { title, ...restFilters } = vars.filters;
+                    router.goto(varsToLink({
+                        order: {
+                            column: vars.order.column,
+                            direction: vars.order.direction,
+                        },
+                        page: vars.page,
+                        filters: restFilters,
+                    }));
+                }}
+                css={{
+                    ":hover, :focus": {
+                        color: COLORS.neutral90,
+                        borderColor: COLORS.neutral25,
+                        outline: `2.5px solid ${COLORS.neutral25}`,
+                    },
+                    ...focusStyle({}),
+                    borderRadius: 4,
+                    color: COLORS.neutral60,
+                    position: "absolute",
+                    top: 9,
+                    right: 9,
+                }}
+            >
+                <LuX size={24} css={{ display: "block" }} />
+            </ProtoButton>
+        </div>
+    );
+};
+
 
 type SortingMenuProps = {
     close: () => void;
@@ -272,6 +391,7 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
                             direction: vars.order.direction,
                         },
                         page: vars.page,
+                        filters: vars.filters,
                     }))}
                     css={extraStyles}
                 />)
@@ -300,6 +420,7 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
                             direction: direction.key,
                         },
                         page: vars.page,
+                        filters: vars.filters,
                     }))}
                     css={extraStyles}
                 />)
@@ -641,6 +762,16 @@ export const parsePaginationAndDirection = (
     return { page, direction, sortColumn };
 };
 
+const parseFilters = (queryParams: URLSearchParams): Record<string, string> => {
+    const filters: Record<string, string> = {};
+    for (const [key, value] of queryParams.entries()) {
+        if (key !== "page" && key !== "sort") {
+            filters[key] = value;
+        }
+    }
+    return filters;
+};
+
 /**
  * Creates a parser function that extracts query variables for a specific resource
  * (i.e. series, videos or playlists) from URL query parameters.
@@ -653,11 +784,13 @@ export function createQueryParamsParser<ColumnType extends string>(
     return (queryParams: URLSearchParams) => {
         const { page, direction, sortColumn } = parsePaginationAndDirection(queryParams);
         const column = parseColumnFn(sortColumn);
+        const filters = parseFilters(queryParams);
         return {
             order: { column, direction },
             page,
             limit: LIMIT,
             offset: Math.max(0, (page - 1) * LIMIT),
+            filters,
         };
     };
 }
@@ -677,6 +810,12 @@ const varsToQueryParams = (vars: ItemVars): URLSearchParams => {
 
     if (vars.page !== 1) {
         searchParams.set("page", String(vars.page));
+    }
+
+    if (vars.filters) {
+        for (const [key, value] of Object.entries(vars.filters)) {
+            searchParams.set(key, value);
+        }
     }
 
     return searchParams;

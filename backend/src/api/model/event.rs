@@ -19,7 +19,7 @@ use crate::{
             acl::{self, Acl},
             realm::Realm,
             series::Series,
-            shared::{ToSqlColumn, SortDirection, convert_acl_input}
+            shared::{ToSqlColumn, SortDirection, SearchFilter, convert_acl_input}
         },
         Context,
         Id,
@@ -737,6 +737,7 @@ impl AuthorizedEvent {
         order: SortOrder<VideosSortColumn>,
         offset: i32,
         limit: i32,
+        filter: Option<SearchFilter>,
     ) -> ApiResult<Connection<AuthorizedEvent>> {
         let parts = ConnectionQueryParts {
             table: "all_events",
@@ -748,6 +749,7 @@ impl AuthorizedEvent {
             context, order, offset, limit, parts,
             AuthorizedEvent::select(),
             AuthorizedEvent::from_row_start,
+            filter,
         ).await
     }
 }

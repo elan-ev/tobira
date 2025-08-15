@@ -532,6 +532,8 @@ manage:
       previous: Page précédente
       next: Page suivante
       last: Dernière page
+    filter:
+      by-title: Filtrer par titre
     sorting:
       label: Trier les entrées
       sort-by: Trier par
