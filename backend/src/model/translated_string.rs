@@ -10,8 +10,7 @@ use crate::prelude::*;
 
 
 /// A string specified in different languages. Entry 'default' is required.
-#[derive(Serialize, Deserialize, Clone, GraphQLScalar)]
-#[serde(try_from = "HashMap<LangKey, String>")]
+#[derive(Serialize, Clone, GraphQLScalar)]
 #[graphql(parse_token(String))]
 pub(crate) struct TranslatedString(HashMap<LangKey, String>);
 
@@ -39,6 +38,23 @@ impl Deref for TranslatedString {
     type Target = HashMap<LangKey, String>;
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl<'de> Deserialize<'de> for TranslatedString {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        let map = <HashMap<LangKey, String>>::deserialize(deserializer).map_err(|e| {
+            let hint = "\
+                this is a 'translated label', a lang -> string map is expected, \
+                e.g. '{ default = \"Dog\", de = \"Hund\" }'";
+            D::Error::custom(format!("{e} (HINT: {hint})"))
+        })?;
+        map.try_into().map_err(|e| D::Error::custom(e))
     }
 }
 
