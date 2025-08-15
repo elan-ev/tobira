@@ -532,12 +532,18 @@ manage:
       previous: Page précédente
       next: Page suivante
       last: Dernière page
-    columns:
+    sorting:
+      label: Trier les entrées
+      sort-by: Trier par
+      order: Organiser
       description: Trier par {{title}}, {{direction}}
       ascending: Croissant
       descending: Décroissant
+      ascending-cap: Croissant
+      descending-cap: Décroissant
       created: Créé
       updated: Actualisé
+      unknown: Tri inconnu
     no-series-title: Titre manquant
     no-entries-found: Aucune entrée trouvée.
     missing-date: Inconnu

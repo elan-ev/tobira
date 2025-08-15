@@ -477,12 +477,18 @@ manage:
       previous: Previous page
       next: Next page
       last: Last page
-    columns:
-      description: 'Sort by {{title}}, {{direction}}'
+    sorting:
+      label: Sort entries
+      sort-by: Sort by
+      order: Order
+      description: 'Sort by {{column}}, {{direction}}'
       ascending: ascending
       descending: descending
+      ascending-cap: Ascending
+      descending-cap: Descending
       created: Created
       updated: Updated
+      unknown: Unknown column
     no-series-title: Missing title
     no-entries-found: No entries found.
     missing-date: Unknown
