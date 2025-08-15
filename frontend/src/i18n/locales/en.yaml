@@ -209,6 +209,7 @@ playlist:
 
 share:
   share-direct-link: Share via direct link
+  share-rss-link: Share via RSS link
   link: Link
   embed: Embed
   rss: RSS

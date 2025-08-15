@@ -13,6 +13,7 @@ import {
     MetadataSection,
     DeleteButton,
     HostRealms,
+    RssLink,
 } from "../Shared/Details";
 import { SeriesDetailsDeleteMutation } from "./__generated__/SeriesDetailsDeleteMutation.graphql";
 import {
@@ -75,6 +76,7 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
             <DirectLink key="direct-link" url={
                 new URL(DirectSeriesRoute.url({ seriesId: series.id }), document.baseURI)
             } />,
+            <RssLink key="rss-link" seriesId={series.id} />,
             <SeriesMetadataSection key="metadata" series={series} />,
             <SeriesContentSection key="content" series={series} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>

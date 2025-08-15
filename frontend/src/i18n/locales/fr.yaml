@@ -215,6 +215,7 @@ playlist:
 
 share:
   share-direct-link: Partager via un lien direct
+  share-rss-link: Partager via un lien RSS
   link: Lien
   embed: Intégrer
   rss: RSS
