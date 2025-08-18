@@ -389,6 +389,11 @@ acl:
       Without these, you can no longer edit these permissions, change the realm path, or delete the page.
     confirm: Confirm
 
+player:
+  options:
+    title: Options
+    label: Show options
+
 manage:
   dashboard:
     title: Dashboard

@@ -435,6 +435,11 @@ acl:
       percorso del regno o cancellare la pagina.
     confirm: Confermare
 
+player:
+  options:
+    title: Opzioni
+    label: Mostra opzioni
+
 manage:
   dashboard:
     title: Dashboard

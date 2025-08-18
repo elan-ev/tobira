@@ -9,11 +9,12 @@ import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
 import { isHlsTrack, PlayerEvent, Track } from ".";
-import { SPEEDS } from "./consts";
+import { SPEEDS, TRANSLATIONS } from "./consts";
 import { timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
 import CONFIG from "../../config";
+import i18n from "../../i18n";
 
 
 type PaellaPlayerProps = {
@@ -134,7 +135,12 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 getManifestUrl: async () => "dummy-url",
                 getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async () => manifest,
-                loadDictionaries: (player: Paella) => player.setLanguage(i18n.language),
+                loadDictionaries: (player: Paella) => {
+                    Object.entries(TRANSLATIONS).forEach(([lang, dict]) => {
+                        player.addDictionary(lang, dict);
+                    });
+                    player.setLanguage(i18n.language);
+                },
                 configResourcesUrl: "/~assets/paella",
                 customPluginContext: [
                     getBasicPluginsContext(),
@@ -360,13 +366,15 @@ const PAELLA_CONFIG = {
         {
             enabled: true,
             groupName: "optionsContainer",
-            description: "Options",
+            // These cannot be changed dynamically, but using translations here will
+            // at least work for users that don't usually switch their language.
+            description: i18n.t("player.options.title"),
             icon: CONFIG.paellaSettingsIcon.replace(/^\/~assets\/paella/, ""),
             order: 6,
             side: "right",
             tabIndex: 6,
             parentContainer: "playbackBar",
-            ariaLabel: "Show options",
+            ariaLabel: i18n.t("player.options.label"),
         },
     ],
 
@@ -560,9 +568,9 @@ const PAELLA_CONFIG = {
 
         // Data plugin
         "es.upv.paella.localStorageDataPlugin": {
-            "enabled": true,
-            "order": 0,
-            "context": ["default", "trimming"],
+            enabled: true,
+            order: 0,
+            context: ["default", "trimming"],
         },
 
         // Let admin provided config add and override entries.

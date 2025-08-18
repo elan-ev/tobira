@@ -280,7 +280,7 @@ realm:
 
 search:
   input-label: Rechercher
-  title: Résultats  pour <i>{{query}}</i> ({{count}} résultats)
+  title: Résultats pour <i>{{query}}</i> ({{count}} résultats)
   no-query: Résultats de la recherche
   no-results: Pas de résultats
   too-few-characters: Veuillez saisir plus de caractères pour lancer la recherche.
@@ -440,6 +440,11 @@ acl:
       Sans ces droits, vous ne pourrez plus modifier ces autorisations, changer
       le chemin d'accès au domaine ou supprimer la page.
     confirm: Confirmer
+
+player:
+  options:
+    title: Options
+    label: Afficher les options
 
 manage:
   dashboard:
