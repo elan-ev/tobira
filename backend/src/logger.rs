@@ -121,15 +121,15 @@ pub(crate) fn init(config: &LogConfig, args: &Args, cmd: &str) -> Result<()> {
         .map(|path| -> Result<std::fs::File> {
             use std::io::Write;
 
-            let new_path = path.to_str()
+            let path = path.to_str()
                 .ok_or_else(|| anyhow!("log file path is not valid UTF-8"))?
                 .replace("${cmd}", cmd);
 
             let mut file = OpenOptions::new()
                 .append(true)
                 .create(true)
-                .open(new_path)
-                .with_context(|| format!("failed to open/create log file '{}'", path.display()))?;
+                .open(&path)
+                .with_context(|| format!("failed to open/create log file '{path}'"))?;
 
             // Add an empty line separator to see process restarts easier.
             file.write_all(b"\n").context("could not write to log file")?;
