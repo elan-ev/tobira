@@ -703,10 +703,6 @@ api-remote-errors:
     no-page-admin-rights: Non è consentito eseguire questa azione.
     cannot-create-user-realm: Non è consentito creare una propria pagina.
     user-realm-already-exists: La pagina personale esiste già.
-    username-not-valid-as-path: >
-      Il nome utente “{{username}}” contiene caratteri non consentiti nei
-      percorsi delle pagine, pertanto non è possibile creare una propria pagina.
-      Contattare un amministratore di sistema per ulteriore assistenza.
   event:
     not-found: 'Azione fallita: video non trovato.'
     not-allowed: Non è permesso eseguire questa azione video.

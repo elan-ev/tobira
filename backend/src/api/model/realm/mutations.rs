@@ -72,7 +72,7 @@ impl Realm {
             "insert into realms (parent, name, path_segment, owner_display_name) \
                 values (null, $1, $2, $1) \
                 returning id",
-            &[&user.display_name, &format!("@{}", user.username)],
+            &[&user.display_name, &format!("@{}", user.user_realm_handle())],
         ).await;
 
         let row = map_db_err!(res, {
@@ -81,8 +81,8 @@ impl Realm {
                 "user realm already exists",
             ),
             if constraint == "valid_path" => invalid_input!(
-                key = "realm.username-not-valid-as-path",
-                "username contains invalid characters for realm path",
+                key = "realm.handle-not-valid-as-path",
+                "handle contains invalid characters for realm path",
             ),
         })?;
         let key: Key = row.get(0);

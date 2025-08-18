@@ -20,6 +20,7 @@ export type UserState = "unknown" | "error" | "none" | User;
 export type User = {
     username: string;
     displayName: string;
+    userRealmHandle: string;
     canUpload: boolean;
     canUseStudio: boolean;
     canUseEditor: boolean;
@@ -57,6 +58,7 @@ export const userDataFragment = graphql`
         currentUser {
             username
             displayName
+            userRealmHandle
             canUpload
             canUseStudio
             canUseEditor

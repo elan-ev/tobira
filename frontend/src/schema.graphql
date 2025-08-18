@@ -1030,6 +1030,11 @@ type User {
   userRole: String!
   "The name of the user intended to be read by humans."
   displayName: String!
+  """
+    The part of the user realm path after `@`, i.e. `/@${user_realm_handle}`.
+    Equals the username, unless overwritten by the auth integration.
+  """
+  userRealmHandle: String!
   "`True` if the user has the permission to upload videos."
   canUpload: Boolean!
   "`True` if the user has the permission to use Opencast Studio."

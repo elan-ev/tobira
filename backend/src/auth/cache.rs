@@ -98,6 +98,7 @@ struct UserCacheEntry {
     email: Option<String>,
     roles: HashSet<String>,
     user_role: String,
+    user_realm_handle: Option<String>,
     last_written_to_db: Instant,
 }
 
@@ -123,7 +124,8 @@ impl UserCache {
                     || entry.display_name != user.display_name
                     || entry.email != user.email
                     || entry.roles != user.roles
-                    || entry.user_role != user.user_role;
+                    || entry.user_role != user.user_role
+                    || entry.user_realm_handle != user.user_realm_handle;
 
                 if needs_update {
                     let res = Self::write_to_db(user, db).await;
@@ -140,6 +142,7 @@ impl UserCache {
                         email: user.email.clone(),
                         roles: user.roles.clone(),
                         user_role: user.user_role.clone(),
+                        user_realm_handle: user.user_realm_handle.clone(),
                         last_written_to_db: Instant::now(),
                     });
                 }
@@ -149,12 +152,14 @@ impl UserCache {
 
     async fn write_to_db(user: &super::User, db: &Client) -> Result<(), ()> {
         let sql = "\
-            insert into users (username, display_name, email, user_role, last_seen) \
-            values ($1, $2, $3, $4, now()) \
+            insert into users (username, display_name, email, user_role, \
+                user_realm_handle, last_seen) \
+            values ($1, $2, $3, $4, $5, now()) \
             on conflict (username) do update set \
                 display_name = excluded.display_name, \
                 email = excluded.email, \
                 user_role = excluded.user_role, \
+                user_realm_handle = excluded.user_realm_handle, \
                 last_seen = excluded.last_seen \
         ";
         let res = db.execute(sql, &[
@@ -162,6 +167,7 @@ impl UserCache {
             &user.display_name,
             &user.email,
             &user.user_role,
+            &user.user_realm_handle,
         ]).await;
 
         // We mostly just ignore errors. That's because saving the user data is
@@ -272,4 +278,3 @@ impl AuthCallbackCache {
             });
     }
 }
-

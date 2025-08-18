@@ -637,8 +637,8 @@ api-remote-errors:
     no-page-admin-rights: You are not allowed to perform this action.
     cannot-create-user-realm: You are not allowed to create your own page.
     user-realm-already-exists: Your own page already exists.
-    username-not-valid-as-path: >
-      Your username '{{username}}' contains characters that are not allowed in page paths,
+    handle-not-valid-as-path: >
+      Your username/page-handle contains characters that are not allowed in page paths,
       thus you cannot create your own page. Contact a system administrator for
       further assistance.
   event:

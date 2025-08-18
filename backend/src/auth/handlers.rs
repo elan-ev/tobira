@@ -253,6 +253,7 @@ async fn check_opencast_login(
         email: info.user.email,
         roles: info.roles.into_iter().collect(),
         user_role: info.user_role,
+        user_realm_handle: None,
     }))
 }
 
