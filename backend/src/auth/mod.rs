@@ -213,7 +213,9 @@ impl User {
         };
 
         // Check if such a session exists in the DB.
-        let (selection, mapping) = select!(username, display_name, roles, email, user_realm_handle);
+        let (selection, mapping) = select!(
+            username, display_name, roles, email, user_role, user_realm_handle,
+        );
         let query = format!(
             "select {selection} from user_sessions \
                 where id = $1 \
@@ -232,10 +234,12 @@ impl User {
         let username: String = mapping.username.of(&row);
         let roles = mapping.roles.of::<Vec<String>>(&row);
         let user_realm_handle = mapping.user_realm_handle.of(&row);
-        let user_role = auth_config
-            .find_user_role(&username, roles.iter().map(|s| s.as_str()))
-            .expect("user session without user role")
-            .to_owned();
+        let user_role = mapping.user_role.of::<Option<String>>(&row).unwrap_or_else(|| {
+            auth_config
+                .find_user_role(&username, roles.iter().map(|s| s.as_str()))
+                .expect("user session without user role")
+                .to_owned()
+        });
 
         Ok(Some(Self {
             username,
@@ -407,11 +411,12 @@ impl User {
         let roles = self.roles.iter().collect::<Vec<_>>();
         db.execute_raw(
             "insert into \
-                user_sessions (id, username, display_name, roles, email, user_realm_handle) \
-                values ($1, $2, $3, $4, $5, $6)",
+                user_sessions (id, username, display_name, roles, user_role, \
+                    email, user_realm_handle) \
+                values ($1, $2, $3, $4, $5, $6, $7)",
             dbargs![
                 &session_id, &self.username, &self.display_name,
-                &roles, &self.email, &self.user_realm_handle,
+                &roles, &self.user_role, &self.email, &self.user_realm_handle,
             ],
         ).await?;
 
