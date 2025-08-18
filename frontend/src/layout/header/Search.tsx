@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
@@ -77,6 +77,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
             : undefined;
     };
     const defaultValue = getSearchParam("q");
+    const [inputIsEmpty, setInputIsEmpty] = useState(!defaultValue);
 
 
     const search = (q: string) => {
@@ -134,6 +135,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                         disabled={disabled}
                         placeholder={t("search.input-label")}
                         defaultValue={defaultValue}
+                        onChange={e => setInputIsEmpty(e.currentTarget.value.length === 0)}
                         // We only want to autofocus if the user just pressed
                         // the search button in the header (mobile only). This
                         // only happens on non-search routes.
@@ -163,13 +165,14 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     />
                 </label>
             </form>
-            <ProtoButton
+            {!inputIsEmpty && <ProtoButton
                 aria-label={t("search.clear")}
                 // Just clear the search input
                 onClick={() => {
                     const input = currentRef(ref);
                     input.value = "";
                     input.focus();
+                    setInputIsEmpty(true);
                 }}
                 css={{
                     ":hover, :focus": {
@@ -182,7 +185,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
                     color: COLORS.neutral60,
                     ...iconStyle,
                 }}
-            ><LuX size={spinnerSize} css={{ display: "block" }} /></ProtoButton>
+            ><LuX size={spinnerSize} css={{ display: "block" }} /></ProtoButton>}
         </div>
     );
 };
