@@ -54,13 +54,18 @@ filters."tobira::http" = "trace"
 
 In most configurations your auth setup is going to have to provide Tobira with certain pieces of information about the user:
 
-- **Username**: a unique, unchanging, URL-safe identifier for each user.
-  An alphabetic ID is preferred over a purely numeric one as it appears in the URL to the user's personal page.
+- **Username**: a unique, unchanging identifier for each user.
+  Unless you set the "user realm handle", the username appears in the URL to the user's personal page.
+  In that case, it must be URL-safe and an alphabetic ID is preferred over a purely numeric one.
 - **Display name**: the user's name in a format intended for humans; usually something like "Firstname Lastname".
 - **User role**: single role uniquely identifying the user that starts with any of the configured `auth.user_role_prefixes`
 - **Roles**: a list of roles that are used for authorization (e.g. deciding whether a user is allowed to see a video or modify some data).
   May contain the user role, but there must not be any other roles starting with any of the configured `auth.user_role_prefixes`.
 - **E-Mail** (optional)
+- **User realm handle** (optional): used in the path of the personal user page, i.e. `/@${user_realm_handle}`.
+  By default the username is used, but it can be overwritten with this.
+  This can only be used with callbacks, not via auth headers.
+  Must be URL-safe.
 
 
 ## Login page & logout button

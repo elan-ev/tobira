@@ -81,6 +81,7 @@ Said JSON always has to have a top-level `"outcome"` field, plus additional fiel
   - `userRole`
   - `roles`
   - `email` (optional)
+  - `userRealmHandle` (optional)
 
 So an example `"outcome": "user"` response might look like this:
 
