@@ -10,6 +10,7 @@ export type LoginOutcome = "forbidden" | {
     roles: string[];
     userRole: string;
     email?: string;
+    userRealmHandle?: string;
 };
 
 /** What the login check gets passed: the data from the login form. */
