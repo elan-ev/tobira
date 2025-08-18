@@ -595,6 +595,7 @@ manage:
   block:
     text:
       placeholder: You can add your text content here. You can also use Markdown.
+      preview: Preview
       formatting:
           guide: Formatting guide
           description: >

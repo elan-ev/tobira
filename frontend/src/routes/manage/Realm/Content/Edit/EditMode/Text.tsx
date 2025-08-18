@@ -1,4 +1,4 @@
-import React from "react";
+import React, { startTransition, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { Controller } from "react-hook-form";
@@ -57,6 +57,7 @@ export const EditTextBlock: React.FC<EditTextBlockProps> = ({ block: blockRef })
     const map = (data: TextFormData) => data;
     const defaultValues = { content };
 
+    const [previewText, setPreviewText] = useState(defaultValues.content);
 
     return <EditModeForm {...{ defaultValues, map, save, create }}>
         <FormattingGuide />
@@ -67,8 +68,20 @@ export const EditTextBlock: React.FC<EditTextBlockProps> = ({ block: blockRef })
                 placeholder={t("manage.block.text.placeholder")}
                 css={{ display: "block" }}
                 {...field}
+                onChange={e => {
+                    const value = e.currentTarget.value;
+                    startTransition(() => setPreviewText(value));
+                    field.onChange(e);
+                }}
             />}
         />
+        <strong css={{ marginTop: 24, display: "block" }}>
+            {t("manage.block.text.preview")}{":"}
+        </strong>
+        <hr css={{ }} />
+        <div css={{ padding: "0 4px" }}>
+            <RenderMarkdown>{previewText}</RenderMarkdown>
+        </div>
     </EditModeForm>;
 };
 

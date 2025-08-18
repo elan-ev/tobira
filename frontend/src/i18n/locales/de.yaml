@@ -628,6 +628,7 @@ manage:
   block:
     text:
       placeholder: Hier können Sie Ihren Text einfügen. Sie können auch Markdown verwenden.
+      preview: Vorschau
       formatting:
           guide: Formatierungshilfe
           description: >
