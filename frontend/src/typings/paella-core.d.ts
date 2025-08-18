@@ -23,6 +23,7 @@ declare module "paella-core" {
         ): () => void;
 
         public setLanguage(lang: string): void;
+        public addDictionary(lang: string, dict: Record<string, string>): void;
 
         public skin: Skin;
 

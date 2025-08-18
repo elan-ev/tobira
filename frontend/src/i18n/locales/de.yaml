@@ -413,6 +413,11 @@ acl:
       vornehmen können, und die Seite kann von Ihnen nicht mehr gelöscht werden.
     confirm: Bestätigen
 
+player:
+  options:
+    title: Optionen
+    label: Optionen anzeigen
+
 manage:
   dashboard:
     title: Dashboard
