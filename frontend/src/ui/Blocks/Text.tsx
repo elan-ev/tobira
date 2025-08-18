@@ -48,8 +48,8 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
         {...props}
     />,
     a: ({ node, href, ...props }) => <Link to={href ?? ""} {...props} />,
-    ul: ({ node, ...props }) => <ul css={{ maxWidth: 800 }} {...props} />,
-    ol: ({ node, ...props }) => <ol css={{ maxWidth: 800 }} {...props} />,
+    ul: ({ node, ...props }) => <ul css={{ maxWidth: 800, paddingLeft: 32 }} {...props} />,
+    ol: ({ node, ...props }) => <ol css={{ maxWidth: 800, paddingLeft: 32 }} {...props} />,
     blockquote: ({ node, ...props }) => <blockquote
         css={{
             borderLeft: `4px solid ${COLORS.neutral25}`,
@@ -96,8 +96,12 @@ export const TextBlock: React.FC<Props> = ({ content }) => (
             outlineOffset: 1,
         },
     }}>
-        <ReactMarkdown allowedElements={ALLOWED_MARKDOWN_TAGS} components={MARKDOWN_COMPONENTS}>
-            {content}
-        </ReactMarkdown>
+        <RenderMarkdown>{content}</RenderMarkdown>
     </div>
+);
+
+export const RenderMarkdown: React.FC<{ children: string }> = ({ children }) => (
+    <ReactMarkdown allowedElements={ALLOWED_MARKDOWN_TAGS} components={MARKDOWN_COMPONENTS}>
+        {children}
+    </ReactMarkdown>
 );

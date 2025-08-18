@@ -626,7 +626,27 @@ manage:
       mit <code>{{reservedChars}}</code> beginnen.
 
   block:
-    text: Hier können Sie Ihren Text einfügen. Sie können auch Markdown verwenden.
+    text:
+      placeholder: Hier können Sie Ihren Text einfügen. Sie können auch Markdown verwenden.
+      formatting:
+          guide: Formatierungshilfe
+          description: >
+              Sie können Markdown zur Formatierung nutzen. Die folgende Tabelle
+              listet alle unterstützten Funktionen. Bilder können hier nicht
+              hochgeladen werden: Sie müssen diese vorher auf anderem Wege
+              hochladen. Eine leere Zeile beginnt einen neuen Paragraphen.
+          result: Ergebnis
+          italic: Kursiv
+          bold: Fett
+          monospace: Monospace
+          link: Link
+          quote: Zitat
+          code-block: Codeblock
+          external-image: Externes Bild
+          hr: Trennlinie
+          bullet-points: Stichpunkte
+          ordered-list: Nummerierte Liste
+
     series:
       invalid: Bitte eine Serie auswählen
       findable-series-note: >
