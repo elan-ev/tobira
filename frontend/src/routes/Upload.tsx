@@ -33,7 +33,7 @@ import { VideoListSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { ManageNav, ManageRoute } from "./manage";
 import { COLORS } from "../color";
-import { defaultAclMap } from "../util/roles";
+import { COMMON_ROLES, defaultAclMap } from "../util/roles";
 import { Acl, AclSelector, knownRolesFragment } from "../ui/Access";
 import {
     AccessKnownRolesData$data,
@@ -406,6 +406,12 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
     } else if (error instanceof JwtInvalid) {
         info = {
             causes: new Set([t("upload.errors.jwt-invalid")]),
+            probablyOurFault: true,
+            potentiallyInternetProblem: false,
+        };
+    } else if (error instanceof OcUnexpectedResponse) {
+        info = {
+            causes: new Set([t("errors.unexpected-response")]),
             probablyOurFault: true,
             potentiallyInternetProblem: false,
         };
@@ -960,6 +966,15 @@ export class OcServerError extends Error {
     }
 }
 
+/** Opencast returned a non-OK status code */
+export class OcUnexpectedResponse extends Error {
+    public constructor(msg: string) {
+        super();
+        this.name = "Opencast unexpected response";
+        this.message = msg;
+    }
+}
+
 /** Opencast could not be reached */
 export class OcNetworkError extends Error {
     public inner?: Error;
@@ -1015,6 +1030,70 @@ const ocRequest = async (
         .catch(e => { throw new OcNetworkError(e); });
 };
 
+type InfoMeResponse = {
+    roles: string[];
+    userRole: string;
+    user: {
+        username: string;
+        name?: string;
+    };
+};
+
+const requestInfoMe = async (): Promise<InfoMeResponse> => {
+    const err = () => new OcUnexpectedResponse("unexpected JSON from /info/me.json");
+
+    const json = JSON.parse(await ocRequest("/info/me.json")) as unknown;
+    if (!json || typeof json !== "object") {
+        throw err();
+    }
+    if ("roles" in json && "userRole" in json && "user" in json
+        && Array.isArray(json.roles) && json.roles.every(role => typeof role === "string")
+        && typeof json.userRole === "string"
+        && json.user && typeof json.user === "object"
+        && "username" in json.user && typeof json.user.username === "string"
+    ) {
+        let name: string | undefined = undefined;
+        if ("name" in json.user) {
+            if (!(typeof json.user.name === "string")) {
+                throw err();
+            }
+            name = json.user.name;
+        }
+
+        return {
+            roles: json.roles,
+            userRole: json.userRole,
+            user: {
+                username: json.user.username,
+                ...name && { name },
+            },
+        };
+    }
+
+    throw err();
+};
+
+const isAnonymous = (user: InfoMeResponse) => (
+    // If there is only ROLE_ANONYMOUS in the roles, it means we have no
+    // user session, meaning the JWT is invalid.
+    new Set([COMMON_ROLES.ANONYMOUS, ...user.roles]).size <= 1
+);
+
+const checkInfoMe = async () => {
+    // Log Opencast user information. This is also a good test whether the
+    // communication with OC works at all, without potentially creating an
+    // empty new media package.
+    const userInfo = await requestInfoMe();
+    // eslint-disable-next-line no-console
+    console.debug("JWT user: ", userInfo);
+
+    if (isAnonymous(userInfo)) {
+        // eslint-disable-next-line no-console
+        console.error("'info/me.json' returned ANONYMOUS -> JWT not working");
+        throw new JwtInvalid();
+    }
+};
+
 
 // ==============================================================================================
 // ===== Functions to perform actions against the ingest API
@@ -1030,13 +1109,7 @@ const startUpload = async (
     try {
         setUploadState({ state: "starting" });
 
-        // Log Opencast user information. This is also a good test whether the
-        // communication with OC works at all, without potentially creating an
-        // empty new media package.
-        const userInfo = JSON.parse(await ocRequest("/info/me.json"));
-        delete userInfo.org;
-        // eslint-disable-next-line no-console
-        console.debug("JWT user: ", userInfo);
+        await checkInfoMe();
 
         // Create a new media package to start the upload
         let mediaPackage = await ocRequest("/ingest/createMediaPackage");
