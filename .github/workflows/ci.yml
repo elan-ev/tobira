@@ -73,12 +73,12 @@ jobs:
     - name: Generate GraphQL query types
       working-directory: frontend
       run: npx relay-compiler
-    - name: Lint frontend
-      working-directory: frontend
-      run: npx eslint --max-warnings 0 .
     - name: Build frontend
       working-directory: frontend
       run: npx webpack --mode=${{ env.ci_webpack_flags }}
+    - name: Lint frontend
+      working-directory: frontend
+      run: npx eslint --max-warnings 0 .
     - name: Typecheck frontend
       working-directory: frontend
       run: npx tsc
