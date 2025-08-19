@@ -13,17 +13,13 @@ import { match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
 
 import { Modal, ModalHandle } from "./Modal";
 import { COLORS } from "../color";
-import { adjustSpeed, jumpFrame } from "./player/PlayerShortcuts";
 import { SKIP_INTERVAL } from "./player/consts";
-import { Paella } from "paella-core";
 import { TranslationKey } from "../i18n";
 
 
 export type ShortcutProps = {
     keys: string,
     translation: TranslationKey | { key: TranslationKey; options?: Record<string, unknown> };
-    playerCallback?: (activePlayer: Paella) => HotkeyCallback,
-    options?: Options,
 }
 
 export const SHORTCUTS = {
@@ -50,82 +46,24 @@ export const SHORTCUTS = {
         play: {
             keys: "k; space",
             translation: "shortcuts.player.play",
-            playerCallback: player => async () => {
-                const isPaused = await player.videoContainer.paused();
-                if (isPaused) {
-                    await player.videoContainer.play();
-                } else {
-                    await player.videoContainer.pause();
-                }
-            },
-            options: {
-                scopes: ["player"],
-                // Don't trigger when a button is focused. This way, users can still
-                // use the space bar to control other elements by default.
-                ignoreEventWhen: e => (e.key !== "k" && (
-                    e.target instanceof HTMLButtonElement
-                        || e.target instanceof HTMLInputElement
-                )),
-                // But still disable scrolling with space.
-                preventDefault: e => !(e.key !== "k" && (
-                    e.target instanceof HTMLButtonElement
-                        || e.target instanceof HTMLInputElement
-                )),
-            },
         },
         mute: {
             keys: "m",
             translation: "shortcuts.player.mute",
-            playerCallback: player => async () => {
-                const vol = await player.videoContainer.volume();
-                let newVol = 0;
-                if (vol > 0) {
-                    player.videoContainer.lastVolume = vol;
-                    newVol = 0;
-                } else {
-                    newVol = player.videoContainer.lastVolume || 1;
-                }
-
-                await player.videoContainer.setVolume(newVol);
-            },
         },
         captions: {
             keys: "c",
             translation: "shortcuts.player.captions",
-            playerCallback: player => () => {
-                if (player.captionsCanvas.isVisible) {
-                    // TODO: cycle through captions before disabling?
-                    player.captionsCanvas.disableCaptions();
-                } else {
-                    const availableCaptions = player.captionsCanvas.captions;
-                    if (availableCaptions && availableCaptions.length > 0) {
-                        player.captionsCanvas.enableCaptions({ index: 0 });
-                    }
-                }
-            },
         },
         fullscreen: {
             keys: "f",
             translation: "shortcuts.player.fullscreen",
-            playerCallback: player => async () => {
-                if (player.isFullscreen) {
-                    await player.exitFullscreen();
-                } else {
-                    await player.enterFullscreen();
-                }
-            },
         },
         rewind: {
             keys: "j; left",
             translation: {
                 key: "shortcuts.player.rewind",
                 options: { seconds: SKIP_INTERVAL },
-            },
-            playerCallback: player => async () => {
-                const currentTime = await player.videoContainer.currentTime();
-                await player.videoContainer.setCurrentTime(
-                    Math.max(0, currentTime - SKIP_INTERVAL),
-                );
             },
         },
         fastForward: {
@@ -134,52 +72,30 @@ export const SHORTCUTS = {
                 key: "shortcuts.player.fast-forward",
                 options: { seconds: SKIP_INTERVAL },
             },
-            playerCallback: player => async () => {
-                const currentTime = await player.videoContainer.currentTime();
-                await player.videoContainer.setCurrentTime(currentTime + SKIP_INTERVAL);
-            },
         },
         frameBackward: {
             keys: "comma",
             translation: "shortcuts.player.frame-backward",
-            playerCallback: player => async () => await jumpFrame(player, -1),
         },
         frameForward: {
             keys: "period",
             translation: "shortcuts.player.frame-forward",
-            playerCallback: player => async () => await jumpFrame(player, 1),
         },
         volumeDown: {
             keys: "shift+down",
             translation: "shortcuts.player.volume-down",
-            playerCallback: player => async () => {
-                const currentVolume = await player.videoContainer.volume();
-                await player.videoContainer.setVolume(
-                    Math.max(0, currentVolume - 0.1),
-                );
-            },
-            options: { preventDefault: true },
         },
         volumeUp: {
             keys: "shift+up",
             translation: "shortcuts.player.volume-up",
-            playerCallback: player => async () => {
-                const currentVolume = await player.videoContainer.volume();
-                await player.videoContainer.setVolume(
-                    Math.min(1, currentVolume + 0.1),
-                );
-            },
-            options: { preventDefault: true },
         },
         slowDown: {
             keys: "shift+comma",
             translation: "shortcuts.player.slow-down",
-            playerCallback: player => async () => await adjustSpeed(player, -1),
         },
         speedUp: {
             keys: "shift+period",
             translation: "shortcuts.player.speed-up",
-            playerCallback: player => async () => await adjustSpeed(player, 1),
         },
     },
 } as const satisfies Record<string, Record<string, ShortcutProps>>;
