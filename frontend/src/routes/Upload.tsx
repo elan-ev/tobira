@@ -175,10 +175,6 @@ type UploadMainProps = {
 };
 
 const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }) => {
-    // TODO: on first mount, send an `ocRequest` to `info/me.json` and make sure
-    // that connection works. That way we can show an error very early, before
-    // the user selected a file.
-
     const { t } = useTranslation();
     const router = useRouter();
 
@@ -189,6 +185,10 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
     const progressHistory = useRef<ProgressHistory>([]);
     const abortController = useRef(new AbortController());
     const [commit] = useMutation<UploadCreatePlaceholderMutation>(createPlaceholderMutation);
+
+    useEffect(() => {
+        checkInfoMe().catch(error => setUploadState({ state: "error", error }));
+    }, []);
 
     const createPlaceholder = async (event: NewEvent) => commit({
         variables: {
@@ -252,7 +252,13 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
     };
 
     if (files === null) {
-        return <FileSelect onSelect={onFileSelect} />;
+        return <>
+            {uploadState.current?.state === "error" && <>
+                <UploadErrorBox error={uploadState.current.error} />
+                <div css={{ height: 16 }} />
+            </>}
+            <FileSelect onSelect={onFileSelect} />
+        </>;
     } else if (uploadState.current === null) {
         // This never happens as, when files are selected, the upload is
         // instantly started and the state is set to `starting`. Check the only
