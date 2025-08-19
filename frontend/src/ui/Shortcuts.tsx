@@ -192,13 +192,19 @@ export const ShortcutsOverview: React.FC<{ modalRef: React.RefObject<ModalHandle
     const groups: (keyof typeof SHORTCUTS)[] = ["general", "player"];
 
     return (
-        <Modal ref={modalRef} title={t("shortcuts.title")} closeOnOutsideClick css={{
-            maxWidth: 1000,
-            "& > div": {
-                maxHeight: "80vh",
-                overflow: "auto",
-            },
-        }}>
+        <Modal
+            className="disable-background-scroll"
+            ref={modalRef}
+            title={t("shortcuts.title")}
+            closeOnOutsideClick
+            css={{
+                maxWidth: 1000,
+                "& > div": {
+                    maxHeight: "80vh",
+                    overflow: "auto",
+                },
+            }}
+        >
             {groups.map(group => (
                 <section key={group} css={{
                     margin: "32px 0",
