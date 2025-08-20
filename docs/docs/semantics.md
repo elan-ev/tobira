@@ -121,7 +121,11 @@ All these roles can be configured in `auth.roles`.
 | `roles.can_find_unlisted` | Can find unlisted items when editing page content |
 | `roles.global_page_admin` | Is *page admin* on all non-user content-pages |
 | `roles.global_page_moderator` | Is *page moderator* on all non-user content-pages |
+| `roles.can_create_series` | Can create new series |
 | `roles.tobira_admin` | Is *Tobira admin* and can do all of the above |
+
+All users can always see "My videos" and "My series".
+If they do not have write access to any video/series they simply see an empty list and cannot do anything.
 
 For content-pages, permissions can be given to users and groups via the UI.
 Permissions are inherited down the page tree.
