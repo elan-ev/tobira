@@ -668,9 +668,10 @@ manage:
       pas commencer par <code>{{reservedChars}}</code>.
 
   block:
-    text: >
-      Vous pouvez insérer votre texte ici. Vous pouvez également utiliser la
-      fonction Markdown.
+    text:
+      placeholder: >
+        Vous pouvez insérer votre texte ici. Vous pouvez également utiliser la
+        fonction Markdown.
     series:
       invalid: Veuillez sélectionner une série
       findable-series-note: >

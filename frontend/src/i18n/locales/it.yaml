@@ -659,9 +659,10 @@ manage:
       e non devono iniziare con <code>{{reservedChars}}</code>.
 
   block:
-    text: >
-      Qui si può aggiungere il contenuto del testo. È anche possibile utilizzare
-      Markdown.
+    text:
+      placeholder: >
+        Qui si può aggiungere il contenuto del testo. È anche possibile utilizzare
+        Markdown.
     series:
       invalid: Si prega di selezionare una serie
       findable-series-note: >

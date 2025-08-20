@@ -598,7 +598,27 @@ manage:
       and they must not start with <code>{{reservedChars}}</code>.
 
   block:
-    text: You can add your text content here. You can also use Markdown.
+    text:
+      placeholder: You can add your text content here. You can also use Markdown.
+      preview: Preview
+      formatting:
+          guide: Formatting guide
+          description: >
+              You can use Markdown for simple formatting. Below you can find all
+              supported features. Note that images cannot be uploaded here: you
+              must first upload them via different means. Use an empty line to
+              start a new paragraph.
+          result: Result
+          italic: Italic
+          bold: Bold
+          monospace: Monospace
+          link: Link
+          quote: Quote
+          code-block: Code block
+          external-image: External image
+          hr: Separator
+          bullet-points: Bullet points
+          ordered-list: Ordered list
     series:
       invalid: Please select a series
       findable-series-note: >
