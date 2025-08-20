@@ -699,8 +699,8 @@ api-remote-errors:
     no-page-admin-rights: Sie haben nicht die Berechtigung, diese Aktion durchzuführen.
     cannot-create-user-realm: Sie haben nicht die Berechtigung, eine persönliche Seite anzulegen.
     user-realm-already-exists: Ihre persönliche Seite existiert bereits.
-    username-not-valid-as-path: >
-      Ihr Nutzername '{{username}}' enthält Zeichen, die nicht in Seitenpfaden erlaubt sind.
+    handle-not-valid-as-path: >
+      Ihr Nutzername/Handle enthält Zeichen, die nicht in Seitenpfaden erlaubt sind.
       Daher können Sie sich keine persönliche Seite anlegen.
       Kontaktieren Sie einen Systemadministrator für weitere Unterstützung.
   event:

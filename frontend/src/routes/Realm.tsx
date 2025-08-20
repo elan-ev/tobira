@@ -115,7 +115,7 @@ export const RealmRoute = makeRoute({
 const query = graphql`
     query RealmQuery($path: String!) {
         ... UserData
-        currentUser { username canCreateUserRealm }
+        currentUser { userRealmHandle canCreateUserRealm }
         realm: realmByPath(path: $path) {
             name
             path
@@ -300,5 +300,5 @@ export const pathToQuery = (path: string): string => (
 
 const showCreateUserRealmPage = (
     realmPath: string,
-    user?: { username: string; canCreateUserRealm: boolean } | null,
-) => user && `/@${user.username}` === realmPath && user.canCreateUserRealm;
+    user?: { userRealmHandle: string; canCreateUserRealm: boolean } | null,
+) => user && `/@${user.userRealmHandle}` === realmPath && user.canCreateUserRealm;

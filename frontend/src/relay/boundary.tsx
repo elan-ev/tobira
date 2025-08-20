@@ -68,6 +68,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
             if (typeof user === "object" && user
                 && "username" in user && typeof user.username === "string"
                 && "displayName" in user && typeof user.displayName === "string"
+                && "userRealmHandle" in user && typeof user.userRealmHandle === "string"
                 && "canUpload" in user && typeof user.canUpload === "boolean"
                 && "canUseStudio" in user && typeof user.canUseStudio === "boolean"
                 && "canUseEditor" in user && typeof user.canUseEditor === "boolean"
@@ -83,6 +84,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                 userData = {
                     username: user.username,
                     displayName: user.displayName,
+                    userRealmHandle: user.userRealmHandle,
                     canUpload: user.canUpload,
                     canUseStudio: user.canUseStudio,
                     canUseEditor: user.canUseEditor,

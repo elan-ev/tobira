@@ -63,6 +63,7 @@ const check: LoginCheck = async ({ userid, password }) => {
             userRole: user.userRole,
             roles: user.roles.concat(["ROLE_ANONYMOUS", "ROLE_USER"]),
             email: user.email,
+            userRealmHandle: user.userRealmHandle,
         }
     } else {
         console.log(`Invalid login ${userid}:${password}`);
@@ -75,6 +76,7 @@ type DummyUserInfo = {
     userRole: string;
     roles: string[];
     email?: string;
+    userRealmHandle?: string;
     properPassword?: boolean;
 };
 const DUMMY_PASSWORD = "tobira";
@@ -112,6 +114,7 @@ const DUMMY_USERS: Record<string, DummyUserInfo> = {
         roles: ["ROLE_EXTERNAL", "ROLE_TOBIRA_CAN_FIND_UNLISTED",
             "ROLE_TOBIRA_UPLOAD", "ROLE_TOBIRA_STUDIO", "ROLE_TOBIRA_CAN_CREATE_SERIES"],
         email: "bjoerk@example.org",
+        userRealmHandle: "bjorky",
     },
     "morgan": {
         displayName: "Morgan Yu",

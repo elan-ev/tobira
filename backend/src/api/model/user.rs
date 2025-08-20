@@ -45,6 +45,12 @@ impl User {
         &self.display_name
     }
 
+    /// The part of the user realm path after `@`, i.e. `/@${user_realm_handle}`.
+    /// Equals the username, unless overwritten by the auth integration.
+    pub fn user_realm_handle(&self) -> &str {
+        self.user_realm_handle.as_deref().unwrap_or(&self.username)
+    }
+
     /// `True` if the user has the permission to upload videos.
     fn can_upload(&self, context: &Context) -> bool {
         HasRoles::can_upload(self, &context.config.auth)

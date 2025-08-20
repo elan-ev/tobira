@@ -91,6 +91,7 @@ pub(crate) struct User {
     pub(crate) email: Option<String>,
     pub(crate) roles: HashSet<String>,
     pub(crate) user_role: String,
+    pub(crate) user_realm_handle: Option<String>,
 }
 
 impl AuthContext {
@@ -195,7 +196,7 @@ impl User {
             .find_user_role(&username, roles.iter().map(|s| s.as_str()))?
             .to_owned();
 
-        Some(Self { username, display_name, email, roles, user_role })
+        Some(Self { username, display_name, email, roles, user_role, user_realm_handle: None })
     }
 
     /// Handler for `auth.source = "tobira-session"`. Tries to load user data
@@ -212,7 +213,9 @@ impl User {
         };
 
         // Check if such a session exists in the DB.
-        let (selection, mapping) = select!(username, display_name, roles, email);
+        let (selection, mapping) = select!(
+            username, display_name, roles, email, user_role, user_realm_handle,
+        );
         let query = format!(
             "select {selection} from user_sessions \
                 where id = $1 \
@@ -230,10 +233,13 @@ impl User {
 
         let username: String = mapping.username.of(&row);
         let roles = mapping.roles.of::<Vec<String>>(&row);
-        let user_role = auth_config
-            .find_user_role(&username, roles.iter().map(|s| s.as_str()))
-            .expect("user session without user role")
-            .to_owned();
+        let user_realm_handle = mapping.user_realm_handle.of(&row);
+        let user_role = mapping.user_role.of::<Option<String>>(&row).unwrap_or_else(|| {
+            auth_config
+                .find_user_role(&username, roles.iter().map(|s| s.as_str()))
+                .expect("user session without user role")
+                .to_owned()
+        });
 
         Ok(Some(Self {
             username,
@@ -241,6 +247,7 @@ impl User {
             email: mapping.email.of(&row),
             roles: roles.into_iter().collect(),
             user_role,
+            user_realm_handle,
         }))
     }
 
@@ -350,6 +357,7 @@ impl User {
                 email: Option<String>,
                 user_role: String,
                 roles: HashSet<String>,
+                user_realm_handle: Option<String>,
             },
             NoUser,
             // TODO: maybe add "redirect"?
@@ -361,10 +369,13 @@ impl User {
             trace!("Auth callback returned {v:?}");
         }
         match deserialized {
-            Ok(CallbackResponse::User { username, display_name, email, user_role, mut roles }) => {
+            Ok(CallbackResponse::User {
+                username, display_name, email, user_role, mut roles, user_realm_handle,
+            }) => {
                 // Validate values
                 let any_empty = username.is_empty() || display_name.is_empty()
-                    || user_role.is_empty() || roles.contains("");
+                    || user_role.is_empty() || roles.contains("")
+                    || user_realm_handle.as_ref().is_some_and(|s| s.is_empty());
                 if any_empty {
                     error!("Auth callback returned empty strings as user info");
                     return Err(callback_bad_gateway());
@@ -376,7 +387,9 @@ impl User {
                 }
 
                 roles.insert(user_role.clone());
-                Ok(Some(Self { username, display_name, email, roles, user_role }))
+                Ok(Some(Self {
+                    username, display_name, email, roles, user_role, user_realm_handle,
+                }))
             },
             Ok(CallbackResponse::NoUser) => Ok(None),
             Err(e) => {
@@ -398,9 +411,13 @@ impl User {
         let roles = self.roles.iter().collect::<Vec<_>>();
         db.execute_raw(
             "insert into \
-                user_sessions (id, username, display_name, roles, email) \
-                values ($1, $2, $3, $4, $5)",
-            dbargs![&session_id, &self.username, &self.display_name, &roles, &self.email],
+                user_sessions (id, username, display_name, roles, user_role, \
+                    email, user_realm_handle) \
+                values ($1, $2, $3, $4, $5, $6, $7)",
+            dbargs![
+                &session_id, &self.username, &self.display_name,
+                &roles, &self.user_role, &self.email, &self.user_realm_handle,
+            ],
         ).await?;
 
         Ok(session_id)

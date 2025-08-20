@@ -175,17 +175,14 @@ impl Realm {
             .pipe(Ok)
     }
 
-    /// Returns the username of the user owning this realm tree IF it is a user
-    /// realm. Otherwise returns `None`.
-    pub(crate) fn owning_user(&self) -> Option<&str> {
-        self.full_path.strip_prefix("/@")?.split('/').next()
-    }
-
     /// Returns whether the current user is the owner of this realm.
     fn is_current_user_owner(&self, context: &Context) -> bool {
-        self.owning_user().is_some_and(|owning_user| {
-            matches!(&context.auth, AuthContext::User(u) if u.username == owning_user)
-        })
+        let handle = || self.full_path.strip_prefix("/@")?.split('/').next();
+        let Some(handle) = handle() else {
+            return false;
+        };
+
+        matches!(&context.auth, AuthContext::User(u) if u.user_realm_handle() == handle)
     }
 
     pub(crate) fn require_moderator_rights(&self, context: &Context) -> ApiResult<()> {

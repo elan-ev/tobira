@@ -217,7 +217,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
         },
         ...user.canCreateUserRealm ? [{
             icon: <HiOutlineFire />,
-            wrapper: <Link to={`/@${user.username}`} />,
+            wrapper: <Link to={`/@${user.userRealmHandle}`} />,
             children: t("realm.user-realm.my-page"),
             css: indent,
         }] : [],

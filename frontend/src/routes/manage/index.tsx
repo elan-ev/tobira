@@ -96,7 +96,11 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     entries.push([PATH, t("manage.dashboard.title"), <LuLayoutTemplate />]);
 
     if (isRealUser(user) && user.canCreateUserRealm) {
-        entries.push([`/@${user.username}`, t("realm.user-realm.my-page"), <HiOutlineFire />]);
+        entries.push([
+            `/@${user.userRealmHandle}`,
+            t("realm.user-realm.my-page"),
+            <HiOutlineFire />,
+        ]);
     }
 
     entries.push([ManageVideosRoute.url, t("manage.video.table"), <LuFilm />]);

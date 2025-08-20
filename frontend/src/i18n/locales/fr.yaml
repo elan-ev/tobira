@@ -715,10 +715,6 @@ api-remote-errors:
     no-page-admin-rights: Vous n'avez pas l'autorisation d'effectuer cette action.
     cannot-create-user-realm: Vous n'avez pas l'autorisation de créer une page personnelle.
     user-realm-already-exists: Votre page personnelle existe déjà.
-    username-not-valid-as-path: >
-      Votre nom d'utilisateur « {{username}} » contient des caractères non
-      autorisés dans les chemins de page. Vous ne pouvez donc pas créer de page
-      personnelle. Contactez un administrateur système pour obtenir de l'aide.
   event:
     not-found: 'Action échouée : la vidéo n''a pas été trouvée.'
     not-allowed: Vous n'avez pas l'autorisation d'effectuer cette action vidéo.
