@@ -4,12 +4,11 @@ import { graphql, useMutation } from "react-relay";
 import i18n from "../../../i18n";
 import { makeManageSeriesRoute, Series } from "./Shared";
 import { ManageSeriesRoute } from ".";
-import { DirectSeriesRoute, SeriesRoute } from "../../Series";
+import { SeriesRoute } from "../../Series";
 import { Link } from "../../../router";
 import {
     UpdatedCreatedInfo,
     DetailsPage,
-    DirectLink,
     MetadataSection,
     DeleteButton,
     HostRealms,
@@ -21,8 +20,9 @@ import {
 import { useNotification } from "../../../ui/NotificationContext";
 import { ManageVideoListContent } from "../Shared/EditVideoList";
 import { SeriesDetailsContentMutation } from "./__generated__/SeriesDetailsContentMutation.graphql";
-import { Inertable, isSynced } from "../../../util";
+import { Inertable, isSynced, keyOfId } from "../../../util";
 import { NotReadyNote } from "../../util";
+import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
 
 
 const updateSeriesMetadata = graphql`
@@ -72,9 +72,6 @@ export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
             <SeriesNoteSection key="series-note" {...{ series }} />,
             <UpdatedCreatedInfo key="date-info" item={series} />,
             <SeriesButtonSection key="button-section" {...{ series }} />,
-            <DirectLink key="direct-link" url={
-                new URL(DirectSeriesRoute.url({ seriesId: series.id }), document.baseURI)
-            } />,
             <SeriesMetadataSection key="metadata" series={series} />,
             <SeriesContentSection key="content" series={series} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
@@ -100,7 +97,14 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
     const { t } = useTranslation();
     const [commit] = useMutation<SeriesDetailsDeleteMutation>(deleteSeriesMutation);
 
+    const seriesKey = keyOfId(series.id);
+    const shareInfo = {
+        shareUrl: `/!s/${seriesKey}`,
+        rssUrl: `/~rss/series/${seriesKey}`,
+    };
+
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
+        <VideoListShareButton {...shareInfo} css={{ height: 40, borderRadius: 8 }} />
         <DeleteButton
             item={series}
             kind="series"

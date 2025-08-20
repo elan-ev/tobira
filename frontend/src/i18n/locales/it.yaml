@@ -37,8 +37,7 @@ general:
   yesterday-at: Ieri alle {{time}}
   tomorrow-at: Domani alle {{time}}
   weekday-at: '{{weekday}} alle {{time}}'
-  date-at: |
-    {{date}} alle {{time}}
+  date-at: '{{date}} alle {{time}}'
   none: Nessuno
   title: Titolo
 

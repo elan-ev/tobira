@@ -146,7 +146,6 @@ export const DirectLink: React.FC<UrlProps> = ({ url, withTimestamp }) => {
     </div>;
 };
 
-
 type MetadataInput = {
     title: string;
     description?: string | null;
