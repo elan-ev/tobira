@@ -6,6 +6,11 @@ import { SHORTCUTS, useShortcut } from "../Shortcuts";
 import { FRAME_DURATION, SKIP_INTERVAL, SPEEDS } from "./consts";
 
 
+export const isSpaceOnInteractiveElement = (e: KeyboardEvent): boolean => (
+    e.key === " "
+    && (e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement)
+);
+
 type PlayerShortcuts = {
     callback: (activePlayer: Paella) => HotkeyCallback;
     options?: Options,
@@ -24,10 +29,7 @@ export const SHORTCUT_ACTIONS = {
         options: {
             // Don't trigger when a button is focused. This way, users can still
             // use the space bar to control other elements by default.
-            ignoreEventWhen: e => (e.key !== "k" && (
-                e.target instanceof HTMLButtonElement
-                    || e.target instanceof HTMLInputElement
-            )),
+            ignoreEventWhen: isSpaceOnInteractiveElement,
             // But still disable scrolling with space.
             preventDefault: true,
         },
