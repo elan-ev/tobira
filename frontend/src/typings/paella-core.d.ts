@@ -13,6 +13,7 @@ declare module "paella-core" {
          * to the constructor.
          */
         public loadManifest(): Promise<void>;
+        public play(): Promise<void>;
 
         public videoContainer: VideoContainer;
 
@@ -161,4 +162,3 @@ declare module "paella-core" {
         };
     }
 }
-

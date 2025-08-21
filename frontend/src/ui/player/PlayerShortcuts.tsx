@@ -1,9 +1,15 @@
 import { Paella } from "paella-core";
 import { HotkeyCallback, Options } from "react-hotkeys-hook";
+import { useCallback } from "react";
 
-import { ShortcutProps, SHORTCUTS, useShortcut } from "../Shortcuts";
+import { SHORTCUTS, useShortcut } from "../Shortcuts";
 import { FRAME_DURATION, SKIP_INTERVAL, SPEEDS } from "./consts";
 
+
+export const isSpaceOnInteractiveElement = (e: KeyboardEvent): boolean => (
+    e.key === " "
+    && (e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement)
+);
 
 type PlayerShortcuts = {
     callback: (activePlayer: Paella) => HotkeyCallback;
@@ -21,13 +27,9 @@ export const SHORTCUT_ACTIONS = {
             }
         },
         options: {
-            scopes: ["player"],
             // Don't trigger when a button is focused. This way, users can still
             // use the space bar to control other elements by default.
-            ignoreEventWhen: e => (e.key !== "k" && (
-                e.target instanceof HTMLButtonElement
-                    || e.target instanceof HTMLInputElement
-            )),
+            ignoreEventWhen: isSpaceOnInteractiveElement,
             // But still disable scrolling with space.
             preventDefault: true,
         },
@@ -112,30 +114,38 @@ export const SHORTCUT_ACTIONS = {
 } satisfies Record<PlayerAction, PlayerShortcuts>;
 
 
-
-export const PlayerShortcuts: React.FC<{ activePlayer: React.MutableRefObject<Paella | null> }> = ({
-    activePlayer,
-}) => <>{(Object.entries(SHORTCUTS.player) as [PlayerAction, ShortcutProps][]).forEach(
-    ([key, shortcut]) => {
-        const action = SHORTCUT_ACTIONS[key];
-        const hotkeyCallback: HotkeyCallback = () => {
+export const usePlayerShortcuts = (activePlayer: React.MutableRefObject<Paella | null>) => {
+    // Since SHORTCUTS.player is static, the loop always iterates over
+    // the same unchanging array and disabling the hook rule is safe.
+    /* eslint-disable react-hooks/rules-of-hooks */
+    for (const [key, shortcut] of Object.entries(SHORTCUTS.player)) {
+        const action = SHORTCUT_ACTIONS[key as PlayerAction];
+        const hotkeyCallback: HotkeyCallback = useCallback(() => {
             if (activePlayer.current) {
                 const playerCallback = action.callback(activePlayer.current);
                 playerCallback();
             }
-        };
+        }, []);
 
-        // Since SHORTCUTS.player is static, the loop always iterates over
-        // the same unchanging array and disabling the hook rule is safe.
-        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const options = "options" in action ? action.options : undefined;
+        const ignoreEventWhen = useCallback((e: KeyboardEvent) => {
+            if (!activePlayer.current) {
+                return true;
+            }
+            return options?.ignoreEventWhen ? options.ignoreEventWhen(e) : false;
+        }, []);
+
         useShortcut(
             shortcut.keys,
             hotkeyCallback,
-            "options" in action ? action.options : undefined,
-            [activePlayer.current],
+            {
+                ...options,
+                ignoreEventWhen,
+            },
         );
-    },
-)}</>;
+    }
+    /* eslint-enable react-hooks/rules-of-hooks */
+};
 
 export const jumpFrame = async (
     player: Paella,

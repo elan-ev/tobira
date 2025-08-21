@@ -1,5 +1,4 @@
 import React, { ReactNode, StrictMode, Suspense } from "react";
-import { HotkeysProvider } from "react-hotkeys-hook";
 import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
@@ -24,6 +23,7 @@ import { InitialConsent } from "./ui/InitialConsent";
 import { InitialLoading } from "./layout/Root";
 import { NotificationProvider } from "./ui/NotificationContext";
 import { DevConfig } from "./DevConfig";
+import { PlayerGroupProvider } from "./ui/player/PlayerGroupContext";
 
 
 type Props = {
@@ -39,11 +39,11 @@ export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
                     <GlobalStyle />
                     <GlobalErrorBoundary>
                         <RelayEnvironmentProvider {...{ environment }}>
-                            <HotkeysProvider initiallyActiveScopes={["general"]}>
-                                <DevConfig>
-                                    <Router initialRoute={initialRoute}>
-                                        <GraphQLErrorBoundary>
-                                            <MenuProvider>
+                            <DevConfig>
+                                <Router initialRoute={initialRoute}>
+                                    <GraphQLErrorBoundary>
+                                        <MenuProvider>
+                                            <PlayerGroupProvider>
                                                 <NotificationProvider>
                                                     <LoadingIndicator />
                                                     <InitialConsent {...{ consentGiven }} />
@@ -51,11 +51,11 @@ export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
                                                         <ActiveRoute />
                                                     </Suspense>
                                                 </NotificationProvider>
-                                            </MenuProvider>
-                                        </GraphQLErrorBoundary>
-                                    </Router>
-                                </DevConfig>
-                            </HotkeysProvider>
+                                            </PlayerGroupProvider>
+                                        </MenuProvider>
+                                    </GraphQLErrorBoundary>
+                                </Router>
+                            </DevConfig>
                         </RelayEnvironmentProvider>
                     </GlobalErrorBoundary>
                 </AppkitConfigProvider>

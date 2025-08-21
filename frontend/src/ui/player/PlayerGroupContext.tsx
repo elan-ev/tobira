@@ -5,6 +5,7 @@ import React, {
     PropsWithChildren,
     useRef,
 } from "react";
+import { usePlayerShortcuts } from "./PlayerShortcuts";
 
 
 type PlayerGroupContext = {
@@ -45,6 +46,7 @@ export const PlayerGroupProvider: React.FC<PropsWithChildren> = ({ children }) =
         activePlayer.current = player;
     };
 
+    usePlayerShortcuts(activePlayer);
 
     return <PlayerGroupContext.Provider value={{
         players,
