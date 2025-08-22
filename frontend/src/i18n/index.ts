@@ -1,5 +1,5 @@
 import i18n from "i18next";
-import type { ResourceLanguage } from "i18next";
+import type { DefaultNamespace, ParseKeys, ResourceLanguage } from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
@@ -14,6 +14,8 @@ export const languages = {
     fr: { translation: frTranslations as ResourceLanguage },
     it: { translation: itTranslations as ResourceLanguage },
 };
+
+export type TranslationKey = ParseKeys<DefaultNamespace, Record<string, unknown>>;
 
 // TODO: wait for `init` to complete before rendering?
 void i18n

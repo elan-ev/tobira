@@ -418,6 +418,35 @@ player:
     title: Optionen
     label: Optionen anzeigen
 
+shortcuts:
+  title: Tastenkürzel
+  sequence-separator: oder
+  general:
+    title: Allgemein
+    show-overview: Diese Übersicht anzeigen
+    close-modal: Dialog schließen
+    tab: Durch Elemente navigieren
+    search: Suchfeld fokussieren
+  player:
+    title: Videoplayer
+    play: Abspielen/pausieren
+    mute: Stummschaltung ein/aus
+    captions: Untertitel ein/aus
+    fullscreen: Vollbildmodus ein/aus
+    rewind: "{{seconds}} Sekunden zurückspulen"
+    fast-forward: "{{seconds}} Sekunden vorspulen"
+    frame-backward: Zum vorherigen Frame springen
+    frame-forward: Zum nächsten Frame springen
+    volume-down: Lautstärke verringern
+    volume-up: Lautstärke erhöhen
+    slow-down: Wiedergabegeschwindigkeit verringern
+    speed-up: Wiedergabegeschwindigkeit erhöhen
+  keys:
+    escape: Esc
+    space: Leertaste
+    shift: Shift
+    tab: Tab
+
 manage:
   dashboard:
     title: Dashboard

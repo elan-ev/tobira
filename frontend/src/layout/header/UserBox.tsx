@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     LuTriangleAlert, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
@@ -10,6 +10,7 @@ import {
     match, ProtoButton, screenWidthAbove, screenWidthAtMost, Spinner,
     HeaderMenuItemDef, HeaderMenuProps, WithHeaderMenu, checkboxMenuItem, useColorScheme,
 } from "@opencast/appkit";
+import KeyboardWide from "@opencast/appkit/dist/icons/keyboard-wide.svg";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import i18n, { languages } from "../../i18n";
@@ -29,6 +30,8 @@ import { CREDENTIALS_STORAGE_KEY } from "../../routes/Video";
 import { ManageSeriesRoute } from "../../routes/manage/Series";
 import SeriesIcon from "../../icons/series.svg";
 import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
+import { SHORTCUTS, ShortcutsOverview, useShortcut } from "../../ui/Shortcuts";
+import { ModalHandle } from "../../ui/Modal";
 
 
 
@@ -59,6 +62,7 @@ export const UserBox: React.FC = () => {
     }
 
     return <>
+        <ShortcutsButton />
         <LanguageSettings />
         <ColorSchemeSettings />
         {boxContent}
@@ -103,6 +107,24 @@ const LoggedOut: React.FC = () => {
             <span>{t("user.login")}</span>
         </LoginLink>
     );
+};
+
+const ShortcutsButton: React.FC = () => {
+    const { t } = useTranslation();
+    const modalRef = useRef<ModalHandle>(null);
+    const openModal = () => modalRef.current?.open();
+    useShortcut(
+        SHORTCUTS.general.showOverview.keys,
+        openModal,
+        { useKey: true },
+    );
+
+    return <div css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: { display: "none" } }}>
+        <ActionIcon title={t("shortcuts.title")} onClick={openModal}>
+            <KeyboardWide />
+        </ActionIcon>
+        <ShortcutsOverview {...{ modalRef }} />
+    </div>;
 };
 
 /** Header button and associated floating menu to choose between color schemes */

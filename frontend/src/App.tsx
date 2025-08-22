@@ -3,6 +3,7 @@ import { RelayEnvironmentProvider } from "react-relay/hooks";
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "@emotion/cache";
 
+
 import { GlobalErrorBoundary } from "./util/err";
 import { environment } from "./relay";
 import { GlobalStyle } from "./GlobalStyle";
@@ -22,6 +23,7 @@ import { InitialConsent } from "./ui/InitialConsent";
 import { InitialLoading } from "./layout/Root";
 import { NotificationProvider } from "./ui/NotificationContext";
 import { DevConfig } from "./DevConfig";
+import { PlayerGroupProvider } from "./ui/player/PlayerGroupContext";
 
 
 type Props = {
@@ -41,13 +43,15 @@ export const App: React.FC<Props> = ({ initialRoute, consentGiven }) => (
                                 <Router initialRoute={initialRoute}>
                                     <GraphQLErrorBoundary>
                                         <MenuProvider>
-                                            <NotificationProvider>
-                                                <LoadingIndicator />
-                                                <InitialConsent {...{ consentGiven }} />
-                                                <Suspense fallback={<InitialLoading />}>
-                                                    <ActiveRoute />
-                                                </Suspense>
-                                            </NotificationProvider>
+                                            <PlayerGroupProvider>
+                                                <NotificationProvider>
+                                                    <LoadingIndicator />
+                                                    <InitialConsent {...{ consentGiven }} />
+                                                    <Suspense fallback={<InitialLoading />}>
+                                                        <ActiveRoute />
+                                                    </Suspense>
+                                                </NotificationProvider>
+                                            </PlayerGroupProvider>
                                         </MenuProvider>
                                     </GraphQLErrorBoundary>
                                 </Router>

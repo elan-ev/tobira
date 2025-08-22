@@ -128,4 +128,8 @@ const GLOBAL_STYLE = css({
             color: COLORS.neutral70,
         },
     },
+    // Disable background scroll when a modal with this class is open.
+    "body:has(.disable-background-scroll)": {
+        overflow: "hidden",
+    },
 });

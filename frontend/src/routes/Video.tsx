@@ -91,6 +91,9 @@ import {
     VideoPageAuthorizedData$data, VideoPageAuthorizedData$key,
 } from "./__generated__/VideoPageAuthorizedData.graphql";
 import { QrCodeButton, ShareButton } from "../ui/ShareButton";
+import { SHORTCUTS, useShortcut } from "../ui/Shortcuts";
+import { usePlayerGroupContext } from "../ui/player/PlayerGroupContext";
+import { isSpaceOnInteractiveElement } from "../ui/player/PlayerShortcuts";
 
 
 // ===========================================================================================
@@ -583,6 +586,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
                     />
                     : <PreviewPlaceholder {...{ event, refetch }}/>
                 }
+                <StartPlayingShortcut />
                 <Metadata {...{ event, realmPath }} />
             </section>
         </PlayerContextProvider>
@@ -604,6 +608,26 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
             />
         }
     </>;
+};
+
+/** Adds a shortcut to start playing the video. */
+const StartPlayingShortcut: React.FC = () => {
+    // This is done here and not in `PlayerGroupContext`, where all other
+    // shortcuts are registered as there we don't have access to not yet playing
+    // Paella instances. Of course we could change the group context so that
+    // we also register not yet playing players.
+    const { paella } = usePlayerContext();
+    const { activePlayer } = usePlayerGroupContext();
+    useShortcut(SHORTCUTS.player.play.keys, () => {
+        if (!activePlayer.current) {
+            paella.current?.player.play?.();
+        }
+    }, {
+        preventDefault: true,
+        ignoreEventWhen: isSpaceOnInteractiveElement,
+    });
+
+    return null;
 };
 
 type ProtectedPlayerProps = {
