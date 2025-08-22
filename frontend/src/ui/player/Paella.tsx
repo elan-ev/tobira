@@ -16,6 +16,8 @@ import { usePlayerGroupContext } from "./PlayerGroupContext";
 import CONFIG from "../../config";
 import i18n from "../../i18n";
 import { SKIP_INTERVAL } from "./consts";
+import { screenWidthAtMost } from "@opencast/appkit";
+import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 
 
 type PaellaPlayerProps = {
@@ -235,6 +237,12 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                         padding: "2px 3px",
                     },
                 },
+                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                    "& .popup-content": {
+                        transform: "scale(0.9)",
+                        padding: "4px 0",
+                    },
+                },
             },
             ".paella-fallback-fullscreen": {
                 position: "fixed !important" as "fixed",
@@ -324,6 +332,68 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
 
                 ":hover .preview-play-icon, .loader-container i": {
                     opacity: "1 !important",
+                },
+
+                [screenWidthAtMost(600)]: {
+                    "& .progress-indicator": {
+                        marginBottom: "-9px",
+                    },
+
+                    "& .button-plugins": {
+                        transform: "scale(0.9)",
+                    },
+
+                    "& .button-plugins.left-side": {
+                        marginLeft: "-6px !important",
+                    },
+
+                    "& .button-plugins.right-side": {
+                        marginRight: "-2px !important",
+                        marginLeft: "-22px !important",
+                    },
+
+                    // While this could follow the same approach as the captions
+                    // button (whose visibility is decided conditionally in the config
+                    // when the player is initialized), I think it's better to have this
+                    // responsive, even if this needs to resort to a... somewhat questionable
+                    // css workaround. This way, the time is only circumcised in portrait mode
+                    // but still fully visible in landscape.
+                    // Does not account for videos lengths >= 100h.
+                    '& div[name="es.upv.paella.customTimeProgressIndicator"]': {
+                        width: event.syncedData.duration < 3600000 ? "5ch" : "8ch",
+                        overflowY: "hidden",
+                    },
+
+                    // The slider is hidden by paella magic on mobile devices, but not on
+                    // very narrow desktop windows. At least sometimes. The behavior appears
+                    // to be inconsistent. We shrink it a little, just in case it does decide
+                    // to show up and mess with the layout. The positioning rules are needed
+                    // to prevent unexplainable layout shifts.
+                    "& .volume-slider": {
+                        width: 70,
+                        transform: "scale(0.9)",
+
+                        position: "absolute",
+                        bottom: 0.5,
+                        margin: "0 -1px",
+                    },
+                },
+
+                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                    // On iOS, the volume button itself is completely hidden, but I think
+                    // that having at the least the option to mute a video is a good thing,
+                    // so we keep it on other devices. But just in case, this forces the slider
+                    // to hide, mainly to prevent the inconsistent behavior mentioned above.
+                    "& .volume-slider": {
+                        display: "none !important",
+                    },
+                },
+
+                [screenWidthAtMost(330)]: {
+                    // Below 331px we always hide the button to prevent line breaks.
+                    "& .volume-button": {
+                        display: "none !important",
+                    },
                 },
             }}
         />
@@ -536,6 +606,9 @@ const PAELLA_CONFIG = {
             side: "right",
             order: 9,
             tabIndex: 9,
+            // Non-responsive (everything here is static), but it's the best we can
+            // do in this context.
+            ...window.innerWidth < BREAKPOINT_SMALL && { parentContainer: "optionsContainer" },
         },
         "es.upv.paella.fullscreenButton": {
             enabled: true,
