@@ -3,13 +3,14 @@ import { useTranslation } from "react-i18next";
 import {
     LuTriangleAlert, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
-    LuCirclePlus, LuKeyboard,
+    LuCirclePlus,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
     match, ProtoButton, screenWidthAbove, screenWidthAtMost, Spinner,
     HeaderMenuItemDef, HeaderMenuProps, WithHeaderMenu, checkboxMenuItem, useColorScheme,
 } from "@opencast/appkit";
+import KeyboardWide from "@opencast/appkit/dist/icons/keyboard-wide.svg";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import i18n, { languages } from "../../i18n";
@@ -120,7 +121,7 @@ const ShortcutsButton: React.FC = () => {
 
     return <div css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: { display: "none" } }}>
         <ActionIcon title={t("shortcuts.title")} onClick={openModal}>
-            <LuKeyboard />
+            <KeyboardWide />
         </ActionIcon>
         <ShortcutsOverview {...{ modalRef }} />
     </div>;

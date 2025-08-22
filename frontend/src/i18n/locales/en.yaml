@@ -420,6 +420,9 @@ shortcuts:
   keys:
     escape: Esc
     space: Spacebar
+    shift: Shift
+    tab: Tab
+
 
 manage:
   dashboard:
