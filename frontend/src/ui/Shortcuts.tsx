@@ -5,11 +5,11 @@ import {
     LuArrowBigUp,
     LuArrowLeft,
     LuArrowRight,
-    LuArrowRightToLine,
     LuArrowDown,
     LuArrowUp,
 } from "react-icons/lu";
 import { match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
+import TabIcon from "@opencast/appkit/dist/icons/tab-key.svg";
 
 import { Modal, ModalHandle } from "./Modal";
 import { COLORS } from "../color";
@@ -185,12 +185,12 @@ const ShortcutKeys: React.FC<{ shortcut: string }> = ({ shortcut }) => {
                 "space": () => <>{t("shortcuts.keys.space")}</>,
                 "period": () => <>.</>,
                 "comma": () => <>,</>,
-                "up": () => <LuArrowUp size={20} title={key} />,
-                "down": () => <LuArrowDown size={20} title={key} />,
-                "left": () => <LuArrowLeft title={key} />,
-                "right": () => <LuArrowRight title={key} />,
-                "shift": () => <LuArrowBigUp size={20} title={key} />,
-                "tab": () => <LuArrowRightToLine size={20} title={key} />,
+                "up": () => <LuArrowUp />,
+                "down": () => <LuArrowDown />,
+                "left": () => <LuArrowLeft />,
+                "right": () => <LuArrowRight />,
+                "shift": () => <>{t("shortcuts.keys.shift")}<LuArrowBigUp /></>,
+                "tab": () => <>{t("shortcuts.keys.tab")}<TabIcon /></>,
             }) ?? <>{key}</>;
             return (
                 <React.Fragment key={shortcut + key}>
