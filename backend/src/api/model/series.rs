@@ -13,7 +13,7 @@ use crate::{
             acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
-            shared::{SortDirection, ToSqlColumn, convert_acl_input},
+            shared::{SortDirection, ToSqlColumn, SearchFilter, convert_acl_input},
         },
         util::LazyLoad,
     },
@@ -382,6 +382,7 @@ impl Series {
         order: SortOrder<SeriesSortColumn>,
         offset: i32,
         limit: i32,
+        filter: Option<SearchFilter>,
     ) -> ApiResult<Connection<Series>> {
         let parts = ConnectionQueryParts {
             table: "all_series",
@@ -406,7 +407,7 @@ impl Series {
                     .collect(),
             });
             out
-        }).await
+        }, filter).await
     }
 
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {

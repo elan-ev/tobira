@@ -527,12 +527,20 @@ manage:
       previous: 'Pagina precedente '
       next: Pagina successiva
       last: Ultima pagina
-    columns:
+    filter:
+      by-title: Filtrare per titolo
+    sorting:
+      label: Ordinare le voci
+      sort-by: Ordinare per
+      order: Organizzare
       description: Ordina per {{title}}, {{direction}}
       ascending: crescente
       descending: decrescente
+      ascending-cap: Crescente
+      descending-cap: Decrescente
       created: Creato
       updated: Aggiornato
+      unknown: Ordinamento sconosciuto
     no-series-title: Titolo mancante
     no-entries-found: Nessuna voce trovata.
     missing-date: Sconosciuto
