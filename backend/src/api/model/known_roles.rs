@@ -19,19 +19,21 @@ pub struct KnownGroup {
     pub(crate) role: String,
     pub(crate) label: TranslatedString,
     pub(crate) implies: Vec<String>,
+    pub(crate) sort_key: Option<String>,
     pub(crate) large: bool,
 }
 
 impl_from_db!(
     KnownGroup,
     select: {
-        known_groups.{ role, label, implies, large },
+        known_groups.{ role, label, implies, sort_key, large },
     },
     |row| {
         KnownGroup {
             role: row.role(),
             label: row.label(),
             implies: row.implies(),
+            sort_key: row.sort_key(),
             large: row.large(),
         }
     },

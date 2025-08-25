@@ -43,7 +43,7 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
 
 ```json
 {
-    "ROLE_STUDENT": { "label": { "default": "Students", "de": "Studierende" }, "implies": [], "large": true },
+    "ROLE_STUDENT": { "label": { "default": "Students", "de": "Studierende" }, "implies": [], "sortKey": "_c", "large": true },
     "ROLE_STAFF": { "label": { "default": "Staff", "de": "Angestellte" }, "implies": [], "large": true },
     "ROLE_LECTURER": { "label": { "default": "Lecturers", "de": "Vortragende" }, "implies": ["ROLE_STAFF"], "large": true },
     "ROLE_TOBIRA_MODERATOR": { "label": { "default": "Moderators", "de": "Moderierende" }, "implies": ["ROLE_STAFF"], "large": false }
@@ -63,6 +63,10 @@ Field explanation:
   All roles automatically imply `ROLE_USER` and `ROLE_ANONYMOUS`.
 - `large`: set to `true` if this group is considered so large that giving write access to it is unusual enough to show a warning in the ACL interface.
   `ROLE_USER` and `ROLE_ANONYMOUS` are both considered large.
+- `sortKey`: optional, used to sort entries in the group selector.
+  Entries with same `sortKey` are sorted alphabetically.
+  Entries without `sortKey` are sorted last.
+  By default, `ROLE_ANONYMOUS` has sortKey "_a" and `ROLE_USER` has "_b".
 
 Note that `upsert` is idempotent, so you can simply call this as part of your Ansible script, for example.
 

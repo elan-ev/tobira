@@ -371,6 +371,7 @@ type KnownGroup {
   role: String!
   label: TranslatedString!
   implies: [String!]!
+  sortKey: String
   large: Boolean!
 }
 
