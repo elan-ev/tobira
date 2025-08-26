@@ -1,4 +1,4 @@
-import { i18n } from "i18next";
+import { i18n, TFunction } from "i18next";
 import { MutableRefObject, PropsWithChildren, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bug, match, useColorScheme } from "@opencast/appkit";
@@ -8,6 +8,7 @@ import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import { COLORS } from "../color";
+import { Caption } from "../ui/player";
 
 
 /**
@@ -334,3 +335,23 @@ export const floatingMenuProps = (isDark: boolean) => ({
     borderWidth: isDark ? 1 : 0,
     backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral05,
 }) as const;
+
+
+// We try to come up with usable labels for the tracks. This should be
+// improved in the future, hopefully by getting better information.
+export const captionsWithLabels = (
+    captions: readonly Caption[],
+    t: TFunction,
+): { label: string, caption: Caption }[] => {
+    // We add numbers to the labels if there would otherwise be two same labels.
+    const captionNumbering = captions.length
+        !== new Set(captions.map(({ lang }) => lang ?? null)).size;
+
+    return captions.map((caption, index) => {
+        const langText = caption.lang ? ` (${caption.lang})` : "";
+        const numberingText = captionNumbering ? ` [${index + 1}]` : "";
+        const label = t("video.caption") + langText + numberingText;
+
+        return { label, caption };
+    });
+};

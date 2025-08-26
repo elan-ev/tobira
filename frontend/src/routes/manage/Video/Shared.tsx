@@ -106,6 +106,7 @@ const query = graphql`
                 }
                 authorizedData {
                     tracks { flavor resolution mimetype uri }
+                    captions { uri lang }
                 }
                 series {
                     id

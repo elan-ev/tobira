@@ -1,10 +1,13 @@
-import { PropsWithChildren, useState } from "react";
+import { Fragment, PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuCircleUser, LuVolume2 } from "react-icons/lu";
 import { useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
 import { MovingTruck } from "./Waiting";
+import { AuthorizedEvent } from "../routes/manage/Video/Shared";
+import { Caption } from "./player";
+import { captionsWithLabels } from "../util";
 
 
 export type ThumbnailItemStatus = "ready" | "waiting" | "deleted";
@@ -339,3 +342,110 @@ export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
             </ul>
         </div>
 );
+
+
+type TrackInfoProps = {
+    event: {
+        authorizedData?: null | {
+            tracks: NonNullable<AuthorizedEvent["authorizedData"]>["tracks"];
+            captions: readonly Caption[];
+        };
+    };
+    translateFlavors?: boolean;
+};
+
+export const TrackInfo: React.FC<TrackInfoProps> = (
+    { event, translateFlavors = false },
+) => {
+    const { t } = useTranslation();
+
+    if (event.authorizedData == null) {
+        return null;
+    }
+
+
+    const flavorTranslation = (flavor: string) => {
+        if (flavor.startsWith("presenter")) {
+            return t("video.download.presenter");
+        }
+        if (flavor.startsWith("presentation")) {
+            return t("video.download.slides");
+        }
+        return flavor;
+    };
+
+    const flavors: Map<string, SingleTrackInfo[]> = new Map();
+    for (const { flavor, resolution, mimetype, uri } of event.authorizedData.tracks) {
+        let tracks = flavors.get(flavor);
+        if (tracks === undefined) {
+            tracks = [];
+            flavors.set(flavor, tracks);
+        }
+
+        tracks.push({ resolution, mimetype, uri });
+    }
+
+    const isSingleFlavor = flavors.size === 1;
+
+    return <ul css={{ fontSize: 15, marginTop: 8, paddingLeft: 24 }}>
+        {Array.from(flavors, ([flavor, tracks]) => {
+            const trackItems = tracks
+                .sort((a, b) => (a.resolution?.[0] ?? 0) - (b.resolution?.[0] ?? 0))
+                .map((track, i) => <TrackItem key={i} {...track} />);
+            const flavorLabel = translateFlavors
+                ? flavorTranslation(flavor)
+                : <code>{flavor}</code>;
+            const flat = isSingleFlavor && translateFlavors;
+
+            return <Fragment key={flavor}>
+                {flat ? trackItems : <li>{flavorLabel}<ul>{trackItems}</ul></li>}
+            </Fragment>;
+        })}
+        <VTTInfo captions={event.authorizedData.captions} />
+    </ul>;
+};
+
+
+type SingleTrackInfo = {
+    resolution?: readonly number[] | null;
+    mimetype?: string | null;
+    uri: string;
+};
+
+const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => {
+    const { t } = useTranslation();
+    const type = mimetype && mimetype.split("/")[0];
+    const subtype = mimetype && mimetype.split("/")[1];
+    const typeTranslation = (type === "audio" || type === "video")
+        ? t(`manage.video.technical-details.${type}`)
+        : type;
+
+    const resolutionString = (type && " ")
+        + "("
+        + [subtype, resolution?.join(" × ")].filter(Boolean).join(", ")
+        + ")";
+
+    return (
+        <li css={{ marginBottom: 4 }}>
+            <a href={uri}>
+                {type
+                    ? <>{typeTranslation}</>
+                    : <i>{t("manage.video.technical-details.unknown-mimetype")}</i>
+                }
+                {(resolution || subtype) && resolutionString}
+            </a>
+        </li>
+    );
+};
+
+const VTTInfo: React.FC<{ captions: readonly Caption[] }> = ({ captions }) => {
+    const { t } = useTranslation();
+
+    return <>{captionsWithLabels(captions, t).map(({ caption, label }) =>
+        <li key={label}>
+            <a href={caption.uri}>
+                {label}
+            </a>
+        </li>)
+    }</>;
+};
