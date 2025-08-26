@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Fragment } from "react";
 
 import { NotAuthorized } from "../../../ui/error";
 import { useUser } from "../../../User";
@@ -130,9 +131,9 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
                     : <code>{flavor}</code>;
                 const flat = isSingleFlavor && translateFlavors;
 
-                return <li key={flavor}>
-                    {flat ? trackItems : <>{flavorLabel}<ul>{trackItems}</ul></>}
-                </li>;
+                return <Fragment key={flavor}>
+                    {flat ? trackItems : <li>{flavorLabel}<ul>{trackItems}</ul></li>}
+                </Fragment>;
             })}
         </ul>
     </section>;
