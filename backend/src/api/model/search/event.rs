@@ -79,7 +79,7 @@ impl Node for SearchEvent {
 impl SearchEvent {
     pub(crate) fn without_matches(src: search::Event, context: &Context) -> Self {
         let read_roles = decode_acl(&src.read_roles);
-        let user_can_read = context.auth.overlaps_roles(read_roles);
+        let user_can_read = context.auth.overlaps_roles(read_roles, &context.config.auth);
         Self::new_inner(src, vec![], SearchEventMatches::default(), user_can_read)
     }
 
@@ -90,7 +90,7 @@ impl SearchEvent {
     ) -> Self {
         let mut text_matches = Vec::new();
         let read_roles = decode_acl(&src.read_roles);
-        let user_can_read = context.auth.overlaps_roles(read_roles);
+        let user_can_read = context.auth.overlaps_roles(read_roles, &context.config.auth);
         if user_can_read {
             src.slide_texts.resolve_matches(
                 match_ranges_for(match_positions, "slide_texts.texts"),

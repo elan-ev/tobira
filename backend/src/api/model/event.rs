@@ -293,7 +293,7 @@ impl AuthorizedEvent {
                 && password.map_or(false, |p| sha1_matches(&p, &credentials.password))
         });
 
-        if context.auth.overlaps_roles(&self.read_roles) || credentials_match {
+        if context.auth.overlaps_roles(&self.read_roles, &context.config.auth) || credentials_match {
             self.authorized_data.as_ref()
         } else {
             None
@@ -302,7 +302,7 @@ impl AuthorizedEvent {
 
     /// Whether the current user has write access to this event.
     fn can_write(&self, context: &Context) -> bool {
-        context.auth.overlaps_roles(&self.write_roles)
+        context.auth.overlaps_roles(&self.write_roles, &context.config.auth)
     }
 
     fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {
@@ -311,7 +311,7 @@ impl AuthorizedEvent {
 
     /// Whether the event has active workflows.
     async fn workflow_status(&self, context: &Context) -> ApiResult<WorkflowStatus> {
-        if !context.auth.overlaps_roles(&self.write_roles) {
+        if !context.auth.overlaps_roles(&self.write_roles, &context.config.auth) {
             return Err(err::not_authorized!(
                 key = "event.workflow.not-allowed",
                 "you are not allowed to inquire about this event's workflow activity",
@@ -495,8 +495,8 @@ impl AuthorizedEvent {
     }
 
     fn can_be_previewed(&self, context: &Context) -> bool {
-        context.auth.overlaps_roles(&self.preview_roles)
-            || context.auth.overlaps_roles(&self.read_roles)
+        context.auth.overlaps_roles(&self.preview_roles, &context.config.auth)
+            || context.auth.overlaps_roles(&self.read_roles, &context.config.auth)
     }
 
     fn series_key(&self) -> Option<Key> {
@@ -512,7 +512,7 @@ impl AuthorizedEvent {
             .ok_or_else(||  err::invalid_input!(key = "event.not-found", "event not found"))?
             .into_result()?;
 
-        if !context.auth.overlaps_roles(&event.write_roles) {
+        if !context.auth.overlaps_roles(&event.write_roles, &context.config.auth) {
             return Err(err::not_authorized!(key = "event.not-allowed", "event action not allowed"));
         }
 

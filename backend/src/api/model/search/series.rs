@@ -61,7 +61,7 @@ impl SearchSeries {
                 .collect(),
             thumbnail_stack: SeriesThumbnailStack {
                 thumbnails: src.thumbnails.into_iter()
-                    .filter_map(|info| ThumbnailInfo::from_search(info, &context.auth))
+                    .filter_map(|info| ThumbnailInfo::from_search(info, &context))
                     .take(3)
                     .collect(),
             },
