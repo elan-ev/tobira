@@ -1,5 +1,8 @@
-import { Card, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
-import { useState, useRef, useEffect, ReactNode, ComponentType, PropsWithChildren } from "react";
+import {
+    Card, currentRef, match, ProtoButton,
+    screenWidthAtMost, useColorScheme,
+} from "@opencast/appkit";
+import { useRef, ReactNode, ComponentType, useEffect, PropsWithChildren, useState } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -7,19 +10,21 @@ import {
     LuArrowUpWideNarrow,
     LuChevronLeft,
     LuChevronRight,
+    LuX,
 } from "react-icons/lu";
+import { HiOutlineSearch } from "react-icons/hi";
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { PrettyDate, prettyDate } from "../../../ui/time";
-import { IconWithTooltip } from "../../../ui";
+import { focusStyle, IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
 import { SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
 import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
-import { Link } from "../../../router";
+import { Link, useRouter } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
@@ -34,6 +39,7 @@ type ItemVars = {
         direction: SortDirection;
     };
     page: number;
+    filters: Record<string, string>;
 };
 
 export type SharedManageProps<T> = {
@@ -87,6 +93,7 @@ export const ManageItems = <T extends Item>({
                 gap: 16,
             }}>
                 <Notification />
+                <SearchField {...{ vars }} />
                 <span css={{ marginLeft: "auto" }}>
                     <PageNavigation {...{ vars, connection }} />
                 </span>
@@ -111,8 +118,121 @@ export const ManageItems = <T extends Item>({
                 link: ManageRoute.url,
             }]} />
             <PageTitle title={title} css={{ marginBottom: 32 }} />
-            {children}
+            {children && <div css={{ marginBottom: 24 }}>
+                {children}
+            </div>}
             {inner}
+        </div>
+    );
+};
+
+const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+    const { t } = useTranslation();
+    const ref = useRef<HTMLInputElement>(null);
+    const router = useRouter();
+
+    const search = (q: string) => {
+        router.goto(varsToLink({
+            order: {
+                column: vars.order.column,
+                direction: vars.order.direction,
+            },
+            page: 1,
+            filters: { title: q },
+        }));
+
+    };
+
+    return (
+        <div css={{
+            position: "relative",
+            flex: 1,
+            maxWidth: 372,
+        }}>
+            <HiOutlineSearch css={{
+                position: "absolute",
+                height: "100%",
+                left: 11,
+                fontSize: 23,
+                color: COLORS.neutral60,
+            }} />
+            <form onSubmit={event => {
+                event.preventDefault();
+                search(currentRef(ref).value);
+
+                // Hide mobile keyboard on enter. The mobile keyboard hides lots
+                // of results and intuitively, pressing "enter" on it should
+                // close the keyboard. We don't want to remove focus for
+                // desktop users though, since that doesn't do any good. The
+                // check is not perfect but should actually detect virtual
+                // keyboard very reliably.
+                const visualHeight = window.visualViewport?.height;
+                if (visualHeight && visualHeight < window.innerHeight) {
+                    ref.current?.blur();
+                }
+            }}>
+                <label css={{ display: "flex" }}>
+                    <span css={{ display: "none" }}>{t("search.input-label")}</span>
+                    <input
+                        ref={ref}
+                        type="text"
+                        placeholder={t("manage.table.filter.by-title")}
+                        defaultValue={vars.filters.title}
+                        css={{
+                            flex: 1,
+                            color: COLORS.neutral60,
+                            backgroundColor: COLORS.neutral05,
+                            border: `1px solid ${COLORS.neutral40}`,
+                            borderRadius: 4,
+                            minWidth: 50,
+                            height: 42,
+                            paddingLeft: 42,
+                            paddingRight: 12,
+                            ":hover": {
+                                borderColor: COLORS.neutral25,
+                                outline: `2.5px solid ${COLORS.neutral25}`,
+                                outlineOffset: -1,
+                            },
+                            ":focus-visible": { borderColor: COLORS.focus },
+                            ...focusStyle({ offset: -1 }),
+                            "&::placeholder": {
+                                color: COLORS.neutral60,
+                                opacity: 1,
+                            },
+                        }}
+                    />
+                </label>
+            </form>
+            <ProtoButton
+                aria-label={t("search.clear")}
+                // Just clear the search input
+                onClick={() => {
+                    const { title, ...restFilters } = vars.filters;
+                    router.goto(varsToLink({
+                        order: {
+                            column: vars.order.column,
+                            direction: vars.order.direction,
+                        },
+                        page: 1,
+                        filters: restFilters,
+                    }));
+                }}
+                css={{
+                    ":hover, :focus": {
+                        color: COLORS.neutral90,
+                        borderColor: COLORS.neutral25,
+                        outline: `2.5px solid ${COLORS.neutral25}`,
+                    },
+                    ...focusStyle({}),
+                    borderRadius: 4,
+                    color: COLORS.neutral60,
+                    position: "absolute",
+                    top: 9,
+                    right: 9,
+                }}
+            >
+                <LuX size={24} css={{ display: "block" }} />
+            </ProtoButton>
         </div>
     );
 };
@@ -429,6 +549,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                     direction,
                 },
                 page: vars.page,
+                filters: vars.filters,
             })}
             css={{
                 display: "inline-flex",
@@ -575,6 +696,20 @@ export const parsePaginationAndDirection = (
     return { page, direction, sortColumn };
 };
 
+
+const FILTERS = ["title"];
+
+const parseFilters = (queryParams: URLSearchParams): Record<string, string> => {
+    const filters: Record<string, string> = {};
+    for (const name of FILTERS) {
+        const value = queryParams.get(`filter:${name}`);
+        if (value !== null) {
+            filters[name] = value;
+        }
+    }
+    return filters;
+};
+
 /**
  * Creates a parser function that extracts query variables for a specific resource
  * (i.e. series, videos or playlists) from URL query parameters.
@@ -587,11 +722,13 @@ export function createQueryParamsParser<ColumnType extends string>(
     return (queryParams: URLSearchParams) => {
         const { page, direction, sortColumn } = parsePaginationAndDirection(queryParams);
         const column = parseColumnFn(sortColumn);
+        const filters = parseFilters(queryParams);
         return {
             order: { column, direction },
             page,
             limit: LIMIT,
             offset: Math.max(0, (page - 1) * LIMIT),
+            filters,
         };
     };
 }
@@ -611,6 +748,12 @@ const varsToQueryParams = (vars: ItemVars): URLSearchParams => {
 
     if (vars.page !== 1) {
         searchParams.set("page", String(vars.page));
+    }
+
+    if (vars.filters) {
+        for (const [key, value] of Object.entries(vars.filters)) {
+            searchParams.set(`filter:${key}`, value);
+        }
     }
 
     return searchParams;
