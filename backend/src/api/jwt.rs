@@ -88,7 +88,7 @@ pub(crate) async fn jwt(
             let opencast_id: String = mapping.opencast_id.of(&row);
             let write_roles: Vec<String> = mapping.write_roles.of(&row);
 
-            if !context.auth.overlaps_roles(&write_roles) {
+            if !context.auth.overlaps_roles(&write_roles, &context.config.auth) {
                 deny!("edit that event");
             }
 

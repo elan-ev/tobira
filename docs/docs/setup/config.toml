@@ -381,6 +381,12 @@
 # Default value: ["ROLE_USER_"]
 #user_role_prefixes = ["ROLE_USER_"]
 
+# List of tenant specific admin roles that have the same permission level
+# as ROLE_ADMIN for that tenant.
+#
+# Default value: "ROLE_TENANT_ADMIN"
+#tenant_admin = "ROLE_TENANT_ADMIN"
+
 
 [log]
 # Specifies what log messages to emit, based on the module path and log level.

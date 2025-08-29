@@ -374,6 +374,11 @@ pub(crate) struct RoleConfig {
     /// `role_user_prefix` in `acl.default.create.properties` in OC.
     #[config(default = ["ROLE_USER_"])]
     pub(crate) user_role_prefixes: Vec<String>,
+
+    /// List of tenant specific admin roles that have the same permission level
+    /// as ROLE_ADMIN for that tenant.
+    #[config(default = "ROLE_TENANT_ADMIN")]
+    pub(crate) tenant_admin: String,
 }
 
 

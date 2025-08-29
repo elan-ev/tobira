@@ -478,14 +478,14 @@ enum Filter {
 
     /// A constant `true`. Inside `Or`, results in the whole `Or` expression
     /// being replaced by `True`. Inside `And`, this is just filtered out and
-    /// the remaining operands are evaluated. If formated on its own, empty
+    /// the remaining operands are evaluated. If formatted on its own, empty
     /// string is emitted.
     True,
 }
 
 impl Filter {
     fn make_or_true_for_admins(context: &Context, f: impl FnOnce() -> Self) -> Self {
-        if context.auth.is_admin() { Self::True } else { f() }
+        if context.auth.is_admin(&context.config.auth) { Self::True } else { f() }
     }
 
     fn or(operands: impl IntoIterator<Item = Self>) -> Self {
@@ -512,7 +512,7 @@ impl Filter {
         Self::Leaf("listed = true".into())
     }
 
-    /// If the user can find unlisted items, just returns `self`. Otherweise,
+    /// If the user can find unlisted items, just returns `self`. Otherwise,
     /// `self` is ANDed with `Self::listed()`.
     fn and_listed(self, context: &Context) -> Self {
         if context.auth.can_find_unlisted_items(&context.config.auth) {

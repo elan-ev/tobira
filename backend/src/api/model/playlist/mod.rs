@@ -93,7 +93,7 @@ impl Playlist {
             .await?
             .map(|row| {
                 let playlist = AuthorizedPlaylist::from_row_start(&row);
-                if context.auth.overlaps_roles(&playlist.read_roles) {
+                if context.auth.overlaps_roles(&playlist.read_roles, &context.config.auth) {
                     Playlist::Playlist(playlist)
                 } else {
                     Playlist::NotAllowed(NotAllowed)
@@ -153,7 +153,7 @@ impl AuthorizedPlaylist {
                 }
 
                 let event = AuthorizedEvent::from_row(&row, mapping.event);
-                if !context.auth.overlaps_roles(&event.read_roles) {
+                if !context.auth.overlaps_roles(&event.read_roles, &context.config.auth) {
                     return VideoListEntry::NotAllowed(NotAllowed);
                 }
 

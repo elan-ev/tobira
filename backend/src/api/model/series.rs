@@ -137,7 +137,7 @@ impl Series {
             .await?
             .ok_or_else(|| err::invalid_input!(key = "series.not-found", "series not found"))?;
 
-        if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[])) {
+        if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[]), &context.config.auth) {
             return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
         }
 
@@ -402,7 +402,7 @@ impl Series {
             out.thumbnail_stack = LazyLoad::Loaded(SeriesThumbnailStack {
                 thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(row)
                     .into_iter()
-                    .filter_map(|info| ThumbnailInfo::from_search(info, &context.auth))
+                    .filter_map(|info| ThumbnailInfo::from_search(info, &context))
                     .collect(),
             });
             out
@@ -697,7 +697,7 @@ impl Series {
 
     /// Whether the current user has write access to this series.
     fn can_write(&self, context: &Context) -> bool {
-        self.write_roles.as_ref().is_some_and(|roles| context.auth.overlaps_roles(roles))
+        self.write_roles.as_ref().is_some_and(|roles| context.auth.overlaps_roles(roles, &context.config.auth))
     }
 
     fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {

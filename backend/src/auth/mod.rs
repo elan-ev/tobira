@@ -455,7 +455,7 @@ pub(crate) trait HasRoles {
     }
 
     fn is_tobira_admin(&self, auth_config: &AuthConfig) -> bool {
-        self.is_admin() || self.roles().contains(&auth_config.roles.tobira_admin)
+        self.is_admin(auth_config) || self.roles().contains(&auth_config.roles.tobira_admin)
     }
 
     fn can_upload(&self, auth_config: &AuthConfig) -> bool {
@@ -496,16 +496,20 @@ pub(crate) trait HasRoles {
 
     /// Returns `true` if the user is a global Opencast administrator and can do
     /// anything.
-    fn is_admin(&self) -> bool {
-        self.roles().contains(ROLE_ADMIN)
+    fn is_admin(&self, auth_config: &AuthConfig) -> bool {
+        self.roles().contains(ROLE_ADMIN) || self.is_tenant_admin(auth_config)
     }
 
-    fn overlaps_roles<I, T>(&self, acls: I) -> bool
+    fn is_tenant_admin(&self, auth_config: &AuthConfig) -> bool {
+        self.roles().contains(&auth_config.roles.tenant_admin)
+    }
+
+    fn overlaps_roles<I, T>(&self, acls: I, auth_config: &AuthConfig) -> bool
     where
         I: IntoIterator<Item = T>,
         T: AsRef<str>,
     {
-        self.is_admin() || acls.into_iter().any(|role| self.roles().contains(role.as_ref()))
+        self.is_admin(auth_config) || acls.into_iter().any(|role| self.roles().contains(role.as_ref()))
     }
 }
 
