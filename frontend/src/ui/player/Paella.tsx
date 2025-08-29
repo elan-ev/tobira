@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 
 import { isHlsTrack, PlayerEvent, Track } from ".";
 import { SPEEDS, TRANSLATIONS } from "./consts";
-import { timeStringToSeconds } from "../../util";
+import { captionsText, timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
 import CONFIG from "../../config";
@@ -69,9 +69,6 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 fixedDuration = 1;
             }
 
-            // We add numbers to the labels if there would otherwise be two same labels.
-            const captionNumbering = event.authorizedData.captions.length
-                !== new Set(event.authorizedData.captions.map(({ lang }) => lang ?? null)).size;
             const manifest: Manifest = {
                 metadata: {
                     title: event.title,
@@ -98,11 +95,11 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     format: "vtt",
                     url: uri,
                     lang: lang ?? undefined,
-                    // We try to come up with usable labels for the tracks. This should be
-                    // improved in the future, hopefully by getting better information.
-                    text: t("video.caption")
-                        + (lang ? ` (${lang})` : "")
-                        + (captionNumbering ? ` [${index + 1}]` : ""),
+                    text: captionsText({
+                        lang: lang ?? undefined,
+                        index,
+                        captions: event.authorizedData.captions,
+                    }),
                 })),
                 frameList: event.authorizedData.segments.map(segment => {
                     const time = segment.startTime / 1000;

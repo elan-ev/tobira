@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Fragment } from "react";
 
 import { NotAuthorized } from "../../../ui/error";
 import { useUser } from "../../../User";
@@ -10,6 +11,8 @@ import { COLORS } from "../../../color";
 import { ManageRoute } from "..";
 import { ManageVideosRoute } from ".";
 import { ManageVideoDetailsRoute } from "./VideoDetails";
+import { Caption } from "../../../ui/player";
+import { captionsText } from "../../../util";
 
 
 export const ManageVideoTechnicalDetailsRoute = makeManageVideoRoute(
@@ -26,6 +29,7 @@ type TrackInfoProps = {
     event: {
         authorizedData?: null | {
             tracks: NonNullable<AuthorizedEvent["authorizedData"]>["tracks"];
+            captions: readonly Caption[];
         };
     };
     className?: string;
@@ -60,7 +64,13 @@ const Page: React.FC<Props> = ({ event }) => {
             },
         }}>
             <OpencastId event={event} />
-            <TrackInfo event={event} />
+            <TrackInfo event={{
+                ...event,
+                authorizedData: {
+                    tracks: event.authorizedData?.tracks ?? [],
+                    captions: event.authorizedData?.captions ?? [],
+                },
+            }} />
             <FurtherInfo event={event} />
         </div>
     </>;
@@ -130,10 +140,11 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
                     : <code>{flavor}</code>;
                 const flat = isSingleFlavor && translateFlavors;
 
-                return <li key={flavor}>
+                return <Fragment key={flavor}>
                     {flat ? trackItems : <>{flavorLabel}<ul>{trackItems}</ul></>}
-                </li>;
+                </Fragment>;
             })}
+            {event.authorizedData.captions && <VTTInfo captions={event.authorizedData.captions} />}
         </ul>
     </section>;
 };
@@ -164,6 +175,21 @@ const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => 
         </li>
     );
 };
+
+const VTTInfo: React.FC<{ captions: readonly Caption[] }> = ({ captions }) => <>{
+    captions.map((caption, index) => {
+        const label = captionsText({
+            lang: caption.lang ?? undefined,
+            index,
+            captions,
+        });
+        return <li key={label}>
+            <a href={caption.uri}>
+                {label}
+            </a>
+        </li>;
+    })
+}</>;
 
 const FurtherInfo: React.FC<Props> = ({ event }) => {
     const { t, i18n } = useTranslation();

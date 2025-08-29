@@ -8,6 +8,8 @@ import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import { COLORS } from "../color";
+import { Caption } from "../ui/player";
+import translator from "../i18n";
 
 
 /**
@@ -334,3 +336,23 @@ export const floatingMenuProps = (isDark: boolean) => ({
     borderWidth: isDark ? 1 : 0,
     backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral05,
 }) as const;
+
+
+type CaptionTextProps = {
+    lang?: string;
+    index: number;
+    captions: readonly Caption[];
+};
+
+// We try to come up with usable labels for the tracks. This should be
+// improved in the future, hopefully by getting better information.
+export const captionsText = ({ lang, index, captions } : CaptionTextProps) => {
+    // We add numbers to the labels if there would otherwise be two same labels.
+    const captionNumbering = captions.length
+        !== new Set(captions.map(({ lang }) => lang ?? null)).size;
+
+    const langText = lang ? ` (${lang})` : "";
+    const numberingText = captionNumbering ? ` [${index + 1}]` : "";
+
+    return translator.t("video.caption") + langText + numberingText;
+};
