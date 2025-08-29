@@ -27,7 +27,7 @@ import { ellipsisOverflowCss, focusStyle } from "../../../ui";
 import { Thumbnail } from "../../../ui/Video";
 import { Link } from "../../../router";
 import { DirectVideoRoute } from "../../Video";
-import { thumbnailLinkStyle, titleLinkStyle } from "./Table";
+import { thumbnailLinkStyle } from "./Table";
 import { useNavBlocker } from "../../util";
 import { UploadRoute } from "../../Upload";
 import { LinkButton } from "../../../ui/LinkButton";
@@ -305,8 +305,11 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                             fontSize: 14,
                             borderRadius: 4,
                             maxWidth: "fit-content",
+                            textDecoration: "none",
+                            ":focus, :focus-visible": {
+                                outline: "none",
+                            },
                             ...ellipsisOverflowCss(1),
-                            ...titleLinkStyle,
                             ...focusStyle({ offset: 1 }),
                         }}>
                             {event.title}
