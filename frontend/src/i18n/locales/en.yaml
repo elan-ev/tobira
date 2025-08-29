@@ -512,6 +512,8 @@ manage:
       previous: Previous page
       next: Next page
       last: Last page
+    filter:
+      by-title: Filter by title
     columns:
       description: 'Sort by {{title}}, {{direction}}'
       ascending: ascending

@@ -1,5 +1,5 @@
-import { Card, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
-import { useState, useRef, useEffect, ReactNode, ComponentType, PropsWithChildren } from "react";
+import { Card, currentRef, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
+import { useRef, ReactNode, ComponentType, useEffect, PropsWithChildren, useState } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -19,13 +19,14 @@ import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
 import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
-import { Link } from "../../../router";
+import { Link, useRouter } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
 import { OcEntity } from "../../../util";
 import { isSynced } from "../../../util";
 import { ThumbnailItemStatus } from "../../../ui/Video";
+import { SearchInput } from "../../../layout/header/Search";
 
 
 type ItemVars = {
@@ -34,6 +35,7 @@ type ItemVars = {
         direction: SortDirection;
     };
     page: number;
+    filters: Record<string, string>;
 };
 
 export type SharedManageProps<T> = {
@@ -72,24 +74,26 @@ export const ManageItems = <T extends Item>({
 
     let inner;
     if (connection.items.length === 0) {
-        inner = <div css={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 32 }}>
+        inner = <div css={{ display: "flex", flexDirection: "column" }}>
             <Notification />
-            <Card kind="info" css={{ width: "fit-content", marginTop: 16 }}>
+            <SearchField {...{ vars }} />
+            <Card kind="info" css={{ width: "fit-content", marginTop: 32 }}>
                 {t("manage.table.no-entries-found")}
             </Card>
         </div>;
     } else {
         inner = <>
+            <Notification />
             <div css={{
                 display: "flex",
                 justifyContent: "space-between",
                 flexWrap: "wrap",
                 gap: 16,
             }}>
-                <Notification />
-                <span css={{ marginLeft: "auto" }}>
+                <SearchField {...{ vars }} />
+                <div css={{ marginLeft: "auto" }}>
                     <PageNavigation {...{ vars, connection }} />
-                </span>
+                </div>
             </div>
             <div css={{ flex: "1 0 0", margin: "16px 0" }}>
                 <ItemTable {...{ vars, connection, additionalColumns, RenderRow }} />
@@ -115,6 +119,47 @@ export const ManageItems = <T extends Item>({
             {inner}
         </div>
     );
+};
+
+const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+    const { t } = useTranslation();
+    const inputRef = useRef<HTMLInputElement>(null);
+    const router = useRouter();
+
+    const search = (q: string) => {
+        router.goto(varsToLink({
+            order: {
+                column: vars.order.column,
+                direction: vars.order.direction,
+            },
+            page: vars.page,
+            filters: { title: q },
+        }));
+
+    };
+
+    const clear = () => {
+        const { title, ...restFilters } = vars.filters;
+        if (Object.keys(vars.filters).length) {
+            router.goto(varsToLink({
+                order: {
+                    column: vars.order.column,
+                    direction: vars.order.direction,
+                },
+                page: vars.page,
+                filters: restFilters,
+            }));
+        } else {
+            const input = currentRef(inputRef);
+            input.value = "";
+        }
+    };
+
+    return <SearchInput
+        {...{ search, inputRef, clear }}
+        defaultValue={vars.filters.title}
+        inputProps={{ placeholder: t("manage.table.filter.by-title") }}
+    />;
 };
 
 const THUMBNAIL_WIDTH = 16 * 8;
@@ -429,6 +474,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                     direction,
                 },
                 page: vars.page,
+                filters: vars.filters,
             })}
             css={{
                 display: "inline-flex",
@@ -575,6 +621,16 @@ export const parsePaginationAndDirection = (
     return { page, direction, sortColumn };
 };
 
+const parseFilters = (queryParams: URLSearchParams): Record<string, string> => {
+    const filters: Record<string, string> = {};
+    for (const [key, value] of queryParams.entries()) {
+        if (key !== "page" && key !== "sort") {
+            filters[key] = value;
+        }
+    }
+    return filters;
+};
+
 /**
  * Creates a parser function that extracts query variables for a specific resource
  * (i.e. series, videos or playlists) from URL query parameters.
@@ -587,11 +643,13 @@ export function createQueryParamsParser<ColumnType extends string>(
     return (queryParams: URLSearchParams) => {
         const { page, direction, sortColumn } = parsePaginationAndDirection(queryParams);
         const column = parseColumnFn(sortColumn);
+        const filters = parseFilters(queryParams);
         return {
             order: { column, direction },
             page,
             limit: LIMIT,
             offset: Math.max(0, (page - 1) * LIMIT),
+            filters,
         };
     };
 }
@@ -611,6 +669,12 @@ const varsToQueryParams = (vars: ItemVars): URLSearchParams => {
 
     if (vars.page !== 1) {
         searchParams.set("page", String(vars.page));
+    }
+
+    if (vars.filters) {
+        for (const [key, value] of Object.entries(vars.filters)) {
+            searchParams.set(key, value);
+        }
     }
 
     return searchParams;

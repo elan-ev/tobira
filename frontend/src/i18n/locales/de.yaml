@@ -535,6 +535,8 @@ manage:
       previous: Vorherige Seite
       next: Nächste Seite
       last: Letzte Seite
+    filter:
+      by-title: Nach Titel filtern
     columns:
       description: 'Sortieren nach {{title}}, {{direction}}'
       ascending: aufsteigend
