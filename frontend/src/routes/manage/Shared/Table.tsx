@@ -1,7 +1,4 @@
-import {
-    Card, currentRef, match, ProtoButton,
-    screenWidthAtMost, useColorScheme,
-} from "@opencast/appkit";
+import { Card, currentRef, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
 import { useRef, ReactNode, ComponentType, useEffect, PropsWithChildren, useState } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -10,14 +7,12 @@ import {
     LuArrowUpWideNarrow,
     LuChevronLeft,
     LuChevronRight,
-    LuX,
 } from "react-icons/lu";
-import { HiOutlineSearch } from "react-icons/hi";
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { PrettyDate, prettyDate } from "../../../ui/time";
-import { focusStyle, IconWithTooltip } from "../../../ui";
+import { IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
 import { SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
@@ -31,6 +26,7 @@ import { useNotification } from "../../../ui/NotificationContext";
 import { OcEntity } from "../../../util";
 import { isSynced } from "../../../util";
 import { ThumbnailItemStatus } from "../../../ui/Video";
+import { SearchInput } from "../../../layout/header/Search";
 
 
 type ItemVars = {
@@ -78,25 +74,26 @@ export const ManageItems = <T extends Item>({
 
     let inner;
     if (connection.items.length === 0) {
-        inner = <div css={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 32 }}>
+        inner = <div css={{ display: "flex", flexDirection: "column" }}>
             <Notification />
-            <Card kind="info" css={{ width: "fit-content", marginTop: 16 }}>
+            <SearchField {...{ vars }} />
+            <Card kind="info" css={{ width: "fit-content", marginTop: 32 }}>
                 {t("manage.table.no-entries-found")}
             </Card>
         </div>;
     } else {
         inner = <>
+            <Notification />
             <div css={{
                 display: "flex",
                 justifyContent: "space-between",
                 flexWrap: "wrap",
                 gap: 16,
             }}>
-                <Notification />
                 <SearchField {...{ vars }} />
-                <span css={{ marginLeft: "auto" }}>
+                <div css={{ marginLeft: "auto" }}>
                     <PageNavigation {...{ vars, connection }} />
-                </span>
+                </div>
             </div>
             <div css={{ flex: "1 0 0", margin: "16px 0" }}>
                 <ItemTable {...{ vars, connection, additionalColumns, RenderRow }} />
@@ -128,7 +125,7 @@ export const ManageItems = <T extends Item>({
 
 const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     const { t } = useTranslation();
-    const ref = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
 
     const search = (q: string) => {
@@ -143,98 +140,28 @@ const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
 
     };
 
-    return (
-        <div css={{
-            position: "relative",
-            flex: 1,
-            maxWidth: 372,
-        }}>
-            <HiOutlineSearch css={{
-                position: "absolute",
-                height: "100%",
-                left: 11,
-                fontSize: 23,
-                color: COLORS.neutral60,
-            }} />
-            <form onSubmit={event => {
-                event.preventDefault();
-                search(currentRef(ref).value);
+    const clear = () => {
+        const { title, ...restFilters } = vars.filters;
+        if (Object.keys(vars.filters).length) {
+            router.goto(varsToLink({
+                order: {
+                    column: vars.order.column,
+                    direction: vars.order.direction,
+                },
+                page: 1,
+                filters: restFilters,
+            }));
+        } else {
+            const input = currentRef(inputRef);
+            input.value = "";
+        }
+    };
 
-                // Hide mobile keyboard on enter. The mobile keyboard hides lots
-                // of results and intuitively, pressing "enter" on it should
-                // close the keyboard. We don't want to remove focus for
-                // desktop users though, since that doesn't do any good. The
-                // check is not perfect but should actually detect virtual
-                // keyboard very reliably.
-                const visualHeight = window.visualViewport?.height;
-                if (visualHeight && visualHeight < window.innerHeight) {
-                    ref.current?.blur();
-                }
-            }}>
-                <label css={{ display: "flex" }}>
-                    <span css={{ display: "none" }}>{t("search.input-label")}</span>
-                    <input
-                        ref={ref}
-                        type="text"
-                        placeholder={t("manage.table.filter.by-title")}
-                        defaultValue={vars.filters.title}
-                        css={{
-                            flex: 1,
-                            color: COLORS.neutral60,
-                            backgroundColor: COLORS.neutral05,
-                            border: `1px solid ${COLORS.neutral40}`,
-                            borderRadius: 4,
-                            minWidth: 50,
-                            height: 42,
-                            paddingLeft: 42,
-                            paddingRight: 12,
-                            ":hover": {
-                                borderColor: COLORS.neutral25,
-                                outline: `2.5px solid ${COLORS.neutral25}`,
-                                outlineOffset: -1,
-                            },
-                            ":focus-visible": { borderColor: COLORS.focus },
-                            ...focusStyle({ offset: -1 }),
-                            "&::placeholder": {
-                                color: COLORS.neutral60,
-                                opacity: 1,
-                            },
-                        }}
-                    />
-                </label>
-            </form>
-            <ProtoButton
-                aria-label={t("search.clear")}
-                // Just clear the search input
-                onClick={() => {
-                    const { title, ...restFilters } = vars.filters;
-                    router.goto(varsToLink({
-                        order: {
-                            column: vars.order.column,
-                            direction: vars.order.direction,
-                        },
-                        page: 1,
-                        filters: restFilters,
-                    }));
-                }}
-                css={{
-                    ":hover, :focus": {
-                        color: COLORS.neutral90,
-                        borderColor: COLORS.neutral25,
-                        outline: `2.5px solid ${COLORS.neutral25}`,
-                    },
-                    ...focusStyle({}),
-                    borderRadius: 4,
-                    color: COLORS.neutral60,
-                    position: "absolute",
-                    top: 9,
-                    right: 9,
-                }}
-            >
-                <LuX size={24} css={{ display: "block" }} />
-            </ProtoButton>
-        </div>
-    );
+    return <SearchInput
+        {...{ search, inputRef, clear }}
+        defaultValue={vars.filters.title}
+        inputProps={{ placeholder: t("manage.table.filter.by-title") }}
+    />;
 };
 
 const THUMBNAIL_WIDTH = 16 * 8;
