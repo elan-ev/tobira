@@ -95,7 +95,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
     return <Inertable isInert={inFlight || !!commitError} css={{ marginBottom: 32, maxWidth: 750 }}>
         <div css={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <h2 css={{ fontSize: 20 }}>
-                {t("video.singular")}
+                {t("video.plural")}
             </h2>
             <i css={{ fontSize: 14, color: COLORS.neutral50 }}>
                 ({listEntries.length > 0
