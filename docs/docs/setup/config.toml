@@ -151,6 +151,13 @@
 # Default value: true
 #explicit_rss_content = true
 
+# Whether users can remove events from a series they have write access for.
+# Should to be disabled when the connected Opencast requires events to always
+# be part of a series, as removing wouldn't work in that case.
+#
+# Default value: true
+#allow_series_event_removal = true
+
 
 [db]
 # The username of the database user.

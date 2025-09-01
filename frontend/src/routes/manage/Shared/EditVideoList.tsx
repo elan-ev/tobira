@@ -7,6 +7,7 @@ import {
     boxError,
     bug,
     Button,
+    Card,
     Floating,
     FloatingContainer,
     FloatingHandle,
@@ -32,6 +33,7 @@ import { useNavBlocker } from "../../util";
 import { UploadRoute } from "../../Upload";
 import { LinkButton } from "../../../ui/LinkButton";
 import { isRealUser, useUser } from "../../../User";
+import CONFIG from "../../../config";
 
 
 type Entry = Series["entries"][number];
@@ -107,6 +109,9 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
             {description}
         </p>}
+        {!CONFIG.allowSeriesEventRemoval && <Card kind="info">
+            {t("manage.video-list.removing-disabled")}
+        </Card>}
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
             <AddVideoMenu {...{ setEvents, events }} />
             {/* // Todo: Omit upload button when adding this route for playlists */}
@@ -375,7 +380,7 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                                 ({t("manage.video-list.edit.cannot-be-removed")})
                             </i>}
                             <Button
-                                disabled={!event.canWrite}
+                                disabled={!event.canWrite || !CONFIG.allowSeriesEventRemoval}
                                 kind="danger"
                                 css={buttonStyle}
                                 onClick={onChange}

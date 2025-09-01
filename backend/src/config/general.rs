@@ -135,6 +135,12 @@ pub(crate) struct GeneralConfig {
     /// content in your Tobira is safe for all audiences.
     #[config(default = true)]
     pub explicit_rss_content: bool,
+
+    /// Whether users can remove events from a series they have write access for.
+    /// Should to be disabled when the connected Opencast requires events to always
+    /// be part of a series, as removing wouldn't work in that case.
+    #[config(default = true)]
+    pub allow_series_event_removal: bool,
 }
 
 const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];
