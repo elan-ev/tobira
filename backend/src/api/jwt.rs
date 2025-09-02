@@ -3,7 +3,7 @@ use serde_json::json;
 
 use crate::{
     api::err::{invalid_input, not_authorized},
-    auth::AuthContext,
+    auth::AuthState,
     db::util::select,
     prelude::HasRoles,
 };
@@ -17,7 +17,7 @@ pub(crate) async fn jwt(
     opencast_id: Option<String>,
     context: &Context,
 ) -> ApiResult<String> {
-    let AuthContext::User(user) = &context.auth else {
+    let AuthState::User(user) = &context.auth.state else {
         return Err(not_authorized!("only logged in users can get a JWT"));
     };
 
@@ -88,7 +88,7 @@ pub(crate) async fn jwt(
             let opencast_id: String = mapping.opencast_id.of(&row);
             let write_roles: Vec<String> = mapping.write_roles.of(&row);
 
-            if !context.auth.overlaps_roles(&write_roles, &context.config.auth) {
+            if !context.auth.overlaps_roles(&write_roles) {
                 deny!("edit that event");
             }
 

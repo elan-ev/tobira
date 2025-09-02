@@ -3,14 +3,9 @@ use postgres_types::{FromSql, ToSql};
 
 use crate::{
     api::{
-        Context,
-        err::ApiResult,
-        Id,
-        model::acl::{self, Acl},
-        Node,
-        NodeValue,
+        err::ApiResult, model::acl::{self, Acl}, Context, Id, Node, NodeValue
     },
-    auth::AuthContext,
+    auth::AuthState,
     db::util::impl_from_db,
     model::Key,
     prelude::*,
@@ -182,7 +177,7 @@ impl Realm {
             return false;
         };
 
-        matches!(&context.auth, AuthContext::User(u) if u.user_realm_handle() == handle)
+        matches!(&context.auth.state, AuthState::User(u) if u.user_realm_handle() == handle)
     }
 
     pub(crate) fn require_moderator_rights(&self, context: &Context) -> ApiResult<()> {
@@ -396,7 +391,7 @@ impl Realm {
     fn is_current_user_page_admin(&self, context: &Context) -> bool {
         context.auth.is_global_page_admin(&context.config.auth)
             || self.is_current_user_owner(context)
-            || context.auth.overlaps_roles(&self.flattened_admin_roles, &context.config.auth)
+            || context.auth.overlaps_roles(&self.flattened_admin_roles)
     }
 
     /// Returns whether the current user has the rights to add sub-pages and edit realm content
@@ -404,6 +399,6 @@ impl Realm {
     fn can_current_user_moderate(&self, context: &Context) -> bool {
         context.auth.is_global_page_moderator(&context.config.auth)
             || self.is_current_user_owner(context)
-            || context.auth.overlaps_roles(&self.flattened_moderator_roles, &context.config.auth)
+            || context.auth.overlaps_roles(&self.flattened_moderator_roles)
     }
 }

@@ -6,7 +6,6 @@ use meilisearch_sdk::search::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
-    auth::HasRoles,
     db::types::TextAssetType,
     search::{self, util::decode_acl},
 };
@@ -79,7 +78,7 @@ impl Node for SearchEvent {
 impl SearchEvent {
     pub(crate) fn without_matches(src: search::Event, context: &Context) -> Self {
         let read_roles = decode_acl(&src.read_roles);
-        let user_can_read = context.auth.overlaps_roles(read_roles, &context.config.auth);
+        let user_can_read = context.auth.overlaps_roles(read_roles);
         Self::new_inner(src, vec![], SearchEventMatches::default(), user_can_read)
     }
 
@@ -90,7 +89,7 @@ impl SearchEvent {
     ) -> Self {
         let mut text_matches = Vec::new();
         let read_roles = decode_acl(&src.read_roles);
-        let user_can_read = context.auth.overlaps_roles(read_roles, &context.config.auth);
+        let user_can_read = context.auth.overlaps_roles(read_roles);
         if user_can_read {
             src.slide_texts.resolve_matches(
                 match_ranges_for(match_positions, "slide_texts.texts"),

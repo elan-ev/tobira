@@ -305,7 +305,7 @@ pub(crate) async fn all_events(
     context: &Context,
 ) -> ApiResult<EventSearchOutcome> {
     let elapsed_time = measure_search_duration();
-    if !context.auth.is_user() {
+    if !context.auth.state.is_user() {
         return Err(context.not_logged_in_error());
     }
 
@@ -379,7 +379,7 @@ pub(crate) async fn all_series(
     context: &Context,
 ) -> ApiResult<SeriesSearchOutcome> {
     let elapsed_time = measure_search_duration();
-    if !context.auth.is_user() {
+    if !context.auth.state.is_user() {
         return Err(context.not_logged_in_error());
     }
 
@@ -430,7 +430,7 @@ pub(crate) async fn all_playlists(
     context: &Context,
 ) -> ApiResult<PlaylistSearchOutcome> {
     let elapsed_time = measure_search_duration();
-    if !context.auth.is_user() {
+    if !context.auth.state.is_user() {
         return Err(context.not_logged_in_error());
     }
 

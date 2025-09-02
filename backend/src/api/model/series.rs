@@ -137,7 +137,7 @@ impl Series {
             .await?
             .ok_or_else(|| err::invalid_input!(key = "series.not-found", "series not found"))?;
 
-        if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[]), &context.config.auth) {
+        if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[])) {
             return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
         }
 
@@ -233,7 +233,7 @@ impl Series {
     }
 
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
-        context.auth.required_trusted_external()?;
+        context.auth.state.required_trusted_external()?;
         Self::create(series, None, context).await
     }
 
@@ -242,7 +242,7 @@ impl Series {
         target_path: String,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.auth.required_trusted_external()?;
+        context.auth.state.required_trusted_external()?;
 
         let series = Self::load_by_opencast_id(series_oc_id, context)
             .await?
@@ -287,7 +287,7 @@ impl Series {
         path: String,
         context: &Context,
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
-        context.auth.required_trusted_external()?;
+        context.auth.state.required_trusted_external()?;
 
         let series = Self::load_by_opencast_id(series_oc_id, context)
             .await?
@@ -336,7 +336,7 @@ impl Series {
         new_realms: Vec<RealmSpecifier>,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.auth.required_trusted_external()?;
+        context.auth.state.required_trusted_external()?;
 
         // Check parameters
         if new_realms.iter().rev().skip(1).any(|r| r.name.is_none()) {
@@ -697,7 +697,7 @@ impl Series {
 
     /// Whether the current user has write access to this series.
     fn can_write(&self, context: &Context) -> bool {
-        self.write_roles.as_ref().is_some_and(|roles| context.auth.overlaps_roles(roles, &context.config.auth))
+        self.write_roles.as_ref().is_some_and(|roles| context.auth.overlaps_roles(roles))
     }
 
     fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {

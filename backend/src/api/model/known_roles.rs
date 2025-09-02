@@ -77,7 +77,7 @@ pub(crate) async fn search_known_users(
     context: &Context,
 ) -> ApiResult<KnownUsersSearchOutcome> {
     let elapsed_time = measure_search_duration();
-    if !context.auth.is_user() {
+    if !context.auth.state.is_user() {
         return Err(context.not_logged_in_error());
     }
 

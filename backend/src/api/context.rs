@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     api::err::{ApiError, ApiErrorKind},
-    auth::{JwtContext, AuthContext},
+    auth::{JwtContext, AuthContext, AuthState},
     config::Config,
     db::Transaction,
     search,
@@ -28,7 +28,7 @@ impl Context {
         translation_key: &'static str,
         msg: impl FnOnce(&str) -> String,
     ) -> ApiError {
-        if let AuthContext::User(user) = &self.auth {
+        if let AuthState::User(user) = &self.auth.state {
             ApiError {
                 msg: msg(&user.username),
                 kind: ApiErrorKind::NotAuthorized,

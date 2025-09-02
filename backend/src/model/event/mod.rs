@@ -2,7 +2,7 @@ use juniper::GraphQLObject;
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
-use crate::{api::Context, HasRoles};
+use crate::api::Context;
 
 
 /// Information necessary to render a thumbnail.
@@ -26,7 +26,7 @@ pub struct SearchThumbnailInfo {
 
 impl ThumbnailInfo {
     pub(crate) fn from_search(info: SearchThumbnailInfo, context: &Context) -> Option<Self> {
-        if context.auth.overlaps_roles(info.read_roles, &context.config.auth) {
+        if context.auth.overlaps_roles(info.read_roles) {
             Some(Self {
                 url: info.url,
                 live: info.live,
