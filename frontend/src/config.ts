@@ -29,6 +29,7 @@ type Config = {
     usersSearchable: boolean;
     allowAclEdit: boolean;
     lockAclToSeries: boolean;
+    allowSeriesEventRemoval: boolean;
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
