@@ -70,10 +70,9 @@ import {
     PlaylistBlockPlaylistData$key,
 } from "../ui/Blocks/__generated__/PlaylistBlockPlaylistData.graphql";
 import { getEventTimeInfo } from "../util/video";
-import { formatDuration } from "../ui/Video";
+import { formatDuration, TrackInfo } from "../ui/Video";
 import { ellipsisOverflowCss } from "../ui";
 import { realmBreadcrumbs } from "../util/realm";
-import { TrackInfo } from "./manage/Video/TechnicalDetails";
 import { COLORS } from "../color";
 import { preciseDateTime, preferredLocaleForLang, PrettyDate } from "../ui/time";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
@@ -989,7 +988,7 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 <Card kind="info" iconPos="left" css={{ maxWidth: 400, fontSize: 14 }}>
                     {t("video.download.info")}
                 </Card>
-                <TrackInfo event={event} translateFlavors css={{ h2: { display: "none" } }} />
+                <TrackInfo event={event} translateFlavors />
             </Floating>
         </FloatingContainer>
     );
