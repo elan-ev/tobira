@@ -15,7 +15,7 @@ use std::{
 
 use crate::{
     api,
-    auth::{self, AuthContext},
+    auth::{self, AuthContext, AuthState},
     db::{self, Transaction},
     http::response::bad_request,
     metrics::HttpReqCategory,
@@ -228,7 +228,7 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
     let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
     // Get auth session
-    let auth = AuthContext::new(&parts.headers, &connection, &ctx).await?;
+    let auth = AuthState::new(&parts.headers, &connection, &ctx).await?;
 
     let tx = match connection.transaction().await {
         Ok(tx) => tx,
@@ -271,7 +271,10 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
 
     let api_context = Arc::new(api::Context {
         db: Transaction::new(tx.clone()),
-        auth,
+        auth: AuthContext {
+            state: auth,
+            config: ctx.config.auth.clone(),
+        },
         config: ctx.config.clone(),
         jwt: ctx.jwt.clone(),
         search: ctx.search.clone(),
@@ -287,7 +290,7 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
 
     // Get some values out of the context before dropping it
     let num_queries = api_context.db.num_queries();
-    let username = api_context.auth.debug_log_username();
+    let username = api_context.auth.state.debug_log_username();
     drop(api_context);
 
     // Check whether we own the last remaining handle of this Arc.

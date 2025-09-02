@@ -233,7 +233,7 @@ impl Series {
     }
 
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
-        context.auth.required_trusted_external()?;
+        context.auth.state.required_trusted_external()?;
         Self::create(series, None, context).await
     }
 
@@ -242,7 +242,7 @@ impl Series {
         target_path: String,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.auth.required_trusted_external()?;
+        context.auth.state.required_trusted_external()?;
 
         let series = Self::load_by_opencast_id(series_oc_id, context)
             .await?
@@ -287,7 +287,7 @@ impl Series {
         path: String,
         context: &Context,
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
-        context.auth.required_trusted_external()?;
+        context.auth.state.required_trusted_external()?;
 
         let series = Self::load_by_opencast_id(series_oc_id, context)
             .await?
@@ -336,7 +336,7 @@ impl Series {
         new_realms: Vec<RealmSpecifier>,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.auth.required_trusted_external()?;
+        context.auth.state.required_trusted_external()?;
 
         // Check parameters
         if new_realms.iter().rev().skip(1).any(|r| r.name.is_none()) {
@@ -402,7 +402,7 @@ impl Series {
             out.thumbnail_stack = LazyLoad::Loaded(SeriesThumbnailStack {
                 thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(row)
                     .into_iter()
-                    .filter_map(|info| ThumbnailInfo::from_search(info, &context.auth))
+                    .filter_map(|info| ThumbnailInfo::from_search(info, &context))
                     .collect(),
             });
             out

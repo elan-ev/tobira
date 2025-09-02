@@ -6,7 +6,6 @@ use meilisearch_sdk::search::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
-    auth::HasRoles,
     db::types::TextAssetType,
     search::{self, util::decode_acl},
 };

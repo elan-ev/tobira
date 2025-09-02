@@ -7,7 +7,7 @@ use crate::{
         Id,
         model::block::RemovedBlock,
     },
-    auth::AuthContext,
+    auth::AuthState,
     model::Key,
     prelude::*,
 };
@@ -30,8 +30,8 @@ impl Realm {
             return Err(invalid_input!(key = "realm.path-is-reserved", "path is reserved and cannot be used"));
         }
 
-        let roles = match &context.auth {
-            AuthContext::User(user) if !parent.is_current_user_owner(context) => vec![&user.user_role],
+        let roles = match &context.auth.state {
+            AuthState::User(user) if !parent.is_current_user_owner(context) => vec![&user.user_role],
             _ => vec![]
         };
 
@@ -65,7 +65,7 @@ impl Realm {
                 |user| format!("'{user}' is not allowed to create their user realm")
             ));
         }
-        let AuthContext::User(user) = &context.auth else { unreachable!() };
+        let AuthState::User(user) = &context.auth.state else { unreachable!() };
         let db = &context.db;
 
         let res = db.query_one(
@@ -353,7 +353,7 @@ impl Realm {
         realms: Vec<RealmLineageComponent>,
         context: &Context,
     ) -> ApiResult<CreateRealmLineageOutcome> {
-        context.auth.required_trusted_external()?;
+        context.auth.state.required_trusted_external()?;
 
         if realms.len() == 0 {
             return Ok(CreateRealmLineageOutcome { num_created: 0 });

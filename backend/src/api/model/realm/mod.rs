@@ -3,14 +3,9 @@ use postgres_types::{FromSql, ToSql};
 
 use crate::{
     api::{
-        Context,
-        err::ApiResult,
-        Id,
-        model::acl::{self, Acl},
-        Node,
-        NodeValue,
+        err::ApiResult, model::acl::{self, Acl}, Context, Id, Node, NodeValue
     },
-    auth::AuthContext,
+    auth::AuthState,
     db::util::impl_from_db,
     model::Key,
     prelude::*,
@@ -182,7 +177,7 @@ impl Realm {
             return false;
         };
 
-        matches!(&context.auth, AuthContext::User(u) if u.user_realm_handle() == handle)
+        matches!(&context.auth.state, AuthState::User(u) if u.user_realm_handle() == handle)
     }
 
     pub(crate) fn require_moderator_rights(&self, context: &Context) -> ApiResult<()> {

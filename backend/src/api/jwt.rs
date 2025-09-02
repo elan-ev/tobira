@@ -3,7 +3,7 @@ use serde_json::json;
 
 use crate::{
     api::err::{invalid_input, not_authorized},
-    auth::AuthContext,
+    auth::AuthState,
     db::util::select,
     prelude::HasRoles,
 };
@@ -17,7 +17,7 @@ pub(crate) async fn jwt(
     opencast_id: Option<String>,
     context: &Context,
 ) -> ApiResult<String> {
-    let AuthContext::User(user) = &context.auth else {
+    let AuthState::User(user) = &context.auth.state else {
         return Err(not_authorized!("only logged in users can get a JWT"));
     };
 

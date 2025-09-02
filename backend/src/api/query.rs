@@ -1,7 +1,7 @@
 use juniper::graphql_object;
 
 
-use crate::auth::{AuthContext, User};
+use crate::auth::{AuthState, User};
 
 use super::{
     err::ApiResult,
@@ -86,8 +86,8 @@ impl Query {
 
     /// Returns the current user.
     fn current_user(context: &Context) -> Option<&User> {
-        match &context.auth {
-            AuthContext::User(user) => Some(user),
+        match &context.auth.state {
+            AuthState::User(user) => Some(user),
             _ => None,
         }
     }

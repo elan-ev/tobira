@@ -77,7 +77,7 @@ const AUTH_HEADER_ROLES: &str = "x-tobira-user-roles";
 /// Information about whether or not, and if so how
 /// someone or something talking to Tobira is authenticated
 #[derive(PartialEq, Eq)]
-pub(crate) enum AuthContext {
+pub(crate) enum AuthState {
     Anonymous,
     TrustedExternal,
     User(User),
@@ -94,7 +94,7 @@ pub(crate) struct User {
     pub(crate) user_realm_handle: Option<String>,
 }
 
-impl AuthContext {
+impl AuthState {
     pub(crate) async fn new(
         headers: &HeaderMap,
         db: &Client,
@@ -134,6 +134,21 @@ impl AuthContext {
             return Err(not_authorized!("only trusted external applications can use this mutation"));
         }
         Ok(())
+    }
+}
+
+pub(crate) struct AuthContext {
+    pub(crate) config: AuthConfig,
+    pub(crate) state: AuthState,
+}
+
+impl AuthContext {
+    pub(crate) fn overlaps_roles<I, T>(&self, acls: I) -> bool
+    where
+        I: IntoIterator<Item = T>,
+        T: AsRef<str>,
+    {
+        HasRoles::overlaps_roles(self, acls, &self.config)
     }
 }
 
@@ -455,7 +470,7 @@ pub(crate) trait HasRoles {
     }
 
     fn is_tobira_admin(&self, auth_config: &AuthConfig) -> bool {
-        self.is_admin() || self.roles().contains(&auth_config.roles.tobira_admin)
+        self.is_admin(auth_config) || self.roles().contains(&auth_config.roles.tobira_admin)
     }
 
     fn can_upload(&self, auth_config: &AuthConfig) -> bool {
@@ -496,16 +511,22 @@ pub(crate) trait HasRoles {
 
     /// Returns `true` if the user is a global Opencast administrator and can do
     /// anything.
-    fn is_admin(&self) -> bool {
-        self.roles().contains(ROLE_ADMIN)
+    fn is_admin(&self, auth_config: &AuthConfig) -> bool {
+        self.roles().contains(ROLE_ADMIN) || self.is_tenant_admin(auth_config)
     }
 
-    fn overlaps_roles<I, T>(&self, acls: I) -> bool
+    fn is_tenant_admin(&self, auth_config: &AuthConfig) -> bool {
+        auth_config.roles.tenant_admin
+            .as_ref()
+            .is_some_and(|tenant_admin_role| self.roles().contains(tenant_admin_role))
+    }
+
+    fn overlaps_roles<I, T>(&self, acls: I, auth_config: &AuthConfig) -> bool
     where
         I: IntoIterator<Item = T>,
         T: AsRef<str>,
     {
-        self.is_admin() || acls.into_iter().any(|role| self.roles().contains(role.as_ref()))
+        self.is_admin(auth_config) || acls.into_iter().any(|role| self.roles().contains(role.as_ref()))
     }
 }
 
@@ -522,15 +543,15 @@ impl HasRoles for AuthContext {
         static ANONYMOUS_ROLES: Lazy<HashSet<String>>
             = Lazy::new(|| HashSet::from([ROLE_ANONYMOUS.into()]));
 
-        match self {
-            Self::Anonymous => &*ANONYMOUS_ROLES,
-            Self::User(user) => user.roles(),
+        match &self.state {
+            AuthState::Anonymous => &*ANONYMOUS_ROLES,
+            AuthState::User(user) => user.roles(),
             // Note: We would like the trusted user to be rather restricted,
             // but as it's currently implemented, it needs at least moderator rights
             // to be able to use the `mount`-API.
             // For simplicity's sake we just make them admin here, but this will
             // likely change in the future. There are no guarantees being made, here!
-            Self::TrustedExternal => &*TRUSTED_ROLES,
+            AuthState::TrustedExternal => &*TRUSTED_ROLES,
         }
     }
 }
