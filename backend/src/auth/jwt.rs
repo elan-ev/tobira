@@ -1,5 +1,6 @@
+use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
 use bytes::Bytes;
-use ring::{rand::{SecureRandom, SystemRandom}, signature::EcdsaKeyPair};
+use aws_lc_rs::{rand::{SecureRandom, SystemRandom}, signature::{self, EcdsaKeyPair, Ed25519KeyPair, KeyPair}};
 use serde::Serialize;
 use serde_json::json;
 use std::{path::PathBuf, time::Duration};
@@ -14,7 +15,7 @@ use super::User;
 pub(crate) struct JwtConfig {
     /// Signing algorithm for JWTs.
     ///
-    /// Valid values: "ES256", "ES384"
+    /// Valid values: "ES256", "ES384", "ED25519"
     #[config(default = "ES384")]
     signing_algorithm: Algorithm,
 
@@ -35,13 +36,16 @@ pub(crate) struct JwtConfig {
 pub(crate) enum Algorithm {
     ES256,
     ES384,
+    ED25519,
 }
 
 impl Algorithm {
-    fn to_str(&self) -> &'static str {
+    /// Returns the value for the `alg` field in a JWT header.
+    fn jwt_alg_field(&self) -> &'static str {
         match self {
             Algorithm::ES256 => "ES256",
             Algorithm::ES384 => "ES384",
+            Algorithm::ED25519 => "EdDSA",
         }
     }
 }
@@ -55,7 +59,7 @@ pub(crate) struct JwtContext {
 
 impl JwtContext {
     pub(crate) fn new(config: &JwtConfig) -> Result<Self> {
-        let auth = config.load_auth().context("failed to load `jwt.secret_key`")?;
+        let auth = JwtAuth::load(config).context("failed to load `jwt.secret_key`")?;
 
         Ok(Self {
             rng: SystemRandom::new(),
@@ -113,7 +117,7 @@ impl JwtContext {
     fn encode(&self, payload: &impl Serialize) -> String {
         let header = json!({
             "typ": "JWT",
-            "alg": self.config.signing_algorithm.to_str(),
+            "alg": self.config.signing_algorithm.jwt_alg_field(),
         });
 
         let mut jwt = String::new();
@@ -140,113 +144,156 @@ impl JwtContext {
     }
 }
 
-impl JwtConfig {
-    fn load_auth(&self) -> Result<JwtAuth> {
-        let rng = ring::rand::SystemRandom::new();
-        if let Some(secret_key_path) = &self.secret_key {
-            let pem_encoded = std::fs::read(secret_key_path)
-                .context("could not load secret key file")?;
-            let (_label, pkcs8_bytes) = pem_rfc7468::decode_vec(&pem_encoded)
-                .context("secret key file is not a valid PEM encoded key")?;
-            JwtAuth::load_es(self.signing_algorithm, &pkcs8_bytes, &rng)
-        } else {
-            let ring_algo = match self.signing_algorithm {
-                Algorithm::ES256 => &ring::signature::ECDSA_P256_SHA256_FIXED_SIGNING,
-                Algorithm::ES384 => &ring::signature::ECDSA_P384_SHA384_FIXED_SIGNING,
-            };
-
-            info!(
-                "No JWT key specified, generating key for algorithm {}",
-                self.signing_algorithm.to_str(),
-            );
-            let pkcs8_bytes = ring::signature::EcdsaKeyPair::generate_pkcs8(ring_algo, &rng)
-                .map_err(|_| anyhow!("failed to generate JWT ECDSA key"))?;
-
-            JwtAuth::load_es(self.signing_algorithm, pkcs8_bytes.as_ref(), &rng)
-        }
-    }
-}
-
-
-
 struct JwtAuth {
     signer: Box<dyn Signer>,
     jwks: Bytes,
 }
 
 impl JwtAuth {
-    /// Loads an elliptic curve key. `algo` has to be `ES256` or `ES384`!
-    fn load_es(algo: Algorithm, key: &[u8], rng: &dyn SecureRandom) -> Result<JwtAuth> {
-        use elliptic_curve::pkcs8::DecodePrivateKey;
-
-        // Create a `ring` key pair that is used for signing.
-        let ring_algo = match algo {
-            Algorithm::ES256 => &ring::signature::ECDSA_P256_SHA256_FIXED_SIGNING,
-            Algorithm::ES384 => &ring::signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+    fn load(config: &JwtConfig) -> Result<Self> {
+        let ec_algo = || match config.signing_algorithm {
+            Algorithm::ES256 => &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+            Algorithm::ES384 => &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+            Algorithm::ED25519 => unreachable!(),
         };
-        let ring_key = EcdsaKeyPair::from_pkcs8(ring_algo, key, rng).map_err(|e| {
-            anyhow!("`jwt.secret_key` is not a valid ECDSA keypair for the expected \
-                algorithm in PKCS8 format: {e}")
-        })?;
 
-        // Create the JWK(S) from the given key for the public route.
-        macro_rules! get_jwk {
-            ($curve:path) => {
-                <elliptic_curve::SecretKey<$curve>>::from_pkcs8_der(key)
-                    .expect("failed to read ECDSA keypair, but it worked with `ring`?!")
-                    .public_key()
-                    .to_jwk()
+        let signer = if let Some(secret_key_path) = &config.secret_key {
+            let pem_encoded = std::fs::read(secret_key_path)
+                .context("could not load secret key file")?;
+            let (_label, pkcs8_bytes) = pem_rfc7468::decode_vec(&pem_encoded)
+                .context("secret key file is not a valid PEM encoded key")?;
+
+            let signer = match config.signing_algorithm {
+                Algorithm::ES256 | Algorithm::ES384 => {
+                    let key = EcdsaKeyPair::from_pkcs8(ec_algo(), &pkcs8_bytes)
+                        .context("`jwt.secret_key` is not a valid PKCS8 ECDSA keypair \
+                            for the configured algorithm")?;
+                    Box::new(key) as Box<dyn Signer>
+                }
+                Algorithm::ED25519 => {
+                    let key = Ed25519KeyPair::from_pkcs8(&pkcs8_bytes)
+                        .context("`jwt.secret_key` is not a valid PKCS8 ED25519 keypair")?;
+                    Box::new(key) as Box<dyn Signer>
+                }
+            };
+
+            info!("Loaded JWT secret key");
+            signer
+        } else {
+            info!(
+                "No JWT key specified, generating key for algorithm {:?}",
+                config.signing_algorithm,
+            );
+
+            match config.signing_algorithm {
+                Algorithm::ES256 | Algorithm::ES384 => {
+                    let key = EcdsaKeyPair::generate(ec_algo())
+                        .context("failed to generate JWT ECDSA key")?;
+                    Box::new(key) as Box<dyn Signer>
+                }
+                Algorithm::ED25519 => {
+                    let key = Ed25519KeyPair::generate()
+                        .context("failed to generate JWT ED25519 key")?;
+                    Box::new(key) as Box<dyn Signer>
+                }
             }
-        }
-
-        let jwk = match algo {
-            Algorithm::ES256 => get_jwk!(p256::NistP256),
-            Algorithm::ES384 => get_jwk!(p384::NistP384),
         };
 
-
+        let jwk = signer.jwk();
         Ok(Self {
-            signer: Box::new(ring_key),
-            jwks: jwk_to_jwks(algo, jwk),
+            signer,
+            jwks: jwk_to_jwks(config.signing_algorithm, jwk),
         })
     }
 }
 
 /// Serializes the given `jwk` from `elliptic_curve` into the expected JWKS structure.
-fn jwk_to_jwks(algo: Algorithm, jwk: impl Serialize) -> Bytes {
+fn jwk_to_jwks(algo: Algorithm, jwk: JwkCore) -> Bytes {
     #[derive(Serialize)]
-    struct Jwk<T: Serialize> {
+    struct Jwk {
         #[serde(flatten)]
-        inner: T,
+        inner: JwkCore,
 
         r#use: &'static str,
         alg: &'static str,
     }
 
-    #[derive(Serialize)]
-    struct Jwks<T: Serialize> {
-        keys: [Jwk<T>; 1],
-    }
-
-    let jwks = Jwks {
-        keys: [Jwk {
-            inner: jwk,
-            r#use: "sig",
-            alg: algo.to_str(),
-        }]
+    let jwk = Jwk {
+        inner: jwk,
+        r#use: "sig",
+        alg: algo.jwt_alg_field(),
     };
+    let jwks = serde_json::json!({
+        "keys": [jwk],
+    });
     serde_json::to_string(&jwks).expect("failed to serialize JWKS").into()
+}
+
+#[derive(Serialize)]
+struct JwkCore {
+    kty: &'static str,
+    crv: &'static str,
+    x: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    y: Option<String>
 }
 
 /// A signature algorithm with corresponding key. Can sign a message.
 trait Signer: Sync + Send {
     /// Signs the given message and writes the signature into `signature`.
     fn sign(&self, rng: &dyn SecureRandom, message: &[u8], signature: &mut Vec<u8>);
+
+    /// Returns the JWK description of the public key.
+    fn jwk(&self) -> JwkCore;
 }
+
 
 impl Signer for EcdsaKeyPair {
     fn sign(&self, rng: &dyn SecureRandom, message: &[u8], signature: &mut Vec<u8>) {
         let sig = self.sign(rng, message).expect("failed to sign JWT");
         signature.extend_from_slice(sig.as_ref())
+    }
+
+    fn jwk(&self) -> JwkCore {
+        let public_key = self.public_key().as_ref();
+        macro_rules! jwk {
+            ($curve:path, $crv:literal) => {{
+
+                let point = <elliptic_curve::sec1::EncodedPoint<$curve>>::from_bytes(public_key)
+                    .expect("failed to read ECDSA keypair, but it worked with `ring`?!");
+                JwkCore {
+                    kty: "EC",
+                    crv: $crv,
+                    x: BASE64_URL_SAFE_NO_PAD.encode(point.x().expect("identity point")),
+                    y: Some(BASE64_URL_SAFE_NO_PAD.encode(point.y().expect("identity point"))),
+                }
+            }}
+        }
+
+        if self.algorithm() == &signature::ECDSA_P256_SHA256_FIXED_SIGNING {
+            jwk!(p256::NistP256, "P-256")
+        } else if self.algorithm() == &signature::ECDSA_P384_SHA384_FIXED_SIGNING {
+            jwk!(p384::NistP384, "P-384")
+        } else {
+            unreachable!()
+        }
+    }
+}
+
+impl Signer for Ed25519KeyPair {
+    fn sign(&self, _: &dyn SecureRandom, message: &[u8], signature: &mut Vec<u8>) {
+        let sig = self.sign(message);
+        signature.extend_from_slice(sig.as_ref())
+    }
+
+    fn jwk(&self) -> JwkCore {
+        let x = BASE64_URL_SAFE_NO_PAD.encode(self.public_key().as_ref());
+
+        JwkCore {
+            kty: "OKP",
+            crv: "Ed25519",
+            x,
+            y: None,
+        }
     }
 }
