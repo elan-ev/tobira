@@ -825,7 +825,7 @@ impl<'a> FromSql<'a> for TextSearchIndex {
             // example. Having duplicates is not useful for search. The `4096`
             // limit is just there to avoid quadratic blowup in case there are
             // lots of texts in the same span.
-            if buf[..min(buf.len(), 4096)].contains(s) {
+            if buf[..ceil_char_boundary(buf, 4096)].contains(s) {
                 continue;
             }
 
