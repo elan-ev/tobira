@@ -13,7 +13,7 @@ use crate::{
             acl::{self, Acl},
             event::AuthorizedEvent,
             realm::Realm,
-            shared::{SortDirection, ToSqlColumn, convert_acl_input},
+            shared::{SortDirection, ToSqlColumn, SearchFilter, convert_acl_input},
         },
         util::LazyLoad,
     },
@@ -382,6 +382,7 @@ impl Series {
         order: SortOrder<SeriesSortColumn>,
         offset: i32,
         limit: i32,
+        filter: Option<SearchFilter>,
     ) -> ApiResult<Connection<Series>> {
         let parts = ConnectionQueryParts {
             table: "all_series",
@@ -396,7 +397,7 @@ impl Series {
                 from events \
                 where events.series = series.id)",
         );
-        load_writable_for_user(context, order, offset, limit, parts, selection, |row| {
+        load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
             let mut out = Self::from_row(row, mapping.series);
             out.num_videos = LazyLoad::Loaded(mapping.num_videos.of::<i64>(row) as u32);
             out.thumbnail_stack = LazyLoad::Loaded(SeriesThumbnailStack {

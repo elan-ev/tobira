@@ -11,7 +11,7 @@ use crate::{
 use super::{
     event::VideosSortOrder,
     series::{Series, SeriesSortOrder},
-    shared::Connection,
+    shared::{Connection, SearchFilter},
 };
 
 
@@ -91,8 +91,10 @@ impl User {
         order: VideosSortOrder,
         offset: i32,
         limit: i32,
+        #[graphql(default)]
+        filter: Option<SearchFilter>,
     ) -> ApiResult<Connection<AuthorizedEvent>> {
-        AuthorizedEvent::load_writable_for_user(context, order.into(), offset, limit).await
+        AuthorizedEvent::load_writable_for_user(context, order.into(), offset, limit, filter).await
     }
 
     /// Returns all series that somehow "belong" to the user, i.e. that appear
@@ -104,7 +106,9 @@ impl User {
         order: SeriesSortOrder,
         offset: i32,
         limit: i32,
+        #[graphql(default)]
+        filter: Option<SearchFilter>,
     ) -> ApiResult<Connection<Series>> {
-        Series::load_writable_for_user(context, order.into(), offset, limit).await
+        Series::load_writable_for_user(context, order.into(), offset, limit, filter).await
     }
 }
