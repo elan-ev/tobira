@@ -417,6 +417,7 @@ shortcuts:
     volume-up: Increase volume
     slow-down: Decrease playback speed
     speed-up: Increase playback speed
+    hide-ui: Hide/show user interface
   keys:
     escape: Esc
     space: Spacebar

@@ -34,6 +34,7 @@ declare module "paella-core" {
         public enterFullscreen(): Promise<void>;
         public exitFullscreen(): Promise<void>;
 
+        public containerElement: HTMLElement;
         public captionsCanvas: CaptionsCanvas;
     }
 

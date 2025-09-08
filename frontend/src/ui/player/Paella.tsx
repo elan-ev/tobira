@@ -27,6 +27,7 @@ type PaellaPlayerProps = {
 export type PaellaState = {
     player: Paella;
     loadPromise: Promise<void>;
+    removeUiHandlers?: () => void;
 };
 
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
@@ -168,13 +169,16 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 });
             });
 
+            const removeUiHandlers = installUiActivityHandlers(player);
+
             const loadPromise = player.skin.loadSkin("/~assets/paella/theme.json")
                 .then(() => player.loadManifest());
-            paella.current = { player, loadPromise };
+            paella.current = { player, loadPromise, removeUiHandlers };
         }
 
         const paellaSnapshot = paella.current;
         return () => {
+            paellaSnapshot.removeUiHandlers?.();
             unregister(paellaSnapshot.player);
             paella.current = undefined;
             paellaSnapshot.loadPromise.then(() => {
@@ -243,6 +247,14 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 position: "fixed !important" as "fixed",
                 inset: "0 !important",
                 zIndex: "499 !important",
+            },
+            [`.${UI_HIDDEN_CLASS}`]: {
+                "& .playback-bar, & .button-area": {
+                    display: "none !important",
+                },
+            },
+            [`body:has(.${UI_HIDDEN_CLASS}) > .popup-container`]: {
+                display: "none !important",
             },
         }} />
         <div
@@ -394,6 +406,25 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
         />
     </>;
 };
+
+export const UI_HIDDEN_CLASS = "paella-ui-hidden";
+const installUiActivityHandlers = (player: Paella) => {
+    const container = player.containerElement;
+    const onActivity = () => {
+        if (container.classList.contains(UI_HIDDEN_CLASS)) {
+            container.classList.remove(UI_HIDDEN_CLASS);
+        }
+    };
+
+    const events: (keyof HTMLElementEventMap)[] = [
+        "mousemove", "pointerdown", "wheel", "touchstart",
+    ];
+
+    events.forEach(e => container.addEventListener(e, onActivity));
+
+    return () => events.forEach(e => container.removeEventListener(e, onActivity));
+};
+
 
 const PAELLA_CONFIG = {
     logLevel: "WARN",
