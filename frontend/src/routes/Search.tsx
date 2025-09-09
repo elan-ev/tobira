@@ -161,7 +161,7 @@ const query = graphql`
                         startTime
                         endTime
                         created
-                        hostRealms { path ancestorNames }
+                        hostRealms { path name ancestorNames }
                         textMatches {
                             start
                             duration
@@ -181,7 +181,7 @@ const query = graphql`
                         title
                         description
                         thumbnailStack { thumbnails { url live audioOnly } }
-                        hostRealms { path ancestorNames }
+                        hostRealms { path name ancestorNames }
                         matches { title description }
                     }
                     ... on SearchRealm {
@@ -536,7 +536,10 @@ const SearchEvent: React.FC<EventItem> = ({
                 height: "100%",
             }}>
                 {hostRealms.length === 1 && (
-                    <SearchBreadcrumbs ancestorNames={hostRealms[0].ancestorNames} />
+                    <SearchBreadcrumbs parts={[
+                        ...hostRealms[0].ancestorNames,
+                        hostRealms[0].name,
+                    ]} />
                 )}
                 <h3 css={{
                     color: COLORS.primary1,
@@ -829,7 +832,14 @@ const SearchSeries: React.FC<SeriesItem> = ({
             minWidth: 0,
         }}>
             {hostRealms.length === 1 && (
-                <SearchBreadcrumbs ancestorNames={hostRealms[0].ancestorNames} />
+                <SearchBreadcrumbs parts={[
+                    ...hostRealms[0].ancestorNames,
+                    // Oftentimes realms are named after the series. In that
+                    // case, we simply not show that name twice. This title
+                    // comparison seems a bit fishy, but not showing the same
+                    // thing twice is fine either way.
+                    ...hostRealms[0].name === title ? [] : [hostRealms[0].name],
+                ]} />
             )}
             <h3 css={{
                 color: COLORS.primary0,
@@ -854,12 +864,12 @@ const SearchSeries: React.FC<SeriesItem> = ({
 
 
 type SearchBreadcrumbsProps = {
-    ancestorNames: readonly (string | null | undefined)[];
+    parts: readonly (string | null | undefined)[];
 };
 
-const SearchBreadcrumbs: React.FC<SearchBreadcrumbsProps> = ({ ancestorNames }) => (
+const SearchBreadcrumbs: React.FC<SearchBreadcrumbsProps> = ({ parts }) => (
     <BreadcrumbsContainer css={{ fontSize: 12, color: COLORS.neutral80 }}>
-        {ancestorNames.map((name, i) => <li key={i}>
+        {parts.map((name, i) => <li key={i}>
             {name ?? <MissingRealmName />}
             <BreadcrumbSeparator />
         </li>)}
@@ -889,7 +899,7 @@ const SearchRealm: React.FC<RealmItem> = ({
                     padding: 0,
                 },
             }}>
-                <SearchBreadcrumbs ancestorNames={ancestorNames} />
+                <SearchBreadcrumbs parts={ancestorNames} />
                 <h3 css={{
                     marginTop: 4,
                     color: COLORS.primary1,
