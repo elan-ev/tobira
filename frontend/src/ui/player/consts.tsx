@@ -145,4 +145,31 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
         "Seek video to the next slide": "diapositive prochaine",
         "Seek video to the previous slide": "diapositive précédente",
     },
+
+    de: {
+        // Paella-basic-plugins
+        "Captions": "Untertitel",
+        "Search": "Suchen",
+        "Search in captions": "In Untertiteln suchen",
+        "No results found": "Keine Ergebnisse gefunden",
+        "Toggle fullscreen": "Vollbild ein/aus",
+        "Video layout": "Videolayout",
+        "Playback rate": "Wiedergabegeschwindigkeit",
+        "Video quality": "Videoqualität",
+        "Volume": "Lautstärke",
+        "Audio track": "Audiospur",
+        "Keyboard shortcuts": "Tastenkürzel",
+
+        // Paella-zoom-plugin
+        "Zoom in": "Vergrößern",
+        "Zoom out": "Verkleinern",
+        "Show video zoom options": "Zoomoptionen anzeigen",
+        "Use Alt+Scroll to zoom": "Zoomen mit Alt+Scroll",
+
+        // Paella-slide-plugin
+        "Show slides": "Folien anzeigen",
+        "go to": "gehe zu",
+        "Seek video to the next slide": "Nächste Folie",
+        "Seek video to the previous slide": "Vorherige Folie",
+    },
 };
