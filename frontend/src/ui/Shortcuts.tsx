@@ -98,6 +98,10 @@ export const SHORTCUTS = {
             keys: "shift+period",
             translation: "shortcuts.player.speed-up",
         },
+        hideUI: {
+            keys: "h",
+            translation: "shortcuts.player.hide-ui",
+        },
     },
 } as const satisfies Record<string, Record<string, ShortcutProps>>;
 

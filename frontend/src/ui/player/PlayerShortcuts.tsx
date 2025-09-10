@@ -4,6 +4,7 @@ import { useCallback } from "react";
 
 import { SHORTCUTS, useShortcut } from "../Shortcuts";
 import { FRAME_DURATION, SKIP_INTERVAL, SPEEDS } from "./consts";
+import { UI_HIDDEN_CLASS } from "./Paella";
 
 
 export const isSpaceOnInteractiveElement = (e: KeyboardEvent): boolean => (
@@ -111,6 +112,9 @@ export const SHORTCUT_ACTIONS = {
     speedUp: {
         callback: player => async () => await adjustSpeed(player, 1),
     },
+    hideUI: {
+        callback: player => () => toggleUiVisibility(player),
+    },
 } satisfies Record<PlayerAction, PlayerShortcuts>;
 
 
@@ -171,3 +175,9 @@ export const adjustSpeed = async (
     const newSpeed = SPEEDS[newIdx];
     await player.videoContainer.setPlaybackRate(newSpeed);
 };
+
+
+const toggleUiVisibility = (player: Paella) => {
+    player.containerElement.classList.toggle(UI_HIDDEN_CLASS);
+};
+

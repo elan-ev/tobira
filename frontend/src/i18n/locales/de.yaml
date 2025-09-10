@@ -441,6 +441,7 @@ shortcuts:
     volume-up: Lautstärke erhöhen
     slow-down: Wiedergabegeschwindigkeit verringern
     speed-up: Wiedergabegeschwindigkeit erhöhen
+    hide-ui: Bedienelemente aus/einblenden
   keys:
     escape: Esc
     space: Leertaste
