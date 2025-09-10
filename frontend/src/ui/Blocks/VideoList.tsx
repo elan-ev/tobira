@@ -216,7 +216,7 @@ const HiddenItemsInfo: React.FC<PropsWithChildren> = ({ children }) => <div css=
     gap: 16,
     alignItems: "center",
 }}>
-    <LuInfo size={18} />
+    <LuInfo size={18} css={{ flexShrink: 0 }} />
     {children}
 </div>;
 
