@@ -8,6 +8,7 @@ import {
     LuChevronLeft,
     LuChevronRight,
 } from "react-icons/lu";
+import { LucideFunnel } from "lucide-react";
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
@@ -459,8 +460,10 @@ type ColumnHeaderProps = {
 
 const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => {
     const { t } = useTranslation();
+
     const direction = vars.order.direction === "ASCENDING" ? "DESCENDING" : "ASCENDING";
     const directionTransKey = direction === "ASCENDING" ? "ascending" : "descending";
+    const inFilters = sortKey.toLowerCase() in vars.filters;
 
     return <th>
         <Link
@@ -499,6 +502,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => 
                 "ASCENDING": () => <LuArrowDownNarrowWide />,
                 "DESCENDING": () => <LuArrowUpWideNarrow />,
             })}
+            {inFilters && <LucideFunnel size={18} />}
         </Link>
     </th>;
 };
