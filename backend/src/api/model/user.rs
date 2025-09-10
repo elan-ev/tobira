@@ -80,6 +80,12 @@ impl User {
         HasRoles::can_create_series(self, &context.config.auth)
     }
 
+    /// `True` if user is a global Tobira admin, i.e. having `ROLE_ADMIN` or the
+    /// configured Tobira admin role.
+    fn is_tobira_admin(&self, context: &Context) -> bool {
+        HasRoles::is_tobira_admin(self, &context.config.auth)
+    }
+
     /// Returns all events that somehow "belong" to the user, i.e. that appear
     /// on the "my videos" page. This also returns events that have been marked
     /// as deleted (meaning their deletion in Opencast has been requested but they

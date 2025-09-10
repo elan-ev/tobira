@@ -1048,6 +1048,11 @@ type User {
   "`True` if the user has the permission to create new series."
   canCreateSeries: Boolean!
   """
+    `True` if user is a global Tobira admin, i.e. having `ROLE_ADMIN` or the
+    configured Tobira admin role.
+  """
+  isTobiraAdmin: Boolean!
+  """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page. This also returns events that have been marked
     as deleted (meaning their deletion in Opencast has been requested but they
