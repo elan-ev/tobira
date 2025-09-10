@@ -16,7 +16,7 @@ use std::{
     os::unix::fs::PermissionsExt,
     panic::AssertUnwindSafe,
     path::PathBuf,
-    sync::Arc,
+    sync::Arc, time::Duration,
 };
 
 use crate::{
@@ -112,7 +112,8 @@ pub(crate) async fn serve(
     tokio::spawn(async move {
         ctx_clone.auth_caches.maintainence_task(&ctx_clone.config).await;
     });
-
+    let graceful = hyper_util::server::graceful::GracefulShutdown::new();
+    let mut signal = std::pin::pin!(shutdown_signal());
 
     // Helper macro to avoid duplicate code. It's basically just an abstraction
     // over TcpListener and UnixListener, which is otherwise annoying to do.
@@ -121,20 +122,30 @@ pub(crate) async fn serve(
             default_enable_backtraces();
 
             loop {
-                let (tcp, _) = $listener.accept().await.context("failed to accept TCP connection")?;
-                let io = TokioIo::new(tcp);
+                tokio::select! {
+                    conn = $listener.accept() => {
+                        let (tcp, _) = conn.context("failed to accept TCP connection")?;
+                        let io = TokioIo::new(tcp);
 
-                let ctx = Arc::clone(&ctx);
-                tokio::task::spawn(async move {
-                    let res = Builder::new(TokioExecutor::new())
-                        .serve_connection(io, service_fn(move |req| {
-                            handle_internal_errors(handle(req, Arc::clone(&ctx)))
-                        }))
-                        .await;
-                    if let Err(e) = res {
-                        warn!("Error serving connection: {e:#}");
+                        let ctx = Arc::clone(&ctx);
+                        let watcher = graceful.watcher();
+                        tokio::task::spawn(async move {
+                            let builder = Builder::new(TokioExecutor::new());
+                            let handle_conn = builder.serve_connection(io, service_fn(move |req| {
+                                handle_internal_errors(handle(req, Arc::clone(&ctx)))
+                            }));
+                            let handle_conn = watcher.watch(handle_conn);
+                            if let Err(e) = handle_conn.await {
+                                warn!("Error serving connection: {e:#}");
+                            }
+                        });
                     }
-                });
+
+                    _ = &mut signal => {
+                        info!("Shutdown signal received");
+                        break;
+                    }
+                }
             }
         };
     }
@@ -160,6 +171,17 @@ pub(crate) async fn serve(
             listener.local_addr().context("failed to acquire local addr")?);
         listen!(listener);
     }
+
+    tokio::select! {
+        _ = graceful.shutdown() => {
+            info!("All HTTP connections gracefully closed");
+        },
+        _ = tokio::time::sleep(Duration::from_secs(1)) => {
+            eprintln!("Timed out waiting for all HTTP connections to close");
+        }
+    }
+
+    Ok(())
 }
 
 /// This just wraps another future and catches all panics that might occur when
@@ -200,4 +222,12 @@ async fn handle_internal_errors(
             Ok(response::internal_server_error())
         }
     }
+}
+
+/// Future that resolves when a shutdown signal is received by our app.
+async fn shutdown_signal() {
+    // Wait for the CTRL+C signal
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to install CTRL+C signal handler");
 }
