@@ -24,6 +24,7 @@ void i18n
     .init({
         resources: languages,
         fallbackLng: "en",
+        supportedLngs: Object.keys(languages),
         interpolation: {
             escapeValue: false,
         },
