@@ -448,6 +448,7 @@ shortcuts:
     tab: Tab
 
 manage:
+  admin-dashboard: Admin dashboard
   dashboard:
     title: Dashboard
     studio-title: Video aufnehmen

@@ -7,6 +7,8 @@ use super::{
     err::ApiResult,
     jwt::{jwt, JwtService},
     model::{
+        self,
+        admin::AdminInfo,
         event::{AuthorizedEvent, Event},
         known_roles::{self, KnownGroup, KnownUsersSearchOutcome},
         playlist::Playlist,
@@ -187,5 +189,10 @@ impl Query {
     /// Returns all known groups selectable in the ACL UI.
     async fn known_groups(context: &Context) -> ApiResult<Vec<KnownGroup>> {
         KnownGroup::load_all(context).await
+    }
+
+    /// Returns information for the admin dashboard.
+    async fn admin_dashboard_info(context: &Context) -> ApiResult<Option<AdminInfo>> {
+        model::admin::dashboard_info(context).await
     }
 }

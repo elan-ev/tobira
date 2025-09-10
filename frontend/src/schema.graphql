@@ -271,6 +271,72 @@ type AclItem {
   info: RoleInfo
 }
 
+type AdminDbInfo {
+  numEvents: Int!
+  numEventsPendingSync: Int!
+  numEventsPendingDeletion: Int!
+  numSeries: Int!
+  numSeriesPendingSync: Int!
+  numSeriesPendingDeletion: Int!
+  numPlaylists: Int!
+  numRealms: Int!
+  numUserRealms: Int!
+  numBlocks: Int!
+  numKnownUsers: Int!
+  numKnownGroups: Int!
+  numUserSessions: Int!
+  dbSize: Float!
+}
+
+type AdminInfo {
+  db: AdminDbInfo!
+  searchIndex: AdminSearchIndexInfo!
+  sync: AdminSyncInfo!
+  problems: AdminProblemInfo!
+}
+
+type AdminMeiliInfo {
+  version: String!
+  size: Float!
+  lastUpdate: DateTime
+  eventIndex: AdminSingleSearchIndexInfo
+  seriesIndex: AdminSingleSearchIndexInfo
+  playlistIndex: AdminSingleSearchIndexInfo
+  realmIndex: AdminSingleSearchIndexInfo
+  userIndex: AdminSingleSearchIndexInfo
+}
+
+type AdminProblemInfo {
+  realmsBrokenName: [String!]!
+  realmsBrokenBlocks: [String!]!
+}
+
+type AdminSearchIndexInfo {
+  isHealthy: Boolean!
+  meili: AdminMeiliInfo
+  state: String
+  queueLen: Int!
+  queuedEvents: Int!
+  queuedSeries: Int!
+  queuedPlaylists: Int!
+  queuedRealms: Int!
+  queuedUsers: Int!
+}
+
+type AdminSingleSearchIndexInfo {
+  numDocuments: Int!
+  isIndexing: Boolean!
+}
+
+type AdminSyncInfo {
+  ocReachable: Boolean!
+  harvestedUntil: DateTime!
+  lastUpdatedItem: DateTime!
+  requiredTobiraApiVersion: String!
+  tobiraApiVersion: String
+  externalApiVersion: String
+}
+
 type ArrayMatch {
   index: Int!
   span: ByteSpan!
@@ -661,6 +727,8 @@ type Query {
   searchKnownUsers(query: String!): KnownUsersSearchOutcome!
   "Returns all known groups selectable in the ACL UI."
   knownGroups: [KnownGroup!]!
+  "Returns information for the admin dashboard."
+  adminDashboardInfo: AdminInfo
 }
 
 type Realm implements Node {

@@ -4,6 +4,7 @@ import {
     LuTriangleAlert, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
     LuCirclePlus,
+    LuGauge,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
@@ -32,6 +33,7 @@ import SeriesIcon from "../../icons/series.svg";
 import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
 import { SHORTCUTS, ShortcutsOverview, useShortcut } from "../../ui/Shortcuts";
 import { ModalHandle } from "../../ui/Modal";
+import { AdminDashboardRoute } from "../../routes/manage/Admin";
 
 
 
@@ -279,6 +281,12 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             icon: <LuCirclePlus />,
             wrapper: <Link to={CreateSeriesRoute.url} />,
             children: t("manage.series.table.create"),
+            css: indent,
+        }] : [],
+        ...user.isTobiraAdmin ? [{
+            icon: <LuGauge />,
+            wrapper: <Link to={AdminDashboardRoute.url} />,
+            children: t("manage.admin-dashboard"),
             css: indent,
         }] : [],
 

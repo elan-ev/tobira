@@ -13,11 +13,11 @@ pub(crate) mod text;
 pub(crate) mod client;
 mod status;
 
-pub(crate) use self::client::OcClient;
+pub(crate) use self::{client::OcClient, status::SyncStatus};
 
 
 /// The minimum API version this Tobira requires from the Tobira-module API.
-const MIN_REQUIRED_API_VERSION: ApiVersion = ApiVersion::new(1, 0);
+pub(crate) const MIN_REQUIRED_API_VERSION: ApiVersion = ApiVersion::new(1, 0);
 
 
 pub(crate) async fn run(daemon: bool, pool: &Pool, config: &Config) -> Result<()> {
@@ -97,9 +97,9 @@ pub(crate) struct SyncConfig {
 }
 
 /// Version of the Tobira-module API in Opencast.
-struct ApiVersion {
-    major: u32,
-    minor: u32,
+pub(crate) struct ApiVersion {
+    pub(crate) major: u32,
+    pub(crate) minor: u32,
 }
 
 impl ApiVersion {
@@ -136,7 +136,7 @@ impl std::str::FromStr for ApiVersion {
 
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct VersionResponse {
-    version: String,
+    pub(crate) version: String,
 }
 
 impl VersionResponse {
