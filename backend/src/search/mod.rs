@@ -183,6 +183,10 @@ impl Client {
             rebuild_if_necessary(&meili, tx).await
         })).await
     }
+
+    pub(crate) async fn index_state(&self) -> Result<IndexState> {
+        IndexState::fetch(&self.meta_index).await
+    }
 }
 
 

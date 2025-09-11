@@ -26,6 +26,7 @@ export type User = {
     canUseEditor: boolean;
     canCreateUserRealm: boolean;
     canCreateSeries: boolean;
+    isTobiraAdmin: boolean;
     canFindUnlisted: boolean;
     roles: readonly string[];
     userRole: string;
@@ -64,6 +65,7 @@ export const userDataFragment = graphql`
             canUseEditor
             canCreateUserRealm
             canCreateSeries
+            isTobiraAdmin
             canFindUnlisted
             roles
             userRole

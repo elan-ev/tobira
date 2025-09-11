@@ -29,6 +29,10 @@ impl Transaction {
         self.num_queries.fetch_add(1, Ordering::SeqCst);
     }
 
+    pub fn inner(&self) -> &impl deadpool_postgres::GenericClient {
+        &*self.inner
+    }
+
     // The following methods shadow the ones from `deadpool_postgres::Transaction`
     // and automatically use the statement cache. This means every query
     // additionally incurs an `RwLock` read lock and a hashmap lookup, but

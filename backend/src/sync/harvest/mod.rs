@@ -53,7 +53,7 @@ pub(crate) async fn run(
 
     loop {
         let mut db = pool.get().await?;
-        let sync_status = SyncStatus::fetch(&**db).await
+        let sync_status = SyncStatus::fetch(&db).await
             .context("failed to fetch sync status from DB")?;
 
         // Send request to API and deserialize data.
@@ -93,7 +93,7 @@ pub(crate) async fn run(
         let last_updated = harvest_data.items.iter().rev().find_map(|item| item.updated());
         let mut transaction = db.transaction().await?;
         store_in_db(harvest_data.items, &sync_status, &mut transaction, config).await?;
-        SyncStatus::update_harvested_until(harvest_data.includes_items_until, &*transaction).await?;
+        SyncStatus::update_harvested_until(harvest_data.includes_items_until, &transaction).await?;
         transaction.commit().await?;
 
 

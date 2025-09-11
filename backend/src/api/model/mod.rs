@@ -2,6 +2,7 @@
 //! API.
 
 pub(crate) mod acl;
+pub(crate) mod admin;
 pub(crate) mod block;
 pub(crate) mod event;
 pub(crate) mod known_roles;

@@ -33,6 +33,7 @@ import { ManageSeriesRoute } from "./routes/manage/Series";
 import { ManageSeriesDetailsRoute } from "./routes/manage/Series/SeriesDetails";
 import { ManageSeriesAccessRoute } from "./routes/manage/Series/SeriesAccess";
 import { CreateSeriesRoute } from "./routes/manage/Series/Create";
+import { AdminDashboardRoute } from "./routes/manage/Admin";
 
 
 
@@ -72,6 +73,7 @@ const {
         ManageSeriesAccessRoute,
         ManageSeriesRoute,
         ManageSeriesDetailsRoute,
+        AdminDashboardRoute,
         UploadRoute,
         CreateSeriesRoute,
         AddChildRoute,
