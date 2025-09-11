@@ -13,18 +13,9 @@ import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import { Thumbnail } from "../../../ui/Video";
 import { keyOfId } from "../../../util";
-import {
-    ColumnProps,
-    createQueryParamsParser,
-    DateColumn,
-    ManageItems,
-    TableRow,
-} from "../Shared/Table";
-import { useTranslation } from "react-i18next";
-import { ellipsisOverflowCss } from "../../../ui";
-import { Link } from "../../../router";
-import { DirectSeriesRoute } from "../../Series";
-import { COLORS } from "../../../color";
+import { createQueryParamsParser, ListItem, ManageItems } from "../Shared/Table";
+import { PartOfSeriesLink } from "../../../ui/Blocks/VideoList";
+import { DateAndCreators } from "../../../ui/metadata";
 
 
 const PATH = "/~manage/videos" as const;
@@ -50,8 +41,8 @@ export const ManageVideosRoute = makeRoute({
                         vars={vars}
                         connection={data.currentUser.myVideos}
                         titleKey="manage.video.table"
-                        additionalColumns={videoColumns}
-                        RenderRow={EventRow}
+                        additionalSortOptions={[{ key: "SERIES", label: "series.singular" }]}
+                        RenderItem={VideoItem}
                     />
                 }
             />,
@@ -76,6 +67,7 @@ const query = graphql`
                     id
                     title
                     created
+                    creators
                     description
                     isLive
                     tobiraDeletionTimestamp
@@ -101,60 +93,27 @@ export type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>[
 export type Events = EventConnection["items"];
 export type Event = Events[number];
 
-// Todo: add series column
-const videoColumns: ColumnProps<Event>[] = [
-    {
-        key: "SERIES",
-        label: "series.singular",
-        headerWidth: 175,
-        column: ({ item }) => <SeriesColumn
-            title={item.series?.title}
-            seriesId={item.series?.id}
-        />,
-    },
-    {
-        key: "UPDATED",
-        label: "manage.table.columns.updated",
-        column: ({ item }) => <DateColumn date={item.syncedData?.updated} />,
-    },
-    {
-        key: "CREATED",
-        label: "manage.table.columns.created",
-        column: ({ item }) => <DateColumn date={item.created} />,
-    },
-];
-
-type SeriesColumnProps = {
-    seriesId?: string;
-    title?: string;
-};
-
-const SeriesColumn: React.FC<SeriesColumnProps> = ({ title, seriesId }) => {
-    const { t } = useTranslation();
-
-    const titleLink = seriesId
-        ? <Link to={DirectSeriesRoute.url({ seriesId })} css={{ textDecoration: "none" }}>
-            {title && title.trim().length > 0 ? title : <i>
-                {t("manage.table.no-series-title")}
-            </i>}
-        </Link>
-        : <i css={{ color: COLORS.neutral60 }}>{t("general.none")}</i>;
-
-    return (
-        <td css={{
-            "&&": { display: "block" },
-            fontSize: 14,
-            ...ellipsisOverflowCss(3),
-        }}>{titleLink}</td>
-    );
-};
-
-const EventRow: React.FC<{ item: Event }> = ({ item }) => <TableRow
+const VideoItem: React.FC<{ item: Event}> = ({ item }) => <ListItem
     itemType="video"
     item={item}
     link={`${PATH}/${keyOfId(item.id)}`}
     thumbnail={status => <Thumbnail event={item} {...{ status }} />}
-    customColumns={videoColumns.map(col => <col.column key={col.key} item={item} />)}
+    dateAndAdditionalInfo={
+        <DateAndCreators
+            timestamp={item.syncedData?.startTime ?? item.created}
+            isLive={item.isLive}
+            creators={[...item.creators]}
+        />
+    }
+    partOf={item.series && <PartOfSeriesLink
+        css={{
+            fontSize: 11,
+            gap: 6,
+            svg: { fontSize: 15 },
+        }}
+        seriesTitle={item.series.title}
+        seriesId={item.series.id}
+    />}
 />;
 
 
