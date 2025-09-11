@@ -201,8 +201,7 @@ impl SeriesBlock {
     async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
         match self.series {
             None => Ok(None),
-            // `unwrap` is okay here because of our foreign key constraint
-            Some(series_id) => Ok(Some(Series::load_by_id(series_id, context).await?.unwrap())),
+            Some(series_id) => Series::load_by_id(series_id, context).await,
         }
     }
 
