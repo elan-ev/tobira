@@ -67,9 +67,6 @@ export const videoListEventFragment = graphql`
             endTime
             audioOnly
         }
-        authorizedData {
-            tracks { resolution }
-        }
     }
 `;
 type Event = VideoListEventData$data;
