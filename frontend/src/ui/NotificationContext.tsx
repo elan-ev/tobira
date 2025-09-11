@@ -44,7 +44,7 @@ export const useNotification = () => {
     const { notification, setNotification } = context;
 
     const Notification: React.FC = () => notification && (
-        <Card css={{ width: "fit-content", marginTop: 12 }} kind={notification.kind}>
+        <Card css={{ width: "fit-content", margin: "12px 0" }} kind={notification.kind}>
             {notification.message(i18n)}
         </Card>
     );

@@ -37,7 +37,13 @@ export const ManageVideosRoute = makeRoute({
         }
 
         const vars = queryParamsToVideosVars(url.searchParams);
-        const queryRef = loadQuery<VideoManageQuery>(query, vars);
+        const titleFilter = vars.filters?.title ?? null;
+        const queryVars = {
+            ...vars,
+            // Todo: Adjust when more filter options are added
+            filter: titleFilter ? { title: titleFilter } : null,
+        };
+        const queryRef = loadQuery<VideoManageQuery>(query, queryVars);
 
         return {
             render: () => <RootLoader
@@ -65,10 +71,11 @@ const query = graphql`
         $order: VideosSortOrder!,
         $offset: Int!,
         $limit: Int!,
+        $filter: SearchFilter,
     ) {
         ...UserData
         currentUser {
-            myVideos(order: $order, offset: $offset, limit: $limit) {
+            myVideos(order: $order, offset: $offset, limit: $limit, filter: $filter) {
                 __typename
                 totalCount
                 pageInfo { hasNextPage hasPrevPage }

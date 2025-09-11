@@ -528,6 +528,8 @@ manage:
       previous: 'Pagina precedente '
       next: Pagina successiva
       last: Ultima pagina
+    filter:
+      by-title: Filtrare per titolo #todo: verify
     columns:
       description: Ordina per {{title}}, {{direction}}
       ascending: crescente

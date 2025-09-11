@@ -162,6 +162,10 @@ input RealmSpecifier {
   pathSegment: String!
 }
 
+input SearchFilter {
+  title: String
+}
+
 input SeriesSortOrder {
   column: SeriesSortColumn!
   direction: SortDirection!
@@ -1053,12 +1057,12 @@ type User {
     as deleted (meaning their deletion in Opencast has been requested but they
     are not yet removed from Tobira's database).
   """
-  myVideos(order: VideosSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!): EventConnection!
+  myVideos(order: VideosSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): EventConnection!
   """
     Returns all series that somehow "belong" to the user, i.e. that appear
     on the "my series" page.
   """
-  mySeries(order: SeriesSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!): SeriesConnection!
+  mySeries(order: SeriesSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): SeriesConnection!
 }
 
 "A block for presenting a single Opencast event"
