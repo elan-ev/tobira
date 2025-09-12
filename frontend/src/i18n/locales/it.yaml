@@ -164,7 +164,7 @@ video:
   description:
     show-more: ...mostra di più
     show-less: Mostra di meno
-  caption: Didascalia
+  caption: Sottotitoli
   download:
     title: Download
     presenter: Video (relatore/relatrice)
@@ -439,7 +439,38 @@ player:
     title: Opzioni
     label: Mostra opzioni
 
+shortcuts:
+  title: Scorciatoie
+  sequence-separator: o
+  general:
+    title: Generale
+    show-overview: Mostra questa panoramica
+    close-modal: Chiudere la finestra di dialogo
+    tab: Spostarsi tra gli elementi
+    search: Inserimento ricerca mirata
+  player:
+    title: Lettore video
+    play: Riproduci/Pausa video
+    mute: Disattiva/attiva audio
+    captions: Attiva/disattiva sottotitoli
+    fullscreen: Attiva/disattiva schermo intero
+    rewind: Riavvolgi {{seconds}} secondi
+    fast-forward: Salta {{seconds}} secondi
+    frame-backward: Indietro di un fotogramma
+    frame-forward: Avanti di un fotogramma
+    volume-down: Diminuisci il volume
+    volume-up: Aumenta il volume
+    slow-down: Riduci la velocità di riproduzione
+    speed-up: Aumenta la velocità di riproduzione
+    hide-ui: Nascondi/mostra interfaccia utente
+  keys:
+    escape: Esc
+    space: Barra spaziatrice
+    shift: Shift
+    tab: Tab
+
 manage:
+  admin-dashboard: Admin dashboard
   dashboard:
     title: Dashboard
     studio-title: Registrare video
@@ -500,7 +531,7 @@ manage:
     no-content: Nessun video
     no-of-videos_one: '{{count}} video'
     no-of-videos_other: '{{count}} video'
-    removing-disabled: La rimozione dei video è disabilitata. # needs verification
+    removing-disabled: La rimozione dei video è disabilitata.
     edit:
       add-video: Aggiungere video
       to-be-added: sarà aggiunto
@@ -529,7 +560,7 @@ manage:
       next: Pagina successiva
       last: Ultima pagina
     filter:
-      by-title: Filtrare per titolo #todo: verify
+      by-title: Filtrare per titolo
     columns:
       description: Ordina per {{title}}, {{direction}}
       ascending: crescente
@@ -665,6 +696,25 @@ manage:
       placeholder: >
         Qui si può aggiungere il contenuto del testo. È anche possibile utilizzare
         Markdown.
+      preview: Anteprima
+      formatting:
+          guide: Guida alla formattazione
+          description: >
+              È possibile utilizzare Markdown per una formattazione semplice. Di seguito sono elencate tutte le
+              funzionalità supportate. Si noti che non è possibile caricare immagini qui: è
+              necessario prima caricarle con altri mezzi. Utilizzare una riga vuota per
+              iniziare un nuovo paragrafo.
+          result: Risultato
+          italic: Corsivo
+          bold: Grassetto
+          monospace: Monospace
+          link: Link
+          quote: Citazione
+          code-block: Blocco di codice
+          external-image: Immagine esterna
+          hr: Separatore
+          bullet-points: Elenco puntato
+          ordered-list: Elenco numerato
     series:
       invalid: Si prega di selezionare una serie
       findable-series-note: >
