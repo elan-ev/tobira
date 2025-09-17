@@ -954,12 +954,6 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
 };
 
 
-const PopoverHeading: React.FC<React.PropsWithChildren> = ({ children }) => (
-    <strong css={{ fontSize: 18, display: "block", marginBottom: 16 }}>
-        {children}
-    </strong>
-);
-
 const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const { t } = useTranslation();
     const ref = useRef(null);
@@ -984,10 +978,9 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 backgroundColor={isDark ? COLORS.neutral15 : COLORS.neutral05}
                 padding={[8, 16, 16, 16]}
             >
-                <PopoverHeading>{t("video.download.title")}</PopoverHeading>
-                <Card kind="info" iconPos="left" css={{ maxWidth: 400, fontSize: 14 }}>
-                    {t("video.download.info")}
-                </Card>
+                <strong css={{ fontSize: 18, display: "block", marginBottom: 8 }}>
+                    {t("video.download.title")}
+                </strong>
                 <TrackInfo event={event} translateFlavors />
             </Floating>
         </FloatingContainer>
