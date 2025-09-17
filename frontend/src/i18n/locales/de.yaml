@@ -8,7 +8,7 @@ general:
   home: Startseite
   homepage: Startseite
   page: Seite
-  password: Password
+  password: Passwort
   leave-page-confirmation: >
     Seite verlassen? Vorgenommene Änderungen sind möglicherweise noch nicht gespeichert!
   action:
