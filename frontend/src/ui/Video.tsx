@@ -387,7 +387,7 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
 
     const isSingleFlavor = flavors.size === 1;
 
-    return <ul css={{ fontSize: 15, marginTop: 8, paddingLeft: 24 }}>
+    return <ul css={{ fontSize: 15, marginBottom: 4, paddingLeft: 24 }}>
         {Array.from(flavors, ([flavor, tracks]) => {
             const trackItems = tracks
                 .sort((a, b) => (a.resolution?.[0] ?? 0) - (b.resolution?.[0] ?? 0))
