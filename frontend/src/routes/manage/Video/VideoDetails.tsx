@@ -103,6 +103,8 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
                         id: event.opencastId,
                         callbackUrl: document.location.href,
                         callbackSystem: translatedConfig(CONFIG.siteTitle, i18n),
+                        // Editor has two german variants and doesn't work with just "de".
+                        lng: i18n.language === "de" ? "de-de" : i18n.language,
                     }}
                     fallback="button"
                     css={buttonStyle(config, "normal", isHighContrast)}
