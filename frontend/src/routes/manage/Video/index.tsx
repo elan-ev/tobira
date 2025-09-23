@@ -160,7 +160,7 @@ const EventRow: React.FC<{ item: Event }> = ({ item }) => <TableRow
     itemType="video"
     item={item}
     link={`${PATH}/${keyOfId(item.id)}`}
-    thumbnail={status => <Thumbnail event={item} {...{ status }} />}
+    thumbnail={state => <Thumbnail event={item} {...{ state }} />}
     customColumns={videoColumns.map(col => <col.column key={col.key} item={item} />)}
 />;
 

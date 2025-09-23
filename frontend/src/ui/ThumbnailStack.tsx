@@ -141,7 +141,7 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
     } else {
         inner = <ThumbnailReplacement
             audioOnly={info.audioOnly}
-            videoStatus={null}
+            videoState={null}
             {...{ isDark }}
         />;
     }
