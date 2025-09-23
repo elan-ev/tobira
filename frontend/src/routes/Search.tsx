@@ -180,7 +180,7 @@ const query = graphql`
                         id
                         title
                         description
-                        thumbnailStack { thumbnails { url live audioOnly } }
+                        thumbnailStack { thumbnails { url live audioOnly state } }
                         hostRealms { path name ancestorNames }
                         matches { title description }
                     }

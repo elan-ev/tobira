@@ -123,12 +123,27 @@ impl Series {
         id: &(dyn ToSql + Sync),
         context: &Context,
     ) -> ApiResult<Option<Self>> {
-        let selection = Self::select();
+        let (selection, mapping) = select!(
+            series: Series,
+            thumbnails: "array(\
+                select search_thumbnail_info_for_event(events.*) \
+                from events \
+                where events.series = series.id)",
+        );
         let query = format!("select {selection} from series where {col} = $1");
         context.db
             .query_opt(&query, &[id])
             .await?
-            .map(|row| Self::from_row_start(&row))
+            .map(|row| {
+                let mut out = Self::from_row(&row, mapping.series);
+                out.thumbnail_stack = LazyLoad::Loaded(SeriesThumbnailStack {
+                    thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(&row)
+                        .into_iter()
+                        .filter_map(|info| ThumbnailInfo::from_search(info, &context))
+                        .collect(),
+                });
+                out
+            })
             .pipe(Ok)
     }
 

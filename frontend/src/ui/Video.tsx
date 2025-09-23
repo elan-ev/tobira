@@ -10,7 +10,9 @@ import { Caption } from "./player";
 import { captionsWithLabels } from "../util";
 
 
-export type ThumbnailItemState = "ready" | "waiting" | "deleted";
+export type ThumbnailItemState
+    = "READY" | "WAITING" | "UPCOMING" | "DELETED" | "%future added value";
+
 type ThumbnailProps = JSX.IntrinsicElements["div"] & {
     /** The event of which a thumbnail should be shown */
     event: {
@@ -37,23 +39,22 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({ event, active, ...rest }) 
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
     const deletionIsPending = event.tobiraDeletionTimestamp != null;
 
-    let videoState: ThumbnailItemState | "upcoming" = "ready";
+    let videoState: ThumbnailItemState = "READY";
     if (isUpcoming) {
-        videoState = "upcoming";
+        videoState = "UPCOMING";
     }
     if (!event.syncedData) {
-        videoState = "waiting";
+        videoState = "WAITING";
     }
     if (deletionIsPending) {
-        videoState = "deleted";
+        videoState = "DELETED";
     }
 
     let inner;
-    if (!event.syncedData?.thumbnail || videoState !== "ready") {
+    if (!event.syncedData?.thumbnail || videoState !== "READY") {
         inner = <ThumbnailReplacement
             audioOnly={event.syncedData?.audioOnly}
-            videoState={videoState !== "ready" ? videoState : null}
-            {...{ isDark }}
+            {...{ videoState, isDark }}
         />;
     } else {
         // We have a proper thumbnail.
@@ -108,14 +109,14 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({ event, active, ...rest }) 
 type ThumbnailReplacementProps = {
     audioOnly?: boolean;
     isDark: boolean;
-    videoState: Exclude<ThumbnailItemState, "ready"> | "upcoming" | null;
+    videoState: ThumbnailItemState;
 }
 export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = ({
     videoState,
     audioOnly,
     isDark,
 }) => {
-    const deletionIsPending = videoState === "deleted";
+    const deletionIsPending = videoState === "DELETED";
     // We have no thumbnail. If the resolution is `null` as well, we are
     // dealing with an audio-only event and show an appropriate icon.
     // Otherwise we use a generic icon.
@@ -129,7 +130,7 @@ export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = ({
     if (deletionIsPending) {
         icon = <LuTrash css={{ color: COLORS.danger1 }} />;
     }
-    if (videoState === "waiting") {
+    if (videoState === "WAITING") {
         icon = <MovingTruck />;
     }
 
@@ -143,7 +144,7 @@ export const ThumbnailReplacement: React.FC<ThumbnailReplacementProps> = ({
         backgroundColor: !deletionIsPending ? "#292929" : COLORS.neutral50,
         ...isDark && !deletionIsPending && {
             backgroundColor: "#313131",
-            background: videoState === "upcoming"
+            background: videoState === "UPCOMING"
                 ? "linear-gradient(135deg, #48484880 50%, transparent 0),"
                     + "linear-gradient(-135deg, #48484880 50%, transparent 0)"
                 : "linear-gradient(135deg, #3e3e3e80 50%, transparent 0),"

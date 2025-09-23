@@ -8,6 +8,12 @@ schema {
   mutation: Mutation
 }
 
+"Represents the `event_state` type defined in `05-events.sql`."
+enum EventState {
+  READY
+  WAITING
+}
+
 enum ItemType {
   EVENT
   SERIES
@@ -1067,6 +1073,7 @@ type ThumbnailInfo {
   url: String
   live: Boolean!
   audioOnly: Boolean!
+  state: EventState!
 }
 
 "A block just showing some title."

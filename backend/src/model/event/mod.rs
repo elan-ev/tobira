@@ -2,7 +2,10 @@ use juniper::GraphQLObject;
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
-use crate::api::Context;
+use crate::{
+    api::Context,
+    db::types::EventState,
+};
 
 
 /// Information necessary to render a thumbnail.
@@ -11,10 +14,11 @@ pub(crate) struct ThumbnailInfo {
     pub(crate) url: Option<String>,
     pub(crate) live: bool,
     pub(crate) audio_only: bool,
+    pub(crate) state: EventState,
 }
 
 /// Thumbnail info with `read_roles` for deferred filtering. Represents the
-/// `search_thumbnail_info` type defined in migration 37.
+/// `search_thumbnail_info` type defined in migration 47.
 #[derive(Debug, FromSql, ToSql, Clone, Serialize, Deserialize)]
 #[postgres(name = "search_thumbnail_info")]
 pub struct SearchThumbnailInfo {
@@ -22,6 +26,7 @@ pub struct SearchThumbnailInfo {
     pub live: bool,
     pub audio_only: bool,
     pub read_roles: Vec<String>,
+    pub state: EventState,
 }
 
 impl ThumbnailInfo {
@@ -31,6 +36,7 @@ impl ThumbnailInfo {
                 url: info.url,
                 live: info.live,
                 audio_only: info.audio_only,
+                state: info.state,
             })
         } else {
             None

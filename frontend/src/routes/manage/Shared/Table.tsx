@@ -347,8 +347,8 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
     const deletionTimestamp = item.tobiraDeletionTimestamp;
     const deletionIsPending = Boolean(deletionTimestamp);
     const deletionDate = new Date(deletionTimestamp ?? "");
-    const thumbnailState = deletionIsPending ? "deleted" : (
-        !isSynced(item) ? "waiting" : "ready"
+    const thumbnailState = deletionIsPending ? "DELETED" : (
+        !isSynced(item) ? "WAITING" : "READY"
     );
 
     // This checks if the current time is later than the deletion timestamp + twice

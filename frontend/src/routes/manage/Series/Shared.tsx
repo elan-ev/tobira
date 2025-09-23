@@ -85,6 +85,7 @@ const query = graphql`
             description
             state
             tobiraDeletionTimestamp
+            thumbnailStack { thumbnails { url live audioOnly state }}
             entries {
                 __typename
                 ...on AuthorizedEvent {
@@ -136,8 +137,8 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
     const link = DirectSeriesRoute.url({ seriesId: id });
     const title = series.title;
     const ariaLabel = t("series.series-page", { series: series.title });
-    const seriesState = series.tobiraDeletionTimestamp ? "deleted" : (
-        !isSynced(series) ? "waiting" : "ready"
+    const seriesState = series.tobiraDeletionTimestamp ? "DELETED" : (
+        !isSynced(series) ? "WAITING" : "READY"
     );
 
     const additionalStyles = {
@@ -147,25 +148,7 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
 
     const thumbnail = <>
         <LuEye />
-        <SeriesThumbnail {...{ seriesState }} series={{
-            ...series,
-            thumbnailStack: {
-                thumbnails: series.entries.slice(0, 3).map(entry => {
-                    if (entry.__typename !== "AuthorizedEvent") {
-                        return {
-                            audioOnly: false,
-                            live: false,
-                            url: null,
-                        };
-                    }
-                    return {
-                        url: entry.syncedData?.thumbnail,
-                        audioOnly: entry.syncedData?.audioOnly ?? false,
-                        live: entry.isLive,
-                    };
-                }),
-            },
-        }} />
+        <SeriesThumbnail {...{ seriesState, series }} />
     </>;
 
     return <ManageNav {...{
@@ -189,9 +172,9 @@ export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, series
         <ThumbnailStack
             thumbnails={series.thumbnailStack.thumbnails}
             title={series.title}
-            css={seriesState === "deleted" && { filter: "blur(2px)" }}
+            css={seriesState === "DELETED" && { filter: "blur(2px)" }}
         />
-        {seriesState !== "ready" && <span css={{
+        {seriesState !== "READY" && <span css={{
             position: "absolute",
             top: "50%",
             left: "50%",
@@ -201,7 +184,7 @@ export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, series
             alignItems: "center",
             justifyContent: "center",
             color: COLORS.neutral70,
-            ...seriesState === "deleted" && {
+            ...seriesState === "DELETED" && {
                 backgroundColor: COLORS.neutral10,
                 color: COLORS.danger1,
                 borderRadius: "50%",
@@ -209,7 +192,7 @@ export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, series
                 height: 50,
             },
         }}>
-            {seriesState === "deleted"
+            {seriesState === "DELETED"
                 ? <LuTrash size={32} />
                 : <MovingTruck />
             }
