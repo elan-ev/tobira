@@ -156,12 +156,14 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
                             audioOnly: false,
                             live: false,
                             url: null,
+                            state: null,
                         };
                     }
                     return {
                         url: entry.syncedData?.thumbnail,
                         audioOnly: entry.syncedData?.audioOnly ?? false,
                         live: entry.isLive,
+                        state: isSynced(entry) ? "ready" : "waiting",
                     };
                 }),
             },

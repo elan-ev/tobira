@@ -120,6 +120,7 @@ type ThumbnailInfo = {
     readonly audioOnly: boolean;
     readonly live: boolean;
     readonly url: string | null | undefined;
+    readonly state?: string | null;
 }
 
 type SeriesThumbnailProps = {
@@ -141,7 +142,7 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
     } else {
         inner = <ThumbnailReplacement
             audioOnly={info.audioOnly}
-            videoState={null}
+            videoState={info.state === "waiting" ? info.state : null}
             {...{ isDark }}
         />;
     }

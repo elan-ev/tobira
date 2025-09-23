@@ -91,7 +91,7 @@ const query = graphql`
                     description
                     state
                     numVideos
-                    thumbnailStack { thumbnails { url live audioOnly }}
+                    thumbnailStack { thumbnails { url live audioOnly state }}
                 }
             }
         }

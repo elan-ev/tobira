@@ -1067,6 +1067,7 @@ type ThumbnailInfo {
   url: String
   live: Boolean!
   audioOnly: Boolean!
+  state: String
 }
 
 "A block just showing some title."
