@@ -16,6 +16,7 @@ import type {
 } from "./__generated__/TextEditSaveMutation.graphql";
 import { COLORS } from "../../../../../../color";
 import { RenderMarkdown } from "../../../../../../ui/Blocks/Text";
+import CONFIG from "../../../../../../config";
 
 
 type TextFormData = {
@@ -190,7 +191,7 @@ const FormattingGuide: React.FC = () => {
                                 <RenderMarkdown>
                                     {markdown.replace(
                                         "https://example.com/image.jpg",
-                                        "/~assets/favicon.svg",
+                                        CONFIG.favicon,
                                     )}
                                 </RenderMarkdown>
                             </td>
