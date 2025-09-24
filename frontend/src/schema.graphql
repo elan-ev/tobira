@@ -279,10 +279,13 @@ type AdminDbInfo {
   numEvents: Int!
   numEventsPendingSync: Int!
   numEventsPendingDeletion: Int!
+  numEventsListed: Int!
   numSeries: Int!
   numSeriesPendingSync: Int!
   numSeriesPendingDeletion: Int!
+  numSeriesListed: Int!
   numPlaylists: Int!
+  numPlaylistsListed: Int!
   numRealms: Int!
   numUserRealms: Int!
   numBlocks: Int!
