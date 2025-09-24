@@ -170,8 +170,6 @@ video:
     title: Download
     presenter: Video (speaker)
     slides: Video (presentation)
-    info: >
-      Here you can download the video(s) in different formats/qualities (Right click - Save as).
   extra-buttons: Additional video actions
   start: Start
   end: End

@@ -172,9 +172,6 @@ video:
     title: Download
     presenter: Video (Sprecher:in)
     slides: Video (Präsentation)
-    info: >
-      Hier können Sie das/die Video(s) in unterschiedlichen Formaten/Auflösungen herunterladen
-      (Rechtsklick - Speichern unter).
   extra-buttons: Weitere Videoaktionen
   start: Anfang
   end: Ende

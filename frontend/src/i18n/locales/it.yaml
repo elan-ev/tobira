@@ -169,9 +169,6 @@ video:
     title: Download
     presenter: Video (relatore/relatrice)
     slides: Video (presentazione)
-    info: >
-      Qui è possibile scaricare il/i video in diversi formati/qualità (clic
-      destro - Salva con nome).
   extra-buttons: Ulteriori azioni video
   start: Inizio
   end: Fine

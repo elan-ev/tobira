@@ -173,9 +173,6 @@ video:
     title: Télécharger
     presenter: Vidéo (Intervenant(s))
     slides: Vidéo (présentation)
-    info: >
-      Ici, vous pouvez télécharger les vidéos dans différents formats (Cic droit
-      - Enregistrer sous).
   extra-buttons: Actions vidéo supplémentaires
   start: Début
   end: Fin
