@@ -105,8 +105,9 @@ const query = graphql`
                     audioOnly
                 }
                 authorizedData {
-                    tracks { flavor resolution mimetype uri }
+                    tracks { flavor isMaster resolution mimetype uri }
                     captions { uri lang }
+                    segments { startTime uri }
                 }
                 series {
                     id

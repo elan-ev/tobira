@@ -11,10 +11,9 @@ import { COLORS } from "../../../color";
 import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { NotAuthorized } from "../../../ui/error";
-import { CopyableInput, TimeInputWithCheckbox } from "../../../ui/Input";
 import { MetadataFields, MetadataForm, SubmitButtonWithStatus } from "../../../ui/metadata";
 import { useUser, isRealUser } from "../../../User";
-import { OcEntity, Inertable, isSynced, OpencastEntity, secondsToTimeString } from "../../../util";
+import { OcEntity, Inertable, isSynced, OpencastEntity } from "../../../util";
 import { PAGE_WIDTH } from "./Nav";
 import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
@@ -22,11 +21,6 @@ import { Link, useRouter } from "../../../router";
 import { useNotification } from "../../../ui/NotificationContext";
 import { preciseDateTime, preferredLocaleForLang } from "../../../ui/time";
 
-
-type UrlProps = {
-    url: URL;
-    withTimestamp?: boolean;
-};
 
 type Item = OpencastEntity & {
     id: string;
@@ -121,31 +115,6 @@ const DateValue: React.FC<DateValueProps> = ({ label, date }) => <>
 </>;
 
 
-export const DirectLink: React.FC<UrlProps> = ({ url, withTimestamp }) => {
-    const { t } = useTranslation();
-    const [timestamp, setTimestamp] = useState(0);
-    const [checkboxChecked, setCheckboxChecked] = useState(false);
-
-    const linkUrl = url;
-    if (withTimestamp && timestamp && checkboxChecked) {
-        linkUrl.searchParams.set("t", secondsToTimeString(timestamp));
-    }
-
-    return <div css={{ marginBottom: 40, maxWidth: 750 }}>
-        <div css={{ marginBottom: 4 }}>
-            {t("share.share-direct-link") + ":"}
-        </div>
-        <CopyableInput
-            label={t("share.copy-direct-link-to-clipboard")}
-            value={linkUrl.href}
-            css={{ fontSize: 14 }}
-        />
-        {withTimestamp && <TimeInputWithCheckbox {...{
-            timestamp, setTimestamp, checkboxChecked, setCheckboxChecked,
-        }} />}
-    </div>;
-};
-
 type MetadataInput = {
     title: string;
     description?: string | null;
@@ -221,7 +190,7 @@ export const MetadataSection = <TMutation extends MetadataMutationParams>({
 
 
 export const ButtonSection: React.FC<PropsWithChildren> = ({ children }) => (
-    <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
+    <div css={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
         {children}
     </div>
 );

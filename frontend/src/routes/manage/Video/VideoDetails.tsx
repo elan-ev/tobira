@@ -9,13 +9,12 @@ import { isRealUser, useUser } from "../../../User";
 import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
 import { Inertable, isSynced, translatedConfig } from "../../../util";
-import { DirectVideoRoute, VideoRoute } from "../../Video";
+import { DirectVideoRoute, VideoRoute, VideoShareButton } from "../../Video";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
 import {
     UpdatedCreatedInfo,
     DetailsPage,
-    DirectLink,
     MetadataSection,
     DeleteButton,
     ButtonSection,
@@ -43,9 +42,6 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
                 updated: event.syncedData?.updated,
             }} />,
             <VideoButtonSection key="button-section" event={authEvent} />,
-            <DirectLink key="direct-link" withTimestamp={!event.isLive} url={
-                new URL(DirectVideoRoute.url({ videoId: authEvent.id }), document.baseURI)
-            } />,
             <VideoMetadataSection key="metadata" event={event} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms kind="video" hostRealms={authEvent.hostRealms} itemLink={realmPath => (
@@ -93,8 +89,15 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
         return <NotAuthorized />;
     }
 
-    return <Inertable isInert={!isSynced(event) || event.workflowStatus !== "IDLE"}>
-        <ButtonSection>
+    return <ButtonSection>
+        <VideoShareButton
+            {...{ event }}
+            videoLink={new URL(DirectVideoRoute.url({ videoId: event.id }), document.baseURI).href}
+        />
+        <Inertable
+            isInert={!isSynced(event) || event.workflowStatus !== "IDLE"}
+            css={{ display: "flex", flexWrap: "wrap", gap: 12 }}
+        >
             {user.canUseEditor && !event.isLive && event.canWrite && (
                 <ExternalLink
                     service="EDITOR"
@@ -116,8 +119,8 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
                 returnPath="/~manage/videos"
                 commit={commit}
             />
-        </ButtonSection>
-    </Inertable>;
+        </Inertable>
+    </ButtonSection>;
 };
 
 const VideoMetadataSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
