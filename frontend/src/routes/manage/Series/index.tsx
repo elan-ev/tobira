@@ -91,7 +91,7 @@ const query = graphql`
                     description
                     state
                     numVideos
-                    thumbnailStack { thumbnails { url live audioOnly }}
+                    thumbnailStack { thumbnails { url live audioOnly state }}
                 }
             }
         }
@@ -140,7 +140,7 @@ const seriesColumns: ColumnProps<SingleSeries>[] = [
 const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
     itemType="series"
     item={item}
-    thumbnail={status => <SeriesThumbnail series={item} seriesStatus={status} />}
+    thumbnail={state => <SeriesThumbnail series={item} seriesState={state} />}
     link={`${PATH}/${keyOfId(item.id)}`}
     customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
 />;
