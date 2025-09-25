@@ -2,6 +2,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { graphql, PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import {
     LuCalendarRange,
+    LuLock,
     LuPanelsTopLeft,
     LuVolume2,
     LuX,
@@ -793,15 +794,17 @@ const TextMatchTooltip: React.FC<TextMatchTooltipProps> = ({ previewImage, textM
             alignItems: "center",
             justifyContent: "center",
         }}>
-            <div css={{
-                padding: 1,
-                fontSize: 13,
-                lineHeight: 1.3,
-                ...ellipsisOverflowCss(2),
-                mark: highlightCss(COLORS.neutral90),
-            }}>
-                …{highlightText(textMatch.text, textMatch.highlights)}…
-            </div>
+            {textMatch.text
+                ? <div css={{
+                    padding: 1,
+                    fontSize: 13,
+                    lineHeight: 1.3,
+                    ...ellipsisOverflowCss(2),
+                    mark: highlightCss(COLORS.neutral90),
+                }}>
+                    …{highlightText(textMatch.text, textMatch.highlights)}…
+                </div>
+                : <LuLock />}
         </div>
         <div css={{ marginTop: 2 }}>
             {`(${startDuration} – ${endDuration})`}

@@ -1054,8 +1054,11 @@ type TextMatch {
   start: Float!
   "Duration of this timespan in number of milliseconds."
   duration: Float!
-  "The text containing the match, with some context"
-  text: String!
+  """
+    The text containing the match, with some context. Is `null` if the user
+    is not allowed to read the event, but only preview it.
+  """
+  text: String
   "Source of this text."
   ty: TextAssetType!
   "Parts of `text` that should be highlighted."

@@ -59,8 +59,9 @@ pub struct TextMatch {
     /// Duration of this timespan in number of milliseconds.
     pub duration: f64,
 
-    /// The text containing the match, with some context
-    pub text: String,
+    /// The text containing the match, with some context. Is `null` if the user
+    /// is not allowed to read the event, but only preview it.
+    pub text: Option<String>,
 
     /// Source of this text.
     pub ty: TextAssetType,
@@ -90,18 +91,18 @@ impl SearchEvent {
         let mut text_matches = Vec::new();
         let read_roles = decode_acl(&src.read_roles);
         let user_can_read = context.auth.overlaps_roles(read_roles);
-        if user_can_read {
-            src.slide_texts.resolve_matches(
-                match_ranges_for(match_positions, "slide_texts.texts"),
-                &mut text_matches,
-                TextAssetType::SlideText,
-            );
-            src.caption_texts.resolve_matches(
-                match_ranges_for(match_positions, "caption_texts.texts"),
-                &mut text_matches,
-                TextAssetType::Caption,
-            );
-        }
+        src.slide_texts.resolve_matches(
+            match_ranges_for(match_positions, "slide_texts.texts"),
+            &mut text_matches,
+            TextAssetType::SlideText,
+            user_can_read,
+        );
+        src.caption_texts.resolve_matches(
+            match_ranges_for(match_positions, "caption_texts.texts"),
+            &mut text_matches,
+            TextAssetType::Caption,
+            user_can_read,
+        );
 
         let matches = SearchEventMatches {
             title: field_matches_for(match_positions, "title"),
