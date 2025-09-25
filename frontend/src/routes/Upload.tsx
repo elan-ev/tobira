@@ -275,6 +275,11 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
         }}>
             <LuCircleCheck css={{ fontSize: 64, color: COLORS.happy0 }} />
             {t("upload.finished")}
+            <LinkButton kind="call-to-action" to={UploadRoute.url({
+                seriesId: preselectedSeries ? keyOfId(preselectedSeries.id) : null,
+            })}>
+                {t("upload.upload-another")}
+            </LinkButton>
         </div>;
     } else {
         const onMetadataSave = (metadata: Metadata): void => {

@@ -1,2 +1,3 @@
 # A separate config for syncing with tobira-test-oc.ethz.ch, containing the admin password.
 sync-config.toml
+deploy-jwt-key.pem
