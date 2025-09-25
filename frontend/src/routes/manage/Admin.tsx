@@ -11,7 +11,6 @@ import {
 } from "./__generated__/AdminDashboardQuery.graphql";
 import { COLORS } from "../../color";
 import { LuTriangleAlert } from "react-icons/lu";
-import { PrettyDate } from "../../ui/time";
 import { WithTooltip } from "@opencast/appkit";
 import { ReactNode } from "react";
 import CONFIG from "../../config";
@@ -54,10 +53,13 @@ const query = graphql`
                 numEvents
                 numEventsPendingSync
                 numEventsPendingDeletion
+                numEventsListed
                 numSeries
                 numSeriesPendingSync
                 numSeriesPendingDeletion
+                numSeriesListed
                 numPlaylists
+                numPlaylistsListed
                 numRealms
                 numUserRealms
                 numBlocks
@@ -277,6 +279,7 @@ const ContentSection: React.FC<Props> = ({ info }) => {
                 <ul>
                     <li>{t("Pending sync: ") + db.numEventsPendingSync}</li>
                     <li>{t("Pending deletion: ") + db.numEventsPendingDeletion}</li>
+                    <li>{t("Listed: ") + db.numEventsListed}</li>
                 </ul>
             </li>
             <li>
@@ -284,9 +287,15 @@ const ContentSection: React.FC<Props> = ({ info }) => {
                 <ul>
                     <li>{t("Pending sync: ") + db.numSeriesPendingSync}</li>
                     <li>{t("Pending deletion: ") + db.numSeriesPendingDeletion}</li>
+                    <li>{t("Listed: ") + db.numSeriesListed}</li>
                 </ul>
             </li>
-            <li>{t("Playlists: ") + db.numPlaylists}</li>
+            <li>
+                {t("Playlists: ") + db.numPlaylists}
+                <ul>
+                    <li>{t("Listed: ") + db.numPlaylistsListed}</li>
+                </ul>
+            </li>
             <li>
                 {t("Pages: ") + db.numRealms}
                 <ul>
@@ -362,9 +371,28 @@ const withMaybeDanger = (elem: ReactNode, danger: boolean) => (
     </div>
 );
 
-const prettyDate = (date: string | null | undefined) => (
-    date ? <PrettyDate date={new Date(date)} /> : "?"
-);
+const prettyDate = (date: string | null | undefined) => {
+    if (!date) {
+        return "?";
+    }
+
+    const d = new Date(date);
+    // Sweden happens to have a very nice, almost ISO format
+    const precise = new Date().toLocaleString("sv-SE");
+    const secsAgo = Math.floor((Date.now() - d.getTime()) / 1000);
+    let rel;
+    if (secsAgo < 90) {
+        rel = `${Math.floor(secsAgo)}s ago`;
+    } else if (secsAgo < 90 * 60) {
+        rel = `${Math.floor(secsAgo / 60)}min ago`;
+    } else if (secsAgo < 25 * 60 * 60) {
+        rel = `${Math.floor(secsAgo / 60 / 60)}h ago`;
+    } else {
+        rel = `${Math.floor(secsAgo / 60 / 60 / 24)}d ago`;
+    }
+
+    return <>{precise}<br />({rel})</>;
+};
 
 const prettyByteSize = (bytes: number): string => {
     const KIB = 1024;
