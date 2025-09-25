@@ -356,6 +356,7 @@ impl TextSearchIndex {
         matches: &[MatchRange],
         out: &mut Vec<TextMatch>,
         ty: TextAssetType,
+        user_can_read: bool,
     ) {
         if matches.is_empty() || self.texts.is_empty() {
             return;
@@ -403,66 +404,73 @@ impl TextSearchIndex {
         );
 
         for (slot, timespan) in simplified {
-            let matches = entries.get(&slot).unwrap();
+            let (text, highlights) = if !user_can_read {
+                (None, Vec::new())
+            } else {
+                let matches = entries.get(&slot).unwrap();
 
-            // Get the range that includes all matches
-            let full_range = {
-                let mut it = matches.iter();
-                let first = it.next().unwrap();
-                let init = first.start..first.start + first.length;
-                let combined = it.fold(init, |acc, m| {
-                    min(acc.start, m.start)..max(acc.end, m.start + m.length)
-                });
+                // Get the range that includes all matches
+                let full_range = {
+                    let mut it = matches.iter();
+                    let first = it.next().unwrap();
+                    let init = first.start..first.start + first.length;
+                    let combined = it.fold(init, |acc, m| {
+                        min(acc.start, m.start)..max(acc.end, m.start + m.length)
+                    });
 
-                // Unfortunately, Meili can sometimes return invalid ranges,
-                // slicing into UTF-8 chars, so we also ceil here.
-                let start = ceil_char_boundary(&self.texts, combined.start);
-                let end = ceil_char_boundary(&self.texts, combined.end);
-                start..end
+                    // Unfortunately, Meili can sometimes return invalid ranges,
+                    // slicing into UTF-8 chars, so we also ceil here.
+                    let start = ceil_char_boundary(&self.texts, combined.start);
+                    let end = ceil_char_boundary(&self.texts, combined.end);
+                    start..end
+                };
+
+                // Add a bit of margin to include more context in the text. We only
+                // include context from the same text though, meaning we only go to
+                // the next `;` or `\n`.
+                let range_with_context = {
+                    let max_distance = 80;
+                    let separators = &[';', '\n'];
+
+                    // First just add a fixed margin around the match, as a limit.
+                    let margin_start = full_range.start.saturating_sub(max_distance);
+                    let margin_end = std::cmp::min(
+                        full_range.end + max_distance,
+                        self.texts.len(),
+                    );
+
+                    let margin_start = ceil_char_boundary(&self.texts, margin_start);
+                    let margin_end = ceil_char_boundary(&self.texts, margin_end);
+
+                    // Search forwards and backwards from the match point to find
+                    // boundaries of the text.
+                    let start = self.texts[margin_start..full_range.start]
+                        .rfind(separators)
+                        .map(|p| margin_start + p + 1)
+                        .unwrap_or(margin_start);
+                    let end = self.texts[full_range.end..margin_end]
+                        .find(separators)
+                        .map(|p| full_range.end + p)
+                        .unwrap_or(margin_end);
+                    start..end
+                };
+
+                let highlights = matches.iter().map(|m| {
+                    ByteSpan {
+                        start: (m.start - range_with_context.start) as u32,
+                        len: m.length as u32,
+                    }
+                }).collect();
+
+                let text = self.texts[range_with_context].to_owned();
+                (Some(text), highlights)
             };
-
-            // Add a bit of margin to include more context in the text. We only
-            // include context from the same text though, meaning we only go to
-            // the next `;` or `\n`.
-            let range_with_context = {
-                let max_distance = 80;
-                let separators = &[';', '\n'];
-
-                // First just add a fixed margin around the match, as a limit.
-                let margin_start = full_range.start.saturating_sub(max_distance);
-                let margin_end = std::cmp::min(
-                    full_range.end + max_distance,
-                    self.texts.len(),
-                );
-
-                let margin_start = ceil_char_boundary(&self.texts, margin_start);
-                let margin_end = ceil_char_boundary(&self.texts, margin_end);
-
-                // Search forwards and backwards from the match point to find
-                // boundaries of the text.
-                let start = self.texts[margin_start..full_range.start]
-                    .rfind(separators)
-                    .map(|p| margin_start + p + 1)
-                    .unwrap_or(margin_start);
-                let end = self.texts[full_range.end..margin_end]
-                    .find(separators)
-                    .map(|p| full_range.end + p)
-                    .unwrap_or(margin_end);
-                start..end
-            };
-
-            let highlights = matches.iter().map(|m| {
-                ByteSpan {
-                    start: (m.start - range_with_context.start) as u32,
-                    len: m.length as u32,
-                }
-            }).collect();
 
 
             out.push(TextMatch {
                 start: timespan.api_start(),
                 duration: timespan.api_duration(),
-                text: self.texts[range_with_context].to_owned(),
+                text,
                 ty,
                 highlights,
             });
