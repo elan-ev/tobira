@@ -885,6 +885,7 @@ type MetadataProps = {
 const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
     const { t } = useTranslation();
     const user = useUser();
+    const { paella, playerIsLoaded } = usePlayerContext();
 
     const shrinkOnMobile = {
         [screenWidthAtMost(BREAKPOINT_SMALL)]: {
@@ -925,7 +926,15 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                 {CONFIG.showDownloadButton && event.authorizedData && (
                     <DownloadButton event={event} />
                 )}
-                <VideoShareButton {...{ event }} />
+                <VideoShareButton
+                    {...{ event }}
+                    videoLink={window.location.href}
+                    onOpen={setTimestamp => {
+                        if (playerIsLoaded) {
+                            paella.current?.player.videoContainer.currentTime().then(setTimestamp);
+                        }
+                    }}
+                />
             </section>
         </div>
         <div css={{
@@ -987,12 +996,21 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     );
 };
 
-const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
+type VideoShareButtonProps = {
+    event: Pick<SyncedEvent, "series" | "isLive" | "id" | "authorizedData">;
+    videoLink: string;
+    onOpen?: (setTimestamp: (seconds: number) => void) => void;
+}
+
+export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
+    event,
+    videoLink,
+    onOpen,
+}) => {
     const { t } = useTranslation();
     const [timestamp, setTimestamp] = useState(0);
     const [addLinkTimestamp, setAddLinkTimestamp] = useState(false);
     const [addEmbedTimestamp, setAddEmbedTimestamp] = useState(false);
-    const { paella, playerIsLoaded } = usePlayerContext();
 
     const timeStringPattern = /\?t=(\d+h)?(\d+m)?(\d+s)?/;
 
@@ -1002,7 +1020,7 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
             label: t("share.link"),
             Icon: LuLink,
             render: () => {
-                let url = window.location.href.replace(timeStringPattern, "");
+                let url = videoLink.replace(timeStringPattern, "");
                 url += addLinkTimestamp && timestamp
                     ? `?t=${secondsToTimeString(timestamp)}`
                     : "";
@@ -1082,15 +1100,7 @@ const VideoShareButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
         },
     };
 
-    const onOpen = () => {
-        if (playerIsLoaded) {
-            paella.current?.player.videoContainer.currentTime().then(res => {
-                setTimestamp(res);
-            });
-        }
-    };
-
-    return <ShareButton {...{ tabs, onOpen }} height={250} />;
+    return <ShareButton {...{ tabs }} onOpen={() => onOpen?.(setTimestamp)} height={250} />;
 };
 
 
