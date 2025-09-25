@@ -90,6 +90,7 @@ impl Assets {
                     *v = format!("/~assets/{resolved}").into();
                 };
                 fix_path(&mut frontend_config["paellaSettingsIcon"]);
+                fix_path(&mut frontend_config["favicon"]);
                 for logo in frontend_config["logos"].as_array_mut().expect("logos is not an array") {
                     fix_path(&mut logo["path"]);
                 }
@@ -326,6 +327,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
             "editorUrl": config.opencast.editor_url().to_string(),
         },
         "logos": logo_entries,
+        "favicon": FAVICON_FILE,
         "sync": {
             "pollPeriod": config.sync.poll_period.as_secs_f64(),
         },

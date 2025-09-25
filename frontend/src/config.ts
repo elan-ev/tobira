@@ -35,6 +35,7 @@ type Config = {
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
     paellaSettingsIcon: string;
     logos: LogoConfig;
+    favicon: string;
     plyr: PlyrConfig;
     upload: UploadConfig;
     paellaPluginConfig: object;
