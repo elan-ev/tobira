@@ -420,6 +420,7 @@ type AuthorizedPlaylist implements Node {
   description: String
   creator: String!
   entries: [VideoListEntry!]!
+  create(metadata: BasicMetadata!, creator: String!, entries: [String!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
 }
 
 type Caption {
@@ -549,6 +550,8 @@ type Mutation {
     and stores the series in Tobira's DB.
   """
   createSeries(metadata: BasicMetadata!, acl: [AclInputEntry!]!): Series!
+  "Creates a new playlist in Opencast and stores it in Tobira's DB."
+  createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [String!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
   """
     Sets the order of all children of a specific realm.
 

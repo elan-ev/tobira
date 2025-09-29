@@ -17,6 +17,7 @@ use tap::TapFallible;
 use crate::{
     api::{model::acl::AclInputEntry, Context},
     config::{Config, HttpHost},
+    db::types::PlaylistEntry,
     prelude::*,
     sync::harvest::HarvestResponse,
     util::download_body,
@@ -287,6 +288,58 @@ impl OcClient {
     }
 
 
+    pub async fn create_playlist(
+        &self,
+        title: &str,
+        description: Option<&str>,
+        creator: &str,
+        entries: &[String],
+        acl: &[AclInputEntry],
+    ) -> Result<CreatePlaylistResponse> {
+        let access_policy: Vec<AclInput> = acl.iter()
+            .flat_map(|entry| entry.actions.iter()
+                .map(|action| AclInput {
+                    allow: true,
+                    action: action.clone(),
+                    role: entry.role.clone(),
+                }))
+            .collect();
+
+        let entries: Vec<serde_json::Value> = entries.into_iter().map(|e| {
+            serde_json::json!({
+                "contentId": e,
+                "type": "EVENT",
+            })
+        }).collect();
+
+        let playlist = serde_json::json!({
+            "title": title,
+            "description": description,
+            "creator": creator,
+            "entries": entries,
+            "accessControlEntries": access_policy,
+        });
+
+        let params = Serializer::new(String::new())
+            .append_pair("playlist", &serde_json::to_string(&playlist).expect("Failed to serialize"))
+            .finish();
+
+        let req = self.authed_req_builder(&self.external_api_node, "/api/playlists/")
+            .method(http::Method::POST)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        let uri = req.uri().clone();
+        let response = self.http_client.request(req).await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}'"))?;
+
+        let (out, _) = self.deserialize_response::<CreatePlaylistResponse>(response, &uri).await?;
+
+        Ok(out)
+    }
+
+
     async fn send_put_request(&self, path_and_query: &str, params: String) -> Result<Response<Incoming>> {
         let req = self.authed_req_builder(&self.external_api_node, &path_and_query)
             .method(http::Method::PUT)
@@ -370,6 +423,12 @@ pub(crate) struct AclInput {
 #[derive(Debug, Deserialize)]
 pub(crate) struct CreateSeriesResponse {
     pub identifier: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreatePlaylistResponse {
+    pub id: String,
+    pub entries: Vec<PlaylistEntry>,
 }
 
 #[derive(Debug, Deserialize)]
