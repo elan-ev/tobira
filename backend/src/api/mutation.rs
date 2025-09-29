@@ -7,6 +7,7 @@ use super::{
     model::{
         acl::AclInputEntry,
         series::{Series, NewSeries},
+        playlist::AuthorizedPlaylist,
         shared::BasicMetadata,
         realm::{
             ChildIndex,
@@ -142,6 +143,17 @@ impl Mutation {
         context: &Context,
     ) -> ApiResult<Series> {
         Series::create_in_oc(metadata, acl, context).await
+    }
+
+    /// Creates a new playlist in Opencast and stores it in Tobira's DB.
+    async fn create_playlist(
+        metadata: BasicMetadata,
+        creator: String,
+        entries: Vec<String>,
+        acl: Vec<AclInputEntry>,
+        context: &Context,
+    ) -> ApiResult<AuthorizedPlaylist> {
+        AuthorizedPlaylist::create(metadata, creator, entries, acl, context).await
     }
 
     /// Sets the order of all children of a specific realm.

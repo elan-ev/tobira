@@ -3,7 +3,16 @@ use postgres_types::ToSql;
 
 use crate::{
     api::{
-        common::NotAllowed, err::ApiResult, Context, Id, Node, NodeValue
+        common::NotAllowed,
+        err::{self, ApiResult},
+        model::{
+            acl::AclInputEntry,
+            shared::{convert_acl_input, BasicMetadata},
+        },
+        Context,
+        Id,
+        Node,
+        NodeValue,
     },
     db::util::{impl_from_db, select},
     model::Key,
@@ -160,6 +169,55 @@ impl AuthorizedPlaylist {
                 VideoListEntry::Event(event)
             })
             .await?
+            .pipe(Ok)
+    }
+
+    pub(crate) async fn create(
+        metadata: BasicMetadata,
+        creator: String,
+        entries: Vec<String>,
+        acl: Vec<AclInputEntry>,
+        context: &Context,
+    ) -> ApiResult<Self> {
+        // Todo: authorization
+
+        let response = context
+            .oc_client
+            .create_playlist(
+                &metadata.title,
+                metadata.description.as_deref(),
+                &creator,
+                &entries,
+                &acl,
+            ).await
+            .map_err(|e| {
+                error!("Failed to create playlist in Opencast: {}", e);
+                err::opencast_unavailable!("Failed to create playlist")
+            })?;
+
+        let acl = convert_acl_input(acl);
+        let selection = Self::select();
+
+        let query = format!(
+            "insert into playlists ( \
+                opencast_id, title, description, creator, \
+                entries, read_roles, write_roles, updated \
+            ) \
+            values ($1, $2, $3, $4, $5, $6, $7, now()) \
+            returning {selection}",
+        );
+
+        context.db
+            .query_one(&query, &[
+                &response.id,
+                &metadata.title,
+                &metadata.description,
+                &creator,
+                &response.entries,
+                &acl.read_roles,
+                &acl.write_roles,
+            ]).await?
+            .pipe(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
 }
