@@ -731,3 +731,6 @@ api-remote-errors:
   series:
     not-found: 'Action échouée : la série n''a pas été trouvée.'
     not-allowed: Vous n'avez pas l'autorisation d'effectuer cette action en série.
+  playlist:
+    not-found: 'Action échouée : la playlist n''a pas été trouvée.' # needs verification
+    not-allowed: Vous n'avez pas l'autorisation d'effectuer cette action de playlist. # needs verification

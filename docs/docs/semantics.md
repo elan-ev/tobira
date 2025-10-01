@@ -122,6 +122,7 @@ All these roles can be configured in `auth.roles`.
 | `roles.global_page_admin` | Is *page admin* on all non-user content-pages |
 | `roles.global_page_moderator` | Is *page moderator* on all non-user content-pages |
 | `roles.can_create_series` | Can create new series |
+| `roles.can_create_playlists` | Can create new playlists |
 | `roles.tobira_admin` | Is *Tobira admin* and can do all of the above |
 
 All users can always see "My videos" and "My series".

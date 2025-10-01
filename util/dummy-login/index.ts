@@ -111,8 +111,8 @@ const DUMMY_USERS: Record<string, DummyUserInfo> = {
     "björk": {
         displayName: "Prof. Björk Guðmundsdóttir",
         userRole: "ROLE_USER_BJOERK",
-        roles: ["ROLE_EXTERNAL", "ROLE_TOBIRA_CAN_FIND_UNLISTED",
-            "ROLE_TOBIRA_UPLOAD", "ROLE_TOBIRA_STUDIO", "ROLE_TOBIRA_CAN_CREATE_SERIES"],
+        roles: ["ROLE_EXTERNAL", "ROLE_TOBIRA_CAN_FIND_UNLISTED", "ROLE_TOBIRA_UPLOAD",
+            "ROLE_TOBIRA_STUDIO", "ROLE_TOBIRA_CAN_CREATE_SERIES"],
         email: "bjoerk@example.org",
         userRealmHandle: "bjorky",
     },

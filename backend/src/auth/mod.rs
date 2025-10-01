@@ -482,6 +482,11 @@ pub(crate) trait HasRoles {
             || self.roles().contains(&auth_config.roles.can_create_series)
     }
 
+    fn can_create_playlists(&self, auth_config: &AuthConfig) -> bool {
+        self.is_tobira_admin(auth_config)
+            || self.roles().contains(&auth_config.roles.can_create_playlists)
+    }
+
     fn can_use_studio(&self, auth_config: &AuthConfig) -> bool {
         self.is_tobira_admin(auth_config) || self.roles().contains(&auth_config.roles.studio)
     }

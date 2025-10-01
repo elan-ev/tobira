@@ -750,3 +750,6 @@ api-remote-errors:
   series:
     not-found: "Aktion fehlgeschlagen: Serie nicht gefunden."
     not-allowed: Sie haben nicht die Berechtigung, diese Serienaktion durchzuführen.
+  playlist:
+    not-found: "Aktion fehlgeschlagen: Playlist nicht gefunden."
+    not-allowed: Sie haben nicht die Berechtigung, diese Playlist-Aktion durchzuführen.
