@@ -80,6 +80,11 @@ impl User {
         HasRoles::can_create_series(self, &context.config.auth)
     }
 
+    /// `True` if the user has the permission to create new playlists.
+    fn can_create_playlists(&self, context: &Context) -> bool {
+        HasRoles::can_create_playlists(self, &context.config.auth)
+    }
+
     /// `True` if user is a global Tobira admin, i.e. having `ROLE_ADMIN` or the
     /// configured Tobira admin role.
     fn is_tobira_admin(&self, context: &Context) -> bool {

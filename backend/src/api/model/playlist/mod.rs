@@ -179,7 +179,9 @@ impl AuthorizedPlaylist {
         acl: Vec<AclInputEntry>,
         context: &Context,
     ) -> ApiResult<Self> {
-        // Todo: authorization
+        if !context.auth.can_create_playlists(&context.config.auth) {
+            return Err(err::not_authorized!(key = "playlist.not-allowed", "playlist action not allowed"));
+        }
 
         let response = context
             .oc_client
