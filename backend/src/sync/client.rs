@@ -459,11 +459,11 @@ pub struct EventStatus {
     pub processing_state: String,
 }
 
-/// Trait for items that can be harvested from Opencast (currently used for events and series,
-/// but can also be used for playlists).
-/// Their api endpoint paths generally shares the same structure (`/api/{endpoint_path}/{id}/...`).
+/// Trait for items that can be harvested from Opencast.
+/// Their api endpoint paths generally share the same structure (`/api/{endpoint_path}/{id}/...`).
 /// Implementing the below methods helps with making some endpoints like `update_acl` and
 /// `update_metadata` generic by just passing the item instead of multiple props.
+/// Playlists however only use the generic `delete` endpoint.
 pub(crate) trait OpencastItem {
     /// Name used in endpoint path.
     fn endpoint_path(&self) -> &'static str;

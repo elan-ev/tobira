@@ -422,6 +422,7 @@ type AuthorizedPlaylist implements Node {
   entries: [VideoListEntry!]!
   create(metadata: BasicMetadata!, creator: String!, entries: [String!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
   update(id: ID!, title: String, description: String, entries: [String!], acl: [AclInputEntry!]): AuthorizedPlaylist!
+  delete(id: ID!): RemovedPlaylist!
 }
 
 type Caption {
@@ -558,6 +559,8 @@ type Mutation {
     and updating the playlist in Tobira's DB.
   """
   updatePlaylist(id: ID!, title: String, description: String, entries: [String!], acl: [AclInputEntry!]): AuthorizedPlaylist!
+  "Deletes the given playlist by sending a delete request to Opencast."
+  deletePlaylist(id: ID!): RemovedPlaylist!
   """
     Sets the order of all children of a specific realm.
 
@@ -901,6 +904,10 @@ type RealmNavItem {
 type RemovedBlock {
   id: ID!
   realm: Realm!
+}
+
+type RemovedPlaylist {
+  id: ID!
 }
 
 type RemovedRealm {
