@@ -156,6 +156,19 @@ impl Mutation {
         AuthorizedPlaylist::create(metadata, creator, entries, acl, context).await
     }
 
+    /// Updates a playlist's metadata, entries or acl by sending the changes to Opencast
+    /// and updating the playlist in Tobira's DB.
+    async fn update_playlist(
+        id: Id,
+        title: Option<String>,
+        description: Option<String>,
+        entries: Option<Vec<String>>,
+        acl: Option<Vec<AclInputEntry>>,
+        context: &Context,
+    ) -> ApiResult<AuthorizedPlaylist> {
+        AuthorizedPlaylist::update(id, title, description, entries, acl, context).await
+    }
+
     /// Sets the order of all children of a specific realm.
     ///
     /// `childIndices` must contain at least one element, i.e. do not call this

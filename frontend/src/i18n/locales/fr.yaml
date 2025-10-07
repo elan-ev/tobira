@@ -707,9 +707,12 @@ manage:
 embed:
   not-supported: Cette page ne peut pas être intégrée.
 
+
+# These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:
   view:
     event: Vous n'êtes pas autorisé(e) à regarder cette vidéo.
+    playlist: Vous n'êtes pas autorisé(e) à voir cette playlist. # needs verification
   mutation:
     not-logged-in: Vous devez être connecté(e) pour effectuer cette action.
   realm:

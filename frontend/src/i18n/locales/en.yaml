@@ -692,6 +692,7 @@ embed:
 api-remote-errors:
   view:
     event: You are not authorized to view this video.
+    playlist: You are not authorized to view this playlist.
   mutation:
     not-logged-in: You have to be logged in to perform this action.
   realm:
