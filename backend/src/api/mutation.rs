@@ -7,7 +7,7 @@ use super::{
     model::{
         acl::AclInputEntry,
         series::{Series, NewSeries},
-        playlist::AuthorizedPlaylist,
+        playlist::{AuthorizedPlaylist, RemovedPlaylist},
         shared::BasicMetadata,
         realm::{
             ChildIndex,
@@ -167,6 +167,11 @@ impl Mutation {
         context: &Context,
     ) -> ApiResult<AuthorizedPlaylist> {
         AuthorizedPlaylist::update(id, title, description, entries, acl, context).await
+    }
+
+    /// Deletes the given playlist by sending a delete request to Opencast.
+    async fn delete_playlist(id: Id, context: &Context) -> ApiResult<RemovedPlaylist> {
+        AuthorizedPlaylist::delete(id, context).await
     }
 
     /// Sets the order of all children of a specific realm.

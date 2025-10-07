@@ -1,3 +1,4 @@
+use hyper::StatusCode;
 use juniper::graphql_object;
 use postgres_types::ToSql;
 
@@ -17,6 +18,7 @@ use crate::{
     db::util::{impl_from_db, select},
     model::Key,
     prelude::*,
+    sync::client::{AclInput, OpencastItem},
 };
 
 use super::event::AuthorizedEvent;
@@ -302,10 +304,62 @@ impl AuthorizedPlaylist {
             .pipe(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
+
+    pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<RemovedPlaylist> {
+        let playlist = Playlist::load_for_mutation(id, context).await?;
+
+        let response = context
+            .oc_client
+            .delete(&playlist)
+            .await
+            .map_err(|e| {
+                error!("Failed to send delete request: {}", e);
+                err::opencast_unavailable!("Failed to communicate with Opencast")
+            })?;
+
+        if response.status() == StatusCode::OK {
+            // 200: OK, Playlist removed.
+            info!(playlist_id = %id, "Deleted playlist");
+            context.db.execute("delete from playlists where id = $1", &[&playlist.key]).await?;
+            Ok(RemovedPlaylist { id: playlist.id() })
+        } else {
+            warn!(
+                playlist_id = %id,
+                "Failed to delete playlist, OC returned status: {}",
+                response.status()
+            );
+            Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
+        }
+    }
 }
 
 impl Node for AuthorizedPlaylist {
     fn id(&self) -> Id {
         Id::playlist(self.key)
     }
+}
+
+impl OpencastItem for AuthorizedPlaylist {
+    fn endpoint_path(&self) -> &'static str {
+        "playlists"
+    }
+
+    fn id(&self) -> &str {
+        &self.opencast_id
+    }
+
+    fn metadata_flavor(&self) -> &'static str {
+        unreachable!()
+    }
+
+    async fn extra_roles(&self, _context: &Context, _oc_id: &str) -> Result<Vec<AclInput>> {
+       // Playlists do not have custom or preview roles.
+        Ok(vec![])
+    }
+}
+
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct RemovedPlaylist {
+    id: Id,
 }
