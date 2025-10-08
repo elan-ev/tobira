@@ -72,7 +72,7 @@ impl Mutation {
     /// Note that "success" in this case only means the request was successfully sent
     /// and accepted, not that the deletion itself succeeded, which is instead checked
     /// in subsequent harvesting results.
-    async fn delete_video(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
+    async fn delete_event(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         AuthorizedEvent::delete(id, context).await
     }
 
