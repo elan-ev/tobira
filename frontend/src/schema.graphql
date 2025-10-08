@@ -420,9 +420,6 @@ type AuthorizedPlaylist implements Node {
   description: String
   creator: String!
   entries: [VideoListEntry!]!
-  create(metadata: BasicMetadata!, creator: String!, entries: [String!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
-  update(id: ID!, title: String, description: String, entries: [String!], acl: [AclInputEntry!]): AuthorizedPlaylist!
-  delete(id: ID!): RemovedPlaylist!
 }
 
 type Caption {
