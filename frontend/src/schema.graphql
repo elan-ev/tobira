@@ -510,7 +510,7 @@ type Mutation {
     and accepted, not that the deletion itself succeeded, which is instead checked
     in subsequent harvesting results.
   """
-  deleteVideo(id: ID!): AuthorizedEvent!
+  deleteEvent(id: ID!): AuthorizedEvent!
   """
     Updates the acl of a given event by sending the changes to Opencast.
     The `acl` parameter can include `read` and `write` roles, as these are the

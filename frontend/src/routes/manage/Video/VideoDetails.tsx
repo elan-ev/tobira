@@ -74,7 +74,7 @@ const updateEventMetadata = graphql`
 
 const deleteVideoMutation = graphql`
     mutation VideoDetailsDeleteMutation($id: ID!) {
-        deleteVideo(id: $id) { id }
+        deleteEvent(id: $id) { id }
     }
 `;
 
