@@ -21,6 +21,7 @@ import {
     PlaylistsManageQuery$data,
     PlaylistsSortColumn,
 } from "./__generated__/PlaylistsManageQuery.graphql";
+import { PlaylistThumbnail } from "./Shared";
 
 
 export const PATH = "/~manage/playlists" as const;
@@ -81,6 +82,7 @@ const query = graphql`
                     updated
                     description
                     numVideos
+                    thumbnailStack { thumbnails { url live audioOnly }}
                 }
             }
         }
@@ -113,11 +115,10 @@ const playlistColumns: ColumnProps<SinglePlaylist>[] = [
 const PlaylistRow: React.FC<{ item: SinglePlaylist }> = ({ item }) => <TableRow
     itemType="series" // Todo: change to "playlist"
     item={{ ...item, state: "READY" }}
-    thumbnail={_status => <></>} // Todo: add thumbnails
+    thumbnail={_ => <PlaylistThumbnail playlist={item} />}
     link={`${PATH}/${keyOfId(item.id)}`}
     customColumns={playlistColumns.map(col => <col.column key={col.key} item={item} />)}
 />;
-
 
 
 const parsePlaylistColumn = (sortBy: string | null): PlaylistsSortColumn =>
