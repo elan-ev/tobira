@@ -1,8 +1,11 @@
 use crate::{
     api::{
-        Context,
         err::ApiResult,
-        model::event::AuthorizedEvent,
+        model::{
+            event::AuthorizedEvent,
+            playlist::{AuthorizedPlaylist, Playlist, PlaylistsSortOrder},
+        },
+        Context,
     },
     auth::User,
     prelude::*,
@@ -121,5 +124,20 @@ impl User {
         filter: Option<SearchFilter>,
     ) -> ApiResult<Connection<Series>> {
         Series::load_writable_for_user(context, order.into(), offset, limit, filter).await
+    }
+
+    /// Returns all playlists that somehow "belong" to the user, i.e. that appear
+    /// on the "my playlists" page.
+    async fn my_playlists(
+        &self,
+        context: &Context,
+        #[graphql(default)]
+        order: PlaylistsSortOrder,
+        offset: i32,
+        limit: i32,
+        #[graphql(default)]
+        filter: Option<SearchFilter>,
+    ) -> ApiResult<Connection<AuthorizedPlaylist>> {
+        Playlist::load_writable_for_user(context, order.into(), offset, limit, filter).await
     }
 }

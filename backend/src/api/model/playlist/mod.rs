@@ -1,10 +1,22 @@
-use juniper::graphql_object;
+use chrono::{DateTime, Utc};
+use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
 use postgres_types::ToSql;
 
 use crate::{
     api::{
         common::NotAllowed,
         err::{self, ApiResult},
+        model::shared::{
+            define_sort_column_and_order,
+            load_writable_for_user,
+            Connection,
+            ConnectionQueryParts,
+            PageInfo,
+            SearchFilter,
+            SortDirection,
+            SortOrder,
+            ToSqlColumn,
+        },
         Context,
         Id,
         Node,
@@ -35,6 +47,8 @@ pub(crate) struct AuthorizedPlaylist {
     title: String,
     description: Option<String>,
     creator: String,
+    updated: DateTime<Utc>,
+    num_videos: u32,
 
     read_roles: Vec<String>,
     #[allow(dead_code)] // TODO
@@ -58,7 +72,10 @@ crate::api::util::impl_object_with_dummy_field!(Missing);
 impl_from_db!(
     AuthorizedPlaylist,
     select: {
-        playlists.{ id, opencast_id, title, description, creator, read_roles, write_roles },
+        playlists.{
+            id, opencast_id, title, description,
+            creator, read_roles, write_roles, updated,
+        },
     },
     |row| {
         Self {
@@ -69,6 +86,9 @@ impl_from_db!(
             creator: row.creator(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
+            updated: row.updated(),
+            // Will be set when needed.
+            num_videos: 0,
         }
     },
 );
@@ -124,6 +144,29 @@ impl Playlist {
         Ok(playlist)
     }
 
+    pub(crate) async fn load_writable_for_user(
+        context: &Context,
+        order: SortOrder<PlaylistsSortColumn>,
+        offset: i32,
+        limit: i32,
+        filter: Option<SearchFilter>,
+    ) -> ApiResult<Connection<AuthorizedPlaylist>> {
+        let parts = ConnectionQueryParts {
+            table: "playlists",
+            alias: None,
+            join_clause: "",
+        };
+        let (selection, mapping) = select!(
+            playlist: AuthorizedPlaylist,
+            num_videos: "cardinality(playlists.entries)",
+        );
+        load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
+            let mut out = AuthorizedPlaylist::from_row(row, mapping.playlist);
+            out.num_videos = mapping.num_videos.of::<i32>(row) as u32;
+            out
+        }).await
+    }
+
     pub(crate) fn into_result(self) -> ApiResult<AuthorizedPlaylist> {
         match self {
             Self::Playlist(p) => Ok(p),
@@ -156,6 +199,14 @@ impl AuthorizedPlaylist {
 
     fn creator(&self) -> &str {
         &self.creator
+    }
+
+    fn updated(&self) -> DateTime<Utc> {
+        self.updated
+    }
+
+    fn num_videos(&self) -> i32 {
+        self.num_videos as i32
     }
 
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
@@ -201,3 +252,27 @@ impl Node for AuthorizedPlaylist {
         Id::playlist(self.key)
     }
 }
+
+#[graphql_object(name = "PlaylistConnection", context = Context)]
+impl Connection<AuthorizedPlaylist> {
+    fn page_info(&self) -> &PageInfo {
+        &self.page_info
+    }
+    fn items(&self) -> &[AuthorizedPlaylist] {
+        &self.items
+    }
+    fn total_count(&self) -> i32 {
+        self.total_count
+    }
+}
+
+define_sort_column_and_order!(
+    pub enum PlaylistsSortColumn {
+        Title      => "title",
+        #[default]
+        Updated    => "updated",
+        EventCount => "cardinality(playlists.entries)",
+    };
+    pub struct PlaylistsSortOrder
+);
+

@@ -1,7 +1,9 @@
 import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineFire } from "react-icons/hi";
-import { LuFilm, LuLayoutTemplate, LuCirclePlus, LuUpload, LuVideo } from "react-icons/lu";
+import {
+    LuFilm, LuLayoutTemplate, LuCirclePlus, LuUpload, LuVideo, LuListVideo,
+} from "react-icons/lu";
 import { graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
 
@@ -26,6 +28,7 @@ import { ManageVideosRoute } from "./Video";
 import SeriesIcon from "../../icons/series.svg";
 import { ManageSeriesRoute } from "./Series";
 import { CreateSeriesRoute } from "./Series/Create";
+import { ManagePlaylistsRoute } from "./Playlist";
 
 
 const PATH = "/~manage" as const;
@@ -80,6 +83,7 @@ type ManageNavProps = {
         | typeof UploadPath
         | typeof ManageSeriesRoute.url
         | typeof CreateSeriesRoute.url
+        | typeof ManagePlaylistsRoute.url
         | `/@${string}`
         | "STUDIO";
 };
@@ -118,6 +122,8 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     if (isRealUser(user) && user.canCreateSeries) {
         entries.push([CreateSeriesRoute.url, t("manage.series.table.create"), <LuCirclePlus />]);
     }
+
+    entries.push([ManagePlaylistsRoute.url, t("manage.playlist.table.title"), <LuListVideo />]);
     /* eslint-enable react/jsx-key */
 
     const items = entries.map(([path, label, icon]) => path === "STUDIO" ? (

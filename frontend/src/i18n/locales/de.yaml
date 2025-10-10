@@ -509,6 +509,10 @@ manage:
         Es können nur Videos hinzugefügt werden, die in keiner anderen Serie enthalten sind.
         Hier entfernte Videos werden nicht gelöscht, sondern nur aus der Serie entfernt.
 
+  playlist:
+    table:
+      title: Meine Playlists
+
   video-list:
     no-content: Keine Videos
     no-of-videos_one: '{{count}} Videos'
@@ -698,7 +702,7 @@ manage:
     playlist:
       invalid: Bitte eine Playlist auswählen
       findable-playlist-note: >
-        Sie können hier nur Playlisten wählen, die gelistet sind oder auf die
+        Sie können hier nur Playlists wählen, die gelistet sind oder auf die
         Sie Schreibzugriff haben.
     event:
       invalid: Bitte ein Video auswählen
