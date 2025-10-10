@@ -17,13 +17,14 @@ use crate::{
             SortOrder,
             ToSqlColumn,
         },
+        util::LazyLoad,
         Context,
         Id,
         Node,
         NodeValue,
     },
     db::util::{impl_from_db, select},
-    model::Key,
+    model::{Key, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
 };
 
@@ -48,7 +49,8 @@ pub(crate) struct AuthorizedPlaylist {
     description: Option<String>,
     creator: String,
     updated: DateTime<Utc>,
-    num_videos: u32,
+    num_entries: LazyLoad<u32>,
+    thumbnail_stack: LazyLoad<ThumbnailStack>,
 
     read_roles: Vec<String>,
     #[allow(dead_code)] // TODO
@@ -87,8 +89,8 @@ impl_from_db!(
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
             updated: row.updated(),
-            // Will be set when needed.
-            num_videos: 0,
+            num_entries: LazyLoad::NotLoaded,
+            thumbnail_stack: LazyLoad::NotLoaded,
         }
     },
 );
@@ -158,11 +160,27 @@ impl Playlist {
         };
         let (selection, mapping) = select!(
             playlist: AuthorizedPlaylist,
-            num_videos: "cardinality(playlists.entries)",
+            num_entries: "cardinality(playlists.entries)",
+            thumbnails: "array(\
+                select search_thumbnail_info_for_event(events.*) \
+                from events \
+                where events.opencast_id = any( \
+                    array( \
+                        select (playlist_entry).content_id \
+                        from unnest(playlists.entries) playlist_entry \
+                    ) \
+                ) \
+            )",
         );
         load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
             let mut out = AuthorizedPlaylist::from_row(row, mapping.playlist);
-            out.num_videos = mapping.num_videos.of::<i32>(row) as u32;
+            out.num_entries = LazyLoad::Loaded(mapping.num_entries.of::<i32>(row) as u32);
+            out.thumbnail_stack = LazyLoad::Loaded(ThumbnailStack {
+                thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(row)
+                    .into_iter()
+                    .filter_map(|info| ThumbnailInfo::from_search(info, &context))
+                    .collect(),
+            });
             out
         }).await
     }
@@ -205,8 +223,14 @@ impl AuthorizedPlaylist {
         self.updated
     }
 
-    fn num_videos(&self) -> i32 {
-        self.num_videos as i32
+    /// Returns the number of entries in this playlist. Note: this is lazily loaded
+    /// and only available in certain contexts (e.g., playlist listings).
+    fn num_entries(&self) -> i32 {
+        self.num_entries.unwrap() as i32
+    }
+
+    fn thumbnail_stack(&self) -> &ThumbnailStack {
+        self.thumbnail_stack.as_ref().unwrap()
     }
 
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
