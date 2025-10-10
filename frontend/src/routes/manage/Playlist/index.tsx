@@ -113,7 +113,7 @@ const playlistColumns: ColumnProps<SinglePlaylist>[] = [
 
 
 const PlaylistRow: React.FC<{ item: SinglePlaylist }> = ({ item }) => <TableRow
-    itemType="series" // Todo: change to "playlist"
+    itemType="playlist"
     item={{ ...item, state: "READY" }}
     thumbnail={_ => <PlaylistThumbnail playlist={item} />}
     link={`${PATH}/${keyOfId(item.id)}`}
