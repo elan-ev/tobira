@@ -506,7 +506,7 @@ manage:
   series:
     created-note: La serie è stata creata.
     table:
-      title: Le mie serie
+      title: I miei serie # needs verification. Should be plural.
       create: Creare serie
     details:
       title: Dettagli serie
@@ -523,6 +523,10 @@ manage:
         possibile aggiungere solo video che non fanno parte di altre serie. La
         rimozione di un video da questo elenco non elimina il video stesso, ma
         lo rimuove semplicemente da questa serie.
+
+  playlist:
+    table:
+      title: I miei playlist # needs verification. Should be plural.
 
   video-list:
     no-content: Nessun video

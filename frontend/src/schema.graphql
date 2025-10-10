@@ -21,6 +21,12 @@ enum JwtService {
   EDITOR
 }
 
+enum PlaylistsSortColumn {
+  TITLE
+  UPDATED
+  EVENT_COUNT
+}
+
 enum RealmOrder {
   BY_INDEX
   ALPHABETIC_ASC
@@ -150,6 +156,11 @@ input NewTitleBlock {
 input NewVideoBlock {
   event: ID!
   displayOptions: DisplayOptions!
+}
+
+input PlaylistsSortOrder {
+  column: PlaylistsSortColumn!
+  direction: SortDirection!
 }
 
 input RealmLineageComponent {
@@ -403,6 +414,8 @@ type AuthorizedPlaylist implements Node {
   title: String!
   description: String
   creator: String!
+  updated: DateTime!
+  numVideos: Int!
   entries: [VideoListEntry!]!
 }
 
@@ -652,6 +665,12 @@ type PlaylistBlock implements Block {
   id: ID!
   index: Int!
   realm: Realm!
+}
+
+type PlaylistConnection {
+  pageInfo: PageInfo!
+  items: [AuthorizedPlaylist!]!
+  totalCount: Int!
 }
 
 type PlaylistSearchResults {
@@ -1153,6 +1172,11 @@ type User {
     on the "my series" page.
   """
   mySeries(order: SeriesSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): SeriesConnection!
+  """
+    Returns all playlists that somehow "belong" to the user, i.e. that appear
+    on the "my playlists" page.
+  """
+  myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
 }
 
 "A block for presenting a single Opencast event"

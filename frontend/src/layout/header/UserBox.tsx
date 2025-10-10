@@ -5,6 +5,7 @@ import {
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
     LuCirclePlus,
     LuGauge,
+    LuListVideo,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
@@ -34,6 +35,7 @@ import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
 import { SHORTCUTS, ShortcutsOverview, useShortcut } from "../../ui/Shortcuts";
 import { ModalHandle } from "../../ui/Modal";
 import { AdminDashboardRoute } from "../../routes/manage/Admin";
+import { ManagePlaylistsRoute } from "../../routes/manage/Playlist";
 
 
 
@@ -283,6 +285,12 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             children: t("manage.series.table.create"),
             css: indent,
         }] : [],
+        {
+            icon: <LuListVideo />,
+            wrapper: <Link to={ManagePlaylistsRoute.url} />,
+            children: t("manage.playlist.table.title"),
+            css: indent,
+        },
         ...user.isTobiraAdmin ? [{
             icon: <LuGauge />,
             wrapper: <Link to={AdminDashboardRoute.url} />,
