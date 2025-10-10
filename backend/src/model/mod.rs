@@ -7,6 +7,8 @@
 //! either of `db`, `api` or any other submodule as they are used in multiple
 //! situations (loading from DB, exposing via API, ...).
 
+use juniper::GraphQLObject;
+
 mod event;
 mod extra_metadata;
 mod key;
@@ -17,6 +19,11 @@ pub(crate) use self::{
     extra_metadata::ExtraMetadata,
     key::Key,
     event::{SearchThumbnailInfo, ThumbnailInfo},
-    series::{SeriesThumbnailStack, SeriesState},
+    series::SeriesState,
     translated_string::{LangKey, TranslatedString},
 };
+
+#[derive(Debug, GraphQLObject, Clone)]
+pub(crate) struct ThumbnailStack {
+    pub(crate) thumbnails: Vec<ThumbnailInfo>,
+}

@@ -431,7 +431,12 @@ type AuthorizedPlaylist implements Node {
   description: String
   creator: String!
   updated: DateTime!
-  numVideos: Int!
+  """
+    Returns the number of entries in this playlist. Note: this is lazily loaded
+    and only available in certain contexts (e.g., playlist listings).
+  """
+  numEntries: Int!
+  thumbnailStack: ThumbnailStack!
   entries: [VideoListEntry!]!
 }
 
@@ -1012,7 +1017,7 @@ type SearchSeries implements Node {
   title: String!
   description: String
   hostRealms: [SearchRealm!]!
-  thumbnailStack: SeriesThumbnailStack!
+  thumbnailStack: ThumbnailStack!
   matches: SearchSeriesMatches!
   created: DateTime
 }
@@ -1046,7 +1051,7 @@ type Series implements Node {
   description: String
   state: SeriesState!
   numVideos: Int!
-  thumbnailStack: SeriesThumbnailStack!
+  thumbnailStack: ThumbnailStack!
   acl: [AclItem!]
   "Whether the current user has write access to this series."
   canWrite: Boolean!
@@ -1083,10 +1088,6 @@ type SeriesSearchResults {
   totalHits: Int!
   "How long searching took in ms."
   duration: Int!
-}
-
-type SeriesThumbnailStack {
-  thumbnails: [ThumbnailInfo!]!
 }
 
 type SyncedEventData {
@@ -1133,6 +1134,10 @@ type ThumbnailInfo {
   live: Boolean!
   audioOnly: Boolean!
   state: EventState!
+}
+
+type ThumbnailStack {
+  thumbnails: [ThumbnailInfo!]!
 }
 
 "A block just showing some title."

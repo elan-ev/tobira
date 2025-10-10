@@ -22,7 +22,7 @@ use crate::{
         ExtraMetadata,
         Key,
         SearchThumbnailInfo,
-        SeriesThumbnailStack,
+        ThumbnailStack,
         SeriesState,
         ThumbnailInfo,
     },
@@ -31,10 +31,15 @@ use crate::{
 };
 
 use self::acl::AclInputEntry;
-use super::block::mutations::DisplayOptions;
 
 use super::{
-    block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
+    block::{
+        BlockValue,
+        NewSeriesBlock,
+        VideoListLayout,
+        VideoListOrder,
+        mutations::DisplayOptions,
+    },
     playlist::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
     shared::{
@@ -63,7 +68,7 @@ pub(crate) struct Series {
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
     pub(crate) num_videos: LazyLoad<u32>,
-    pub(crate) thumbnail_stack: LazyLoad<SeriesThumbnailStack>,
+    pub(crate) thumbnail_stack: LazyLoad<ThumbnailStack>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
@@ -400,7 +405,7 @@ impl Series {
         load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
             let mut out = Self::from_row(row, mapping.series);
             out.num_videos = LazyLoad::Loaded(mapping.num_videos.of::<i64>(row) as u32);
-            out.thumbnail_stack = LazyLoad::Loaded(SeriesThumbnailStack {
+            out.thumbnail_stack = LazyLoad::Loaded(ThumbnailStack {
                 thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(row)
                     .into_iter()
                     .filter_map(|info| ThumbnailInfo::from_search(info, &context))
@@ -688,7 +693,7 @@ impl Series {
         self.num_videos.unwrap() as i32
     }
 
-    async fn thumbnail_stack(&self, context: &Context) -> ApiResult<SeriesThumbnailStack> {
+    async fn thumbnail_stack(&self, context: &Context) -> ApiResult<ThumbnailStack> {
         if let LazyLoad::Loaded(stack) = &self.thumbnail_stack {
             return Ok(stack.clone());
         }
@@ -707,7 +712,7 @@ impl Series {
             .filter_map(|info| ThumbnailInfo::from_search(info, context))
             .collect();
 
-        Ok(SeriesThumbnailStack { thumbnails })
+        Ok(ThumbnailStack { thumbnails })
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
