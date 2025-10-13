@@ -418,6 +418,9 @@ type AuthorizedPlaylist implements Node {
   numVideos: Int!
   thumbnailStack: ThumbnailStack!
   entries: [VideoListEntry!]!
+  hostRealms: [Realm!]!
+  "Whether the current user has write access to this playlist."
+  canWrite: Boolean!
 }
 
 type Caption {
