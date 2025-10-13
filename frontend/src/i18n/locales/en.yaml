@@ -202,6 +202,7 @@ series:
 
 playlist:
   singular: Playlist
+  playlist-page: 'Playlist page: “{{playlist}}”'
   deleted-block: The playlist referenced here was deleted.
   not-allowed: You are not authorized to view this playlist.
   not-allowed-block: You are not authorized to view the playlist embedded here.
@@ -490,6 +491,8 @@ manage:
   playlist:
     table:
       title: My playlists
+    details:
+      title: Playlist details
 
   video-list:
     no-content: No videos
