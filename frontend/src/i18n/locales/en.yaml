@@ -493,6 +493,11 @@ manage:
       title: My playlists
     details:
       title: Playlist details
+      delete: Delete playlist
+      delete-note: Videos in this playlist will not be deleted.
+      confirm-delete: Delete playlist?
+      referencing-pages-explanation: 'This playlist is referenced on the following pages:'
+      no-referencing-pages: No pages reference this playlist.
 
   video-list:
     no-content: No videos
@@ -543,6 +548,7 @@ manage:
       failed-maybe: Deletion possibly failed.
       pending: Deletion is pending.
       in-progress: '“{{itemTitle}}” is being deleted.'
+      success: '“{{itemTitle}}” has been deleted.'
       tooltip:
         failed: >
           The deletion of this entry was requested {{time}} but still has not happened, so it might have failed.

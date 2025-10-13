@@ -199,7 +199,7 @@ export const ButtonSection: React.FC<PropsWithChildren> = ({ children }) => (
 type DeleteMutationParams = MutationParameters & { variables: { id: string } }
 type DeleteButtonProps<TMutation extends DeleteMutationParams> = PropsWithChildren<{
     item: Item
-    kind: OcEntity;
+    kind: OcEntity | "playlist";
     commit: (config: UseMutationConfig<TMutation>) => Disposable;
     returnPath: string;
 }>;
@@ -227,7 +227,9 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
                 setNotification({
                     kind: "info",
                     message: i18n => i18n.t(
-                        "manage.table.deletion.in-progress", { itemTitle: item.title },
+                        `manage.table.deletion.${
+                            kind === "playlist" ? "success" : "in-progress"
+                        }`, { itemTitle: item.title },
                     ),
                     scope: returnPath,
                 });
@@ -266,7 +268,7 @@ type HostRealmsProps = {
         readonly path: string;
     }[];
     itemLink: (path: string) => ReactNode;
-    kind: OcEntity;
+    kind: OcEntity | "playlist";
 };
 
 export const HostRealms: React.FC<HostRealmsProps> = ({ hostRealms, itemLink, kind }) => {

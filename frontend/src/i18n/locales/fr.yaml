@@ -512,6 +512,11 @@ manage:
       title: Mes playlists # needs verification
       details:
         title: Détails de la playlist # needs verification
+        delete: Supprimer la playlist # needs verification
+        delete-note: Les vidéos de cette playlist ne seront pas supprimées. # needs verification
+        confirm-delete: Supprimer la playlist? # needs verification
+        referencing-pages-explanation: 'Cette playlist est référencée dans les pages suivantes:' # needs verfification
+        no-referencing-pages: Aucune page ne mentionne cette playlist. # needs verification
 
   video-list:
     no-content: pas de vidéos
@@ -563,6 +568,7 @@ manage:
       failed-maybe: La suppression a peut-être échoué.
       pending: La suppression est en cours.
       in-progress: « {{itemTitle}} » est en cours de suppression.
+      success: '« {{itemTitle}} » a été supprimé.' # needs verificaton
       tooltip:
         failed: >
           La suppression de cette entrée a été demandée {{time}} mais n'a

@@ -89,6 +89,7 @@ const query = graphql`
                 title
                 description
                 canWrite
+                updated
                 thumbnailStack { thumbnails { url live audioOnly state }}
                 entries {
                     __typename

@@ -515,6 +515,11 @@ manage:
       title: Meine Playlists
     details:
       title: Playlistdetails
+      delete: Playlist löschen
+      delete-note: In der Playlist enthaltene Videos werden nicht gelöscht.
+      confirm-delete: Playlist löschen?
+      referencing-pages-explanation: 'Diese Playlist wird von den folgenden Seiten referenziert:'
+      no-referencing-pages: Diese Playlist wird von keiner Seite referenziert.
 
   video-list:
     no-content: Keine Videos
@@ -565,6 +570,7 @@ manage:
       failed-maybe: Löschen möglicherweise fehlgeschlagen.
       pending: Löschvorgang ausstehend.
       in-progress: '„{{itemTitle}}“ wird gelöscht.'
+      success: '„{{itemTitle}}“ wurde gelöscht.'
       tooltip:
         failed: >
           Der Löschvorgang für diesen Eintrag wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
