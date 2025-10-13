@@ -534,6 +534,11 @@ manage:
       title: I miei playlist # needs verification. Should be plural.
     details:
       title: Dettagli playlist # needs verification
+      delete: Cancellare playlist # needs verification
+      delete-note: I video di questa playlist non verranno eliminati. # needs verification
+      confirm-delete: Cancellare playlist? # needs verification
+      referencing-pages-explanation: 'Questa playlist è citata nelle pagine seguenti:' # needs verification
+      no-referencing-pages: Nessuna pagina fa riferimento a questa playlist. # needs verification
 
   video-list:
     no-content: Nessun video
@@ -584,6 +589,7 @@ manage:
       failed-maybe: Cancellazione possibilmente non riuscita.
       pending: Cancellazione in programma.
       in-progress: '"{{itemTitle}}“  sarà cancellato.'
+      success: '"{{itemTitle}}“ è stato cancellato.' # needs verification
       tooltip:
         failed: >
           La cancellazione di questa voce è stata richiesta {{time}} ma non è
