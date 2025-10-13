@@ -18,7 +18,7 @@ export type SharedManageNavProps = {
 
 /** Simple nav element linking back to the item table overview page. */
 type ReturnLinkProps = {
-    url: "/~manage/series" | "/~manage/videos";
+    url: "/~manage/series" | "/~manage/videos" | "/~manage/playlists";
     title: ParseKeys;
 };
 
