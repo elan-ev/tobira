@@ -89,6 +89,7 @@ const query = graphql`
                 title
                 description
                 canWrite
+                updated
                 entries {
                     __typename
                     ...on AuthorizedEvent {
