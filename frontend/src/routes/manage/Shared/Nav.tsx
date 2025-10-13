@@ -12,7 +12,6 @@ import { ManageVideoSubPageType } from "../Video/Shared";
 
 
 
-export const PAGE_WIDTH = 1100;
 export type SharedManageNavProps = {
     active: ManageVideoSubPageType;
 };

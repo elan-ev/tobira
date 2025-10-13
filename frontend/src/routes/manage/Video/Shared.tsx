@@ -17,8 +17,6 @@ import CONFIG from "../../../config";
 import { ReturnLink, ManageNav } from "../Shared/Nav";
 
 
-export const PAGE_WIDTH = 1100;
-
 export type QueryResponse = SharedVideoManageQuery["response"];
 export type Event = QueryResponse["event"];
 export type AuthorizedEvent = Extract<Event, { __typename: "AuthorizedEvent" }>;

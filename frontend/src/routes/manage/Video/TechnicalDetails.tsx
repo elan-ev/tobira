@@ -1,17 +1,18 @@
 import { useTranslation } from "react-i18next";
+import { Card } from "@opencast/appkit";
 
 import { NotAuthorized } from "../../../ui/error";
 import { useUser } from "../../../User";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { PageTitle } from "../../../layout/header/ui";
-import { AuthorizedEvent, makeManageVideoRoute, PAGE_WIDTH } from "./Shared";
+import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { CopyableInput } from "../../../ui/Input";
 import { COLORS } from "../../../color";
 import { ManageRoute } from "..";
 import { ManageVideosRoute } from ".";
 import { ManageVideoDetailsRoute } from "./VideoDetails";
 import { TrackInfo } from "../../../ui/Video";
-import { Card } from "@opencast/appkit";
+import { PAGE_WIDTH } from "../Shared/consts";
 import CONFIG from "../../../config";
 
 
