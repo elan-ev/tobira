@@ -1,7 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
-import { DeleteButton, DetailsPage, HostRealms, UpdatedCreatedInfo } from "../Shared/Details";
+import {
+    DeleteButton,
+    DetailsPage,
+    HostRealms,
+    MetadataSection,
+    UpdatedCreatedInfo,
+} from "../Shared/Details";
 import i18n from "../../../i18n";
 import { ManagePlaylistsRoute } from ".";
 import { Link } from "../../../router";
@@ -13,12 +19,21 @@ import { keyOfId } from "../../../util";
 import {
     PlaylistDetailsDeleteMutation,
 } from "./__generated__/PlaylistDetailsDeleteMutation.graphql";
+import {
+    PlaylistDetailsMetadataMutation,
+} from "./__generated__/PlaylistDetailsMetadataMutation.graphql";
 
 
 
 const deletePlaylistMutation = graphql`
     mutation PlaylistDetailsDeleteMutation($id: ID!) {
         deletePlaylist(id: $id) { id }
+    }
+`;
+
+const updatePlaylistMetadata = graphql`
+    mutation PlaylistDetailsMetadataMutation($id: ID!, $metadata: BasicMetadata!) {
+        updatePlaylist(id: $id, metadata: $metadata) { id }
     }
 `;
 
@@ -37,6 +52,7 @@ export const ManagePlaylistDetailsRoute = makeManagePlaylistRoute(
             <NotificationSection key="notification" />,
             <UpdatedCreatedInfo key="date-info" item={playlist} />,
             <PlaylistButtonSection key="button-section" {...{ playlist }} />,
+            <PlaylistMetadataSection key="metadata" {...{ playlist }} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms
                     kind="playlist"
@@ -79,4 +95,13 @@ const PlaylistButtonSection: React.FC<{ playlist: AuthorizedPlaylist }> = ({ pla
             <p>{t("manage.playlist.details.delete-note")}</p>
         </DeleteButton>
     </div>;
+};
+
+const PlaylistMetadataSection: React.FC<{ playlist: AuthorizedPlaylist }> = ({ playlist }) => {
+    const [commit, inFlight] = useMutation<PlaylistDetailsMetadataMutation>(updatePlaylistMetadata);
+
+    return <MetadataSection
+        item={{ ...playlist, state: "READY" }}
+        {...{ commit, inFlight }}
+    />;
 };
