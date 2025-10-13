@@ -204,6 +204,7 @@ series:
 
 playlist:
   singular: Playlist
+  playlist-page: 'Playlistseite: “{{playlist}}”'
   deleted-block: Die hier referenzierte Playlist wurde gelöscht.
   not-allowed: Sie sind nicht autorisiert, diese Playlist zu sehen.
   not-allowed-block: Sie sind nicht autorisiert, die hier eingebettete Playlist zu sehen.
@@ -512,6 +513,8 @@ manage:
   playlist:
     table:
       title: Meine Playlists
+    details:
+      title: Playlistdetails
 
   video-list:
     no-content: Keine Videos

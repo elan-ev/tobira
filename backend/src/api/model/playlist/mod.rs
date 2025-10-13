@@ -6,16 +6,19 @@ use crate::{
     api::{
         common::NotAllowed,
         err::{self, ApiResult},
-        model::shared::{
-            define_sort_column_and_order,
-            load_writable_for_user,
-            Connection,
-            ConnectionQueryParts,
-            PageInfo,
-            SearchFilter,
-            SortDirection,
-            SortOrder,
-            ToSqlColumn,
+        model::{
+            realm::Realm,
+            shared::{
+                define_sort_column_and_order,
+                load_writable_for_user,
+                Connection,
+                ConnectionQueryParts,
+                PageInfo,
+                SearchFilter,
+                SortDirection,
+                SortOrder,
+                ToSqlColumn,
+            },
         },
         util::LazyLoad,
         Context,
@@ -53,7 +56,6 @@ pub(crate) struct AuthorizedPlaylist {
     thumbnail_stack: LazyLoad<ThumbnailStack>,
 
     read_roles: Vec<String>,
-    #[allow(dead_code)] // TODO
     write_roles: Vec<String>,
 }
 
@@ -268,6 +270,30 @@ impl AuthorizedPlaylist {
             })
             .await?
             .pipe(Ok)
+    }
+
+    async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
+        let selection = Realm::select();
+        let query = format!("\
+            select {selection} \
+            from realms \
+            where exists ( \
+                select from blocks \
+                where realm = realms.id \
+                and type = 'playlist' \
+                and playlist = $1 \
+            ) \
+        ");
+        let id = self.id().key_for(Id::PLAYLIST_KIND).unwrap();
+        context.db.query_mapped(&query, dbargs![&id], |row| Realm::from_row_start(&row))
+            .await?
+            .pipe(Ok)
+    }
+
+
+    /// Whether the current user has write access to this playlist.
+    fn can_write(&self, context: &Context) -> bool {
+        context.auth.overlaps_roles(&self.write_roles)
     }
 }
 

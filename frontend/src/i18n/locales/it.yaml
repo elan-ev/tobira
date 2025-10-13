@@ -189,7 +189,7 @@ video:
 series:
   singular: Serie
   plural: Serie
-  series-page: Pagina serie “{{series}}”
+  series-page: 'Pagina serie: “{{series}}”'
   deleted-block: La serie a cui si fa riferimento è stata cancellata.
   entry-of-series-thumbnail: Anteprima per la voce “{{series}}”
   not-ready:
@@ -202,6 +202,7 @@ series:
 
 playlist:
   singular: Playlist
+  playlist-page: 'Pagina playlist: “{{playlist}}”' # needs verification
   deleted-block: La playlist a cui si fa riferimento è stata cancellata.
   not-allowed: Non è autorizzato a visualizzare questa playlist.
   not-allowed-block: Non è autorizzato a visualizzare la playlist incorporata qui.
@@ -531,6 +532,8 @@ manage:
   playlist:
     table:
       title: I miei playlist # needs verification. Should be plural.
+    details:
+      title: Dettagli playlist # needs verification
 
   video-list:
     no-content: Nessun video

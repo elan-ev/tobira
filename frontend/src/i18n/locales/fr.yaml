@@ -206,6 +206,7 @@ series:
 
 playlist:
   singular: Playlist
+  playlist-page: 'Page de la playlist : « {{playlist}} »' # needs verification
   deleted-block: La playlist référencée ici a été supprimée.
   not-allowed: Vous n'êtes pas autorisé(e) à voir cette playlist.
   not-allowed-block: Vous n'êtes pas autorisé(e) à voir la playlist intégrée ici.
@@ -509,6 +510,8 @@ manage:
   playlist:
     table:
       title: Mes playlists # needs verification
+      details:
+        title: Détails de la playlist # needs verification
 
   video-list:
     no-content: pas de vidéos
