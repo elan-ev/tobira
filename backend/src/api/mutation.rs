@@ -160,12 +160,16 @@ impl Mutation {
     /// and updating the playlist in Tobira's DB.
     async fn update_playlist(
         id: Id,
-        title: Option<String>,
-        description: Option<String>,
+        metadata: Option<BasicMetadata>,
         entries: Option<Vec<String>>,
         acl: Option<Vec<AclInputEntry>>,
         context: &Context,
     ) -> ApiResult<AuthorizedPlaylist> {
+        let (title, description) = match metadata {
+            Some(m) => (Some(m.title), m.description),
+            None => (None, None),
+        };
+
         AuthorizedPlaylist::update(id, title, description, entries, acl, context).await
     }
 
