@@ -14,7 +14,7 @@ import { eventId, keyOfId } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
-import { ReturnLink, ManageNav, ManageSubPageType } from "../Shared/Nav";
+import { ReturnLink, ManageNav } from "../Shared/Nav";
 
 
 export const PAGE_WIDTH = 1100;
@@ -23,11 +23,11 @@ export type QueryResponse = SharedVideoManageQuery["response"];
 export type Event = QueryResponse["event"];
 export type AuthorizedEvent = Extract<Event, { __typename: "AuthorizedEvent" }>;
 
-type ManageVideoSubPageType = "details" | "technical-details" | "acl";
+export type ManageVideoSubPageType = "details" | "technical-details" | "acl";
 
 /** Helper around `makeRoute` for manage single video subpages. */
 export const makeManageVideoRoute = (
-    page: ManageSubPageType,
+    page: ManageVideoSubPageType,
     path: `/${string}` | "",
     render: (event: AuthorizedEvent, data: QueryResponse) => JSX.Element,
     options?: { fetchWorkflowState?: boolean },
