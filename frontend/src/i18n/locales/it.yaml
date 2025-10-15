@@ -539,6 +539,9 @@ manage:
       confirm-delete: Cancellare playlist? # needs verification
       referencing-pages-explanation: 'Questa playlist è citata nelle pagine seguenti:' # needs verification
       no-referencing-pages: Nessuna pagina fa riferimento a questa playlist. # needs verification
+      edit-note: > # needs verification
+        La rimozione di un video da questo elenco non elimina il video stesso, ma
+        lo rimuove semplicemente da questa playlist.
 
   video-list:
     no-content: Nessun video

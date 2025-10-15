@@ -517,6 +517,8 @@ manage:
         confirm-delete: Supprimer la playlist? # needs verification
         referencing-pages-explanation: 'Cette playlist est référencée dans les pages suivantes:' # needs verfification
         no-referencing-pages: Aucune page ne mentionne cette playlist. # needs verification
+        edit-note: > # needs verification
+          Les vidéos retirées ne sont pas supprimées, mais simplement retirées de la playlist.
 
   video-list:
     no-content: pas de vidéos
