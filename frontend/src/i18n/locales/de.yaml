@@ -520,6 +520,8 @@ manage:
       confirm-delete: Playlist löschen?
       referencing-pages-explanation: 'Diese Playlist wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Diese Playlist wird von keiner Seite referenziert.
+      edit-note: >
+        Hier entfernte Videos werden nicht gelöscht, sondern nur aus der Playlist entfernt.
 
   video-list:
     no-content: Keine Videos

@@ -97,9 +97,16 @@ const query = graphql`
                         id
                         title
                         isLive
+                        created
+                        creators
+                        description
+                        canWrite
                         syncedData {
                             thumbnail
                             audioOnly
+                            duration
+                            startTime
+                            endTime
                         }
                     }
                 }
