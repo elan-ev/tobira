@@ -161,7 +161,7 @@ impl Mutation {
     async fn update_playlist(
         id: Id,
         metadata: Option<BasicMetadata>,
-        entries: Option<Vec<String>>,
+        entries: Option<Vec<Id>>,
         acl: Option<Vec<AclInputEntry>>,
         context: &Context,
     ) -> ApiResult<AuthorizedPlaylist> {
