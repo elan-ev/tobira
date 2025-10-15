@@ -22,6 +22,10 @@ import {
 import {
     PlaylistDetailsMetadataMutation,
 } from "./__generated__/PlaylistDetailsMetadataMutation.graphql";
+import { ManageVideoListContent } from "../Shared/EditVideoList";
+import {
+    PlaylistDetailsContentMutation,
+} from "./__generated__/PlaylistDetailsContentMutation.graphql";
 
 
 
@@ -34,6 +38,35 @@ const deletePlaylistMutation = graphql`
 const updatePlaylistMetadata = graphql`
     mutation PlaylistDetailsMetadataMutation($id: ID!, $metadata: BasicMetadata!) {
         updatePlaylist(id: $id, metadata: $metadata) { id }
+    }
+`;
+
+const editPlaylistContent = graphql`
+    mutation PlaylistDetailsContentMutation(
+        $id: ID!,
+        $entries: [ID!]!,
+    ) {
+        updatePlaylist(id: $id, entries: $entries) {
+            entries {
+                __typename
+                ...on AuthorizedEvent {
+                    id
+                    title
+                    isLive
+                    created
+                    creators
+                    description
+                    canWrite
+                    syncedData {
+                        thumbnail
+                        audioOnly
+                        duration
+                        startTime
+                        endTime
+                    }
+                }
+            }
+        }
     }
 `;
 
@@ -53,6 +86,7 @@ export const ManagePlaylistDetailsRoute = makeManagePlaylistRoute(
             <UpdatedCreatedInfo key="date-info" item={playlist} />,
             <PlaylistButtonSection key="button-section" {...{ playlist }} />,
             <PlaylistMetadataSection key="metadata" {...{ playlist }} />,
+            <PlaylistContentSection key="content" {...{ playlist }} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms
                     kind="playlist"
@@ -102,6 +136,20 @@ const PlaylistMetadataSection: React.FC<{ playlist: AuthorizedPlaylist }> = ({ p
 
     return <MetadataSection
         item={{ ...playlist, state: "READY" }}
+        {...{ commit, inFlight }}
+    />;
+};
+
+
+const PlaylistContentSection: React.FC<{ playlist: AuthorizedPlaylist }> = ({ playlist }) => {
+    const { t } = useTranslation();
+    const [commit, inFlight] = useMutation<PlaylistDetailsContentMutation>(editPlaylistContent);
+
+    return <ManageVideoListContent
+        listId={playlist.id}
+        listEntries={[...playlist.entries]}
+        getUpdatedEntries={data => [...data.updatePlaylist.entries]}
+        description={t("manage.playlist.details.edit-note")}
         {...{ commit, inFlight }}
     />;
 };

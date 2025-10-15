@@ -5,6 +5,7 @@ use crate::{
         err::{self, ApiResult},
         model::{
             acl::AclInputEntry,
+            event::AuthorizedEvent,
             shared::{convert_acl_input, BasicMetadata},
         },
         Context,
@@ -74,12 +75,28 @@ impl AuthorizedPlaylist {
         id: Id,
         title: Option<String>,
         description: Option<String>,
-        entries: Option<Vec<String>>,
+        entries: Option<Vec<Id>>,
         acl: Option<Vec<AclInputEntry>>,
         context: &Context,
     ) -> ApiResult<Self> {
         // `load_for_mutation` handles authorization.
         let playlist = Playlist::load_for_mutation(id, context).await?;
+
+        let entry_ids = if let Some(entries) = entries {
+            let mut entry_ids = Vec::with_capacity(entries.len());
+            for id in entries {
+                let maybe_event = AuthorizedEvent::load_by_id(id, context).await?;
+                let event = maybe_event.ok_or_else(|| err::invalid_input!(
+                    key = "event.not-found",
+                    "unknown event"
+                ))?;
+                let event = event.into_result()?;
+                entry_ids.push(event.opencast_id);
+            }
+            Some(entry_ids)
+        } else {
+            None
+        };
 
         let response = context
             .oc_client
@@ -87,7 +104,7 @@ impl AuthorizedPlaylist {
                 playlist.opencast_id,
                 title.as_deref(),
                 description.as_deref(),
-                entries.as_deref(),
+                entry_ids.as_deref(),
                 acl.as_deref(),
             ).await
             .map_err(|e| {

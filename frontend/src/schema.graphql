@@ -576,7 +576,7 @@ type Mutation {
     Updates a playlist's metadata, entries or acl by sending the changes to Opencast
     and updating the playlist in Tobira's DB.
   """
-  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [String!], acl: [AclInputEntry!]): AuthorizedPlaylist!
+  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [ID!], acl: [AclInputEntry!]): AuthorizedPlaylist!
   "Deletes the given playlist by sending a delete request to Opencast."
   deletePlaylist(id: ID!): RemovedPlaylist!
   """

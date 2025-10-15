@@ -498,6 +498,9 @@ manage:
       confirm-delete: Delete playlist?
       referencing-pages-explanation: 'This playlist is referenced on the following pages:'
       no-referencing-pages: No pages reference this playlist.
+      edit-note: >
+        Removing a video from this list does not delete the video itself but just removes it from
+        this playlist.
 
   video-list:
     no-content: No videos

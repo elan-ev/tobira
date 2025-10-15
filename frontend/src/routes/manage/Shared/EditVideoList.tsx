@@ -44,8 +44,11 @@ type ListEvent = AuthEvent & { action: "add" | "remove" | "none" };
 type VideoListMutationParams = MutationParameters & {
     variables: {
         id: string;
+    } & {
         addedEvents: readonly string[];
         removedEvents: readonly string[];
+    } | {
+        entries: readonly string[];
     }
 };
 type ManageVideoListProps<TMutation extends VideoListMutationParams> = {
@@ -77,11 +80,17 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         return bug("Used <ManageVideoListContent> without user");
     }
 
+    const updatedEntries = listId.startsWith("pl") ? {
+        entries: events.filter(e => e.action !== "remove").map(e => e.id),
+    } : {
+        addedEvents: events.filter(e => e.action === "add").map(e => e.id),
+        removedEvents: events.filter(e => e.action === "remove").map(e => e.id),
+    };
+
     const onSubmit = () => commit({
         variables: {
             id: listId,
-            addedEvents: events.filter(e => e.action === "add").map(e => e.id),
-            removedEvents: events.filter(e => e.action === "remove").map(e => e.id),
+            ...updatedEntries,
         },
         onCompleted: data => {
             setSuccess(true);
@@ -114,11 +123,12 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         </Card>}
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
             <AddVideoMenu {...{ setEvents, events }} />
-            {/* // Todo: Omit upload button when adding this route for playlists */}
-            {user.canUpload && <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
-                <LuUpload />
-                {t("upload.title")}
-            </LinkButton>}
+            {user.canUpload && !listId.startsWith("pl")
+                && <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
+                    <LuUpload />
+                    {t("upload.title")}
+                </LinkButton>
+            }
         </div>
         {events.length > 0 && <>
             <div css={{
