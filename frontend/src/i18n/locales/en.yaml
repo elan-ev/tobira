@@ -507,6 +507,9 @@ manage:
     no-of-videos_one: '{{count}} video'
     no-of-videos_other: '{{count}} videos'
     removing-disabled: Removing videos is disabled.
+    details:
+      unknown_one: One video is missing or requires additional permissions to view.
+      unknown_other: '{{count}} videos are missing or require additional permissions to view.'
     edit:
       add-video: Add video
       to-be-added: will be added

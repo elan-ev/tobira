@@ -82,7 +82,7 @@ impl AuthorizedPlaylist {
         // `load_for_mutation` handles authorization.
         let playlist = Playlist::load_for_mutation(id, context).await?;
 
-        let entry_ids = if let Some(entries) = entries {
+        let mut entry_ids = if let Some(entries) = entries {
             let mut entry_ids = Vec::with_capacity(entries.len());
             for id in entries {
                 let maybe_event = AuthorizedEvent::load_by_id(id, context).await?;
@@ -97,6 +97,31 @@ impl AuthorizedPlaylist {
         } else {
             None
         };
+
+        // If a new explicit entry list is provided, we need to make sure to preserve any existing
+        // entries that are not known to Tobira.
+        // Otherwise an update would accidentally drop those entries from the playlist in Opencast.
+        if let Some(ids) = &mut entry_ids {
+            let query = "\
+                with entries as (\
+                    select unnest(entries) as entry \
+                    from playlists \
+                    where id = $1\
+                ) \
+                select (entry).content_id as id \
+                from entries \
+                left join events on events.opencast_id = (entry).content_id \
+                where (entry).type = 'event' and events.id is null\
+            ";
+
+            let unknown_ids: Vec<String> = context.db
+                .query_mapped(query, dbargs![&playlist.key], |row| row.get(0))
+                .await?;
+
+            // This does not preserve the original order, but unknown (i.e. waiting) events in playlists will be a very rare
+            // occurrence. Currently, those can only be added via API.
+            ids.extend(unknown_ids);
+        }
 
         let response = context
             .oc_client

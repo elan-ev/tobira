@@ -80,7 +80,10 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         return bug("Used <ManageVideoListContent> without user");
     }
 
-    const updatedEntries = listId.startsWith("pl") ? {
+    const unknownItemsCount = listEntries.filter(e => e.__typename !== "AuthorizedEvent").length;
+    const isPlaylist = listId.startsWith("pl");
+
+    const updatedEntries = isPlaylist ? {
         entries: events.filter(e => e.action !== "remove").map(e => e.id),
     } : {
         addedEvents: events.filter(e => e.action === "add").map(e => e.id),
@@ -122,8 +125,8 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
             {t("manage.video-list.removing-disabled")}
         </Card>}
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <AddVideoMenu {...{ setEvents, events }} />
-            {user.canUpload && !listId.startsWith("pl")
+            <AddVideoMenu {...{ setEvents, events, isPlaylist }} />
+            {user.canUpload && !isPlaylist
                 && <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
                     <LuUpload />
                     {t("upload.title")}
@@ -154,13 +157,16 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
                     />
                 ))}
             </div>
-            <SubmitButtonWithStatus
-                label={t("manage.video-list.edit.save")}
-                onClick={onSubmit}
-                disabled={!!commitError || events.every(e => e.action === "none") || inFlight}
-                {...{ inFlight, success, setSuccess }}
-            />
         </>}
+        {unknownItemsCount > 0 && <Card css={{ marginTop: 12 }} kind="info">
+            {t("manage.video-list.details.unknown", { count: unknownItemsCount })}
+        </Card>}
+        {events.length > 0 && <SubmitButtonWithStatus
+            label={t("manage.video-list.edit.save")}
+            onClick={onSubmit}
+            disabled={!!commitError || events.every(e => e.action === "none") || inFlight}
+            {...{ inFlight, success, setSuccess }}
+        />}
         {boxError(commitError)}
     </Inertable>;
 };
@@ -168,9 +174,10 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 type AddVideoMenuProps = {
     events: ListEvent[];
     setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    isPlaylist: boolean;
 };
 
-const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
+const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlaylist }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const [buttonIsActive, setButtonIsActive] = useState(false);
@@ -211,7 +218,7 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
                 hideArrowTip
             >
                 <EventSelector
-                    writableOnly
+                    writableOnly={!isPlaylist}
                     css={{ position: "relative" }}
                     onChange={event => {
                         if (!event) {
@@ -236,8 +243,10 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
                     isClearable={false}
                     menuIsOpen
                     additionalOptions={{
-                        excludeSeriesMembers: true,
-                        excludedIds: events.filter(e => e.action === "add").map(e => keyOfId(e.id)),
+                        excludeSeriesMembers: !isPlaylist,
+                        excludedIds: events
+                            .filter(e => e.action !== "remove")
+                            .map(e => keyOfId(e.id)),
                     }}
                 />
             </Floating>
