@@ -25,6 +25,7 @@ import { aclMapToArray } from "../../util";
 import { CreatePlaylistMutation } from "./__generated__/CreatePlaylistMutation.graphql";
 import { ManagePlaylistDetailsRoute } from "./PlaylistDetails";
 import { CreatePlaylistQuery } from "./__generated__/CreatePlaylistQuery.graphql";
+import { ListEvent, VideoListMenu } from "../Shared/EditVideoList";
 
 
 export const CREATE_PLAYLIST_PATH = "/~manage/create-playlist" as const;
@@ -62,7 +63,7 @@ const createPlaylistMutation = graphql`
         $metadata: BasicMetadata!,
         $acl: [AclInputEntry!]!,
         $creator: String!,
-        $entries: [String!]!,
+        $entries: [ID!]!,
     ) {
         createPlaylist(
             metadata: $metadata,
@@ -92,6 +93,7 @@ const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({ knownRolesRef }
     const [commit, inFlight] = useMutation<CreatePlaylistMutation>(createPlaylistMutation);
     const [success, setSuccess] = useState(false);
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [events, setEvents] = useState<ListEvent[]>([]);
     const { setNotification } = useNotification();
     const user = useUser();
 
@@ -116,7 +118,7 @@ const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({ knownRolesRef }
                 },
                 acl: aclMapToArray(data.acl),
                 creator: user.username,
-                entries: [],
+                entries: events.map(e => e.id),
             },
             onCompleted: response => {
                 const returnPath = ManagePlaylistDetailsRoute.url({
@@ -173,6 +175,11 @@ const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({ knownRolesRef }
                 <TextArea id={descriptionFieldId} {...register("description")} />
             </InputContainer>
 
+            {/* Entries */}
+            <InputContainer css={{ maxWidth: 900 }}>
+                <VideoListMenu {...{ events, setEvents }} isPlaylist />
+            </InputContainer>
+
             {/* ACL */}
             <InputContainer css={{ maxWidth: 900 }}>
                 <h2 css={{
@@ -206,5 +213,3 @@ const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({ knownRolesRef }
         {boxError(commitError)}
     </>;
 };
-
-
