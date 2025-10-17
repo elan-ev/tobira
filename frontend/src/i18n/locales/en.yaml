@@ -372,6 +372,8 @@ acl:
       video-write-description: Can also edit and delete the video, metadata and other details.
       series-read-description: Usable as template for videos in this series.
       series-write-description: Can delete the series, change metadata and add or remove videos.
+      playlist-read-description: Can find the playlist and view metadata.
+      playlist-write-description: Can delete the playlist, change metadata and add or remove videos.
       realm-moderate-description: Can edit content, add subpages and change the name and subpage order.
       realm-admin-description: Can moderate, delete pages and edit permissions.
       write-access: write-access

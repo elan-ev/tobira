@@ -402,6 +402,14 @@ acl:
       series-write-description_other: >
         Possono cancellare la serie, modificare i metadati e aggiungere o
         rimuovere video.
+      playlist-read-description_one: Può trovare il playlist e vedere i metadati. # needs verification
+      playlist-read-description_other: Possono trovare il playlist e vedere i metadati. # needs verification
+      playlist-write-description_one: > # needs verification
+        Può cancellare la playlist, modificare i metadati e aggiungere o rimuovere
+        video.
+      playlist-write-description_other: > # needs verification
+         Possono cancellare la playlist, modificare i metadati e aggiungere o
+         rimuovere video.
       realm-moderate-description: —
       realm-moderate-description_one: >
         Può modificare il contenuto, aggiungere sottopagine e cambiare il nome e

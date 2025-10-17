@@ -437,6 +437,7 @@ type AuthorizedPlaylist implements Node {
   """
   numEntries: Int!
   thumbnailStack: ThumbnailStack!
+  acl: [AclItem!]!
   entries: [VideoListEntry!]!
   hostRealms: [Realm!]!
   "Whether the current user has write access to this playlist."
