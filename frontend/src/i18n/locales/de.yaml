@@ -517,8 +517,10 @@ manage:
         Hier entfernte Videos werden nicht gelöscht, sondern nur aus der Serie entfernt.
 
   playlist:
+    created-note: Playlist wurde erstellt.
     table:
       title: Meine Playlists
+      create: Playlist erstellen
     details:
       title: Playlistdetails
       delete: Playlist löschen

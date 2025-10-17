@@ -22,6 +22,11 @@ import {
     PlaylistsSortColumn,
 } from "./__generated__/PlaylistsManageQuery.graphql";
 import { PlaylistThumbnail } from "./Shared";
+import { useTranslation } from "react-i18next";
+import { isRealUser, useUser } from "../../../User";
+import { LinkButton } from "../../../ui/LinkButton";
+import { LuCirclePlus } from "react-icons/lu";
+import { CREATE_PLAYLIST_PATH } from "./Create";
 
 
 export const PATH = "/~manage/playlists" as const;
@@ -55,7 +60,9 @@ export const ManagePlaylistsRoute = makeRoute({
                         titleKey="manage.playlist.table.title"
                         additionalColumns={playlistColumns}
                         RenderRow={PlaylistRow}
-                    />
+                    >
+                        <CreatePlaylistLink />
+                    </ManageItems>
                 }
             />,
             dispose: () => queryRef.dispose(),
@@ -88,6 +95,19 @@ const query = graphql`
         }
     }
 `;
+
+const CreatePlaylistLink: React.FC = () => {
+    const { t } = useTranslation();
+    const user = useUser();
+
+    return (!isRealUser(user) || !user.canCreatePlaylists)
+        ? null
+        : <LinkButton to={CREATE_PLAYLIST_PATH} css={{ width: "fit-content" }}>
+            {t("manage.playlist.table.create")}
+            <LuCirclePlus />
+        </LinkButton>;
+};
+
 
 
 export type PlaylistConnection

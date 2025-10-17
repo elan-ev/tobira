@@ -498,8 +498,13 @@ manage:
         mais simplement retirées de la série.
 
   playlist:
+    created-note: La playlist a été créée. # needs verification... in theory.
+    # Most of these additions just copy the series text and replace the word "series" with "playlist".
+    # The word "playlist" uses the same gender as the word "series" in translations made by the ETH translator,
+    # so this should be fine. The same applies to the new italian translations.
     table:
       title: Mes playlists # needs verification
+      create: Créer une playlist
       details:
         title: Détails de la playlist # needs verification
         delete: Supprimer la playlist # needs verification

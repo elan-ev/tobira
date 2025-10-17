@@ -36,6 +36,7 @@ import { SHORTCUTS, ShortcutsOverview, useShortcut } from "../../ui/Shortcuts";
 import { ModalHandle } from "../../ui/Modal";
 import { AdminDashboardRoute } from "../../routes/manage/Admin";
 import { ManagePlaylistsRoute } from "../../routes/manage/Playlist";
+import { CreatePlaylistRoute } from "../../routes/manage/Playlist/Create";
 
 
 
@@ -291,6 +292,12 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             children: t("manage.playlist.table.title"),
             css: indent,
         },
+        ...user.canCreatePlaylists ? [{
+            icon: <LuCirclePlus />,
+            wrapper: <Link to={CreatePlaylistRoute.url} />,
+            children: t("manage.playlist.table.create"),
+            css: indent,
+        }] : [],
         ...user.isTobiraAdmin ? [{
             icon: <LuGauge />,
             wrapper: <Link to={AdminDashboardRoute.url} />,
