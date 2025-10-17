@@ -29,6 +29,7 @@ import SeriesIcon from "../../icons/series.svg";
 import { ManageSeriesRoute } from "./Series";
 import { CreateSeriesRoute } from "./Series/Create";
 import { ManagePlaylistsRoute } from "./Playlist";
+import { CreatePlaylistRoute } from "./Playlist/Create";
 
 
 const PATH = "/~manage" as const;
@@ -84,6 +85,7 @@ type ManageNavProps = {
         | typeof ManageSeriesRoute.url
         | typeof CreateSeriesRoute.url
         | typeof ManagePlaylistsRoute.url
+        | typeof CreatePlaylistRoute.url
         | `/@${string}`
         | "STUDIO";
 };
@@ -124,6 +126,12 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     }
 
     entries.push([ManagePlaylistsRoute.url, t("manage.playlist.table.title"), <LuListVideo />]);
+
+    if (isRealUser(user) && user.canCreatePlaylists) {
+        entries.push(
+            [CreatePlaylistRoute.url, t("manage.playlist.table.create"), <LuCirclePlus />],
+        );
+    }
     /* eslint-enable react/jsx-key */
 
     const items = entries.map(([path, label, icon]) => path === "STUDIO" ? (
