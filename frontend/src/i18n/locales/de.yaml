@@ -386,6 +386,12 @@ acl:
         Kann Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
       series-write-description_other: >
         Können Serie löschen, Metadaten ändern und Videos zur Serie hinzufügen oder entfernen.
+      playlist-read-description_one: Kann die Playlist finden und Metadaten sehen.
+      playlist-read-description_other: Können die Playlist finden und Metadaten sehen.
+      playlist-write-description_one: >
+        Kann Playlist löschen, Metadaten ändern und Videos hinzufügen oder entfernen.
+      playlist-write-description_other: >
+        Können Playlist löschen, Metadaten ändern und Videos hinzufügen oder entfernen.
       realm-moderate-description_one: >
         Kann Unterseiten hinzufügen, Inhalte und den Namen der Seite sowie die Reihenfolge
         der Unterseiten bearbeiten.
