@@ -741,4 +741,5 @@ api-remote-errors:
     not-allowed: You are not allowed to perform this series action.
   playlist:
     not-found: "Action failed: playlist not found."
+    entry-not-found: Attempted to add unknown entries.
     not-allowed: You are not allowed to perform this playlist action.
