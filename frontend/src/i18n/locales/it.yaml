@@ -534,8 +534,10 @@ manage:
         lo rimuove semplicemente da questa serie.
 
   playlist:
+    created-note: La playlist è stata creata.
     table:
       title: I miei playlist # needs verification. Should be plural.
+      create: Creare playlist
     details:
       title: Dettagli playlist # needs verification
       delete: Cancellare playlist # needs verification
