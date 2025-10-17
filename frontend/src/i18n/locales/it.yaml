@@ -809,4 +809,5 @@ api-remote-errors:
     not-allowed: Non siete autorizzati a eseguire questa azione in serie.
   playlist:
     not-found: 'Azione fallita: playlist non trovata' # needs verification
+    entry-not-found: 'Azione fallita: voci della playlist non trovata' # needs verification
     not-allowed: Non siete autorizzati a eseguire questa azione sulla playlist. # needs verification

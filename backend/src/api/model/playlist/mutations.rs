@@ -2,10 +2,9 @@ use hyper::StatusCode;
 
 use crate::{
     api::{
-        err::{self, ApiResult},
+        err::{self, ApiResult, ApiError, ApiErrorKind},
         model::{
             acl::AclInputEntry,
-            event::AuthorizedEvent,
             shared::{convert_acl_input, BasicMetadata},
         },
         Context,
@@ -23,7 +22,7 @@ impl AuthorizedPlaylist {
     pub(crate) async fn create(
         metadata: BasicMetadata,
         creator: String,
-        entries: Vec<String>,
+        entries: Vec<Id>,
         acl: Vec<AclInputEntry>,
         context: &Context,
     ) -> ApiResult<Self> {
@@ -31,13 +30,15 @@ impl AuthorizedPlaylist {
             return Err(err::not_authorized!(key = "playlist.not-allowed", "playlist action not allowed"));
         }
 
+        let entry_ids = load_entries(entries, context).await?;
+
         let response = context
             .oc_client
             .create_playlist(
                 &metadata.title,
                 metadata.description.as_deref(),
                 &creator,
-                &entries,
+                &entry_ids,
                 &acl,
             ).await
             .map_err(|e| {
@@ -83,17 +84,7 @@ impl AuthorizedPlaylist {
         let playlist = Playlist::load_for_mutation(id, context).await?;
 
         let mut entry_ids = if let Some(entries) = entries {
-            let mut entry_ids = Vec::with_capacity(entries.len());
-            for id in entries {
-                let maybe_event = AuthorizedEvent::load_by_id(id, context).await?;
-                let event = maybe_event.ok_or_else(|| err::invalid_input!(
-                    key = "event.not-found",
-                    "unknown event"
-                ))?;
-                let event = event.into_result()?;
-                entry_ids.push(event.opencast_id);
-            }
-            Some(entry_ids)
+            Some(load_entries(entries, context).await?)
         } else {
             None
         };
@@ -220,4 +211,25 @@ impl OpencastItem for AuthorizedPlaylist {
 #[graphql(Context = Context)]
 pub(crate) struct RemovedPlaylist {
     id: Id,
+}
+
+async fn load_entries(entries: Vec<Id>, context: &Context) -> ApiResult<Vec<String>> {
+    let entry_keys: Vec<_> = entries.iter().map(|id| id.key_for(Id::EVENT_KIND)).collect();
+    let entry_ids = context.db
+        .query_mapped(
+            "select opencast_id from events where id = any($1)",
+            dbargs![&entry_keys],
+            |row| row.get(0),
+        )
+        .await?;
+
+    if entry_ids.len() != entries.len() {
+        return Err(ApiError {
+            msg: "Attempted to add unknown entries".into(),
+            kind: ApiErrorKind::InvalidInput,
+            key: Some("playlist.entry-not-found"),
+        });
+    }
+
+    Ok(entry_ids)
 }

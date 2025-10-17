@@ -751,4 +751,5 @@ api-remote-errors:
     not-allowed: Vous n'avez pas l'autorisation d'effectuer cette action en série.
   playlist:
     not-found: 'Action échouée : la playlist n''a pas été trouvée.' # needs verification
+    entry-not-found: 'Action échouée : les entrées de la playlist n''a pas été trouvée.' # needs verification
     not-allowed: Vous n'avez pas l'autorisation d'effectuer cette action de playlist. # needs verification

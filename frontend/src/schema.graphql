@@ -572,7 +572,7 @@ type Mutation {
   """
   createSeries(metadata: BasicMetadata!, acl: [AclInputEntry!]!): Series!
   "Creates a new playlist in Opencast and stores it in Tobira's DB."
-  createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [String!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
+  createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [ID!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
   """
     Updates a playlist's metadata, entries or acl by sending the changes to Opencast
     and updating the playlist in Tobira's DB.
