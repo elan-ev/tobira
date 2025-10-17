@@ -36,6 +36,7 @@ import { CreateSeriesRoute } from "./routes/manage/Series/Create";
 import { AdminDashboardRoute } from "./routes/manage/Admin";
 import { ManagePlaylistsRoute } from "./routes/manage/Playlist";
 import { ManagePlaylistDetailsRoute } from "./routes/manage/Playlist/PlaylistDetails";
+import { ManagePlaylistAccessRoute } from "./routes/manage/Playlist/PlaylistAccess";
 
 
 
@@ -77,6 +78,7 @@ const {
         ManageSeriesDetailsRoute,
         ManagePlaylistsRoute,
         ManagePlaylistDetailsRoute,
+        ManagePlaylistAccessRoute,
         AdminDashboardRoute,
         UploadRoute,
         CreateSeriesRoute,

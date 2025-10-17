@@ -89,6 +89,7 @@ const query = graphql`
                 title
                 description
                 canWrite
+                acl { role actions info { label implies large } }
                 updated
                 thumbnailStack { thumbnails { url live audioOnly state }}
                 entries {

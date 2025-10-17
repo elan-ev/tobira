@@ -386,27 +386,17 @@ acl:
       unknown: Autorisation inconnue
       unknown-description: Cette autorisation n'est pas connue.
       video-read-description: Possibilité de regarder la vidéo et de voir les métadonnées.
-      video-read-description_one: Possibilité de regarder la vidéo et de voir les métadonnées.
-      video-read-description_other: Possibilité de regarder la vidéo et de voir les métadonnées.
       video-write-description: >
         Possibilité d'éditer et de supprimer la vidéo, les métadonnées et
         d'autres détails.
-      video-write-description_one: >
-        Peut également éditer la vidéo, la supprimer et modifier les métadonnées
-        ainsi que d'autres détails de la vidéo.
-      video-write-description_other: >
-        Peuvent également modifier la vidéo, la supprimer et changer les
-        métadonnées ainsi que d'autres détails de la vidéo.
       series-read-description: Peut être utilisé comme exemple pour les vidéos de cette série.
       series-write-description: >
         Il est possible de supprimer la série, de modifier les métadonnées et
         d'ajouter ou de supprimer des vidéos.
-      series-write-description_one: >
-        Peut supprimer des séries, modifier les métadonnées et ajouter ou
-        supprimer des vidéos à la série.
-      series-write-description_other: >
-        Peuvent supprimer des séries, modifier les métadonnées et ajouter ou
-        supprimer des vidéos à la série.
+      playlist-read-description: Possibilité de trouver la playlist et de voir les métadonnées. # needs verification
+      playlist-write-description: > # needs verification
+        Il est possible de supprimer la playlist, de modifier les métadonnées et
+        d'ajouter ou de supprimer des vidéos.
       realm-moderate-description: >
         Peut modifier le contenu, ajouter des sous-pages et changer le nom et
         l'ordre des sous-pages.
