@@ -491,8 +491,10 @@ manage:
         this series.
 
   playlist:
+    created-note: Playlist has been created.
     table:
       title: My playlists
+      create: Create playlist
     details:
       title: Playlist details
       delete: Delete playlist
