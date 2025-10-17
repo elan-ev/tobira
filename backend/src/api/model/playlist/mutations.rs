@@ -24,7 +24,7 @@ impl AuthorizedPlaylist {
     pub(crate) async fn create(
         metadata: BasicMetadata,
         creator: String,
-        entries: Vec<String>,
+        entries: Vec<Id>,
         acl: Vec<AclInputEntry>,
         context: &Context,
     ) -> ApiResult<Self> {
@@ -32,13 +32,15 @@ impl AuthorizedPlaylist {
             return Err(err::not_authorized!(key = "playlist.not-allowed", "playlist action not allowed"));
         }
 
+        let entry_ids = load_entries(entries, context).await?;
+
         let response = context
             .oc_client
             .create_playlist(
                 &metadata.title,
                 metadata.description.as_deref(),
                 &creator,
-                &entries,
+                &entry_ids,
                 &acl,
             ).await
             .map_err(|e| {
@@ -84,18 +86,7 @@ impl AuthorizedPlaylist {
         let playlist = Playlist::load_for_mutation(id, context).await?;
 
         let mut entry_ids = if let Some(entries) = entries {
-            Some(futures::stream::iter(entries)
-                .then(|id| async move {
-                    let maybe_event = AuthorizedEvent::load_by_id(id, context).await?;
-                    let event = maybe_event.ok_or_else(|| err::invalid_input!(
-                        key = "event.not-found",
-                        "unknown event"
-                    ))?;
-                    let event = event.into_result()?;
-                    Ok::<_, ApiError>(event.opencast_id)
-                })
-                .try_collect::<Vec<_>>()
-                .await?)
+            Some(load_entries(entries, context).await?)
         } else {
             None
         };
@@ -221,4 +212,19 @@ impl OpencastItem for AuthorizedPlaylist {
 #[graphql(Context = Context)]
 pub(crate) struct RemovedPlaylist {
     id: Id,
+}
+
+async fn load_entries(entries: Vec<Id>, context: &Context) -> ApiResult<Vec<String>> {
+    futures::stream::iter(entries)
+        .then(|id| async move {
+            let maybe_event = AuthorizedEvent::load_by_id(id, context).await?;
+            let event = maybe_event.ok_or_else(|| err::invalid_input!(
+                key = "event.not-found",
+                "unknown event"
+            ))?;
+            let event = event.into_result()?;
+            Ok::<_, ApiError>(event.opencast_id)
+        })
+        .try_collect::<Vec<_>>()
+        .await
 }

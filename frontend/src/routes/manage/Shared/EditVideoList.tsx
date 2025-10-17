@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { PropsWithChildren, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UseMutationConfig } from "react-relay";
 import { MutationParameters, Disposable } from "relay-runtime";
@@ -38,7 +38,7 @@ import CONFIG from "../../../config";
 
 type Entry = Series["entries"][number];
 type AuthEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
-type ListEvent = AuthEvent & { action: "add" | "remove" | "none" };
+export type ListEvent = AuthEvent & { action: "add" | "remove" | "none" };
 
 
 type VideoListMutationParams = MutationParameters & {
@@ -107,31 +107,64 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
 
     return <Inertable isInert={inFlight || !!commitError} css={{ marginBottom: 32, maxWidth: 750 }}>
+        <VideoListMenu {...{ listEntries, isPlaylist, events, setEvents }} seriesLink={
+            user.canUpload && !isPlaylist && <LinkButton
+                to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
+                <LuUpload />
+                {t("upload.title")}
+            </LinkButton>
+        }>
+            {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
+                {description}
+            </p>}
+            {!CONFIG.allowSeriesEventRemoval && <Card kind="info">
+                {t("manage.video-list.removing-disabled")}
+            </Card>}
+        </VideoListMenu>
+        {unknownItemsCount > 0 && <Card css={{ marginTop: 12 }} kind="info">
+            {t("manage.video-list.details.unknown", { count: unknownItemsCount })}
+        </Card>}
+        {events.length > 0 && <SubmitButtonWithStatus
+            label={t("manage.video-list.edit.save")}
+            onClick={onSubmit}
+            disabled={!!commitError || events.every(e => e.action === "none") || inFlight}
+            {...{ inFlight, success, setSuccess }}
+        />}
+        {boxError(commitError)}
+    </Inertable>;
+};
+
+type VideoListMenuProps = PropsWithChildren<{
+    isPlaylist: boolean;
+    events: ListEvent[];
+    setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    seriesLink?: React.ReactNode;
+}>;
+
+export const VideoListMenu: React.FC<VideoListMenuProps> = ({
+    isPlaylist,
+    events,
+    setEvents,
+    children,
+    seriesLink,
+}) => {
+    const { t } = useTranslation();
+    return <>
         <div css={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <h2 css={{ fontSize: 20 }}>
                 {t("video.plural")}
             </h2>
             <i css={{ fontSize: 14, color: COLORS.neutral50 }}>
-                ({listEntries.length > 0
-                    ? t("manage.video-list.no-of-videos", { count: listEntries.length })
+                ({events.length > 0
+                    ? t("manage.video-list.no-of-videos", { count: events.length })
                     : <i>{t("manage.video-list.no-content")}</i>
                 })
             </i>
         </div>
-        {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
-            {description}
-        </p>}
-        {!CONFIG.allowSeriesEventRemoval && <Card kind="info">
-            {t("manage.video-list.removing-disabled")}
-        </Card>}
+        {children}
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
             <AddVideoMenu {...{ setEvents, events, isPlaylist }} />
-            {user.canUpload && !isPlaylist
-                && <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
-                    <LuUpload />
-                    {t("upload.title")}
-                </LinkButton>
-            }
+            {seriesLink}
         </div>
         {events.length > 0 && <>
             <div css={{
@@ -158,17 +191,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
                 ))}
             </div>
         </>}
-        {unknownItemsCount > 0 && <Card css={{ marginTop: 12 }} kind="info">
-            {t("manage.video-list.details.unknown", { count: unknownItemsCount })}
-        </Card>}
-        {events.length > 0 && <SubmitButtonWithStatus
-            label={t("manage.video-list.edit.save")}
-            onClick={onSubmit}
-            disabled={!!commitError || events.every(e => e.action === "none") || inFlight}
-            {...{ inFlight, success, setSuccess }}
-        />}
-        {boxError(commitError)}
-    </Inertable>;
+    </>;
 };
 
 type AddVideoMenuProps = {

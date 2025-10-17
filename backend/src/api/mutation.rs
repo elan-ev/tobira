@@ -149,7 +149,7 @@ impl Mutation {
     async fn create_playlist(
         metadata: BasicMetadata,
         creator: String,
-        entries: Vec<String>,
+        entries: Vec<Id>,
         acl: Vec<AclInputEntry>,
         context: &Context,
     ) -> ApiResult<AuthorizedPlaylist> {
