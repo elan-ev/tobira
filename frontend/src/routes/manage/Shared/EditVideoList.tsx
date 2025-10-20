@@ -177,6 +177,7 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                     <EventEntry
                         key={event.id}
                         event={event}
+                        isPlaylistEntry={isPlaylist}
                         onChange={() => setEvents(prev => match(event.action, {
                             // Undo "add" -> remove from list again
                             "add": () => prev.filter(e => e.id !== event.id),
@@ -281,9 +282,10 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
 type EventEntryProps = {
     event: ListEvent;
     onChange: () => void;
+    isPlaylistEntry: boolean;
 };
 
-const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
+const EventEntry: React.FC<EventEntryProps> = ({ event, onChange, isPlaylistEntry }) => {
     const { t, i18n } = useTranslation();
 
     const buttonStyle = css({
@@ -418,11 +420,15 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                             </Button>
                         </>}
                         {event.action === "none" && <>
-                            {!event.canWrite && <i css={{ color: COLORS.neutral50 }}>
+                            {!event.canWrite && !isPlaylistEntry
+                                && <i css={{ color: COLORS.neutral50 }}>
                                 ({t("manage.video-list.edit.cannot-be-removed")})
-                            </i>}
+                                </i>
+                            }
                             <Button
-                                disabled={!event.canWrite || !CONFIG.allowSeriesEventRemoval}
+                                disabled={!isPlaylistEntry && (
+                                    !event.canWrite || !CONFIG.allowSeriesEventRemoval
+                                )}
                                 kind="danger"
                                 css={buttonStyle}
                                 onClick={onChange}
