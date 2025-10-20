@@ -1,30 +1,15 @@
-import { useId, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { graphql, useFragment, useMutation } from "react-relay";
-import { useTranslation } from "react-i18next";
-import { boxError } from "@opencast/appkit";
+import { graphql, useMutation } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { CreateSeriesQuery } from "./__generated__/CreateSeriesQuery.graphql";
-import { useUser, isRealUser } from "../../../User";
-import { Acl, AclSelector, knownRolesFragment } from "../../../ui/Access";
-import { defaultAclMap } from "../../../util/roles";
-import { Form } from "../../../ui/Form";
-import { InputContainer, SubmitButtonWithStatus, TitleLabel } from "../../../ui/metadata";
-import { Input, TextArea } from "../../../ui/Input";
-import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import { ManageNav } from "..";
-import { PageTitle } from "../../../layout/header/ui";
-import { displayCommitError } from "../Realm/util";
-import { useRouter } from "../../../router";
 import { CreateSeriesMutation } from "./__generated__/CreateSeriesMutation.graphql";
-import { useNotification } from "../../../ui/NotificationContext";
-import { NotAuthorized } from "../../../ui/error";
 import { ManageSeriesDetailsRoute } from "./SeriesDetails";
-import { aclMapToArray } from "../../util";
+import { CreateVideoList } from "../Shared/Create";
+import type { User } from "../../../User";
 
 
 export const CREATE_SERIES_PATH = "/~manage/create-series" as const;
@@ -63,136 +48,22 @@ const createSeriesMutation = graphql`
     }
 `;
 
-type Metadata = {
-    title: string;
-    description?: string;
-    acl: Acl;
-};
-
 type CreateSeriesPageProps = {
     knownRolesRef: AccessKnownRolesData$key;
 };
 
 const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) => {
-    const { t } = useTranslation();
-    const router = useRouter();
-    const titleFieldId = useId();
-    const descriptionFieldId = useId();
-    const knownRoles = useFragment(knownRolesFragment, knownRolesRef);
     const [commit, inFlight] = useMutation<CreateSeriesMutation>(createSeriesMutation);
-    const [success, setSuccess] = useState(false);
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
-    const { setNotification } = useNotification();
-    const user = useUser();
 
-    const {
-        register, handleSubmit, control,
-        formState: { errors, isValid, isDirty },
-    } = useForm<Metadata>({
-        mode: "onChange",
-        defaultValues: { acl: isRealUser(user) ? defaultAclMap(user) : [] },
-    });
+    const canUserCreateList = (user: User) => user.canCreateSeries;
 
-    if (!isRealUser(user) || !user.canCreateSeries) {
-        return <NotAuthorized />;
-    }
-
-    const createSeries = (data: Metadata) => {
-        commit({
-            variables: {
-                metadata: {
-                    title: data.title,
-                    description: data.description,
-                },
-                acl: aclMapToArray(data.acl),
-            },
-            onCompleted: response => {
-                const returnPath = ManageSeriesDetailsRoute.url({
-                    seriesId: response.createSeries.id,
-                });
-                setSuccess(true);
-                setNotification({
-                    kind: "info",
-                    message: () => t("manage.series.created-note"),
-                    scope: returnPath,
-                });
-                router.goto(returnPath);
-            },
-            onError: error => setCommitError(displayCommitError(error)),
-            updater: store => store.invalidateStore(),
-        });
-    };
-
-    const onSubmit = handleSubmit(data => createSeries(data));
-
-    return <>
-        <PageTitle title={t("manage.series.table.create")} />
-        <Form
-            noValidate
-            onSubmit={e => e.preventDefault()}
-            {...(commitError && { inert: "true" })}
-            css={{
-                margin: "32px 2px",
-                "label": {
-                    color: "var(--color-neutral90)",
-                },
-                ...commitError && { opacity: 0.7 },
-            }}
-        >
-            {/* Title */}
-            <InputContainer>
-                <TitleLabel htmlFor={titleFieldId} />
-                <Input
-                    id={titleFieldId}
-                    required
-                    error={!!errors.title}
-                    css={{ width: 400, maxWidth: "100%" }}
-                    autoFocus
-                    {...register("title", {
-                        required: t("manage.metadata-form.errors.field-required") as string,
-                    })}
-                />
-                {boxError(errors.title?.message)}
-            </InputContainer>
-
-            {/* Description */}
-            <InputContainer css={{ maxWidth: 750 }}>
-                <label htmlFor={descriptionFieldId}>{t("manage.metadata-form.description")}</label>
-                <TextArea id={descriptionFieldId} {...register("description")} />
-            </InputContainer>
-
-            {/* ACL */}
-            <InputContainer css={{ maxWidth: 900 }}>
-                <h2 css={{
-                    marginTop: 32,
-                    marginBottom: 12,
-                    fontSize: 22,
-                }}>{t("acl.title")}</h2>
-                <Controller
-                    name="acl"
-                    control={control}
-                    render={({ field }) => <AclSelector
-                        itemType="series"
-                        userIsRequired
-                        onChange={field.onChange}
-                        acl={field.value}
-                        knownRoles={knownRoles}
-                        permissionLevels={READ_WRITE_ACTIONS}
-                    />}
-                />
-            </InputContainer>
-
-            {/* Submit button */}
-            <SubmitButtonWithStatus
-                label={t("manage.series.table.create")}
-                onClick={onSubmit}
-                disabled={!!commitError || inFlight || !isValid}
-                success={success && !isDirty}
-                {...{ inFlight, setSuccess }}
-            />
-        </Form>
-        {boxError(commitError)}
-    </>;
+    return <CreateVideoList
+        {...{ commit, inFlight, knownRolesRef, canUserCreateList }}
+        kind="series"
+        returnPath={response =>
+            ManageSeriesDetailsRoute.url({ seriesId: response.createSeries.id })
+        }
+    />;
 };
 
 
