@@ -71,13 +71,16 @@ jobs:
         run: |
           echo "utc_now=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
           echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-        
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "version=pr-${{ github.event.number }}" >> $GITHUB_OUTPUT
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           elif [[ "${GITHUB_REF_NAME}" == "${{ github.event.repository.default_branch }}" ]]; then
             echo "version=edge" >> $GITHUB_OUTPUT
           else
-            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+            SAFE=$(echo "${GITHUB_REF_NAME}" | sed -E 's/[^A-Za-z0-9._-]+/-/g')
+            echo "version=${SAFE}" >> $GITHUB_OUTPUT
           fi
 
       - name: Set up QEMU
