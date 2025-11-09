@@ -181,6 +181,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
     const [files, setFiles] = useState<FileList | null>(null);
     const [uploadState, setUploadState] = useRefState<UploadState | null>(null);
     const [metadata, setMetadata] = useRefState<Metadata | null>(null);
+    const selectedFileName = files && files.length > 0 ? files[0].name : null;
 
     const progressHistory = useRef<ProgressHistory>([]);
     const abortController = useRef(new AbortController());
@@ -273,6 +274,15 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
             marginTop: "max(16px, 10vh - 50px)",
             gap: 32,
         }}>
+            {selectedFileName && (
+                <div css={{
+                    fontSize: 14,
+                    color: COLORS.neutral60,
+                    alignSelf: "flex-start",
+                }}>
+                    {selectedFileName}
+                </div>
+            )}
             <LuCircleCheck css={{ fontSize: 64, color: COLORS.happy0 }} />
             {t("upload.finished")}
             <LinkButton kind="call-to-action" to={UploadRoute.url({
@@ -305,6 +315,9 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
                 width: "100%",
                 maxWidth: 900,
             }}>
+                {selectedFileName && <p css={{ fontSize: 14, color: COLORS.neutral60 }}>
+                    {selectedFileName}
+                </p>}
                 <UploadState
                     state={uploadState.current}
                     seriesId={preselectedSeries?.id}
