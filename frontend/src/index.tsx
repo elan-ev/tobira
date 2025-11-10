@@ -8,10 +8,21 @@ import { checkInitialConsent } from "./ui/InitialConsent";
 import CONFIG from "./config";
 
 
-navigator.serviceWorker
-    .register("/~sw.js", { updateViaCache: "none" })
-    // eslint-disable-next-line no-console
-    .catch(e => console.error("Failed to register service worker", e));
+if (CONFIG.auth.authStaticFiles) {
+    navigator.serviceWorker
+        .register("/~sw.js", { updateViaCache: "none" })
+        // eslint-disable-next-line no-console
+        .catch(e => console.error("Failed to register service worker", e));
+} else {
+    navigator.serviceWorker
+        .getRegistration("/~sw.js")
+        .then(reg => {
+            // eslint-disable-next-line no-console
+            reg?.unregister().then(() => console.debug("UNregistered service worker"));
+        })
+        // eslint-disable-next-line no-console
+        .catch(e => console.error("Failed to UNregister service worker", e));
+}
 
 const redirect = (target: string) => {
     const newUri = new URL(target, document.baseURI).href;
