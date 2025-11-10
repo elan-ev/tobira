@@ -313,6 +313,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
             "userRolePrefixes": config.auth.roles.user_role_prefixes,
             "globalPageAdminRole": config.auth.roles.global_page_admin,
             "globalPageModeratorRole": config.auth.roles.global_page_moderator,
+            "authStaticFiles": config.auth.auth_static_files,
         },
         "upload": {
             "requireSeries": config.upload.require_series,

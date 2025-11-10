@@ -30,6 +30,7 @@ login_page.note.de = 'Testnutzer: "jose", "morgan", "björk" und "sabine". Passw
 
 trusted_external_key = "tobira"
 
+auth_static_files = true
 pre_auth_external_links = true
 
 [auth.roles]

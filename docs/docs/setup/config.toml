@@ -252,6 +252,13 @@
 # every channel this is sent over.
 #trusted_external_key =
 
+# If `true`, Tobira attaches a JWT to all requests for Opencast static files.
+# This only considers requests to hosts listed in the `opencast` section
+# of the configuration. If necessary, use `other_hosts`.
+#
+# Default value: false
+#auth_static_files = false
+
 # Determines whether or not Tobira users are getting pre-authenticated against
 # Opencast when they visit external links like the ones to Opencast Studio
 # or the Editor. If you have an SSO-solution, you don't need this.
