@@ -1325,8 +1325,7 @@ const finishUpload = async (
         // Add thumbnail attachment if provided
         if (metadata.thumbnail) {
             const body = new FormData();
-            // Todo: make flavor configurable
-            body.append("flavor", "presentation/player+preview");
+            body.append("flavor", `presentation/${CONFIG.upload.thumbnailSubtype}`);
             body.append("mediaPackage", mediaPackage);
             body.append("BODY", metadata.thumbnail, metadata.thumbnail.name);
 
@@ -1348,8 +1347,7 @@ const finishUpload = async (
             if (metadata.thumbnail) {
                 // We piggyback on the editor condition. Doing so allows the thumbnail
                 // upload to work without any workflow changes or additions in Opencast itself.
-                // Todo: also needs to be configurable (as it is in Opencast)
-                body.append("presentation/thumbnail_edited", "true");
+                body.append(`presentation/${CONFIG.upload.workflowProperty}`, "true");
             }
 
             await ocRequest("/ingest/ingest", { method: "post", body: body }, id);

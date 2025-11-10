@@ -308,6 +308,8 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         "upload": {
             "requireSeries": config.upload.require_series,
             "workflow": config.upload.workflow,
+            "thumbnailSubtype": config.upload.thumbnail_subtype,
+            "workflowProperty": config.upload.workflow_property,
         },
         "siteTitle": config.general.site_title,
         "initialConsent": config.general.initial_consent,
