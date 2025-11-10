@@ -101,6 +101,7 @@ type Metadata = {
         acl: AclArray;
     };
     acl: Acl;
+    thumbnail?: File | null;
 };
 
 type Props = {
@@ -788,6 +789,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
     const user = isRealUser(u) ? u : unreachable();
 
     const seriesFieldId = useId();
+    const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
     const [lockedAcl, setLockedAcl] = useState<Acl | null>(
         preselectedSeries ? aclArrayToMap(preselectedSeries.acl) : null,
     );
@@ -912,6 +914,39 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
                     />
                 </Inertable>
                 {boxError(errors.series?.message)}
+            </InputContainer>
+
+            {/* Thumbnail */}
+            <InputContainer css={{ maxWidth: 750 }}>
+                <label>{t("upload.thumbnail.title")}</label>
+                <Controller
+                    name="thumbnail"
+                    control={control}
+                    render={({ field }) => (
+                        <div css={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <input
+                                ref={thumbnailInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={e => {
+                                    const f = e.target.files?.[0] ?? null;
+                                    field.onChange(f);
+                                }}
+                                onBlur={field.onBlur}
+                                aria-hidden="true"
+                                css={{ display: "none" }}
+                            />
+
+                            <Button onClick={() => thumbnailInputRef.current?.click()}>
+                                {t("upload.thumbnail.upload")}
+                            </Button>
+
+                            <span css={{ fontSize: 14, color: COLORS.neutral60 }}>
+                                {field.value?.name ?? <i>{t("upload.thumbnail.no-file")}</i>}
+                            </span>
+                        </div>
+                    )}
+                />
             </InputContainer>
 
             {/* ACL */}
@@ -1281,6 +1316,21 @@ const finishUpload = async (
             );
         }
 
+        // Add thumbnail attachment if provided
+        if (metadata.thumbnail) {
+            const body = new FormData();
+            // Todo: make flavor configurable
+            body.append("flavor", "presentation/player+preview");
+            body.append("mediaPackage", mediaPackage);
+            body.append("BODY", metadata.thumbnail, metadata.thumbnail.name);
+
+            mediaPackage = await ocRequest(
+                "/ingest/addAttachment",
+                { method: "post", body },
+                id,
+            );
+        }
+
         // Finish ingest
         {
             const body = new FormData();
@@ -1288,6 +1338,14 @@ const finishUpload = async (
             if (CONFIG.upload.workflow) {
                 body.append("workflowDefinitionId", CONFIG.upload.workflow);
             }
+
+            if (metadata.thumbnail) {
+                // We piggyback on the editor condition. Doing so allows the thumbnail
+                // upload to work without any workflow changes or additions in Opencast itself.
+                // Todo: also needs to be configurable (as it is in Opencast)
+                body.append("presentation/thumbnail_edited", "true");
+            }
+
             await ocRequest("/ingest/ingest", { method: "post", body: body }, id);
         }
 

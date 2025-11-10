@@ -322,6 +322,10 @@ upload:
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
     failed-fetching-series-acl: Failed to fetch series acl.
+  thumbnail:
+    title: Thumbnail
+    upload: Select file
+    no-file: No file chosen
 
 acl:
   title: Access policy

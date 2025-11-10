@@ -334,6 +334,10 @@ upload:
       Errore interno di autenticazione incrociata: Opencast non ha autorizzato
       il caricamento.
     failed-fetching-series-acl: Impossibile recuperare le autorizzazioni di accesso per le serie.
+  thumbnail:
+    title: Anteprima # verify
+    upload: Seleziona file # verify
+    no-file: Nessun file selezionato # verify
 
 acl:
   title: Politica di accesso

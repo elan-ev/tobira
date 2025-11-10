@@ -335,6 +335,10 @@ upload:
       Erreur d'authentification externe : Opencast n'a pas autorisé le
       téléchargement.
     failed-fetching-series-acl: Échec de la récupération des droits d'accès à la série.
+  thumbnail:
+    title: Vignette # verify
+    upload: Sélectionner un fichier # verify
+    no-file: Aucun fichier sélectionné # verify
 
 acl:
   title: Droits d'accès
