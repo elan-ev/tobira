@@ -36,6 +36,16 @@ pub(crate) struct AuthConfig {
     /// every channel this is sent over.
     pub(crate) trusted_external_key: Option<SecretString>,
 
+    /// If `true`, Tobira attaches a JWT to all requests for Opencast static files.
+    /// This only considers requests to hosts listed in the `opencast` section
+    /// of the configuration. If necessary, use `other_hosts`.
+    ///
+    /// Experimental: this should work fine, but we don't have enough experience
+    /// yet to generally recommend turning this on. When you do, please report
+    /// any problems or weird behaviors to us!
+    #[config(default = false)]
+    pub(crate) auth_static_files: bool,
+
     /// Determines whether or not Tobira users are getting pre-authenticated against
     /// Opencast when they visit external links like the ones to Opencast Studio
     /// or the Editor. If you have an SSO-solution, you don't need this.

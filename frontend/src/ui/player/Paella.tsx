@@ -536,7 +536,7 @@ const PAELLA_CONFIG = {
         "es.upv.paella.mp4MultiQualityVideoFormat": {
             enabled: true,
             order: 1,
-            crossOrigin: "anonymous",
+            crossOrigin: CONFIG.auth.authStaticFiles ? "anonymous" : false,
         },
         "es.upv.paella.hlsVideoFormat": {
             enabled: true,
