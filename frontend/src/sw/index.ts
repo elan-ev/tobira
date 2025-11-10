@@ -1,4 +1,4 @@
-import { EventId, setUpServiceWorker } from "./lib";
+import { EventId, setUpServiceWorker } from "@opencast/jwtify";
 
 const fetchJwts = async (eventIds: Set<EventId>): Promise<Map<string, string>> => {
     // We don't use relay here, as it's straight forward to do maually and we
@@ -38,7 +38,10 @@ const fetchJwts = async (eventIds: Set<EventId>): Promise<Map<string, string>> =
     return new Map(entries);
 };
 
+declare const MAGIC_REPLACE_TRUSTED_ORIGINS_SW: string[];
+
 setUpServiceWorker({
     getJwts: fetchJwts,
-    trustedOcOrigins: ["http://localhost:4050"], // TODO
+    // This value is replaced by the backend with values from the config.
+    trustedOcOrigins: MAGIC_REPLACE_TRUSTED_ORIGINS_SW,
 });
