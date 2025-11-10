@@ -9,4 +9,19 @@ pub(crate) struct UploadConfig {
     /// Specify workflow to start after ingesting. If unset, Tobira does not
     /// send any workflow ID, meaning Opencast will choose its default.
     pub workflow: Option<String>,
+
+    /// Subtype of thumbnail image. Has to match the subtype used in the related
+    /// Opencast workflows and should be identical to what is used for the editor.
+    /// See https://github.com/opencast/opencast/blob/a68c337f11499a0a939a5a96bffa3898c1cd032c/etc/org.opencastproject.editor.EditorServiceImpl.cfg#L58
+    #[config(default = "player+preview")]
+    pub thumbnail_subtype: String,
+
+    /// When uploading a thumbnail, this property is set to trigger
+    /// the operation that prepares the thumbnail for publication
+    /// in the default `partial-publish` workflow.
+    /// This needs to match the property in Opencast and should also be identical
+    /// to what is used for the editor.
+    /// See https://github.com/opencast/opencast/blob/a68c337f11499a0a939a5a96bffa3898c1cd032c/etc/org.opencastproject.editor.EditorServiceImpl.cfg#L62
+    #[config(default = "thumbnail_edited")]
+    pub thumbnail_workflow_property: String,
 }
