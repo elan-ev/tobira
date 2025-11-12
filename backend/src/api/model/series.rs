@@ -531,7 +531,7 @@ impl Series {
 
         let mut events_to_update = Vec::new();
         // Map target series key -> (target series opencast_id, list of event ids to move)
-        let mut events_to_move: HashMap<Key, (String, Vec<Key>)> = HashMap::new();
+        let mut events_to_move: HashMap<Key, (OpencastId, Vec<Key>)> = HashMap::new();
 
         for (event, add, target_series) in &changes {
             let mut target_key = None;

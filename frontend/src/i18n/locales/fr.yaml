@@ -501,12 +501,13 @@ manage:
       delete-note: >
         Les vidéos de cette série ne seront pas supprimées. Elles resteront dans
         le système et pourront être ajoutées à une autre série.
-      edit-note: >
+      edit-note: > # verify
         Vous pouvez charger de nouvelles vidéos dans le cadre de cette série,
         ainsi que supprimer ou ajouter des vidéos auxquelles vous avez droit
-        d'écriture. Seules les vidéos qui ne sont pas incluses dans une autre
-        série peuvent être ajoutées. Les vidéos retirées ne sont pas supprimées,
-        mais simplement retirées de la série.
+        d'écriture, ou les déplacer directement vers une autre série. Seules les
+        vidéos qui ne sont pas incluses dans une autre série peuvent être ajoutées.
+        Les vidéos retirées ne sont pas supprimées, mais simplement retirées de
+        la série.
 
   playlist:
     created-note: La playlist a été créée. # needs verification... in theory.
@@ -528,8 +529,8 @@ manage:
 
   video-list:
     no-content: pas de vidéos
-    no-of-videos_one: '{{count}} Vidéos'
-    no-of-videos_other: '{{count}} Vidéos'
+    no-of-videos_one: '{{count}} vidéo' # verify - should be singular and probably lowercase
+    no-of-videos_other: '{{count}} vidéos' # verify - should be lowercase
     removing-disabled: La suppression des vidéos est désactivée. # needs verification
     details:
       unknown_one: Vous n'avez pas les droits d'accès à une vidéo ou elle n'existe plus. # needs verification
@@ -541,6 +542,8 @@ manage:
       to-be-added: sera ajouté
       remove: Supprimer
       to-be-removed: sera supprimé
+      move: Déplacer vers une autre série # verify
+      to-be-moved: "sera déplacé vers : {{series}}" # verify
       cannot-be-removed: 'Pas possible de supprimer : manque du droit d''écriture'
       undo: Annuler
       save: Sauvegarder les modifications

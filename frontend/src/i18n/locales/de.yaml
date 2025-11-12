@@ -522,7 +522,7 @@ manage:
         zugeordnet werden.
       edit-note: >
         Sie können neue Videos als Teil dieser Serie hochladen und bestehende Videos, auf welche
-        Sie Schreibzugriff haben, hinzufügen oder entfernen.
+        Sie Schreibzugriff haben, hinzufügen, entfernen order direkt in eine andere Serie verschieben.
         Es können nur Videos hinzugefügt werden, die in keiner anderen Serie enthalten sind.
         Hier entfernte Videos werden nicht gelöscht, sondern nur aus der Serie entfernt.
 
@@ -558,6 +558,8 @@ manage:
       to-be-added: wird hinzugefügt
       remove: Entfernen
       to-be-removed: wird entfernt
+      move: In andere Serie verschieben
+      to-be-moved: "wird verschoben in: {{series}}"
       cannot-be-removed: "Nicht entfernbar: Fehlender Schreibzugriff"
       undo: Rückgängig
       save: Änderungen speichern
