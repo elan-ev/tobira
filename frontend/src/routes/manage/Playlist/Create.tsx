@@ -84,7 +84,7 @@ const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({ knownRolesRef }
             }
         >
             <InputContainer css={{ maxWidth: 900 }}>
-                <VideoListMenu events={events} setEvents={setEvents} isPlaylist />
+                <VideoListMenu events={events} setEvents={setEvents} listId="dummy" isPlaylist />
             </InputContainer>
         </CreateVideoList>
     );
