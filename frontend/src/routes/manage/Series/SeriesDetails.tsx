@@ -38,24 +38,27 @@ const deleteSeriesMutation = graphql`
 `;
 
 const editSeriesContent = graphql`
-    mutation SeriesDetailsContentMutation($id: ID!, $addedEvents: [ID!]!, $removedEvents: [ID!]!) {
-        updateSeriesContent(id: $id, addedEvents: $addedEvents, removedEvents: $removedEvents) {
-            entries {
-                __typename
-                ...on AuthorizedEvent {
-                    id
-                    isLive
-                    title
-                    created
-                    creators
-                    description
-                    canWrite
-                    syncedData { thumbnail audioOnly duration startTime endTime }
-                }
+    mutation SeriesDetailsContentMutation(
+    $id: ID!,
+    $addedEvents: [ID!]!,
+    $removedEvents: [RemovedEvent!]!,
+) {
+    updateSeriesContent(id: $id, addedEvents: $addedEvents, removedEvents: $removedEvents) {
+        entries {
+            __typename
+            ...on AuthorizedEvent {
+                id
+                isLive
+                title
+                created
+                creators
+                description
+                canWrite
+                syncedData { thumbnail audioOnly duration startTime endTime }
             }
         }
     }
-`;
+}`;
 
 export const ManageSeriesDetailsRoute = makeManageSeriesRoute(
     "details",
