@@ -1347,7 +1347,15 @@ const finishUpload = async (
             if (metadata.thumbnail) {
                 // We piggyback on the editor condition. Doing so allows the thumbnail
                 // upload to work without any workflow changes or additions in Opencast itself.
+                //
+                // Even though we upload the track and thumbnail with the `presentation` main
+                // flavor, both of these need to  be set to ensure that the video uses the
+                // uploaded thumbnail everywhere.
+                // "presentation" is used for everything but the editor. I suspect there might
+                // be a bug or workflow misconfiguration behind that, but haven't been able to
+                // pin it down. So for now, this also sets the `presenter` condition as workaround.
                 body.append(`presentation/${CONFIG.upload.workflowProperty}`, "true");
+                body.append(`presenter/${CONFIG.upload.workflowProperty}`, "true");
             }
 
             await ocRequest("/ingest/ingest", { method: "post", body: body }, id);
