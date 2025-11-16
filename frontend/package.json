@@ -33,6 +33,7 @@
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@opencast/appkit": "^0.4.1",
+    "@opencast/jwtify": "^0.1.1",
     "@svgr/webpack": "^8.1.0",
     "babel-loader": "^10.0.0",
     "babel-plugin-relay": "^16.2.0",
