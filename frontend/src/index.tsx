@@ -9,7 +9,7 @@ import CONFIG from "./config";
 
 
 navigator.serviceWorker
-    .register("/~sw.js", { updateViaCache: "none", type: "module" })
+    .register("/~sw.js", { updateViaCache: "none" })
     // eslint-disable-next-line no-console
     .catch(e => console.error("Failed to register service worker", e));
 

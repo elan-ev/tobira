@@ -1,93 +1,44 @@
-declare let self: ServiceWorkerGlobalScope;
+import { EventId, setUpServiceWorker } from "@opencast/jwtify";
 
-// Make sure a downloaded service worker is immediately activated and starts
-// controlling all clients (pages).
-self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (e: ExtendableEvent) => e.waitUntil(self.clients.claim()));
-
-
-self.addEventListener("fetch", (event: FetchEvent) => {
-    // TODO: only run for trusted OC hosts!!
-    const url = new URL(event.request.url);
-    if (url.origin === self.location.origin) {
-        return;
-    }
-
-    // If the path is not one we recognize, we don't change the request.
-    const parsed = parsePath(url.pathname);
-    if (!parsed) {
-        return;
-    }
-
-    // Inject JWT
-    event.respondWith((async () => {
-        const jwt = await jwtForEvent(parsed.eventId);
-        const req = new Request(event.request, {
-            // We have to use CORS as we set the `Authorization` header.
-            mode: "cors",
-            headers: {
-                ...event.request.headers,
-                "Authorization": `Bearer ${jwt}`,
-            },
-        });
-        return fetch(req);
-    })());
-});
-
-// Config
-const PATH_PREFIXES = ["/static"];
-
-type ParsedPath = {
-    prefix: string;
-    org: string;
-    channel: string;
-    eventId: string;
-    suffix: string;
-}
-
-const parsePath = (path: string): ParsedPath | null => {
-    const prefix = PATH_PREFIXES.find(prefix => path.startsWith(prefix));
-    if (!prefix) {
-        return null;
-    }
-
-    const withoutPrefix = path.slice(prefix.length + 1);
-    const parts = withoutPrefix.split("/");
-    if (parts.length < 4) {
-        return null;
-    }
-
-    const [org, channel, eventId, ...suffix] = parts;
-    return {
-        prefix,
-        org,
-        channel,
-        eventId,
-        suffix: suffix.join("/"),
-    };
-};
-
-/** Fetch JWT for the given Opencast event ID from the API. */
-const jwtForEvent = async (eventId: string): Promise<string | null> => {
-    const body = JSON.stringify({
-        query: "query($ev: String!) { eventByOpencastId(id:$ev) { ...on AuthorizedEvent { jwt } }}",
-        variables: {
-            ev: eventId,
-        },
-    });
+const fetchJwts = async (eventIds: Set<EventId>): Promise<Map<string, string>> => {
+    // We don't use relay here, as it's straight forward to do maually and we
+    // don't need to pull in a big dependency for this.
     const response = await fetch("/graphql", {
         method: "POST",
-        body,
         headers: {
             "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+            query: "query($events: [String!]!) { eventReadJwts(events:$events) { event jwt } }",
+            variables: {
+                events: [...eventIds.keys()],
+            },
+        }),
     });
     if (response.status !== 200) {
-        return null;
+        throw new Error("unexpected non-200 response from API");
     }
     const data = await response.json();
-    return data?.data?.eventByOpencastId?.jwt;
+
+    // Read & convert data, making sure it has the expected format
+    const arr = data?.data?.eventReadJwts;
+    if (!arr || !Array.isArray(arr)) {
+        throw new Error("unexpected API response data");
+    }
+    const entries = arr.map(elem => {
+        if (typeof elem === "object") {
+            const { jwt, event } = elem;
+            if (typeof jwt === "string" && typeof event === "string") {
+                return [event, jwt] as const;
+            }
+        }
+        throw new Error("unexpected API response data (invalid element)");
+    });
+
+    return new Map(entries);
 };
 
-
-export { };
+setUpServiceWorker({
+    getJwts: fetchJwts,
+    trustedOcOrigins: ["http://localhost:4050"], // TODO
+});
