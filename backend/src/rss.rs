@@ -11,7 +11,7 @@ use crate::{
     config::HttpHost,
     db::{DbConnection, types::EventTrack, util::{FromDb, dbargs, impl_from_db, select}},
     http::{Context, Response, response::{self, bad_request, internal_server_error, not_found}},
-    model::Key,
+    model::{ExtraMetadata, Key},
     prelude::*,
 };
 
@@ -24,12 +24,13 @@ struct Event {
     creators: Vec<String>,
     thumbnail_url: Option<String>,
     tracks: Vec<EventTrack>,
+    metadata: ExtraMetadata,
 }
 
 impl_from_db!(
     Event,
     select: {
-        events.{ id, title, description, creators, thumbnail, created, tracks },
+        events.{ id, title, description, creators, thumbnail, created, tracks, metadata },
     },
     |row| {
         Self {
@@ -40,6 +41,7 @@ impl_from_db!(
             creators: row.creators(),
             thumbnail_url: row.thumbnail(),
             tracks: row.tracks(),
+            metadata: row.metadata(),
         }
     }
 );
@@ -56,13 +58,15 @@ pub(crate) async fn generate_series_feed(
     };
 
     // Load series data
-    let (selection, mapping) = select!(title, description);
+    let (selection, mapping) = select!(title, description, metadata);
     let query = format!("select {selection} from series where id = $1");
     let row = load_item(&db, &query, series_id).await?;
+    let metadata = mapping.metadata.of(&row);
     let info = FeedInfo {
         title: mapping.title.of(&row),
         description: mapping.description.of::<Option<String>>(&row).unwrap_or_default(),
         link: format!("{}/!s/{id}", context.config.general.tobira_url),
+        author: extract_author(&metadata),
     };
 
     // Load event data
@@ -87,7 +91,7 @@ pub(crate) async fn generate_playlist_feed(
     };
 
     // Load playlist data
-    let (selection, mapping) = select!(title, description, read_roles);
+    let (selection, mapping) = select!(title, description, read_roles, creator);
     let query = format!("select {selection} from playlists where id = $1");
     let row = load_item(&db, &query, playlist_id).await?;
     let read_roles = mapping.read_roles.of::<Vec<String>>(&row);
@@ -98,6 +102,7 @@ pub(crate) async fn generate_playlist_feed(
         title: mapping.title.of(&row),
         description: mapping.description.of::<Option<String>>(&row).unwrap_or_default(),
         link: format!("{}/!p/{id}", context.config.general.tobira_url),
+        author: mapping.creator.of(&row),
     };
 
     // Load event data
@@ -130,6 +135,15 @@ struct FeedInfo {
     title: String,
     link: String,
     description: String,
+    author: Option<String>,
+}
+
+/// Extracts author from metadata, preferring publisher over creator.
+fn extract_author(metadata: &ExtraMetadata) -> Option<String> {
+    metadata.dcterms.get("publisher")
+        .or_else(|| metadata.dcterms.get("creator"))
+        .and_then(|values| values.first())
+        .map(|s| s.to_owned())
 }
 
 async fn generate_feed(
@@ -164,6 +178,9 @@ async fn generate_feed(
                 <description>{info.description}</description>
                 <language>"und"</language>
                 <itunes:category text="Education" />
+                {|buf| if let Some(author) = &info.author {
+                    xml!(buf, <itunes:author>{author}</itunes:author>)
+                }}
                 <itunes:explicit>{&context.config.general.explicit_rss_content}</itunes:explicit>
                 <itunes:image href={format!("{tobira_url}/~assets/logo-small.svg")} />
                 <atom:link href={rss_link} rel="self" type="application/rss+xml" />
@@ -216,6 +233,8 @@ async fn video_items(
         let event_link = format!("{tobira_url}/!v/{tobira_event_id}");
         let thumbnail = &event.thumbnail_url.unwrap_or_default();
         let creators = event.creators.join(", ");
+        let event_author = extract_author(&event.metadata)
+            .or_else(|| event.creators.first().cloned());
         let (enclosure_track, track_groups) = preferred_tracks(event.tracks);
 
         xml!(doc,
@@ -228,7 +247,9 @@ async fn video_items(
                 <guid>{event_link}</guid>
                 <media:thumbnail url={thumbnail} />
                 <itunes:image href={thumbnail} />
-                <itunes:author>{creators}</itunes:author>
+                {|buf| if let Some(author) = &event_author {
+                    xml!(buf, <itunes:author>{author}</itunes:author>)
+                }}
                 <enclosure
                     url={&enclosure_track.uri}
                     type={&enclosure_track.mimetype.unwrap_or_default()}
