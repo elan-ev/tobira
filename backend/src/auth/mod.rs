@@ -538,12 +538,17 @@ impl HasRoles for User {
 
 impl HasRoles for AuthContext {
     fn roles(&self) -> &HashSet<String> {
+        self.state.roles()
+    }
+}
+impl HasRoles for AuthState {
+    fn roles(&self) -> &HashSet<String> {
         static TRUSTED_ROLES: Lazy<HashSet<String>>
             = Lazy::new(|| HashSet::from([ROLE_ADMIN.into()]));
         static ANONYMOUS_ROLES: Lazy<HashSet<String>>
             = Lazy::new(|| HashSet::from([ROLE_ANONYMOUS.into()]));
 
-        match &self.state {
+        match self {
             AuthState::Anonymous => &*ANONYMOUS_ROLES,
             AuthState::User(user) => user.roles(),
             // Note: We would like the trusted user to be rather restricted,
