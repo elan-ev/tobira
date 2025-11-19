@@ -384,6 +384,12 @@ type AuthorizedEvent implements Node {
     Otherwise, `false` is returned.
   """
   isReferencedByRealm(path: String!): Boolean!
+  """
+    Returns a JWT that grants read access to static files of this event.
+    Returns `null` if the feature is disabled or the user does not have
+    access to the event.
+  """
+  jwt: String
 }
 
 """
@@ -427,6 +433,11 @@ type EventConnection {
   pageInfo: PageInfo!
   items: [AuthorizedEvent!]!
   totalCount: Int!
+}
+
+type EventJwt {
+  event: String!
+  jwt: String!
 }
 
 type EventSearchResults {
@@ -689,11 +700,17 @@ type Query {
   "Returns the current user."
   currentUser: User
   """
+    Returns one JWT for each given event (by Opencast IDs), granting the
+    bearer read access to that event. Events that the user is not allowed
+    to read will not appear in the resulting list.
+  """
+  eventReadJwts(events: [String!]!): [EventJwt!]!
+  """
     Returns a new JWT that can be used to authenticate against Opencast for
     using the given service. For `service = Editor`, `event` has to be
     specified.
   """
-  jwt(service: JwtService!, event: ID, opencastId: String): String!
+  serviceJwt(service: JwtService!, event: ID, opencastId: String): String!
   "Retrieve a node by globally unique ID. Mostly useful for relay."
   node(id: ID!): Node
   "Returns `null` if the query is too short."

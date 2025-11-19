@@ -106,7 +106,7 @@ export const getJwt = (
         let out: authJwtQuery["response"];
         const query = graphql`
             query authJwtQuery($service: JwtService!, $event: ID, $ocId: String) {
-                jwt(service: $service, event: $event, opencastId: $ocId)
+                serviceJwt(service: $service, event: $event, opencastId: $ocId)
             }
         `;
         fetchQuery<authJwtQuery>(
@@ -121,7 +121,7 @@ export const getJwt = (
                 if (!gotResult) {
                     bug("'complete' callback before receiving any data");
                 } else {
-                    resolve(out.jwt);
+                    resolve(out.serviceJwt);
                 }
             },
             error: (error: unknown) => reject(error),

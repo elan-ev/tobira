@@ -65,6 +65,7 @@ type AuthConfig = {
     userRolePrefixes: string[];
     globalPageAdminRole: string;
     globalPageModeratorRole: string;
+    authStaticFiles: boolean;
 };
 
 type LogoConfig = {

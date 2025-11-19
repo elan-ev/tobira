@@ -415,6 +415,21 @@ impl AuthorizedEvent {
             .get::<_, bool>(0)
             .pipe(Ok)
     }
+
+    /// Returns a JWT that grants read access to static files of this event.
+    /// Returns `null` if the feature is disabled or the user does not have
+    /// access to the event.
+    fn jwt(&self, context: &Context) -> Option<String> {
+        // TODO: think about how to make it work for password-protected videos,
+        // i.e. whether to use preview roles.
+        if !context.auth.overlaps_roles(&self.read_roles) {
+            return None;
+        }
+
+        let jwt = context.jwt.event_read_token(&self.opencast_id);
+
+        Some(jwt)
+    }
 }
 
 #[derive(juniper::GraphQLUnion)]
