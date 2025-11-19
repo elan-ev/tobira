@@ -26,7 +26,7 @@ import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.grap
 import { useNotification } from "../../../ui/NotificationContext";
 import { OcEntity } from "../../../util";
 import { isSynced } from "../../../util";
-import { ThumbnailItemStatus } from "../../../ui/Video";
+import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
 
 
@@ -330,7 +330,7 @@ type TableRowItem = {
 
 type TableRowProps<T extends TableRowItem> = {
     itemType: OcEntity;
-    thumbnail: (status: ThumbnailItemStatus) => ReactNode;
+    thumbnail: (state: ThumbnailItemState) => ReactNode;
     link: string;
     item: T;
     customColumns?: ReactNode[];
@@ -347,7 +347,7 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
     const deletionTimestamp = item.tobiraDeletionTimestamp;
     const deletionIsPending = Boolean(deletionTimestamp);
     const deletionDate = new Date(deletionTimestamp ?? "");
-    const thumbnailStatus = deletionIsPending ? "deleted" : (
+    const thumbnailState = deletionIsPending ? "deleted" : (
         !isSynced(item) ? "waiting" : "ready"
     );
 
@@ -363,9 +363,9 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
         {/* Thumbnail */}
         <td>
             {deletionIsPending
-                ? props.thumbnail(thumbnailStatus)
+                ? props.thumbnail(thumbnailState)
                 : <Link to={props.link} css={{ ...thumbnailLinkStyle }}>
-                    {props.thumbnail(thumbnailStatus)}
+                    {props.thumbnail(thumbnailState)}
                 </Link>
             }
         </td>

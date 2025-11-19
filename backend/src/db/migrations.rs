@@ -379,4 +379,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     44: "redo-events-no-null-tracks-constraint",
     45: "custom-user-realm-path",
     46: "known-groups-sort-key",
+    47: "search-thumbnail-info-with-state",
 ];

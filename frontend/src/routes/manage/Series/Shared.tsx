@@ -15,7 +15,7 @@ import { DirectSeriesRoute } from "../../Series";
 import { ReturnLink, ManageNav, SharedManageNavProps } from "../Shared/Nav";
 import { COLORS } from "../../../color";
 import { ThumbnailStack } from "../../../ui/ThumbnailStack";
-import { ThumbnailItemStatus } from "../../../ui/Video";
+import { ThumbnailItemState } from "../../../ui/Video";
 import { MovingTruck } from "../../../ui/Waiting";
 
 
@@ -136,7 +136,7 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
     const link = DirectSeriesRoute.url({ seriesId: id });
     const title = series.title;
     const ariaLabel = t("series.series-page", { series: series.title });
-    const seriesStatus = series.tobiraDeletionTimestamp ? "deleted" : (
+    const seriesState = series.tobiraDeletionTimestamp ? "deleted" : (
         !isSynced(series) ? "waiting" : "ready"
     );
 
@@ -147,7 +147,7 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
 
     const thumbnail = <>
         <LuEye />
-        <SeriesThumbnail {...{ seriesStatus }} series={{
+        <SeriesThumbnail {...{ seriesState }} series={{
             ...series,
             thumbnailStack: {
                 thumbnails: series.entries.slice(0, 3).map(entry => {
@@ -156,12 +156,14 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
                             audioOnly: false,
                             live: false,
                             url: null,
+                            state: null,
                         };
                     }
                     return {
                         url: entry.syncedData?.thumbnail,
                         audioOnly: entry.syncedData?.audioOnly ?? false,
                         live: entry.isLive,
+                        state: isSynced(entry) ? "ready" : "waiting",
                     };
                 }),
             },
@@ -181,17 +183,17 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
 
 type SeriesThumbnailProps = {
     series: Pick<SingleSeries, "title" | "thumbnailStack">;
-    seriesStatus: ThumbnailItemStatus;
+    seriesState: ThumbnailItemState;
 }
 
-export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, seriesStatus }) => (
+export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, seriesState }) => (
     <div css={{ position: "relative", "> div": { width: "100%" } }}>
         <ThumbnailStack
             thumbnails={series.thumbnailStack.thumbnails}
             title={series.title}
-            css={seriesStatus === "deleted" && { filter: "blur(2px)" }}
+            css={seriesState === "deleted" && { filter: "blur(2px)" }}
         />
-        {seriesStatus !== "ready" && <span css={{
+        {seriesState !== "ready" && <span css={{
             position: "absolute",
             top: "50%",
             left: "50%",
@@ -201,7 +203,7 @@ export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, series
             alignItems: "center",
             justifyContent: "center",
             color: COLORS.neutral70,
-            ...seriesStatus === "deleted" && {
+            ...seriesState === "deleted" && {
                 backgroundColor: COLORS.neutral10,
                 color: COLORS.danger1,
                 borderRadius: "50%",
@@ -209,7 +211,7 @@ export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, series
                 height: 50,
             },
         }}>
-            {seriesStatus === "deleted"
+            {seriesState === "deleted"
                 ? <LuTrash size={32} />
                 : <MovingTruck />
             }
