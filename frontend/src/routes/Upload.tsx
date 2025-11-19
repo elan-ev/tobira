@@ -101,6 +101,7 @@ type Metadata = {
         acl: AclArray;
     };
     acl: Acl;
+    thumbnail?: File | null;
 };
 
 type Props = {
@@ -181,6 +182,7 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
     const [files, setFiles] = useState<FileList | null>(null);
     const [uploadState, setUploadState] = useRefState<UploadState | null>(null);
     const [metadata, setMetadata] = useRefState<Metadata | null>(null);
+    const selectedFileName = files && files.length > 0 ? files[0].name : null;
 
     const progressHistory = useRef<ProgressHistory>([]);
     const abortController = useRef(new AbortController());
@@ -273,6 +275,15 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
             marginTop: "max(16px, 10vh - 50px)",
             gap: 32,
         }}>
+            {selectedFileName && (
+                <div css={{
+                    fontSize: 14,
+                    color: COLORS.neutral60,
+                    alignSelf: "flex-start",
+                }}>
+                    {selectedFileName}
+                </div>
+            )}
             <LuCircleCheck css={{ fontSize: 64, color: COLORS.happy0 }} />
             {t("upload.finished")}
             <LinkButton kind="call-to-action" to={UploadRoute.url({
@@ -305,6 +316,9 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
                 width: "100%",
                 maxWidth: 900,
             }}>
+                {selectedFileName && <p css={{ fontSize: 14, color: COLORS.neutral60 }}>
+                    {selectedFileName}
+                </p>}
                 <UploadState
                     state={uploadState.current}
                     seriesId={preselectedSeries?.id}
@@ -781,6 +795,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
     const user = isRealUser(u) ? u : unreachable();
 
     const seriesFieldId = useId();
+    const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
     const [lockedAcl, setLockedAcl] = useState<Acl | null>(
         preselectedSeries ? aclArrayToMap(preselectedSeries.acl) : null,
     );
@@ -905,6 +920,39 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
                     />
                 </Inertable>
                 {boxError(errors.series?.message)}
+            </InputContainer>
+
+            {/* Thumbnail */}
+            <InputContainer css={{ maxWidth: 750 }}>
+                <label>{t("upload.thumbnail.title")}</label>
+                <Controller
+                    name="thumbnail"
+                    control={control}
+                    render={({ field }) => (
+                        <div css={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <input
+                                ref={thumbnailInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={e => {
+                                    const f = e.target.files?.[0] ?? null;
+                                    field.onChange(f);
+                                }}
+                                onBlur={field.onBlur}
+                                aria-hidden="true"
+                                css={{ display: "none" }}
+                            />
+
+                            <Button onClick={() => thumbnailInputRef.current?.click()}>
+                                {t("upload.thumbnail.upload")}
+                            </Button>
+
+                            <span css={{ fontSize: 14, color: COLORS.neutral60 }}>
+                                {field.value?.name ?? <i>{t("upload.thumbnail.no-file")}</i>}
+                            </span>
+                        </div>
+                    )}
+                />
             </InputContainer>
 
             {/* ACL */}
@@ -1274,6 +1322,20 @@ const finishUpload = async (
             );
         }
 
+        // Add thumbnail attachment if provided
+        if (metadata.thumbnail) {
+            const body = new FormData();
+            body.append("flavor", `presentation/${CONFIG.upload.thumbnailSubtype}`);
+            body.append("mediaPackage", mediaPackage);
+            body.append("BODY", metadata.thumbnail, metadata.thumbnail.name);
+
+            mediaPackage = await ocRequest(
+                "/ingest/addAttachment",
+                { method: "post", body },
+                id,
+            );
+        }
+
         // Finish ingest
         {
             const body = new FormData();
@@ -1281,6 +1343,21 @@ const finishUpload = async (
             if (CONFIG.upload.workflow) {
                 body.append("workflowDefinitionId", CONFIG.upload.workflow);
             }
+
+            if (metadata.thumbnail) {
+                // We piggyback on the editor condition. Doing so allows the thumbnail
+                // upload to work without any workflow changes or additions in Opencast itself.
+                //
+                // Even though we upload the track and thumbnail with the `presentation` main
+                // flavor, both of these need to  be set to ensure that the video uses the
+                // uploaded thumbnail everywhere.
+                // "presentation" is used for everything but the editor. I suspect there might
+                // be a bug or workflow misconfiguration behind that, but haven't been able to
+                // pin it down. So for now, this also sets the `presenter` condition as workaround.
+                body.append(`presentation/${CONFIG.upload.workflowProperty}`, "true");
+                body.append(`presenter/${CONFIG.upload.workflowProperty}`, "true");
+            }
+
             await ocRequest("/ingest/ingest", { method: "post", body: body }, id);
         }
 

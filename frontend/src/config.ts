@@ -98,6 +98,8 @@ type VersionInfo = {
 type UploadConfig = {
     requireSeries: boolean;
     workflow: string | null;
+    thumbnailSubtype: string,
+    workflowProperty: string,
 };
 
 type SyncConfig = {

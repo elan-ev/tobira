@@ -327,6 +327,10 @@ upload:
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
     failed-fetching-series-acl: Abruf der Serienzugangsberechtigungen fehlgeschlagen.
+  thumbnail:
+    title: Thumbnail
+    upload: Datei auswählen
+    no-file: Keine Datei ausgewählt
 
 acl:
   title: Zugriffsrechte
