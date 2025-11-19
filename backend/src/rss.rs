@@ -7,11 +7,12 @@ use ogrim::xml;
 use tokio_postgres::{Client, Row, RowStream};
 
 use crate::{
+    auth::{AuthState, HasRoles},
     config::HttpHost,
-    db::{self, types::EventTrack, util::{dbargs, impl_from_db, select, FromDb}},
-    http::{response::{self, bad_request, internal_server_error, not_found}, Context, Response},
+    db::{DbConnection, types::EventTrack, util::{FromDb, dbargs, impl_from_db, select}},
+    http::{Context, Response, response::{self, bad_request, internal_server_error, not_found}},
     model::Key,
-    prelude::*
+    prelude::*,
 };
 
 #[derive(Debug)]
@@ -46,12 +47,13 @@ impl_from_db!(
 /// Generates the XML for an RSS feed of a series in Tobira.
 pub(crate) async fn generate_series_feed(
     context: &Arc<Context>,
+    auth: &AuthState,
+    db: &DbConnection,
     id: &str,
 ) -> Result<String, Response> {
     let Some(series_id) = Key::from_base64(id) else {
         return Err(bad_request("invalid series ID"));
     };
-    let db = db::get_conn_or_service_unavailable(&context.db_pool).await?;
 
     // Load series data
     let (selection, mapping) = select!(title, description);
@@ -65,8 +67,10 @@ pub(crate) async fn generate_series_feed(
 
     // Load event data
     let selection = Event::select();
-    let query = format!("select {selection} from events where series = $1");
-    let events = db.query_raw(&query, dbargs![&series_id]).await.map_err(Into::into);
+    let query = format!("select {selection} from events where series = $1 and read_roles && $2");
+    let events = db.query_raw(&query, dbargs![&series_id, &auth.roles_vec()])
+        .await
+        .map_err(Into::into);
 
     generate_feed(context, format!("~rss/series/{id}"), info, events).await
 }
@@ -74,17 +78,22 @@ pub(crate) async fn generate_series_feed(
 /// Generates the XML for an RSS feed of a playlist in Tobira.
 pub(crate) async fn generate_playlist_feed(
     context: &Arc<Context>,
+    auth: &AuthState,
+    db: &DbConnection,
     id: &str,
 ) -> Result<String, Response> {
     let Some(playlist_id) = Key::from_base64(id) else {
         return Err(bad_request("invalid playlist ID"));
     };
-    let db = db::get_conn_or_service_unavailable(&context.db_pool).await?;
 
     // Load playlist data
-    let (selection, mapping) = select!(title, description);
+    let (selection, mapping) = select!(title, description, read_roles);
     let query = format!("select {selection} from playlists where id = $1");
     let row = load_item(&db, &query, playlist_id).await?;
+    let read_roles = mapping.read_roles.of::<Vec<String>>(&row);
+    if !auth.overlaps_roles(&read_roles, &context.config.auth) {
+        return Err(crate::http::response::forbidden())
+    }
     let info = FeedInfo {
         title: mapping.title.of(&row),
         description: mapping.description.of::<Option<String>>(&row).unwrap_or_default(),
@@ -95,10 +104,12 @@ pub(crate) async fn generate_playlist_feed(
     let selection = Event::select();
     let query = format!("select {selection} from events \
         where opencast_id = any(event_entry_ids((\
-            select entries from playlists where id = $1\
+            select entries from playlists where id = $1 and read_roles && $2\
         )))",
     );
-    let events = db.query_raw(&query, dbargs![&playlist_id]).await.map_err(Into::into);
+    let events = db.query_raw(&query, dbargs![&playlist_id, &auth.roles_vec()])
+        .await
+        .map_err(Into::into);
 
     generate_feed(context, format!("~rss/playlist/{id}"), info, events).await
 }

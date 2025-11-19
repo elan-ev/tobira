@@ -41,3 +41,11 @@ pub(crate) fn unauthorized() -> Response {
         .body("Not authenticated".into())
         .unwrap()
 }
+
+/// Returns "403 Forbidden".
+pub(crate) fn forbidden() -> Response {
+    Response::builder()
+        .status(StatusCode::FORBIDDEN)
+        .body("403 Forbidden".into())
+        .unwrap()
+}

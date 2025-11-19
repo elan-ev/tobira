@@ -88,7 +88,7 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
 
         path if path.starts_with("/~rss") => {
             register_req!(HttpReqCategory::Other);
-            handle_rss_request(path, &ctx).await.unwrap_or_else(|r| r)
+            handle_rss_request(req, &ctx).await.unwrap_or_else(|r| r)
         }
 
         // Assets (JS files, fonts, ...)
@@ -166,11 +166,15 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
     response
 }
 
-async fn handle_rss_request(path: &str, ctx: &Arc<Context>) -> Result<Response, Response> {
+async fn handle_rss_request(req: Request<Incoming>, ctx: &Arc<Context>) -> Result<Response, Response> {
+    let db = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
+    let auth = AuthState::new(&req.headers(), &db, &ctx).await?;
+
+    let path = req.uri().path();
     let rss_content = if let Some(series_id) = path.strip_prefix("/~rss/series/") {
-        rss::generate_series_feed(&ctx, series_id).await?
+        rss::generate_series_feed(&ctx, &auth, &db, series_id).await?
     } else if let Some(playlist_id) = path.strip_prefix("/~rss/playlist/") {
-        rss::generate_playlist_feed(&ctx, playlist_id).await?
+        rss::generate_playlist_feed(&ctx, &auth, &db, playlist_id).await?
     } else {
         return Ok(response::not_found());
     };
