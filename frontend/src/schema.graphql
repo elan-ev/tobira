@@ -21,6 +21,12 @@ enum JwtService {
   EDITOR
 }
 
+enum PlaylistsSortColumn {
+  TITLE
+  UPDATED
+  EVENT_COUNT
+}
+
 enum RealmOrder {
   BY_INDEX
   ALPHABETIC_ASC
@@ -150,6 +156,11 @@ input NewTitleBlock {
 input NewVideoBlock {
   event: ID!
   displayOptions: DisplayOptions!
+}
+
+input PlaylistsSortOrder {
+  column: PlaylistsSortColumn!
+  direction: SortDirection!
 }
 
 input RealmLineageComponent {
@@ -403,7 +414,14 @@ type AuthorizedPlaylist implements Node {
   title: String!
   description: String
   creator: String!
+  updated: DateTime!
+  numVideos: Int!
+  thumbnailStack: ThumbnailStack!
+  acl: [AclItem!]!
   entries: [VideoListEntry!]!
+  hostRealms: [Realm!]!
+  "Whether the current user has write access to this playlist."
+  canWrite: Boolean!
 }
 
 type Caption {
@@ -486,7 +504,7 @@ type Mutation {
     and accepted, not that the deletion itself succeeded, which is instead checked
     in subsequent harvesting results.
   """
-  deleteVideo(id: ID!): AuthorizedEvent!
+  deleteEvent(id: ID!): AuthorizedEvent!
   """
     Updates the acl of a given event by sending the changes to Opencast.
     The `acl` parameter can include `read` and `write` roles, as these are the
@@ -528,6 +546,11 @@ type Mutation {
     and stores the series in Tobira's DB.
   """
   createSeries(metadata: BasicMetadata!, acl: [AclInputEntry!]!): Series!
+  "Creates a new playlist in Opencast and stores it in Tobira's DB."
+  createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [ID!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
+  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [ID!], acl: [AclInputEntry!]): AuthorizedPlaylist!
+  "Deletes the given playlist by sending a delete request to Opencast."
+  deletePlaylist(id: ID!): RemovedPlaylist!
   """
     Sets the order of all children of a specific realm.
 
@@ -647,6 +670,12 @@ type PlaylistBlock implements Block {
   id: ID!
   index: Int!
   realm: Realm!
+}
+
+type PlaylistConnection {
+  pageInfo: PageInfo!
+  items: [AuthorizedPlaylist!]!
+  totalCount: Int!
 }
 
 type PlaylistSearchResults {
@@ -867,6 +896,10 @@ type RemovedBlock {
   realm: Realm!
 }
 
+type RemovedPlaylist {
+  id: ID!
+}
+
 type RemovedRealm {
   parent: Realm
 }
@@ -953,7 +986,7 @@ type SearchSeries implements Node {
   title: String!
   description: String
   hostRealms: [SearchRealm!]!
-  thumbnailStack: SeriesThumbnailStack!
+  thumbnailStack: ThumbnailStack!
   matches: SearchSeriesMatches!
   created: DateTime
 }
@@ -987,7 +1020,7 @@ type Series implements Node {
   description: String
   state: SeriesState!
   numVideos: Int!
-  thumbnailStack: SeriesThumbnailStack!
+  thumbnailStack: ThumbnailStack!
   acl: [AclItem!]
   "Whether the current user has write access to this series."
   canWrite: Boolean!
@@ -1024,10 +1057,6 @@ type SeriesSearchResults {
   totalHits: Int!
   "How long searching took in ms."
   duration: Int!
-}
-
-type SeriesThumbnailStack {
-  thumbnails: [ThumbnailInfo!]!
 }
 
 type SyncedEventData {
@@ -1073,6 +1102,10 @@ type ThumbnailInfo {
   url: String
   live: Boolean!
   audioOnly: Boolean!
+}
+
+type ThumbnailStack {
+  thumbnails: [ThumbnailInfo!]!
 }
 
 "A block just showing some title."
@@ -1125,6 +1158,8 @@ type User {
   canFindUnlisted: Boolean!
   "`True` if the user has the permission to create new series."
   canCreateSeries: Boolean!
+  "`True` if the user has the permission to create new playlists."
+  canCreatePlaylists: Boolean!
   """
     `True` if user is a global Tobira admin, i.e. having `ROLE_ADMIN` or the
     configured Tobira admin role.
@@ -1142,6 +1177,11 @@ type User {
     on the "my series" page.
   """
   mySeries(order: SeriesSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): SeriesConnection!
+  """
+    Returns all playlists that somehow "belong" to the user, i.e. that appear
+    on the "my playlists" page.
+  """
+  myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
 }
 
 "A block for presenting a single Opencast event"

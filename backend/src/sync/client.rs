@@ -17,6 +17,7 @@ use tap::TapFallible;
 use crate::{
     api::{model::acl::AclInputEntry, Context},
     config::{Config, HttpHost},
+    db::types::PlaylistEntry,
     prelude::*,
     sync::harvest::HarvestResponse,
     util::download_body,
@@ -163,22 +164,11 @@ impl OcClient {
     ) -> Result<Response<Incoming>> {
         let oc_id = endpoint.id();
         let pq = format!("/api/{}/{oc_id}/acl", endpoint.endpoint_path());
-        let mut access_policy = Vec::new();
 
-        // Temporary solution to add custom and preview roles
+        let mut access_policy = build_access_policy(acl);
+        // Temporary solution to add custom and preview roles (`extra roles`).
         // Todo: remove again once frontend sends these roles.
-        let extra_roles = endpoint.extra_roles(context, oc_id).await?;
-        access_policy.extend(extra_roles);
-
-        for entry in acl {
-            access_policy.extend(
-                entry.actions.iter().map(|action| AclInput {
-                    allow: true,
-                    action: action.clone(),
-                    role: entry.role.clone(),
-                }),
-            );
-        }
+        access_policy.extend(endpoint.extra_roles(context, oc_id).await?);
 
         let params = Serializer::new(String::new())
             .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
@@ -243,14 +233,7 @@ impl OcClient {
         title: &str,
         description: Option<&str>,
     ) -> Result<CreateSeriesResponse> {
-        let access_policy: Vec<AclInput> = acl.iter()
-            .flat_map(|entry| entry.actions.iter()
-                .map(|action| AclInput {
-                    allow: true,
-                    action: action.clone(),
-                    role: entry.role.clone(),
-                }))
-            .collect();
+        let access_policy= build_access_policy(acl);
 
         let metadata = serde_json::json!([{
             "flavor": "dublincore/series",
@@ -282,6 +265,93 @@ impl OcClient {
             .with_context(|| format!("HTTP request failed (uri: '{uri}'"))?;
 
         let (out, _) = self.deserialize_response::<CreateSeriesResponse>(response, &uri).await?;
+
+        Ok(out)
+    }
+
+
+    pub async fn create_playlist(
+        &self,
+        title: &str,
+        description: Option<&str>,
+        creator: &str,
+        entries: &[String],
+        acl: &[AclInputEntry],
+    ) -> Result<CreatePlaylistResponse> {
+        let access_policy = build_access_policy(acl);
+
+        let playlist = serde_json::json!({
+            "title": title,
+            "description": description,
+            "creator": creator,
+            "entries": entries_to_json(entries),
+            "accessControlEntries": access_policy,
+        });
+
+        let params = Serializer::new(String::new())
+            .append_pair("playlist", &serde_json::to_string(&playlist).expect("Failed to serialize"))
+            .finish();
+
+        let req = self.authed_req_builder(&self.external_api_node, "/api/playlists/")
+            .method(http::Method::POST)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        let uri = req.uri().clone();
+        let response = self.http_client.request(req).await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}'"))?;
+
+        let (out, _) = self.deserialize_response::<CreatePlaylistResponse>(response, &uri).await?;
+
+        Ok(out)
+    }
+
+    pub async fn update_playlist(
+        &self,
+        playlist_id: String,
+        title: Option<&str>,
+        description: Option<&str>,
+        entries: Option<&[String]>,
+        acl: Option<&[AclInputEntry]>,
+    ) -> Result<CreatePlaylistResponse> {
+        let mut payload = serde_json::Map::new();
+
+        if let Some(title) = title {
+            payload.insert("title".into(), title.into());
+        }
+
+        if let Some(description) = description {
+            payload.insert("description".into(), description.into());
+        }
+
+        if let Some(entries) = entries {
+            payload.insert("entries".into(), entries_to_json(entries));
+        }
+
+        if let Some(acl_entries) = acl {
+            payload.insert(
+                "accessControlEntries".into(),
+                serde_json::to_value(build_access_policy(acl_entries))?,
+            );
+        }
+
+        let params = Serializer::new(String::new())
+            .append_pair("playlist", &serde_json::to_string(&payload)?)
+            .finish();
+
+        let pq = format!("/api/playlists/{}", playlist_id);
+        let req = self.authed_req_builder(&self.external_api_node, &pq)
+            .method(http::Method::PUT)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(params.into())
+            .expect("failed to build request");
+
+        let uri = req.uri().clone();
+        let response = self.http_client.request(req).await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
+
+        let (out, _) = self.deserialize_response::<CreatePlaylistResponse>(response, &uri).await?;
 
         Ok(out)
     }
@@ -360,7 +430,8 @@ pub struct ExternalApiVersions {
     pub versions: Vec<String>,
 }
 
-#[derive(Debug, Serialize)]
+/// ACL structure used in Opencast (different from the structure used in Tobira)
+#[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct AclInput {
     pub allow: bool,
     pub action: String,
@@ -373,15 +444,26 @@ pub(crate) struct CreateSeriesResponse {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct CreatePlaylistResponse {
+    pub id: String,
+    pub entries: Vec<PlaylistEntry>,
+    pub title: String,
+    pub description: Option<String>,
+    pub creator: String,
+    #[serde(rename = "accessControlEntries")]
+    pub acl: Vec<AclInput>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct EventStatus {
     pub processing_state: String,
 }
 
-/// Trait for items that can be harvested from Opencast (currently used for events and series,
-/// but can also be used for playlists).
-/// Their api endpoint paths generally shares the same structure (`/api/{endpoint_path}/{id}/...`).
+/// Trait for items that can be harvested from Opencast.
+/// Their api endpoint paths generally share the same structure (`/api/{endpoint_path}/{id}/...`).
 /// Implementing the below methods helps with making some endpoints like `update_acl` and
 /// `update_metadata` generic by just passing the item instead of multiple props.
+/// Playlists however only use the generic `delete` endpoint.
 pub(crate) trait OpencastItem {
     /// Name used in endpoint path.
     fn endpoint_path(&self) -> &'static str;
@@ -397,3 +479,34 @@ pub(crate) trait OpencastItem {
     /// code at least *somewhat* lean.
     async fn extra_roles(&self, context: &Context, oc_id: &str) -> Result<Vec<AclInput>>;
 }
+
+
+/// Builds the Opencast ACL from the input structure used in Tobira.
+pub(crate) fn build_access_policy(acl: &[AclInputEntry]) -> Vec<AclInput> {
+    acl
+        .iter()
+        .flat_map(|entry| {
+            entry.actions.iter().map(|action| AclInput {
+                allow: true,
+                action: action.clone(),
+                role: entry.role.clone(),
+            })
+        })
+        .collect()
+}
+
+/// Maps a collection of content IDs to the JSON structure expected by the Opencast API.
+fn entries_to_json(ids: &[String]) -> serde_json::Value {
+    serde_json::Value::Array(
+        ids
+            .iter()
+            .map(|e| {
+                serde_json::json!({
+                    "contentId": e.as_str(),
+                    "type": "EVENT",
+                })
+            })
+            .collect()
+    )
+}
+

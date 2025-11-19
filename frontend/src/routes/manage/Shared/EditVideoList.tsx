@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { PropsWithChildren, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UseMutationConfig } from "react-relay";
 import { MutationParameters, Disposable } from "relay-runtime";
@@ -38,14 +38,17 @@ import CONFIG from "../../../config";
 
 type Entry = Series["entries"][number];
 type AuthEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
-type ListEvent = AuthEvent & { action: "add" | "remove" | "none" };
+export type ListEvent = AuthEvent & { action: "add" | "remove" | "none" };
 
 
 type VideoListMutationParams = MutationParameters & {
     variables: {
         id: string;
+    } & {
         addedEvents: readonly string[];
         removedEvents: readonly string[];
+    } | {
+        entries: readonly string[];
     }
 };
 type ManageVideoListProps<TMutation extends VideoListMutationParams> = {
@@ -77,11 +80,20 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         return bug("Used <ManageVideoListContent> without user");
     }
 
+    const unknownItemsCount = listEntries.filter(e => e.__typename !== "AuthorizedEvent").length;
+    const isPlaylist = listId.startsWith("pl");
+
+    const updatedEntries = isPlaylist ? {
+        entries: events.filter(e => e.action !== "remove").map(e => e.id),
+    } : {
+        addedEvents: events.filter(e => e.action === "add").map(e => e.id),
+        removedEvents: events.filter(e => e.action === "remove").map(e => e.id),
+    };
+
     const onSubmit = () => commit({
         variables: {
             id: listId,
-            addedEvents: events.filter(e => e.action === "add").map(e => e.id),
-            removedEvents: events.filter(e => e.action === "remove").map(e => e.id),
+            ...updatedEntries,
         },
         onCompleted: data => {
             setSuccess(true);
@@ -95,30 +107,64 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
 
     return <Inertable isInert={inFlight || !!commitError} css={{ marginBottom: 32, maxWidth: 750 }}>
+        <VideoListMenu {...{ listEntries, isPlaylist, events, setEvents }} seriesLink={
+            user.canUpload && !isPlaylist && <LinkButton
+                to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
+                <LuUpload />
+                {t("upload.title")}
+            </LinkButton>
+        }>
+            {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
+                {description}
+            </p>}
+            {!CONFIG.allowSeriesEventRemoval && <Card kind="info">
+                {t("manage.video-list.removing-disabled")}
+            </Card>}
+        </VideoListMenu>
+        {unknownItemsCount > 0 && <Card css={{ marginTop: 12 }} kind="info">
+            {t("manage.video-list.details.unknown", { count: unknownItemsCount })}
+        </Card>}
+        {events.length > 0 && <SubmitButtonWithStatus
+            label={t("manage.video-list.edit.save")}
+            onClick={onSubmit}
+            disabled={!!commitError || events.every(e => e.action === "none") || inFlight}
+            {...{ inFlight, success, setSuccess }}
+        />}
+        {boxError(commitError)}
+    </Inertable>;
+};
+
+type VideoListMenuProps = PropsWithChildren<{
+    isPlaylist: boolean;
+    events: ListEvent[];
+    setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    seriesLink?: React.ReactNode;
+}>;
+
+export const VideoListMenu: React.FC<VideoListMenuProps> = ({
+    isPlaylist,
+    events,
+    setEvents,
+    children,
+    seriesLink,
+}) => {
+    const { t } = useTranslation();
+    return <>
         <div css={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <h2 css={{ fontSize: 20 }}>
                 {t("video.plural")}
             </h2>
             <i css={{ fontSize: 14, color: COLORS.neutral50 }}>
-                ({listEntries.length > 0
-                    ? t("manage.video-list.no-of-videos", { count: listEntries.length })
+                ({events.length > 0
+                    ? t("manage.video-list.no-of-videos", { count: events.length })
                     : <i>{t("manage.video-list.no-content")}</i>
                 })
             </i>
         </div>
-        {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
-            {description}
-        </p>}
-        {!CONFIG.allowSeriesEventRemoval && <Card kind="info">
-            {t("manage.video-list.removing-disabled")}
-        </Card>}
+        {children}
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <AddVideoMenu {...{ setEvents, events }} />
-            {/* // Todo: Omit upload button when adding this route for playlists */}
-            {user.canUpload && <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
-                <LuUpload />
-                {t("upload.title")}
-            </LinkButton>}
+            <AddVideoMenu {...{ setEvents, events, isPlaylist }} />
+            {seriesLink}
         </div>
         {events.length > 0 && <>
             <div css={{
@@ -131,6 +177,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
                     <EventEntry
                         key={event.id}
                         event={event}
+                        isPlaylistEntry={isPlaylist}
                         onChange={() => setEvents(prev => match(event.action, {
                             // Undo "add" -> remove from list again
                             "add": () => prev.filter(e => e.id !== event.id),
@@ -144,23 +191,17 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
                     />
                 ))}
             </div>
-            <SubmitButtonWithStatus
-                label={t("manage.video-list.edit.save")}
-                onClick={onSubmit}
-                disabled={!!commitError || events.every(e => e.action === "none") || inFlight}
-                {...{ inFlight, success, setSuccess }}
-            />
         </>}
-        {boxError(commitError)}
-    </Inertable>;
+    </>;
 };
 
 type AddVideoMenuProps = {
     events: ListEvent[];
     setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    isPlaylist: boolean;
 };
 
-const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
+const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlaylist }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const [buttonIsActive, setButtonIsActive] = useState(false);
@@ -201,7 +242,7 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
                 hideArrowTip
             >
                 <EventSelector
-                    writableOnly
+                    writableOnly={!isPlaylist}
                     css={{ position: "relative" }}
                     onChange={event => {
                         if (!event) {
@@ -226,8 +267,10 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
                     isClearable={false}
                     menuIsOpen
                     additionalOptions={{
-                        excludeSeriesMembers: true,
-                        excludedIds: events.filter(e => e.action === "add").map(e => keyOfId(e.id)),
+                        excludeSeriesMembers: !isPlaylist,
+                        excludedIds: events
+                            .filter(e => e.action !== "remove")
+                            .map(e => keyOfId(e.id)),
                     }}
                 />
             </Floating>
@@ -239,9 +282,10 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
 type EventEntryProps = {
     event: ListEvent;
     onChange: () => void;
+    isPlaylistEntry: boolean;
 };
 
-const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
+const EventEntry: React.FC<EventEntryProps> = ({ event, onChange, isPlaylistEntry }) => {
     const { t, i18n } = useTranslation();
 
     const buttonStyle = css({
@@ -376,11 +420,15 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                             </Button>
                         </>}
                         {event.action === "none" && <>
-                            {!event.canWrite && <i css={{ color: COLORS.neutral50 }}>
+                            {!event.canWrite && !isPlaylistEntry
+                                && <i css={{ color: COLORS.neutral50 }}>
                                 ({t("manage.video-list.edit.cannot-be-removed")})
-                            </i>}
+                                </i>
+                            }
                             <Button
-                                disabled={!event.canWrite || !CONFIG.allowSeriesEventRemoval}
+                                disabled={!isPlaylistEntry && (
+                                    !event.canWrite || !CONFIG.allowSeriesEventRemoval
+                                )}
                                 kind="danger"
                                 css={buttonStyle}
                                 onClick={onChange}

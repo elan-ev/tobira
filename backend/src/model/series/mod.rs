@@ -1,13 +1,6 @@
-use juniper::{GraphQLEnum, GraphQLObject};
+use juniper::GraphQLEnum;
 use postgres_types::{FromSql, ToSql};
 
-use super::ThumbnailInfo;
-
-
-#[derive(Debug, GraphQLObject, Clone)]
-pub(crate) struct SeriesThumbnailStack {
-    pub(crate) thumbnails: Vec<ThumbnailInfo>,
-}
 
 /// Represents the `series_state` type defined in `04-series.sql`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]

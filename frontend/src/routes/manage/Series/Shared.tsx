@@ -19,8 +19,6 @@ import { ThumbnailItemStatus } from "../../../ui/Video";
 import { MovingTruck } from "../../../ui/Waiting";
 
 
-export const PAGE_WIDTH = 1100;
-
 export type QueryResponse = SharedSeriesManageQuery["response"];
 export type Series = NonNullable<QueryResponse["series"]>;
 

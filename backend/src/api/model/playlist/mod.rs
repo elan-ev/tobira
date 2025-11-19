@@ -1,16 +1,42 @@
-use juniper::graphql_object;
+use chrono::{DateTime, Utc};
+use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
 use postgres_types::ToSql;
 
 use crate::{
     api::{
-        common::NotAllowed, err::ApiResult, Context, Id, Node, NodeValue
+        common::NotAllowed,
+        err::{self, ApiResult},
+        model::{
+            acl::{self, Acl},
+            realm::Realm,
+            shared::{
+                define_sort_column_and_order,
+                load_writable_for_user,
+                Connection,
+                ConnectionQueryParts,
+                PageInfo,
+                SearchFilter,
+                SortDirection,
+                SortOrder,
+                ToSqlColumn,
+            },
+        },
+        util::LazyLoad,
+        Context,
+        Id,
+        Node,
+        NodeValue,
     },
     db::util::{impl_from_db, select},
-    model::Key,
+    model::{Key, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
 };
 
 use super::event::AuthorizedEvent;
+
+mod mutations;
+
+pub(crate) use mutations::RemovedPlaylist;
 
 
 #[derive(juniper::GraphQLUnion)]
@@ -26,9 +52,11 @@ pub(crate) struct AuthorizedPlaylist {
     title: String,
     description: Option<String>,
     creator: String,
+    updated: DateTime<Utc>,
+    num_videos: LazyLoad<u32>,
+    thumbnail_stack: LazyLoad<ThumbnailStack>,
 
     read_roles: Vec<String>,
-    #[allow(dead_code)] // TODO
     write_roles: Vec<String>,
 }
 
@@ -49,7 +77,10 @@ crate::api::util::impl_object_with_dummy_field!(Missing);
 impl_from_db!(
     AuthorizedPlaylist,
     select: {
-        playlists.{ id, opencast_id, title, description, creator, read_roles, write_roles },
+        playlists.{
+            id, opencast_id, title, description,
+            creator, read_roles, write_roles, updated,
+        },
     },
     |row| {
         Self {
@@ -60,6 +91,9 @@ impl_from_db!(
             creator: row.creator(),
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
+            updated: row.updated(),
+            num_videos: LazyLoad::NotLoaded,
+            thumbnail_stack: LazyLoad::NotLoaded,
         }
     },
 );
@@ -101,6 +135,68 @@ impl Playlist {
             })
             .pipe(Ok)
     }
+
+    async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<AuthorizedPlaylist> {
+        let playlist = Playlist::load_by_id(id, context)
+            .await?
+            .ok_or_else(|| err::invalid_input!(key = "playlist.not-found", "playlist not found"))?
+            .into_result()?;
+
+        if !context.auth.overlaps_roles(&playlist.write_roles) {
+            return Err(err::not_authorized!(key = "playlist.not-allowed", "playlist action not allowed"));
+        }
+
+        Ok(playlist)
+    }
+
+    pub(crate) async fn load_writable_for_user(
+        context: &Context,
+        order: SortOrder<PlaylistsSortColumn>,
+        offset: i32,
+        limit: i32,
+        filter: Option<SearchFilter>,
+    ) -> ApiResult<Connection<AuthorizedPlaylist>> {
+        let parts = ConnectionQueryParts {
+            table: "playlists",
+            alias: Some("playlists"),
+            join_clause: "",
+        };
+        let (selection, mapping) = select!(
+            playlist: AuthorizedPlaylist,
+            num_videos: "cardinality(playlists.entries)",
+            thumbnails: "array(\
+                select search_thumbnail_info_for_event(events.*) \
+                from events \
+                where events.opencast_id = any( \
+                    array( \
+                        select (playlist_entry).content_id \
+                        from unnest(playlists.entries) playlist_entry \
+                    ) \
+                ) \
+            )",
+        );
+        load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
+            let mut out = AuthorizedPlaylist::from_row(row, mapping.playlist);
+            out.num_videos = LazyLoad::Loaded(mapping.num_videos.of::<i32>(row) as u32);
+            out.thumbnail_stack = LazyLoad::Loaded(ThumbnailStack {
+                thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(row)
+                    .into_iter()
+                    .filter_map(|info| ThumbnailInfo::from_search(info, &context))
+                    .collect(),
+            });
+            out
+        }).await
+    }
+
+    pub(crate) fn into_result(self) -> ApiResult<AuthorizedPlaylist> {
+        match self {
+            Self::Playlist(p) => Ok(p),
+            Self::NotAllowed(_) => Err(err::not_authorized!(
+                key = "view.playlist",
+                "you cannot access this playlist",
+            )),
+        }
+    }
 }
 
 /// Represents an Opencast playlist.
@@ -124,6 +220,27 @@ impl AuthorizedPlaylist {
 
     fn creator(&self) -> &str {
         &self.creator
+    }
+
+    fn updated(&self) -> DateTime<Utc> {
+        self.updated
+    }
+
+    fn num_videos(&self) -> i32 {
+        self.num_videos.unwrap() as i32
+    }
+
+    fn thumbnail_stack(&self) -> &ThumbnailStack {
+        self.thumbnail_stack.as_ref().unwrap()
+    }
+
+    async fn acl(&self, context: &Context) -> ApiResult<Acl> {
+        let raw_roles_sql = "\
+            select unnest(read_roles) as role, 'read' as action from playlists where id = $1
+            union
+            select unnest(write_roles) as role, 'write' as action from playlists where id = $1
+        ";
+        acl::load_for(context, raw_roles_sql, dbargs![&self.key]).await
     }
 
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
@@ -162,6 +279,31 @@ impl AuthorizedPlaylist {
             .await?
             .pipe(Ok)
     }
+
+    async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
+        let selection = Realm::select();
+        let query = format!("\
+            select {selection} \
+            from realms \
+            where exists ( \
+                select 1 as contains \
+                from blocks \
+                where realm = realms.id \
+                and type = 'playlist' \
+                and playlist = $1 \
+            ) \
+        ");
+        let id = self.id().key_for(Id::PLAYLIST_KIND).unwrap();
+        context.db.query_mapped(&query, dbargs![&id], |row| Realm::from_row_start(&row))
+            .await?
+            .pipe(Ok)
+    }
+
+
+    /// Whether the current user has write access to this playlist.
+    fn can_write(&self, context: &Context) -> bool {
+        context.auth.overlaps_roles(&self.write_roles)
+    }
 }
 
 impl Node for AuthorizedPlaylist {
@@ -169,3 +311,27 @@ impl Node for AuthorizedPlaylist {
         Id::playlist(self.key)
     }
 }
+
+#[graphql_object(name = "PlaylistConnection", context = Context)]
+impl Connection<AuthorizedPlaylist> {
+    fn page_info(&self) -> &PageInfo {
+        &self.page_info
+    }
+    fn items(&self) -> &Vec<AuthorizedPlaylist> {
+        &self.items
+    }
+    fn total_count(&self) -> i32 {
+        self.total_count
+    }
+}
+
+define_sort_column_and_order!(
+    pub enum PlaylistsSortColumn {
+        Title      => "title",
+        #[default]
+        Updated    => "updated",
+        EventCount => "array_length(playlist.entries)",
+    };
+    pub struct PlaylistsSortOrder
+);
+

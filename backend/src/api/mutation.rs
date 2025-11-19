@@ -7,6 +7,7 @@ use super::{
     model::{
         acl::AclInputEntry,
         series::{Series, NewSeries},
+        playlist::{AuthorizedPlaylist, RemovedPlaylist},
         shared::BasicMetadata,
         realm::{
             ChildIndex,
@@ -71,7 +72,7 @@ impl Mutation {
     /// Note that "success" in this case only means the request was successfully sent
     /// and accepted, not that the deletion itself succeeded, which is instead checked
     /// in subsequent harvesting results.
-    async fn delete_video(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
+    async fn delete_event(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         AuthorizedEvent::delete(id, context).await
     }
 
@@ -142,6 +143,39 @@ impl Mutation {
         context: &Context,
     ) -> ApiResult<Series> {
         Series::create_in_oc(metadata, acl, context).await
+    }
+
+    /// Creates a new playlist in Opencast and stores it in Tobira's DB.
+    async fn create_playlist(
+        metadata: BasicMetadata,
+        creator: String,
+        entries: Vec<Id>,
+        acl: Vec<AclInputEntry>,
+        context: &Context,
+    ) -> ApiResult<AuthorizedPlaylist> {
+        AuthorizedPlaylist::create(metadata, creator, entries, acl, context).await
+    }
+
+    // Updates a playlist's metadata, entries or acl by sending the changes to Opencast
+    // and optimistically updating the playlist in Tobira's DB.
+    async fn update_playlist(
+        id: Id,
+        metadata: Option<BasicMetadata>,
+        entries: Option<Vec<Id>>,
+        acl: Option<Vec<AclInputEntry>>,
+        context: &Context,
+    ) -> ApiResult<AuthorizedPlaylist> {
+        let (title, description) = match metadata {
+            Some(m) => (Some(m.title), m.description),
+            None => (None, None),
+        };
+
+        AuthorizedPlaylist::update(id, title, description, entries, acl, context).await
+    }
+
+    /// Deletes the given playlist by sending a delete request to Opencast.
+    async fn delete_playlist(id: Id, context: &Context) -> ApiResult<RemovedPlaylist> {
+        AuthorizedPlaylist::delete(id, context).await
     }
 
     /// Sets the order of all children of a specific realm.
