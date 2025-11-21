@@ -28,7 +28,7 @@ use crate::{
         NodeValue,
     },
     db::util::{impl_from_db, select},
-    model::{Key, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
+    model::{Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
 };
 
@@ -48,7 +48,7 @@ pub(crate) enum Playlist {
 
 pub(crate) struct AuthorizedPlaylist {
     pub(crate) key: Key,
-    opencast_id: String,
+    opencast_id: OpencastId,
     title: String,
     description: Option<String>,
     creator: String,
@@ -111,7 +111,7 @@ impl Playlist {
         Self::load_by_any_id("id", &key, context).await
     }
 
-    pub(crate) async fn load_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Self>> {
+    pub(crate) async fn load_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Self>> {
         Self::load_by_any_id("opencast_id", &id, context).await
     }
 

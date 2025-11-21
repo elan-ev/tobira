@@ -10,6 +10,7 @@ use crate::{
         Context,
         Id,
     },
+    model::OpencastId,
     prelude::*,
     sync::client::{AclInput, OpencastItem},
 };
@@ -105,7 +106,7 @@ impl AuthorizedPlaylist {
                 where (entry).type = 'event' and events.id is null\
             ";
 
-            let unknown_ids: Vec<String> = context.db
+            let unknown_ids = context.db
                 .query_mapped(query, dbargs![&playlist.key], |row| row.get(0))
                 .await?;
 
@@ -213,7 +214,7 @@ pub(crate) struct RemovedPlaylist {
     id: Id,
 }
 
-async fn load_entries(entries: Vec<Id>, context: &Context) -> ApiResult<Vec<String>> {
+async fn load_entries(entries: Vec<Id>, context: &Context) -> ApiResult<Vec<OpencastId>> {
     let entry_keys: Vec<_> = entries.iter().map(|id| id.key_for(Id::EVENT_KIND)).collect();
     let entry_ids = context.db
         .query_mapped(

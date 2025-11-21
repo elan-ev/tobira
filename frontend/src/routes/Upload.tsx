@@ -762,7 +762,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ state }) => {
 
 
 const SeriesAclQuery = graphql`
-    query UploadSeriesAclQuery($seriesId: String!) {
+    query UploadSeriesAclQuery($seriesId: OpencastId!) {
         series: seriesByOpencastId(id: $seriesId) {
             id
             acl { role actions info { label implies large } }

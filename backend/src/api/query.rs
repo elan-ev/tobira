@@ -1,7 +1,7 @@
 use juniper::graphql_object;
 
 
-use crate::auth::{AuthState, User};
+use crate::{auth::{AuthState, User}, model::OpencastId};
 
 use super::{
     err::ApiResult,
@@ -57,7 +57,7 @@ impl Query {
     }
 
     /// Returns an event by its Opencast ID.
-    async fn event_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Event>> {
+    async fn event_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Event>> {
         AuthorizedEvent::load_by_opencast_id(id, context).await
     }
 
@@ -67,7 +67,7 @@ impl Query {
     }
 
     /// Returns a series by its Opencast ID.
-    async fn series_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Series>> {
+    async fn series_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Series>> {
         Series::load_by_opencast_id(id, context).await
     }
 
@@ -77,7 +77,7 @@ impl Query {
     }
 
     /// Returns a playlist by its Opencast ID.
-    async fn playlist_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Playlist>> {
+    async fn playlist_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Playlist>> {
         Playlist::load_by_opencast_id(id, context).await
     }
 

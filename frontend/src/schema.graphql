@@ -117,7 +117,7 @@ input Filters {
 }
 
 input NewEvent {
-  opencastId: String!
+  opencastId: OpencastId!
   title: String!
   description: String
   seriesId: ID
@@ -139,7 +139,7 @@ input NewRealm {
 }
 
 input NewSeries {
-  opencastId: String!
+  opencastId: OpencastId!
   title: String!
   description: String
 }
@@ -269,6 +269,12 @@ scalar DateTime
 
 "Arbitrary metadata for events/series. Serialized as JSON object."
 scalar ExtraMetadata
+
+"""
+  Wrapper around Opencast IDs.
+  Should prevent using a regular String where an Opencast ID is expected.
+"""
+scalar OpencastId
 
 "A string specified in different languages. Entry 'default' is required."
 scalar TranslatedString
@@ -653,7 +659,7 @@ type Mutation {
   "Stores series information in Tobira's DB, so it can be mounted without having to be harvested first."
   announceSeries(series: NewSeries!): Series!
   "Adds a series block to an empty realm and makes that realm derive its name from said series."
-  addSeriesMountPoint(seriesOcId: String!, targetPath: String!): Realm!
+  addSeriesMountPoint(seriesOcId: OpencastId!, targetPath: String!): Realm!
   """
     Removes the series block of given series from the given realm.
     If the realm has sub-realms and used to derive its name from the block,
@@ -662,7 +668,7 @@ type Mutation {
     Errors if the given realm does not have exactly one series block referring to the
     specified series.
   """
-  removeSeriesMountPoint(seriesOcId: String!, path: String!): RemoveMountedSeriesOutcome!
+  removeSeriesMountPoint(seriesOcId: OpencastId!, path: String!): RemoveMountedSeriesOutcome!
   """
     Atomically mount a series into an (empty) realm.
     Creates all the necessary realms on the path to the target
@@ -733,15 +739,15 @@ type Query {
   """
   realmByPath(path: String!): Realm
   "Returns an event by its Opencast ID."
-  eventByOpencastId(id: String!): Event
+  eventByOpencastId(id: OpencastId!): Event
   "Returns an event by its ID."
   eventById(id: ID!): Event
   "Returns a series by its Opencast ID."
-  seriesByOpencastId(id: String!): Series
+  seriesByOpencastId(id: OpencastId!): Series
   "Returns a series by its ID."
   seriesById(id: ID!): Series
   "Returns a playlist by its Opencast ID."
-  playlistByOpencastId(id: String!): Playlist
+  playlistByOpencastId(id: OpencastId!): Playlist
   "Returns a playlist by its ID."
   playlistById(id: ID!): Playlist
   "Returns the current user."
@@ -1017,7 +1023,7 @@ type SearchResults {
 
 type SearchSeries implements Node {
   id: ID!
-  opencastId: String!
+  opencastId: OpencastId!
   title: String!
   description: String
   hostRealms: [SearchRealm!]!

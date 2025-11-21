@@ -87,7 +87,7 @@ export const OpencastSeriesRoute = makeRoute({
         params.seriesId = params.seriesId.substring(1);
 
         const query = graphql`
-            query SeriesByOcIdQuery($id: String!, $realmPath: String!) {
+            query SeriesByOcIdQuery($id: OpencastId!, $realmPath: String!) {
                 ... UserData
                 series: seriesByOpencastId(id: $id) {
                     ...SeriesRouteData
@@ -170,7 +170,7 @@ export const DirectSeriesOCRoute = makeRoute({
 
         const opencastId = decodeURIComponent(matches[1]);
         const query = graphql`
-            query SeriesDirectByOpencastIdQuery($id: String!) {
+            query SeriesDirectByOpencastIdQuery($id: OpencastId!) {
                 ... UserData
                 series: seriesByOpencastId(id: $id) { ...SeriesRouteData }
                 rootRealm { ... NavigationData, ... SeriesPageRealmData }
