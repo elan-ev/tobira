@@ -18,6 +18,7 @@ use crate::{
     api::{model::acl::AclInputEntry, Context},
     config::{Config, HttpHost},
     db::types::PlaylistEntry,
+    model::OpencastId,
     prelude::*,
     sync::harvest::HarvestResponse,
     util::download_body,
@@ -275,7 +276,7 @@ impl OcClient {
         title: &str,
         description: Option<&str>,
         creator: &str,
-        entries: &[String],
+        entries: &[OpencastId],
         acl: &[AclInputEntry],
     ) -> Result<CreatePlaylistResponse> {
         let access_policy = build_access_policy(acl);
@@ -309,10 +310,10 @@ impl OcClient {
 
     pub async fn update_playlist(
         &self,
-        playlist_id: String,
+        playlist_id: OpencastId,
         title: Option<&str>,
         description: Option<&str>,
-        entries: Option<&[String]>,
+        entries: Option<&[OpencastId]>,
         acl: Option<&[AclInputEntry]>,
     ) -> Result<CreatePlaylistResponse> {
         let mut payload = serde_json::Map::new();
@@ -340,7 +341,7 @@ impl OcClient {
             .append_pair("playlist", &serde_json::to_string(&payload)?)
             .finish();
 
-        let pq = format!("/api/playlists/{}", playlist_id);
+        let pq = format!("/api/playlists/{playlist_id}");
         let req = self.authed_req_builder(&self.external_api_node, &pq)
             .method(http::Method::PUT)
             .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
@@ -440,12 +441,12 @@ pub(crate) struct AclInput {
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct CreateSeriesResponse {
-    pub identifier: String,
+    pub identifier: OpencastId,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct CreatePlaylistResponse {
-    pub id: String,
+    pub id: OpencastId,
     pub entries: Vec<PlaylistEntry>,
     pub title: String,
     pub description: Option<String>,
@@ -468,7 +469,7 @@ pub(crate) trait OpencastItem {
     /// Name used in endpoint path.
     fn endpoint_path(&self) -> &'static str;
     /// Opencast ID of the item.
-    fn id(&self) -> &str;
+    fn id(&self) -> &str; // TODO: also change to OpencastId?
     /// Metadata flavor needed for the `update_metadata` endpoint of the item
     /// (i.e. `dublincore/series` or `dublincore/episode`).
     fn metadata_flavor(&self) -> &'static str;
@@ -496,17 +497,16 @@ pub(crate) fn build_access_policy(acl: &[AclInputEntry]) -> Vec<AclInput> {
 }
 
 /// Maps a collection of content IDs to the JSON structure expected by the Opencast API.
-fn entries_to_json(ids: &[String]) -> serde_json::Value {
+fn entries_to_json(ids: &[OpencastId]) -> serde_json::Value {
     serde_json::Value::Array(
         ids
             .iter()
             .map(|e| {
                 serde_json::json!({
-                    "contentId": e.as_str(),
+                    "contentId": e,
                     "type": "EVENT",
                 })
             })
             .collect()
     )
 }
-

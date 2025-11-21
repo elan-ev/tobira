@@ -21,6 +21,7 @@ use crate::{
     model::{
         ExtraMetadata,
         Key,
+        OpencastId,
         SearchThumbnailInfo,
         ThumbnailStack,
         SeriesState,
@@ -58,7 +59,7 @@ use super::{
 #[derive(Clone)]
 pub(crate) struct Series {
     pub(crate) key: Key,
-    pub(crate) opencast_id: String,
+    pub(crate) opencast_id: OpencastId,
     pub(crate) state: SeriesState,
     pub(crate) description: Option<String>,
     pub(crate) title: String,
@@ -119,7 +120,7 @@ impl Series {
         Self::load_by_any_id("id", &key, context).await
     }
 
-    pub(crate) async fn load_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Self>> {
+    pub(crate) async fn load_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Self>> {
         Self::load_by_any_id("opencast_id", &id, context).await
     }
 
@@ -243,7 +244,7 @@ impl Series {
     }
 
     pub(crate) async fn add_mount_point(
-        series_oc_id: String,
+        series_oc_id: OpencastId,
         target_path: String,
         context: &Context,
     ) -> ApiResult<Realm> {
@@ -288,7 +289,7 @@ impl Series {
     }
 
     pub(crate) async fn remove_mount_point(
-        series_oc_id: String,
+        series_oc_id: OpencastId,
         path: String,
         context: &Context,
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
@@ -794,7 +795,7 @@ impl OpencastItem for Series {
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewSeries {
-    pub(crate) opencast_id: String,
+    pub(crate) opencast_id: OpencastId,
     title: String,
     description: Option<String>,
     // TODO In the future this `struct` can be extended with additional

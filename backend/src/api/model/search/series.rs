@@ -6,7 +6,7 @@ use meilisearch_sdk::search::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
-    model::{ThumbnailStack, ThumbnailInfo},
+    model::{OpencastId, ThumbnailStack, ThumbnailInfo},
     search
 };
 
@@ -17,7 +17,7 @@ use super::{field_matches_for, ByteSpan, SearchRealm};
 #[graphql(Context = Context, impl = NodeValue)]
 pub(crate) struct SearchSeries {
     id: Id,
-    opencast_id: String,
+    opencast_id: OpencastId,
     title: String,
     description: Option<String>,
     host_realms: Vec<SearchRealm>,

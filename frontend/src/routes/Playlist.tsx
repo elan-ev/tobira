@@ -31,7 +31,7 @@ export const DirectPlaylistOCRoute = makeRoute({
 
         const opencastId = decodeURIComponent(matches[1]);
         const query = graphql`
-            query PlaylistByOpencastIdQuery($id: String!) {
+            query PlaylistByOpencastIdQuery($id: OpencastId!) {
                 ... UserData
                 playlist: playlistByOpencastId(id: $id) { ...PlaylistRouteData }
                 rootRealm { ... NavigationData }

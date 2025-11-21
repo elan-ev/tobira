@@ -1,5 +1,7 @@
 use juniper::graphql_object;
 
+use crate::model::OpencastId;
+
 use super::{
     Context,
     err::ApiResult,
@@ -354,7 +356,7 @@ impl Mutation {
 
     /// Adds a series block to an empty realm and makes that realm derive its name from said series.
     async fn add_series_mount_point(
-        series_oc_id: String,
+        series_oc_id: OpencastId,
         target_path: String,
         context: &Context,
     ) -> ApiResult<Realm> {
@@ -368,7 +370,7 @@ impl Mutation {
     /// Errors if the given realm does not have exactly one series block referring to the
     /// specified series.
     async fn remove_series_mount_point(
-        series_oc_id: String,
+        series_oc_id: OpencastId,
         path: String,
         context: &Context,
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
