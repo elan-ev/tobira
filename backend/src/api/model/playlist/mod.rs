@@ -168,10 +168,8 @@ impl Playlist {
                 select search_thumbnail_info_for_event(events.*) \
                 from events \
                 where events.opencast_id = any( \
-                    array( \
-                        select (playlist_entry).content_id \
-                        from unnest(playlists.entries) playlist_entry \
-                    ) \
+                    select (playlist_entry).content_id \
+                    from unnest(playlists.entries) as playlist_entry \
                 ) \
             )",
         );
@@ -232,8 +230,32 @@ impl AuthorizedPlaylist {
         self.num_entries.unwrap() as i32
     }
 
-    fn thumbnail_stack(&self) -> &ThumbnailStack {
-        self.thumbnail_stack.as_ref().unwrap()
+    /// Returns a stack of thumbnails from the events in this playlist.
+    /// This is lazily loaded and pre-loaded in certain contexts (like in `load_writable_for_user`).
+    /// In other contexts the thumbnails will be fetched from the database on demand.
+    async fn thumbnail_stack(&self, context: &Context) -> ApiResult<ThumbnailStack> {
+        if let LazyLoad::Loaded(stack) = &self.thumbnail_stack {
+            return Ok(stack.clone());
+        }
+
+        let query = "select array(\
+            select search_thumbnail_info_for_event(events.*) \
+            from events \
+            where events.opencast_id = any( \
+                select (playlist_entry).content_id \
+                from unnest((select entries from playlists where id = $1)) as playlist_entry \
+            ) \
+        )";
+
+        let thumbnails = context.db
+            .query_one(query, &[&self.key])
+            .await?
+            .get::<_, Vec<SearchThumbnailInfo>>(0)
+            .into_iter()
+            .filter_map(|info| ThumbnailInfo::from_search(info, context))
+            .collect();
+
+        Ok(ThumbnailStack { thumbnails })
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
@@ -326,7 +348,7 @@ define_sort_column_and_order!(
         Title      => "title",
         #[default]
         Updated    => "updated",
-        EventCount => "cardinality(playlists.entries)",
+        EntryCount => "cardinality(playlists.entries)",
     };
     pub struct PlaylistsSortOrder
 );
