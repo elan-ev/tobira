@@ -393,12 +393,7 @@ impl AuthorizedEvent {
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
-        let raw_roles_sql = "\
-            select unnest(read_roles) as role, 'read' as action from events where id = $1
-            union
-            select unnest(write_roles) as role, 'write' as action from events where id = $1
-        ";
-        acl::load_for(context, raw_roles_sql, dbargs![&self.key]).await
+        acl::load_for(context, &acl::query_for("events"), dbargs![&self.key]).await
     }
 
     /// Returns `true` if the realm has a video block with this video

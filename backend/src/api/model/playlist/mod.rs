@@ -237,12 +237,7 @@ impl AuthorizedPlaylist {
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
-        let raw_roles_sql = "\
-            select unnest(read_roles) as role, 'read' as action from playlists where id = $1
-            union
-            select unnest(write_roles) as role, 'write' as action from playlists where id = $1
-        ";
-        acl::load_for(context, raw_roles_sql, dbargs![&self.key]).await
+        acl::load_for(context, &acl::query_for("playlists"), dbargs![&self.key]).await
     }
 
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
