@@ -1062,7 +1062,7 @@ type Series implements Node {
   state: SeriesState!
   numVideos: Int!
   thumbnailStack: ThumbnailStack!
-  acl: [AclItem!]
+  acl: [AclItem!]!
   "Whether the current user has write access to this series."
   canWrite: Boolean!
   tobiraDeletionTimestamp: DateTime

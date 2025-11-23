@@ -66,6 +66,7 @@ pub(crate) struct Series {
     pub(crate) created: Option<DateTime<Utc>>,
     pub(crate) updated: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
+    #[allow(dead_code)]
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
     pub(crate) num_videos: LazyLoad<u32>,
@@ -148,23 +149,6 @@ impl Series {
         }
 
         Ok(series)
-    }
-
-    async fn load_acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
-        match (self.read_roles.as_ref(), self.write_roles.as_ref()) {
-            (None, None) => Ok(None),
-            (read_roles, write_roles) => {
-                let raw_roles_sql = "\
-                    select unnest($1::text[]) as role, 'read' as action
-                    union
-                    select unnest($2::text[]) as role, 'write' as action
-                ";
-
-                acl::load_for(context, raw_roles_sql, dbargs![&read_roles, &write_roles])
-                    .await
-                    .map(Some)
-            }
-        }
     }
 
     pub(crate) async fn create(
@@ -716,8 +700,8 @@ impl Series {
         Ok(ThumbnailStack { thumbnails })
     }
 
-    async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
-        self.load_acl(context).await
+    async fn acl(&self, context: &Context) -> ApiResult<Acl> {
+        acl::load_for(context, &acl::query_for("series"), dbargs![&self.key]).await
     }
 
     /// Whether the current user has write access to this series.
