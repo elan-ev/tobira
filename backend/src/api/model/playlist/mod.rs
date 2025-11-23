@@ -231,8 +231,11 @@ impl AuthorizedPlaylist {
         self.num_entries as i32
     }
 
-    fn thumbnail_stack(&self) -> &ThumbnailStack {
-        self.thumbnail_stack.as_ref().unwrap()
+    fn thumbnail_stack(&self) -> Option<&ThumbnailStack> {
+        match &self.thumbnail_stack {
+            LazyLoad::Loaded(stack) => Some(stack),
+            LazyLoad::NotLoaded => None,
+        }
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {

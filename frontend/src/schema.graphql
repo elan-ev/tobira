@@ -438,7 +438,7 @@ type AuthorizedPlaylist implements Node {
   creator: String!
   updated: DateTime!
   numEntries: Int!
-  thumbnailStack: ThumbnailStack!
+  thumbnailStack: ThumbnailStack
   acl: [AclItem!]!
   entries: [VideoListEntry!]!
   hostRealms: [Realm!]!
