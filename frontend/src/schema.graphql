@@ -30,7 +30,7 @@ enum JwtService {
 enum PlaylistsSortColumn {
   TITLE
   UPDATED
-  EVENT_COUNT
+  ENTRY_COUNT
 }
 
 enum RealmOrder {
@@ -442,6 +442,11 @@ type AuthorizedPlaylist implements Node {
     and only available in certain contexts (e.g., playlist listings).
   """
   numEntries: Int!
+  """
+    Returns a stack of thumbnails from the events in this playlist.
+    This is lazily loaded and pre-loaded in certain contexts (like in `load_writable_for_user`).
+    In other contexts the thumbnails will be fetched from the database on demand.
+  """
   thumbnailStack: ThumbnailStack!
   acl: [AclItem!]!
   entries: [VideoListEntry!]!
@@ -1060,7 +1065,16 @@ type Series implements Node {
   metadata: ExtraMetadata
   description: String
   state: SeriesState!
+  """
+    Returns the number of entries in this series. Note: this is lazily loaded
+    and only available in certain contexts (e.g., series listings).
+  """
   numVideos: Int!
+  """
+    Returns a stack of thumbnails from the events in this series.
+    This is lazily loaded and pre-loaded in certain contexts (like in `load_writable_for_user`).
+    In other contexts the thumbnails will be fetched from the database on demand.
+  """
   thumbnailStack: ThumbnailStack!
   acl: [AclItem!]!
   "Whether the current user has write access to this series."

@@ -674,10 +674,15 @@ impl Series {
         self.state
     }
 
+    /// Returns the number of entries in this series. Note: this is lazily loaded
+    /// and only available in certain contexts (e.g., series listings).
     fn num_videos(&self) -> i32 {
         self.num_videos.unwrap() as i32
     }
 
+    /// Returns a stack of thumbnails from the events in this series.
+    /// This is lazily loaded and pre-loaded in certain contexts (like in `load_writable_for_user`).
+    /// In other contexts the thumbnails will be fetched from the database on demand.
     async fn thumbnail_stack(&self, context: &Context) -> ApiResult<ThumbnailStack> {
         if let LazyLoad::Loaded(stack) = &self.thumbnail_stack {
             return Ok(stack.clone());
