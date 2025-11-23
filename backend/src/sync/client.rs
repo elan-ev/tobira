@@ -56,7 +56,7 @@ impl OcClient {
 
     pub(crate) async fn get_tobira_api_version(&self) -> Result<VersionResponse> {
         trace!("Sending request to '{}'", Self::VERSION_PATH);
-        let (uri, req) = self.build_authed_req(&self.sync_node, Self::VERSION_PATH);
+        let (req, uri) = self.build_authed_req(&self.sync_node, Self::VERSION_PATH);
 
         let response = self.http_client.request(req)
             .await
@@ -88,7 +88,7 @@ impl OcClient {
             since.timestamp_millis(),
             preferred_amount,
         );
-        let (uri, req) = self.build_authed_req(&self.sync_node, &pq);
+        let (req, uri) = self.build_authed_req(&self.sync_node, &pq);
 
         trace!("Sending harvest request (since = {:?}): GET {}", since, uri);
 
@@ -121,7 +121,8 @@ impl OcClient {
     /// Sends the given serialized JSON to the `/stats` endpoint in Opencast.
     pub async fn send_stats(&self, stats: String) -> Result<Response<Incoming>> {
         // TODO: maybe introduce configurable node for this
-        let req = self.authed_req_builder(&self.external_api_node, Self::STATS_PATH)
+        let (builder, _) = self.authed_req_builder(&self.external_api_node, Self::STATS_PATH);
+        let req = builder
             .method(http::Method::POST)
             .header(http::header::CONTENT_TYPE, "application/json")
             .body(stats.into())
@@ -131,10 +132,10 @@ impl OcClient {
     }
 
     pub async fn external_api_versions(&self) -> Result<ExternalApiVersions> {
-        let req = self.authed_req_builder(&self.external_api_node, "/api/version")
+        let (builder, uri) = self.authed_req_builder(&self.external_api_node, "/api/version");
+        let req = builder
             .body(RequestBody::empty())
             .expect("failed to build request");
-        let uri = req.uri().clone();
         let response = self.http_client.request(req)
             .await
             .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
@@ -149,7 +150,8 @@ impl OcClient {
             endpoint = endpoint.endpoint_path(),
             oc_id = endpoint.id(),
         );
-        let req = self.authed_req_builder(&self.external_api_node, &pq)
+        let (builder, _) = self.authed_req_builder(&self.external_api_node, &pq);
+        let req = builder
             .method(http::Method::DELETE)
             .body(RequestBody::empty())
             .expect("failed to build request");
@@ -171,11 +173,10 @@ impl OcClient {
         // Todo: remove again once frontend sends these roles.
         access_policy.extend(endpoint.extra_roles(context, oc_id).await?);
 
-        let params = Serializer::new(String::new())
-            .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
-            .finish();
+        let acl_json = serde_json::to_string(&access_policy).expect("Failed to serialize");
 
-        self.send_put_request(&pq, params).await
+        let (req, _uri) = self.build_form_request(&pq, http::Method::PUT, &[("acl", &acl_json)]);
+        self.http_client.request(req).await.map_err(Into::into)
     }
 
    pub async fn update_metadata<T: OpencastItem>(
@@ -190,33 +191,28 @@ impl OcClient {
             flavor = endpoint.metadata_flavor(),
         );
 
-        let params = Serializer::new(String::new())
-            .append_pair("metadata", &serde_json::to_string(metadata).expect("Failed to serialize"))
-            .finish();
+        let metadata_json = serde_json::to_string(metadata).expect("Failed to serialize");
 
-        self.send_put_request(&pq, params).await
+        let (req, _uri) = self.build_form_request(&pq, http::Method::PUT, &[
+            ("metadata", &metadata_json),
+        ]);
+        self.http_client.request(req).await.map_err(Into::into)
     }
 
     pub async fn start_workflow(&self, oc_id: &str, workflow_id: &str) -> Result<Response<Incoming>> {
-        let params = Serializer::new(String::new())
-            .append_pair("event_identifier", &oc_id)
-            .append_pair("workflow_definition_identifier", &workflow_id)
-            .finish();
-        let req = self.authed_req_builder(&self.external_api_node, "/api/workflows")
-            .method(http::Method::POST)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
-
+        let (req, _uri) = self.build_form_request("/api/workflows", http::Method::POST, &[
+            ("event_identifier", oc_id),
+            ("workflow_definition_identifier", workflow_id),
+        ]);
         self.http_client.request(req).await.map_err(Into::into)
     }
 
     pub async fn has_active_workflows(&self, oc_id: &str) -> Result<bool> {
         let pq = format!("/api/events/{oc_id}");
-        let req = self.authed_req_builder(&self.external_api_node, &pq)
+        let (builder, uri) = self.authed_req_builder(&self.external_api_node, &pq);
+        let req = builder
             .body(RequestBody::empty())
             .expect("failed to build request");
-        let uri = req.uri().clone();
         let response = self.http_client.request(req)
             .await
             .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
@@ -250,18 +246,13 @@ impl OcClient {
             ]
         }]);
 
-        let params = Serializer::new(String::new())
-            .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
-            .append_pair("metadata", &serde_json::to_string(&metadata).expect("Failed to serialize"))
-            .finish();
+        let acl_json = serde_json::to_string(&access_policy).expect("Failed to serialize");
+        let metadata_json = serde_json::to_string(&metadata).expect("Failed to serialize");
 
-        let req = self.authed_req_builder(&self.external_api_node, "/api/series")
-            .method(http::Method::POST)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
-
-        let uri = req.uri().clone();
+        let (req, uri) = self.build_form_request("/api/series", http::Method::POST, &[
+            ("acl", &acl_json),
+            ("metadata", &metadata_json),
+        ]);
         let response = self.http_client.request(req).await
             .with_context(|| format!("HTTP request failed (uri: '{uri}'"))?;
 
@@ -289,17 +280,11 @@ impl OcClient {
             "accessControlEntries": access_policy,
         });
 
-        let params = Serializer::new(String::new())
-            .append_pair("playlist", &serde_json::to_string(&playlist).expect("Failed to serialize"))
-            .finish();
+        let playlist_json = serde_json::to_string(&playlist).expect("Failed to serialize");
 
-        let req = self.authed_req_builder(&self.external_api_node, "/api/playlists/")
-            .method(http::Method::POST)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
-
-        let uri = req.uri().clone();
+        let (req, uri) = self.build_form_request("/api/playlists/", http::Method::POST, &[
+            ("playlist", &playlist_json),
+        ]);
         let response = self.http_client.request(req).await
             .with_context(|| format!("HTTP request failed (uri: '{uri}'"))?;
 
@@ -337,18 +322,12 @@ impl OcClient {
             );
         }
 
-        let params = Serializer::new(String::new())
-            .append_pair("playlist", &serde_json::to_string(&payload)?)
-            .finish();
+        let playlist_json = serde_json::to_string(&payload)?;
 
         let pq = format!("/api/playlists/{playlist_id}");
-        let req = self.authed_req_builder(&self.external_api_node, &pq)
-            .method(http::Method::PUT)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
-
-        let uri = req.uri().clone();
+        let (req, uri) = self.build_form_request(&pq, http::Method::PUT, &[
+            ("playlist", &playlist_json),
+        ]);
         let response = self.http_client.request(req).await
             .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
 
@@ -357,39 +336,52 @@ impl OcClient {
         Ok(out)
     }
 
-
-    async fn send_put_request(&self, path_and_query: &str, params: String) -> Result<Response<Incoming>> {
-        let req = self.authed_req_builder(&self.external_api_node, &path_and_query)
-            .method(http::Method::PUT)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
-
-        self.http_client.request(req).await.map_err(Into::into)
-    }
-
-    fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
-        let req = self.authed_req_builder(node, path_and_query)
-            .body(RequestBody::empty())
-            .expect("bug: failed to build request");
-
-        (req.uri().clone(), req)
-    }
-
-    fn authed_req_builder(&self, node: &HttpHost, path_and_query: &str) -> request::Builder {
-        self.req_builder(node, path_and_query)
-            .header("Authorization", self.auth_header.expose_secret())
-    }
-
-    fn req_builder(&self, node: &HttpHost, path_and_query: &str) -> request::Builder {
+    fn authed_req_builder(&self, node: &HttpHost, path_and_query: &str) -> (request::Builder, Uri) {
         let uri = Uri::builder()
             .scheme(node.scheme.clone())
             .authority(node.authority.clone())
             .path_and_query(path_and_query)
             .build()
-            .expect("bug: failed build URI");
+            .expect("bug: failed to build URI");
+        let builder = Request::builder()
+            .uri(&uri)
+            .header("Authorization", self.auth_header.expose_secret());
+        (builder, uri)
+    }
 
-        Request::builder().uri(&uri)
+    fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Request<RequestBody>, Uri) {
+        let (builder, uri) = self.authed_req_builder(node, path_and_query);
+        let req = builder
+            .body(RequestBody::empty())
+            .expect("bug: failed to build request");
+        (req, uri)
+    }
+
+    fn form_encoded_req_builder(
+        &self,
+        node: &HttpHost,
+        path_and_query: &str,
+        method: http::Method,
+    ) -> (request::Builder, Uri) {
+        let (builder, uri) = self.authed_req_builder(node, path_and_query);
+        let builder = builder
+            .method(method)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded");
+        (builder, uri)
+    }
+
+    fn build_form_request(&self, path_and_query: &str, method: http::Method, params: &[(&str, &str)]) -> (Request<RequestBody>, Uri) {
+        let mut serializer = Serializer::new(String::new());
+        for (key, value) in params {
+            serializer.append_pair(key, value);
+        }
+        let encoded = serializer.finish();
+
+        let (builder, uri) = self.form_encoded_req_builder(&self.external_api_node, path_and_query, method);
+        let req = builder
+            .body(encoded.into())
+            .expect("failed to build request");
+        (req, uri)
     }
 
     async fn deserialize_response<T: for<'de> serde::Deserialize<'de>>(
