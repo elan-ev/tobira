@@ -117,7 +117,7 @@ export type SinglePlaylist = Playlists[number];
 
 const playlistColumns: ColumnProps<SinglePlaylist>[] = [
     {
-        key: "EVENT_COUNT",
+        key: "ENTRY_COUNT",
         label: "video.plural",
         headerWidth: 112,
         column: ({ item }) => <td css={{ fontSize: 14 }}>
@@ -146,7 +146,7 @@ const parsePlaylistColumn = (sortBy: string | null): PlaylistsSortColumn =>
         ? match(sortBy, {
             "title": () => "TITLE" as const,
             "updated": () => "UPDATED" as const,
-            "event_count": () => "EVENT_COUNT" as const,
+            "entry_count": () => "ENTRY_COUNT" as const,
         }) ?? "UPDATED"
         : "UPDATED";
 
