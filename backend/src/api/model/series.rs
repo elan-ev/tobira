@@ -805,7 +805,7 @@ define_sort_column_and_order!(
         #[default]
         Created    => "created",
         Updated    => "updated",
-        EventCount => "(select count(*) from events where events.series = series.id)",
+        EntryCount => "(select count(*) from events where events.series = series.id)",
     };
     pub struct SeriesSortOrder
 );

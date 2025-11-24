@@ -30,7 +30,7 @@ enum JwtService {
 enum PlaylistsSortColumn {
   TITLE
   UPDATED
-  EVENT_COUNT
+  ENTRY_COUNT
 }
 
 enum RealmOrder {
@@ -43,7 +43,7 @@ enum SeriesSortColumn {
   TITLE
   CREATED
   UPDATED
-  EVENT_COUNT
+  ENTRY_COUNT
 }
 
 "Represents the different states a series can be in during its lifecycle"

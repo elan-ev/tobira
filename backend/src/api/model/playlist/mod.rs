@@ -328,7 +328,7 @@ define_sort_column_and_order!(
         Title      => "title",
         #[default]
         Updated    => "updated",
-        EventCount => "cardinality(playlists.entries)",
+        EntryCount => "cardinality(playlists.entries)",
     };
     pub struct PlaylistsSortOrder
 );

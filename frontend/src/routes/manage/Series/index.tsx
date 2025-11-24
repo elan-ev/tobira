@@ -117,7 +117,7 @@ export type SingleSeries = Series[number];
 
 const seriesColumns: ColumnProps<SingleSeries>[] = [
     {
-        key: "EVENT_COUNT",
+        key: "ENTRY_COUNT",
         label: "video.plural",
         headerWidth: 112,
         column: ({ item }) => <td css={{ fontSize: 14 }}>
@@ -153,7 +153,7 @@ const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
             "title": () => "TITLE" as const,
             "created": () => "CREATED" as const,
             "updated": () => "UPDATED" as const,
-            "event_count": () => "EVENT_COUNT" as const,
+            "entry_count": () => "ENTRY_COUNT" as const,
         }) ?? "CREATED"
         : "CREATED";
 
