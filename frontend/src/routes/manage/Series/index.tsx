@@ -117,7 +117,7 @@ export type SingleSeries = Series[number];
 
 const seriesColumns: ColumnProps<SingleSeries>[] = [
     {
-        key: "EVENT_COUNT",
+        key: "ENTRY_COUNT",
         label: "video.plural",
         headerWidth: 112,
         column: ({ item }) => <td css={{ fontSize: 14 }}>
