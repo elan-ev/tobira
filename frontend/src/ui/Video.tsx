@@ -1,13 +1,17 @@
 import { Fragment, PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuCircleUser, LuVolume2 } from "react-icons/lu";
-import { useColorScheme } from "@opencast/appkit";
+import { Spinner, useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
 import { MovingTruck } from "./Waiting";
 import { AuthorizedEvent } from "../routes/manage/Video/Shared";
 import { Caption } from "./player";
 import { captionsWithLabels } from "../util";
+import { graphql } from "react-relay";
+import { fetchQuery } from "../relay";
+import { VideoStaticFileLinkQuery } from "./__generated__/VideoStaticFileLinkQuery.graphql";
+import CONFIG from "../config";
 
 
 export type ThumbnailItemStatus = "ready" | "waiting" | "deleted";
@@ -346,6 +350,7 @@ export const Creators: React.FC<CreatorsProps> = ({ creators, className }) => (
 
 type TrackInfoProps = {
     event: {
+        id: string;
         authorizedData?: null | {
             tracks: NonNullable<AuthorizedEvent["authorizedData"]>["tracks"];
             captions: readonly Caption[];
@@ -382,7 +387,7 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
             flavors.set(flavor, tracks);
         }
 
-        tracks.push({ resolution, mimetype, uri });
+        tracks.push({ resolution, mimetype, uri, eventId: event.id });
     }
 
     const isSingleFlavor = flavors.size === 1;
@@ -401,7 +406,7 @@ export const TrackInfo: React.FC<TrackInfoProps> = (
                 {flat ? trackItems : <li>{flavorLabel}<ul>{trackItems}</ul></li>}
             </Fragment>;
         })}
-        <VTTInfo captions={event.authorizedData.captions} />
+        <VTTInfo captions={event.authorizedData.captions} eventId={event.id} />
     </ul>;
 };
 
@@ -410,9 +415,10 @@ type SingleTrackInfo = {
     resolution?: readonly number[] | null;
     mimetype?: string | null;
     uri: string;
+    eventId: string;
 };
 
-const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => {
+const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri, eventId }) => {
     const { t } = useTranslation();
     const type = mimetype && mimetype.split("/")[0];
     const subtype = mimetype && mimetype.split("/")[1];
@@ -427,25 +433,78 @@ const TrackItem: React.FC<SingleTrackInfo> = ({ mimetype, resolution, uri }) => 
 
     return (
         <li css={{ marginBottom: 4 }}>
-            <a href={uri}>
+            <StaticFileLink link={uri} event={eventId}>
                 {type
                     ? <>{typeTranslation}</>
                     : <i>{t("manage.video.technical-details.unknown-mimetype")}</i>
                 }
                 {(resolution || subtype) && resolutionString}
-            </a>
+            </StaticFileLink>
         </li>
     );
 };
 
-const VTTInfo: React.FC<{ captions: readonly Caption[] }> = ({ captions }) => {
+type VTTInfoProps = {
+    captions: readonly Caption[];
+    eventId: string;
+};
+
+const VTTInfo: React.FC<VTTInfoProps> = ({ captions, eventId }) => {
     const { t } = useTranslation();
 
     return <>{captionsWithLabels(captions, t).map(({ caption, label }) =>
         <li key={label}>
-            <a href={caption.uri}>
+            <StaticFileLink link={caption.uri} event={eventId}>
                 {label}
-            </a>
+            </StaticFileLink>
         </li>)
     }</>;
+};
+
+type StaticFileLinkProps = React.PropsWithChildren<{
+    event: string;
+    link: string;
+}>;
+
+const StaticFileLink: React.FC<StaticFileLinkProps> = ({ event, link, children }) => {
+    const [pending, setPending] = useState(false);
+
+    const buildLink = () => {
+        const query = graphql`
+            query VideoStaticFileLinkQuery($id: ID!) {
+                eventById(id:$id) {
+                    ...on AuthorizedEvent { jwtForDownload }
+                }
+            }
+        `;
+        fetchQuery<VideoStaticFileLinkQuery>(query, { id: event }, { fetchPolicy: "network-only" })
+            .subscribe({
+                start: () => setPending(true),
+                complete: () => setPending(false),
+                error: () => setPending(false),
+                next: data => {
+                    const elem = document.createElement("a");
+                    elem.href = `${link}?jwt=${data.eventById?.jwtForDownload}`;
+                    elem.target = "_blank";
+                    elem.click();
+                },
+            });
+    };
+
+    return (
+        <a {...CONFIG.auth.authStaticFiles ? {
+            onClick: buildLink,
+            css: {
+                cursor: "pointer",
+            },
+        } : {
+            href: link,
+        }}>
+            {children}
+            {pending && <Spinner css={{
+                verticalAlign: "middle",
+                marginLeft: 8,
+            }} />}
+        </a>
+    );
 };
