@@ -99,7 +99,6 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
             }
         }
         // This seems to work, all cases have a nice toString() as far as I can tell.
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         const errorMsg = error.toString();
         return (
             <UserProvider data={userData}>

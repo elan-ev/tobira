@@ -251,7 +251,7 @@ pub(crate) enum HttpReqCategory {
 }
 
 impl EncodeLabelSet for HttpReqCategory {
-    fn encode(&self, mut encoder: LabelSetEncoder) -> Result<(), std::fmt::Error> {
+    fn encode(&self, encoder: &mut LabelSetEncoder) -> Result<(), std::fmt::Error> {
         let s = match self {
             HttpReqCategory::GraphQL => "graphql",
             HttpReqCategory::Login => "login",
@@ -280,7 +280,7 @@ pub(crate) enum ItemKind {
 }
 
 impl EncodeLabelSet for ItemKind {
-    fn encode(&self, mut encoder: LabelSetEncoder) -> Result<(), std::fmt::Error> {
+    fn encode(&self, encoder: &mut LabelSetEncoder) -> Result<(), std::fmt::Error> {
         let s = match self {
             ItemKind::Realms => "realms",
             ItemKind::Events => "events",
@@ -306,7 +306,7 @@ pub(crate) enum MemoryKind {
 }
 
 impl EncodeLabelSet for MemoryKind {
-    fn encode(&self, mut encoder: LabelSetEncoder) -> Result<(), std::fmt::Error> {
+    fn encode(&self, encoder: &mut LabelSetEncoder) -> Result<(), std::fmt::Error> {
         let s = match self {
             MemoryKind::Pss => "pss",
             MemoryKind::Uss => "uss",
