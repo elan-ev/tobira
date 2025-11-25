@@ -3,10 +3,9 @@ import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
 import { CSSObjectWithLabel, SelectInstance, Theme } from "react-select";
 import AsyncSelect from "react-select/async";
-import { fetchQuery, graphql, GraphQLTaggedNode } from "react-relay";
+import { graphql, GraphQLTaggedNode } from "react-relay";
 import { Card, useColorScheme } from "@opencast/appkit";
 
-import { environment } from "../relay";
 import { SmallDescription } from "./metadata";
 import { ErrorDisplay } from "../util/err";
 import { COLORS } from "../color";
@@ -17,6 +16,7 @@ import {
     SearchableSelectSeriesQuery,
 } from "./__generated__/SearchableSelectSeriesQuery.graphql";
 import { LuCalendar } from "react-icons/lu";
+import { fetchQuery } from "../relay";
 
 
 export type DerivedProps<T> = Omit<Parameters<typeof AsyncSelect<T>>[0],
@@ -183,7 +183,7 @@ export const VideoListSelector: React.FC<VideoListSelectorProps> = ({
             input: string,
             callback: (options: readonly VideoListOption[]) => void,
         ) => {
-            fetchQuery<Q>(environment, query, { q: input, writableOnly }).subscribe({
+            fetchQuery<Q>(query, { q: input, writableOnly }).subscribe({
                 next: r => {
                     const items = ("series" in r ? r.series : r.playlists).items;
                     if (items === undefined) {

@@ -25,7 +25,7 @@ import { LuX } from "react-icons/lu";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 import AsyncCreatableSelect from "react-select/async-creatable";
-import { fetchQuery, graphql } from "react-relay";
+import { graphql } from "react-relay";
 import { i18n, ParseKeys } from "i18next";
 
 import { IconWithTooltip, focusStyle } from ".";
@@ -37,7 +37,6 @@ import { searchableSelectStyles, theme } from "./SearchableSelect";
 import { FloatingBaseMenu } from "./FloatingBaseMenu";
 import { AccessKnownRolesData$data } from "./__generated__/AccessKnownRolesData.graphql";
 import CONFIG from "../config";
-import { environment } from "../relay";
 import { AccessUserSearchQuery } from "./__generated__/AccessUserSearchQuery.graphql";
 import { ErrorDisplay } from "../util/err";
 import { useNavBlocker } from "../routes/util";
@@ -45,6 +44,7 @@ import { currentRef, OcEntity } from "../util";
 import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
 import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 import { languages } from "../i18n";
+import { fetchQuery } from "../relay";
 
 
 
@@ -367,7 +367,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             : <AsyncCreatableSelect
                 {...commonSelectProps}
                 loadOptions={(q: string, callback: (options: readonly SelectOption[]) => void) => {
-                    fetchQuery<AccessUserSearchQuery>(environment, userSearchQuery, { q })
+                    fetchQuery<AccessUserSearchQuery>(userSearchQuery, { q })
                         .subscribe({
                             next: ({ users }) => {
                                 if (users.items === undefined) {

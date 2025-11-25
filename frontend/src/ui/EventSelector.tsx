@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { fetchQuery, graphql } from "react-relay";
+import { graphql } from "react-relay";
 import { SingleValue } from "react-select";
 import { TFunction } from "i18next";
 import { Card } from "@opencast/appkit";
@@ -9,12 +9,12 @@ import {
     VideoEditModeBlockData$data,
 } from "../routes/manage/Realm/Content/Edit/EditMode/__generated__/VideoEditModeBlockData.graphql";
 import { SearchableSelect, DerivedProps as SelectProps } from "./SearchableSelect";
-import { environment } from "../relay";
 import { EventSelectorQuery } from "./__generated__/EventSelectorQuery.graphql";
 import { ErrorDisplay } from "../util/err";
 import { MovingTruck } from "./Waiting";
 import { Creators, Thumbnail } from "./Video";
 import { ellipsisOverflowCss } from ".";
+import { fetchQuery } from "../relay";
 
 
 type AuthorizedEvent = Extract<
@@ -80,7 +80,7 @@ export const EventSelector = ({
     `;
 
     const loadEvents = (input: string, callback: (options: readonly Option[]) => void) => {
-        fetchQuery<EventSelectorQuery>(environment, query, {
+        fetchQuery<EventSelectorQuery>(query, {
             q: input,
             writableOnly,
             ...additionalOptions,

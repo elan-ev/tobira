@@ -1,13 +1,13 @@
 import React from "react";
-import { fetchQuery, graphql } from "react-relay";
+import { graphql } from "react-relay";
 import { bug, match } from "@opencast/appkit";
 
 import CONFIG from "../config";
-import { environment } from ".";
 import { authJwtQuery, JwtService } from "./__generated__/authJwtQuery.graphql";
 import { FormEvent, PropsWithChildren } from "react";
 import { Link } from "../router";
 import { LinkButton } from "../ui/LinkButton";
+import { fetchQuery } from ".";
 
 
 /** Different external services we can link to using JWT pre-authentication */
@@ -110,7 +110,6 @@ export const getJwt = (
             }
         `;
         fetchQuery<authJwtQuery>(
-            environment,
             query,
             { service, event: payload?.event, ocId: payload?.opencastId },
             // Use "network-only" as we always want a fresh JWTs. `fetchQuery` should already
