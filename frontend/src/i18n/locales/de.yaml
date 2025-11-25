@@ -170,6 +170,7 @@ video:
   caption: Untertitel
   download:
     title: Download
+    expiration-note: 'Download-Links sind nur für eine kurze Zeit gültig'
     presenter: Video (Sprecher:in)
     slides: Video (Präsentation)
   extra-buttons: Weitere Videoaktionen

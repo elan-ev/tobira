@@ -990,6 +990,9 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 <strong css={{ fontSize: 18, display: "block", marginBottom: 8 }}>
                     {t("video.download.title")}
                 </strong>
+                {CONFIG.auth.authStaticFiles && (
+                    <Card kind="info">{t("video.download.expiration-note")}</Card>
+                )}
                 <TrackInfo event={event} translateFlavors />
             </Floating>
         </FloatingContainer>
