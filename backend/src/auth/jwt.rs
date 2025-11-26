@@ -29,6 +29,16 @@ pub(crate) struct JwtConfig {
     /// until the frontend received the JWT and used it with Opencast.
     #[config(default = "30s", deserialize_with = crate::config::deserialize_duration)]
     pub(crate) expiration_time: Duration,
+
+    /// Duration for which JWTs guarding static files are valid. Only used if
+    /// `auth.auth_static_files` is enabled.
+    #[config(default = "30s", deserialize_with = crate::config::deserialize_duration)]
+    pub(crate) static_file_expiration_time: Duration,
+
+    /// Duration for which JWTs in download links are valid. Only used if
+    /// `auth.auth_static_files` is enabled.
+    #[config(default = "3min", deserialize_with = crate::config::deserialize_duration)]
+    pub(crate) download_expiration_time: Duration,
 }
 
 /// A supported JWT signing algorithm.
@@ -68,7 +78,9 @@ pub(crate) struct JwtContext {
 
     // Pre-calculated to make signing faster.
     encoded_header: String,
-    expiration_time: chrono::Duration,
+    service_expiration_time: chrono::Duration,
+    static_file_expiration_time: chrono::Duration,
+    download_expiration_time: chrono::Duration,
 }
 
 impl JwtContext {
@@ -83,13 +95,16 @@ impl JwtContext {
         let header_json = serde_json::to_string(&header).expect("failed to serialize JWT header");
         let encoded_header = BASE64_URL_SAFE_NO_PAD.encode(header_json);
 
+        let to_chrono = |d| chrono::Duration::from_std(d)
+            .expect("failed to convert from std Duration to chrono::Duration");
         Ok(Self {
             rng: SystemRandom::new(),
             auth,
             config: config.clone(),
             encoded_header,
-            expiration_time: chrono::Duration::from_std(config.expiration_time)
-                .expect("failed to convert from std Duration to chrono::Duration"),
+            service_expiration_time: to_chrono(config.expiration_time),
+            static_file_expiration_time: to_chrono(config.static_file_expiration_time),
+            download_expiration_time: to_chrono(config.download_expiration_time),
         })
     }
 
@@ -131,11 +146,13 @@ impl JwtContext {
                 email: user.email.as_deref(),
             },
             auth_claims,
-        })
+        }, &self.service_expiration_time)
     }
 
-    /// Generates a JWT giving read access to a single event.
-    pub(crate) fn event_read_token(&self, event_id: &str) -> String {
+    /// Generates a JWT giving read access to a single event. `for_download`
+    /// indicates whether it is used for a download link, which might influence
+    /// the expiration time.
+    pub(crate) fn event_read_token(&self, event_id: &str, for_download: bool) -> String {
         struct EventReadAccess<'a>(&'a str);
         impl Serialize for EventReadAccess<'_> {
             fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
@@ -160,12 +177,16 @@ impl JwtContext {
             }
         }
 
-        self.generate(EventReadAccess(event_id))
+        self.generate(EventReadAccess(event_id), if for_download {
+            &self.download_expiration_time
+        } else {
+            &self.static_file_expiration_time
+        })
     }
 
     /// Generates a new JWT with the given payload. The `exp` is claim is added
     /// to the payload and should not be contained in `payload` already.
-    fn generate(&self, payload: impl Serialize) -> String {
+    fn generate(&self, payload: impl Serialize, expiration_time: &chrono::Duration) -> String {
         #[derive(Serialize)]
         struct Payload<P: Serialize> {
             exp: i64,
@@ -174,7 +195,7 @@ impl JwtContext {
         }
 
         self.encode(&Payload {
-            exp: (chrono::offset::Utc::now() + self.expiration_time).timestamp(),
+            exp: (chrono::offset::Utc::now() + *expiration_time).timestamp(),
             payload,
         })
     }

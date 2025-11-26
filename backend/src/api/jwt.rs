@@ -23,7 +23,7 @@ pub(crate) async fn event_read_jwts(
         .await?
         .map_ok(|row| {
             let opencast_id = row.get::<_, String>(0);
-            let jwt = context.jwt.event_read_token(&opencast_id);
+            let jwt = context.jwt.event_read_token(&opencast_id, false);
             EventJwt { jwt, event: opencast_id }
         })
         .try_collect::<Vec<_>>()

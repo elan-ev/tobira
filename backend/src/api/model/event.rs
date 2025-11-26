@@ -417,18 +417,27 @@ impl AuthorizedEvent {
     }
 
     /// Returns a JWT that grants read access to static files of this event.
-    /// Returns `null` if the feature is disabled or the user does not have
-    /// access to the event.
-    fn jwt(&self, context: &Context) -> Option<String> {
+    /// Returns `null` if the user does not have access to the event.
+    fn jwt_for_read(&self, context: &Context) -> Option<String> {
         // TODO: think about how to make it work for password-protected videos,
         // i.e. whether to use preview roles.
         if !context.auth.overlaps_roles(&self.read_roles) {
             return None;
         }
 
-        let jwt = context.jwt.event_read_token(&self.opencast_id);
+        Some(context.jwt.event_read_token(&self.opencast_id, false))
+    }
 
-        Some(jwt)
+    /// Returns a JWT to create a download link (JWT just grants read access).
+    /// Returns `null` if the user does not have access to the event.
+    fn jwt_for_download(&self, context: &Context) -> Option<String> {
+        // TODO: think about how to make it work for password-protected videos,
+        // i.e. whether to use preview roles.
+        if !context.auth.overlaps_roles(&self.read_roles) {
+            return None;
+        }
+
+        Some(context.jwt.event_read_token(&self.opencast_id, true))
     }
 }
 

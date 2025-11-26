@@ -386,10 +386,14 @@ type AuthorizedEvent implements Node {
   isReferencedByRealm(path: String!): Boolean!
   """
     Returns a JWT that grants read access to static files of this event.
-    Returns `null` if the feature is disabled or the user does not have
-    access to the event.
+    Returns `null` if the user does not have access to the event.
   """
-  jwt: String
+  jwtForRead: String
+  """
+    Returns a JWT to create a download link (JWT just grants read access).
+    Returns `null` if the user does not have access to the event.
+  """
+  jwtForDownload: String
 }
 
 """

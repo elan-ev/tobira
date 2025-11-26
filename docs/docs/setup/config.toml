@@ -338,6 +338,18 @@
 # Default value: "30s"
 #expiration_time = "30s"
 
+# Duration for which JWTs guarding static files are valid. Only used if
+# `auth.auth_static_files` is enabled.
+#
+# Default value: "30s"
+#static_file_expiration_time = "30s"
+
+# Duration for which JWTs in download links are valid. Only used if
+# `auth.auth_static_files` is enabled.
+#
+# Default value: "3min"
+#download_expiration_time = "3min"
+
 
 [auth.roles]
 # The role giving a user "Tobira admin" status, giving them all
