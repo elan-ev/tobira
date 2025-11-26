@@ -44,7 +44,7 @@ pub struct EventTextsQueueRecord {
 }
 
 /// Represents the `event_state` type defined in `05-events.sql`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, Serialize, Deserialize, GraphQLEnum)]
 #[postgres(name = "event_state")]
 pub enum EventState {
     #[postgres(name = "ready")]

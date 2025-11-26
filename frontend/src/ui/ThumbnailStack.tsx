@@ -4,6 +4,7 @@ import { useColorScheme } from "@opencast/appkit";
 
 import {
     ThumbnailImg,
+    ThumbnailItemState,
     ThumbnailOverlay,
     ThumbnailOverlayContainer,
     ThumbnailReplacement,
@@ -120,6 +121,7 @@ type ThumbnailInfo = {
     readonly audioOnly: boolean;
     readonly live: boolean;
     readonly url: string | null | undefined;
+    readonly state: ThumbnailItemState;
 }
 
 type SeriesThumbnailProps = {
@@ -141,7 +143,7 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
     } else {
         inner = <ThumbnailReplacement
             audioOnly={info.audioOnly}
-            videoStatus={null}
+            videoState={info.state}
             {...{ isDark }}
         />;
     }
