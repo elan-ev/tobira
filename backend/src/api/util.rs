@@ -29,6 +29,8 @@ impl<T> LazyLoad<T> {
         }
     }
 
+    // Currently unused, but might come in handy again at some point.
+    #[allow(dead_code)]
     pub fn as_ref(&self) -> LazyLoad<&T> {
         match self {
             LazyLoad::Loaded(t) => LazyLoad::Loaded(t),
