@@ -11,6 +11,8 @@ import { ManageRoute } from "..";
 import { ManageVideosRoute } from ".";
 import { ManageVideoDetailsRoute } from "./VideoDetails";
 import { TrackInfo } from "../../../ui/Video";
+import { Card } from "@opencast/appkit";
+import CONFIG from "../../../config";
 
 
 export const ManageVideoTechnicalDetailsRoute = makeManageVideoRoute(
@@ -53,6 +55,9 @@ const Page: React.FC<Props> = ({ event }) => {
             <OpencastId event={event} />
             <section>
                 <h2>{t("manage.video.technical-details.tracks")}</h2>
+                {CONFIG.auth.authStaticFiles && (
+                    <Card kind="info">{t("video.download.expiration-note")}</Card>
+                )}
                 <TrackInfo event={{
                     ...event,
                     authorizedData: {
@@ -125,5 +130,3 @@ const SingleInfo: React.FC<React.PropsWithChildren<{ label: string }>> = ({ labe
         {children}
     </li>
 );
-
-

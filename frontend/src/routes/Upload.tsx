@@ -1,6 +1,6 @@
 import React, { MutableRefObject, ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { fetchQuery, graphql, useFragment, useMutation } from "react-relay";
+import { graphql, useFragment, useMutation } from "react-relay";
 import type { Disposable } from "relay-runtime";
 import { keyframes } from "@emotion/react";
 import { Controller, FormProvider, useController, useForm } from "react-hook-form";
@@ -11,7 +11,7 @@ import {
 } from "@opencast/appkit";
 
 import { RootLoader } from "../layout/Root";
-import { environment, loadQuery } from "../relay";
+import { fetchQuery, loadQuery } from "../relay";
 import { UploadQuery, UploadQuery$data } from "./__generated__/UploadQuery.graphql";
 import { makeRoute } from "../rauta";
 import { ErrorDisplay, errorDisplayInfo } from "../util/err";
@@ -800,7 +800,6 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
 
     const fetchSeriesAcl = async (seriesId: string): Promise<Acl | null> => {
         const data = await fetchQuery<UploadSeriesAclQuery>(
-            environment,
             SeriesAclQuery,
             { seriesId },
         ).toPromise();

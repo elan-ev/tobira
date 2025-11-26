@@ -1,4 +1,8 @@
-import { loadQuery as relayLoadQuery, LoadQueryOptions } from "react-relay";
+import {
+    loadQuery as relayLoadQuery,
+    fetchQuery as relayFetchQuery,
+    LoadQueryOptions,
+} from "react-relay";
 import type { PreloadedQuery } from "react-relay";
 import { Environment, Store, RecordSource, Network } from "relay-runtime";
 import type {
@@ -10,6 +14,7 @@ import type {
 
 import { hasErrors, APIError, ServerError, NotJson } from "./errors";
 import { NetworkError } from "../util/err";
+import { RelayObservable } from "relay-runtime/lib/network/RelayObservable";
 
 
 export const environment = new Environment({
@@ -58,6 +63,14 @@ export function loadQuery<TQuery extends OperationType>(
     return relayLoadQuery(environment, preloadableRequest, variables, options);
 }
 
+/** Like `fetchQuery` from relay, but using our environment */
+export function fetchQuery<TQuery extends OperationType>(
+    query: GraphQLTaggedNode,
+    variables: VariablesOf<TQuery>,
+    options?: Parameters<typeof relayFetchQuery>[3],
+): RelayObservable<TQuery["response"]> {
+    return relayFetchQuery(environment, query, variables, options);
+}
 
 /** Extract queried fields from Relay types. Removes internal properties. */
 export type Fields<T> = {

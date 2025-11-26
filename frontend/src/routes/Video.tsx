@@ -9,7 +9,7 @@ import {
     useRefetchableFragment,
 } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
-import { fetchQuery, OperationType } from "relay-runtime";
+import { OperationType } from "relay-runtime";
 import {
     LuCode, LuDownload, LuInfo, LuLink, LuRss, LuSettings, LuLockOpen,
 } from "react-icons/lu";
@@ -20,7 +20,7 @@ import {
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
 
-import { environment, loadQuery } from "../relay";
+import { fetchQuery, loadQuery } from "../relay";
 import { InitialLoading, RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { RealmNav } from "../layout/Navigation";
@@ -682,7 +682,7 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
             eventUser: creds.user,
             eventPassword: creds.password,
         };
-        fetchQuery<VideoAuthorizedDataQuery>(environment, authorizedDataQuery, {
+        fetchQuery<VideoAuthorizedDataQuery>(authorizedDataQuery, {
             id: event.id,
             ...credentialVars,
         }).subscribe({
@@ -990,6 +990,9 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
                 <strong css={{ fontSize: 18, display: "block", marginBottom: 8 }}>
                     {t("video.download.title")}
                 </strong>
+                {CONFIG.auth.authStaticFiles && (
+                    <Card kind="info">{t("video.download.expiration-note")}</Card>
+                )}
                 <TrackInfo event={event} translateFlavors />
             </Floating>
         </FloatingContainer>

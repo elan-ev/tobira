@@ -168,6 +168,7 @@ video:
   caption: Caption
   download:
     title: Download
+    expiration-note: 'Download links are only valid for a short time'
     presenter: Video (speaker)
     slides: Video (presentation)
   extra-buttons: Additional video actions

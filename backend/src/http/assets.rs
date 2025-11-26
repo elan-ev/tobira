@@ -20,6 +20,8 @@ const EMBEDS: Embeds = reinda::embed! {
         "index.html",
         "bundle.*.js",
         "bundle.*.js.map",
+        "~sw.js",
+        "~sw.js.map",
 
         "1x1-black.png",
 
@@ -174,6 +176,13 @@ impl Assets {
         // JS bundle
         builder.add_embedded("", &EMBEDS["bundle.*.js"]);
         builder.add_embedded("", &EMBEDS["bundle.*.js.map"]);
+        builder.add_embedded("~sw.js", &EMBEDS["~sw.js"]).with_modifier::<_, _, String>([], {
+            let replacement = serde_json::to_string(&config.opencast.trusted_hosts()).unwrap();
+            move |original, _| {
+                original.replacen("MAGIC_REPLACE_TRUSTED_ORIGINS_SW", &replacement, 1).into()
+            }
+        });
+        builder.add_embedded("~sw.js.map", &EMBEDS["~sw.js.map"]);
 
         // Paella assets: no hashing for some files that Paella requests as
         // fixed path. But do hash icons and replace the path in the `theme.json`.
@@ -304,6 +313,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
             "userRolePrefixes": config.auth.roles.user_role_prefixes,
             "globalPageAdminRole": config.auth.roles.global_page_admin,
             "globalPageModeratorRole": config.auth.roles.global_page_moderator,
+            "authStaticFiles": config.auth.auth_static_files,
         },
         "upload": {
             "requireSeries": config.upload.require_series,

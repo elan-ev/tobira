@@ -1,0 +1,1 @@
+{"query":"query($events: [String!]!) { eventReadJwts(events:$events) { event jwt } }","variables":{"events":["dd39fac1-c03e-47de-9341-36f0c81354a3", "1799e993-3861-42ba-a584-02cf14433811", "9293e8f0-1155-455e-b5f9-77ad8bd6e227", "6e2821cb-f6a4-49b5-a1b3-bf18d2445a20", "e316cc68-036f-469e-825c-9eaeac635ee3", "b9cfb23e-3dfd-4322-9d63-a38172675722"]}}

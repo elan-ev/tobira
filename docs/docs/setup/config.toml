@@ -252,6 +252,17 @@
 # every channel this is sent over.
 #trusted_external_key =
 
+# If `true`, Tobira attaches a JWT to all requests for Opencast static files.
+# This only considers requests to hosts listed in the `opencast` section
+# of the configuration. If necessary, use `other_hosts`.
+#
+# Experimental: this should work fine, but we don't have enough experience
+# yet to generally recommend turning this on. When you do, please report
+# any problems or weird behaviors to us!
+#
+# Default value: false
+#auth_static_files = false
+
 # Determines whether or not Tobira users are getting pre-authenticated against
 # Opencast when they visit external links like the ones to Opencast Studio
 # or the Editor. If you have an SSO-solution, you don't need this.
@@ -326,6 +337,18 @@
 #
 # Default value: "30s"
 #expiration_time = "30s"
+
+# Duration for which JWTs guarding static files are valid. Only used if
+# `auth.auth_static_files` is enabled.
+#
+# Default value: "30s"
+#static_file_expiration_time = "30s"
+
+# Duration for which JWTs in download links are valid. Only used if
+# `auth.auth_static_files` is enabled.
+#
+# Default value: "3min"
+#download_expiration_time = "3min"
 
 
 [auth.roles]

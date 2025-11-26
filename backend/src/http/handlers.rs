@@ -100,6 +100,11 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
                 None => response::not_found(),
             }
         }
+        "/~sw.js" | "/~sw.map.js" => {
+            register_req!(HttpReqCategory::Assets);
+            let without_slash = &path[1..];
+            ctx.assets.serve(without_slash).await.unwrap()
+        }
 
         // Some browser automatically request this in certain situations. As we
         // serve our favicon differently, it's best to reply 404 here

@@ -1,0 +1,1 @@
+{"query":"query($ev: String!) { eventByOpencastId(id:$ev) { ...on AuthorizedEvent { jwt } }}","variables":{"ev":"9293e8f0-1155-455e-b5f9-77ad8bd6e227"}}
