@@ -484,7 +484,11 @@ const StaticFileLink: React.FC<StaticFileLinkProps> = ({ event, link, children }
                 error: () => setPending(false),
                 next: data => {
                     const elem = document.createElement("a");
-                    elem.href = `${link}?jwt=${data.eventById?.jwtForDownload}`;
+                    const url = new URL(link);
+                    if (data.eventById?.jwtForDownload) {
+                        url.searchParams.set("jwt", data.eventById.jwtForDownload);
+                    }
+                    elem.href = url.toString();
                     elem.target = "_blank";
                     elem.click();
                 },
