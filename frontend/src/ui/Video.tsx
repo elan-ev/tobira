@@ -488,6 +488,7 @@ const StaticFileLink: React.FC<StaticFileLinkProps> = ({ event, link, children }
                     if (data.eventById?.jwtForDownload) {
                         url.searchParams.set("jwt", data.eventById.jwtForDownload);
                     }
+                    url.searchParams.set("download", "1");
                     elem.href = url.toString();
                     elem.target = "_blank";
                     elem.click();
