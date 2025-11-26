@@ -123,27 +123,12 @@ impl Series {
         id: &(dyn ToSql + Sync),
         context: &Context,
     ) -> ApiResult<Option<Self>> {
-        let (selection, mapping) = select!(
-            series: Series,
-            thumbnails: "array(\
-                select search_thumbnail_info_for_event(events.*) \
-                from events \
-                where events.series = series.id)",
-        );
+        let selection = Self::select();
         let query = format!("select {selection} from series where {col} = $1");
         context.db
             .query_opt(&query, &[id])
             .await?
-            .map(|row| {
-                let mut out = Self::from_row(&row, mapping.series);
-                out.thumbnail_stack = LazyLoad::Loaded(SeriesThumbnailStack {
-                    thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(&row)
-                        .into_iter()
-                        .filter_map(|info| ThumbnailInfo::from_search(info, &context))
-                        .collect(),
-                });
-                out
-            })
+            .map(|row| Self::from_row_start(&row))
             .pipe(Ok)
     }
 
@@ -703,8 +688,26 @@ impl Series {
         self.num_videos.unwrap() as i32
     }
 
-    fn thumbnail_stack(&self) -> &SeriesThumbnailStack {
-        self.thumbnail_stack.as_ref().unwrap()
+    async fn thumbnail_stack(&self, context: &Context) -> ApiResult<SeriesThumbnailStack> {
+        if let LazyLoad::Loaded(stack) = &self.thumbnail_stack {
+            return Ok(stack.clone());
+        }
+
+        let query = "select array(\
+            select search_thumbnail_info_for_event(events.*) \
+            from events \
+            where events.series = $1\
+        )";
+
+        let thumbnails = context.db
+            .query_one(query, &[&self.key])
+            .await?
+            .get::<_, Vec<SearchThumbnailInfo>>(0)
+            .into_iter()
+            .filter_map(|info| ThumbnailInfo::from_search(info, context))
+            .collect();
+
+        Ok(SeriesThumbnailStack { thumbnails })
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
