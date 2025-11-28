@@ -57,8 +57,8 @@ impl Query {
     }
 
     /// Returns an event by its Opencast ID.
-    async fn event_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Event>> {
-        AuthorizedEvent::load_by_opencast_id(id, context).await
+    async fn event_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Event>> {
+        AuthorizedEvent::load_by_opencast_id(OpencastId(id), context).await
     }
 
     /// Returns an event by its ID.
@@ -67,8 +67,8 @@ impl Query {
     }
 
     /// Returns a series by its Opencast ID.
-    async fn series_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Series>> {
-        Series::load_by_opencast_id(id, context).await
+    async fn series_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Series>> {
+        Series::load_by_opencast_id(OpencastId(id), context).await
     }
 
     /// Returns a series by its ID.
@@ -77,8 +77,8 @@ impl Query {
     }
 
     /// Returns a playlist by its Opencast ID.
-    async fn playlist_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Playlist>> {
-        Playlist::load_by_opencast_id(id, context).await
+    async fn playlist_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Playlist>> {
+        Playlist::load_by_opencast_id(OpencastId(id), context).await
     }
 
     /// Returns a playlist by its ID.

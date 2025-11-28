@@ -181,7 +181,7 @@ export const OpencastVideoRoute = makeRoute({
 
         const query = graphql`
             query VideoPageByOcIdInRealmQuery(
-                $id: OpencastId!,
+                $id: String!,
                 $realmPath: String!,
                 $listId: ID!,
                 $eventUser: String,
@@ -300,7 +300,7 @@ export const DirectOpencastVideoRoute = makeRoute({
 
         const query = graphql`
             query VideoPageDirectOpencastLinkQuery(
-                $id: OpencastId!,
+                $id: String!,
                 $listId: ID!,
                 $eventUser: String,
                 $eventPassword: String
