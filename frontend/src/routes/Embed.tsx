@@ -60,7 +60,7 @@ export const EmbedOpencastVideoRoute = makeRoute({
 
         const query = graphql`
             query EmbedDirectOpencastQuery(
-                $id: OpencastId!,
+                $id: String!,
                 $eventUser: String,
                 $eventPassword: String)
             {

@@ -744,15 +744,15 @@ type Query {
   """
   realmByPath(path: String!): Realm
   "Returns an event by its Opencast ID."
-  eventByOpencastId(id: OpencastId!): Event
+  eventByOpencastId(id: String!): Event
   "Returns an event by its ID."
   eventById(id: ID!): Event
   "Returns a series by its Opencast ID."
-  seriesByOpencastId(id: OpencastId!): Series
+  seriesByOpencastId(id: String!): Series
   "Returns a series by its ID."
   seriesById(id: ID!): Series
   "Returns a playlist by its Opencast ID."
-  playlistByOpencastId(id: OpencastId!): Playlist
+  playlistByOpencastId(id: String!): Playlist
   "Returns a playlist by its ID."
   playlistById(id: ID!): Playlist
   "Returns the current user."
