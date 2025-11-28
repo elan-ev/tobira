@@ -36,7 +36,7 @@ pub(crate) struct ThumbnailStack {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, FromSql, ToSql, GraphQLScalar)]
 #[postgres(transparent)]
 #[graphql(transparent)]
-pub(crate) struct OpencastId(String);
+pub(crate) struct OpencastId(pub String);
 
 impl From<String> for OpencastId {
     fn from(s: String) -> Self {
