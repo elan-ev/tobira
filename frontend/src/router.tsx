@@ -34,6 +34,10 @@ import { ManageSeriesDetailsRoute } from "./routes/manage/Series/SeriesDetails";
 import { ManageSeriesAccessRoute } from "./routes/manage/Series/SeriesAccess";
 import { CreateSeriesRoute } from "./routes/manage/Series/Create";
 import { AdminDashboardRoute } from "./routes/manage/Admin";
+import { ManagePlaylistsRoute } from "./routes/manage/Playlist";
+import { ManagePlaylistDetailsRoute } from "./routes/manage/Playlist/PlaylistDetails";
+import { ManagePlaylistAccessRoute } from "./routes/manage/Playlist/PlaylistAccess";
+import { CreatePlaylistRoute } from "./routes/manage/Playlist/Create";
 
 
 
@@ -73,9 +77,13 @@ const {
         ManageSeriesAccessRoute,
         ManageSeriesRoute,
         ManageSeriesDetailsRoute,
+        ManagePlaylistsRoute,
+        ManagePlaylistDetailsRoute,
+        ManagePlaylistAccessRoute,
         AdminDashboardRoute,
         UploadRoute,
         CreateSeriesRoute,
+        CreatePlaylistRoute,
         AddChildRoute,
         ManageRealmContentRoute,
         EmbedVideoRoute,

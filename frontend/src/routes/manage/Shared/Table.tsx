@@ -329,7 +329,7 @@ type TableRowItem = {
 });
 
 type TableRowProps<T extends TableRowItem> = {
-    itemType: OcEntity;
+    itemType: OcEntity | "playlist";
     thumbnail: (state: ThumbnailItemState) => ReactNode;
     link: string;
     item: T;
@@ -391,7 +391,7 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
                         : <Link to={props.link} css={{ ...titleLinkStyle }}>{item.title}</Link>
                     }
                 </div>
-                {!isSynced(item) && (
+                {!isSynced(item) && props.itemType !== "playlist" && (
                     <span css={{
                         padding: "0 8px",
                         fontSize: "small",

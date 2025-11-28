@@ -10,6 +10,7 @@ use rand::{rng, Rng, distr::weighted::WeightedIndex, prelude::*};
 use crate::{
     config::Config,
     db,
+    model::OpencastId,
     prelude::*,
 };
 
@@ -65,7 +66,7 @@ enum Block {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 enum List {
-    ByUuid(String),
+    ByUuid(OpencastId),
     ByTitle(String),
 }
 
@@ -133,14 +134,14 @@ fn for_all_empty_realms(realm: &mut Realm, mut f: impl FnMut(&mut Realm)) {
     for_all_realms_rec(realm, &mut f);
 }
 
-// Function to load video lists from the database and store them in a hashmap
-async fn load_entities_from_db(db: &impl GenericClient, list_type: ListType) -> Result<HashMap<String, Vec<String>>> {
+/// Loads video lists from the database and stores them in a hashmap.
+async fn load_entities_from_db(db: &impl GenericClient, list_type: ListType) -> Result<HashMap<String, Vec<OpencastId>>> {
     let query = format!("select title, opencast_id from {}", list_type.table_name());
     let rows = db.query(&query, &[]).await?;
     let mut map = <HashMap<_, Vec<_>>>::new();
     for row in rows {
         if let Some(title) = row.get::<_, Option<String>>("title") {
-            let oc_id = row.get::<_, String>("opencast_id");
+            let oc_id = row.get::<_, OpencastId>("opencast_id");
             map.entry(title).or_default().push(oc_id);
         }
     }
@@ -169,7 +170,7 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
     for_all_empty_realms(root, |realm| {
         // TODO: derive realm name from series block
         // TODO: Don't show title, but do show description
-        let mut add_video_list_blocks = |map: &mut HashMap<String, Vec<String>>, list_type: ListType| {
+        let mut add_video_list_blocks = |map: &mut HashMap<String, Vec<OpencastId>>, list_type: ListType| {
             if let Some(uuids) = map.get_mut(&realm.name) {
                 // We can `unwrap` here because we make sure that there are no empty vectors in the hashmap.
                 let uuid = uuids.pop().unwrap();
@@ -195,7 +196,7 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
         number_of_remaining_realms += 1;
     });
 
-    let list_prob = |map: HashMap<String, Vec<String>>| -> (Vec<String>, f32) {
+    let list_prob = |map: HashMap<String, Vec<OpencastId>>| -> (Vec<OpencastId>, f32) {
         let list = map.into_values().flatten().collect::<Vec<_>>();
         let prob  = (list.len() as f32 / number_of_remaining_realms as f32).min(0.95);
         (list, prob)
@@ -221,7 +222,7 @@ async fn add_dummy_blocks(root: &mut Realm, db: &impl GenericClient) -> Result<(
         // Add a number of text blocks according to the above distribution.
         realm.blocks.extend(std::iter::repeat(text_block).take(num_text_blocks));
 
-        let mut add_video_list = |prob: f32, list: &Vec<String>, list_type: ListType| {
+        let mut add_video_list = |prob: f32, list: &Vec<OpencastId>, list_type: ListType| {
             if rand::random::<f32>() < prob {
                 let uuid = list.choose(&mut rng);
                 realm.blocks.extend(
@@ -363,7 +364,7 @@ impl Block {
                         let query = format!("select id from {table} where opencast_id = $1");
                         let rows = db.query(&query, &[uuid]).await?;
                         if rows.is_empty() {
-                            anyhow::bail!("Video list with UUID '{}' not found!", uuid);
+                            anyhow::bail!("Video list with UUID '{uuid}' not found!");
                         }
                         rows[0].get::<_, i64>(0)
                     }

@@ -21,8 +21,9 @@ use crate::{
     model::{
         ExtraMetadata,
         Key,
+        OpencastId,
         SearchThumbnailInfo,
-        SeriesThumbnailStack,
+        ThumbnailStack,
         SeriesState,
         ThumbnailInfo,
     },
@@ -31,10 +32,15 @@ use crate::{
 };
 
 use self::acl::AclInputEntry;
-use super::block::mutations::DisplayOptions;
 
 use super::{
-    block::{BlockValue, NewSeriesBlock, VideoListLayout, VideoListOrder},
+    block::{
+        BlockValue,
+        NewSeriesBlock,
+        VideoListLayout,
+        VideoListOrder,
+        mutations::DisplayOptions,
+    },
     playlist::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
     shared::{
@@ -53,17 +59,16 @@ use super::{
 #[derive(Clone)]
 pub(crate) struct Series {
     pub(crate) key: Key,
-    pub(crate) opencast_id: String,
+    pub(crate) opencast_id: OpencastId,
     pub(crate) state: SeriesState,
     pub(crate) description: Option<String>,
     pub(crate) title: String,
     pub(crate) created: Option<DateTime<Utc>>,
     pub(crate) updated: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
-    pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
     pub(crate) num_videos: LazyLoad<u32>,
-    pub(crate) thumbnail_stack: LazyLoad<SeriesThumbnailStack>,
+    pub(crate) thumbnail_stack: LazyLoad<ThumbnailStack>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
@@ -74,7 +79,7 @@ impl_from_db!(
             id, opencast_id, state,
             title, description,
             metadata, created,
-            read_roles, write_roles,
+            write_roles,
             tobira_deletion_timestamp,
         },
         updated: "case \
@@ -91,7 +96,6 @@ impl_from_db!(
             created: row.created(),
             updated: row.updated(),
             metadata: row.metadata(),
-            read_roles: row.read_roles(),
             write_roles: row.write_roles(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             description: row.description(),
@@ -114,7 +118,7 @@ impl Series {
         Self::load_by_any_id("id", &key, context).await
     }
 
-    pub(crate) async fn load_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Self>> {
+    pub(crate) async fn load_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Self>> {
         Self::load_by_any_id("opencast_id", &id, context).await
     }
 
@@ -142,23 +146,6 @@ impl Series {
         }
 
         Ok(series)
-    }
-
-    async fn load_acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
-        match (self.read_roles.as_ref(), self.write_roles.as_ref()) {
-            (None, None) => Ok(None),
-            (read_roles, write_roles) => {
-                let raw_roles_sql = "\
-                    select unnest($1::text[]) as role, 'read' as action
-                    union
-                    select unnest($2::text[]) as role, 'write' as action
-                ";
-
-                acl::load_for(context, raw_roles_sql, dbargs![&read_roles, &write_roles])
-                    .await
-                    .map(Some)
-            }
-        }
     }
 
     pub(crate) async fn create(
@@ -238,7 +225,7 @@ impl Series {
     }
 
     pub(crate) async fn add_mount_point(
-        series_oc_id: String,
+        series_oc_id: OpencastId,
         target_path: String,
         context: &Context,
     ) -> ApiResult<Realm> {
@@ -283,7 +270,7 @@ impl Series {
     }
 
     pub(crate) async fn remove_mount_point(
-        series_oc_id: String,
+        series_oc_id: OpencastId,
         path: String,
         context: &Context,
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
@@ -400,7 +387,7 @@ impl Series {
         load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
             let mut out = Self::from_row(row, mapping.series);
             out.num_videos = LazyLoad::Loaded(mapping.num_videos.of::<i64>(row) as u32);
-            out.thumbnail_stack = LazyLoad::Loaded(SeriesThumbnailStack {
+            out.thumbnail_stack = LazyLoad::Loaded(ThumbnailStack {
                 thumbnails: mapping.thumbnails.of::<Vec<SearchThumbnailInfo>>(row)
                     .into_iter()
                     .filter_map(|info| ThumbnailInfo::from_search(info, &context))
@@ -688,7 +675,7 @@ impl Series {
         self.num_videos.unwrap() as i32
     }
 
-    async fn thumbnail_stack(&self, context: &Context) -> ApiResult<SeriesThumbnailStack> {
+    async fn thumbnail_stack(&self, context: &Context) -> ApiResult<ThumbnailStack> {
         if let LazyLoad::Loaded(stack) = &self.thumbnail_stack {
             return Ok(stack.clone());
         }
@@ -707,11 +694,11 @@ impl Series {
             .filter_map(|info| ThumbnailInfo::from_search(info, context))
             .collect();
 
-        Ok(SeriesThumbnailStack { thumbnails })
+        Ok(ThumbnailStack { thumbnails })
     }
 
-    async fn acl(&self, context: &Context) -> ApiResult<Option<Acl>> {
-        self.load_acl(context).await
+    async fn acl(&self, context: &Context) -> ApiResult<Acl> {
+        acl::load_for(context, &acl::query_for("series"), dbargs![&self.key]).await
     }
 
     /// Whether the current user has write access to this series.
@@ -789,7 +776,7 @@ impl OpencastItem for Series {
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct NewSeries {
-    pub(crate) opencast_id: String,
+    pub(crate) opencast_id: OpencastId,
     title: String,
     description: Option<String>,
     // TODO In the future this `struct` can be extended with additional
@@ -818,7 +805,7 @@ define_sort_column_and_order!(
         #[default]
         Created    => "created",
         Updated    => "updated",
-        EventCount => "(select count(*) from events where events.series = series.id)",
+        EntryCount => "(select count(*) from events where events.series = series.id)",
     };
     pub struct SeriesSortOrder
 );
