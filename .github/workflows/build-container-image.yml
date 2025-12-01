@@ -13,7 +13,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME:  nuzat-tabassum//tobira
+  IMAGE_NAME:  nuzat-tabassum/tobira
   DOCKERFILE: util/containers/Dockerfile
 
 jobs:
