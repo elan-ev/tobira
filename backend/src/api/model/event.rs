@@ -31,7 +31,7 @@ use crate::{
         types::{Credentials, EventCaption, EventSegment, EventState, EventTrack},
         util::impl_from_db,
     },
-    model::{ExtraMetadata, Key, SeriesState},
+    model::{ExtraMetadata, Key, OpencastId, SeriesState},
     prelude::*,
     sync::client::{AclInput, OpencastItem}
 };
@@ -56,7 +56,7 @@ use super::{
 pub(crate) struct AuthorizedEvent {
     pub(crate) key: Key,
     pub(crate) series: Option<PreloadedSeries>,
-    pub(crate) opencast_id: String,
+    pub(crate) opencast_id: OpencastId,
     pub(crate) is_live: bool,
 
     pub(crate) title: String,
@@ -78,7 +78,7 @@ pub(crate) struct AuthorizedEvent {
 #[derive(Debug)]
 pub(crate) struct PreloadedSeries {
     pub(crate) key: Key,
-    pub(crate) opencast_id: String,
+    pub(crate) opencast_id: OpencastId,
     pub(crate) title: String,
 }
 
@@ -393,12 +393,7 @@ impl AuthorizedEvent {
     }
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
-        let raw_roles_sql = "\
-            select unnest(read_roles) as role, 'read' as action from events where id = $1
-            union
-            select unnest(write_roles) as role, 'write' as action from events where id = $1
-        ";
-        acl::load_for(context, raw_roles_sql, dbargs![&self.key]).await
+        acl::load_for(context, &acl::query_for("events"), dbargs![&self.key]).await
     }
 
     /// Returns `true` if the realm has a video block with this video
@@ -468,7 +463,7 @@ impl AuthorizedEvent {
         }
     }
 
-    pub(crate) async fn load_by_opencast_id(oc_id: String, context: &Context) -> ApiResult<Option<Event>> {
+    pub(crate) async fn load_by_opencast_id(oc_id: OpencastId, context: &Context) -> ApiResult<Option<Event>> {
         Self::load_by_any_id_impl("opencast_id", &oc_id, context).await
     }
 
@@ -870,7 +865,7 @@ define_sort_column_and_order!(
 
 #[derive(Debug, GraphQLInputObject)]
 pub(crate) struct NewEvent {
-    opencast_id: String,
+    opencast_id: OpencastId,
     title: String,
     description: Option<String>,
     series_id: Option<Id>,

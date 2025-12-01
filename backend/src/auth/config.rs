@@ -351,6 +351,10 @@ pub(crate) struct RoleConfig {
     #[config(default = "ROLE_TOBIRA_CAN_CREATE_SERIES")]
     pub(crate) can_create_series: String,
 
+    /// The role granting permission to create new playlists through Tobira.
+    #[config(default = "ROLE_USER")]
+    pub(crate) can_create_playlists: String,
+
     /// The role granting permission to use Opencast Studio from Tobira.
     #[config(default = "ROLE_TOBIRA_STUDIO")]
     pub(crate) studio: String,
