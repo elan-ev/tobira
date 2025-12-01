@@ -13,7 +13,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME:  nuzat-tabassum/tobira
+  IMAGE_NAME:  elan-ev/tobira
   DOCKERFILE: util/containers/Dockerfile
 
 jobs:
@@ -120,11 +120,11 @@ jobs:
             VERSION=${{ steps.vars.outputs.version }}
 
   manifest:
-  name: Publish multi-arch tags
-  needs: [meta, build]
-  if: github.event_name != 'pull_request'
-  runs-on: ubuntu-latest
-  steps:
+   name: Publish multi-arch tags
+   needs: [meta, build]
+   if: github.event_name != 'pull_request'
+   runs-on: ubuntu-latest
+   steps:
     - name: Set up Buildx
       uses: docker/setup-buildx-action@v3
 
