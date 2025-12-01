@@ -34,6 +34,7 @@ export type ExternalLinkProps = PropsWithChildren<{
         id: string;
         callbackUrl: string;
         callbackSystem: string;
+        lng: string;
     };
 })>;
 
