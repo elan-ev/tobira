@@ -1,10 +1,7 @@
 name: Build & Publish Tobira image
 
 on:
-  pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]          
+  push:  
     tags:     [ 'v*' ]          
 
 permissions:
@@ -15,6 +12,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME:  elan-ev/tobira
   DOCKERFILE: util/containers/Dockerfile
+  VERSIONS_FILE: util/scripts/versions.env
 
 jobs:
   meta:
@@ -24,7 +22,7 @@ jobs:
       tags:   ${{ steps.meta.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Docker metadata
         id: meta
@@ -32,12 +30,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,format=short,prefix=sha-
-            type=raw,value=edge,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/') }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/') }}
-            type=semver,pattern={{major}},enable=${{ startsWith(github.ref, 'refs/tags/') }}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=ref,event=tag
+            type=raw,value=latest
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
 
@@ -58,30 +52,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Extract Node and Rust versions
+      - name: Read Node/Rust versions
         id: tools
+        shell: bash
         run: |
-          nv=$(grep -E '^NODE_VERSION=' util/scripts/build-container-image.sh | head -n1 | cut -d= -f2)
-          rv=$(grep -E '^RUST_VERSION=' util/scripts/build-container-image.sh | head -n1 | cut -d= -f2)
-          echo "node=${nv}" >> "$GITHUB_OUTPUT"
-          echo "rust=${rv}" >> "$GITHUB_OUTPUT"
+          source "${{ env.VERSIONS_FILE }}"
+          echo "node=${NODE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "rust=${RUST_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Common vars
         id: vars
         run: |
-          echo "utc_now=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
-          echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            echo "version=pr-${{ github.event.number }}" >> $GITHUB_OUTPUT
-          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
-          elif [[ "${GITHUB_REF_NAME}" == "${{ github.event.repository.default_branch }}" ]]; then
-            echo "version=edge" >> $GITHUB_OUTPUT
-          else
-            SAFE=$(echo "${GITHUB_REF_NAME}" | sed -E 's/[^A-Za-z0-9._-]+/-/g')
-            echo "version=${SAFE}" >> $GITHUB_OUTPUT
-          fi
+          set -euo pipefail
+          echo "utc_now=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT" 
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -103,14 +87,12 @@ jobs:
           context: .
           file: ${{ env.DOCKERFILE }}
           platforms: ${{ matrix.platform }}
-          push: ${{ github.event_name != 'pull_request' }}     
+          push: true
           provenance: false
           labels: ${{ needs.meta.outputs.labels }}             
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.version }}-${{ matrix.name }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ steps.vars.outputs.short_sha }}-${{ matrix.name }}
+           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.version }}-${{ matrix.name }}
+           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-${{ matrix.name }}
           build-args: |
             NODE_VERSION=${{ steps.tools.outputs.node }}
             RUST_VERSION=${{ steps.tools.outputs.rust }}
@@ -125,6 +107,7 @@ jobs:
    if: github.event_name != 'pull_request'
    runs-on: ubuntu-latest
    steps:
+
     - name: Set up Buildx
       uses: docker/setup-buildx-action@v3
 
