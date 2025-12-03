@@ -24,7 +24,7 @@ export const ManageVideoAccessRoute = makeManageVideoRoute(
     (event, data) => (
         <AclPage note={event.hostRealms.length < 1 && <UnlistedNote />} breadcrumbTails={[
             { label: i18n.t("manage.video.table"), link: ManageVideosRoute.url },
-            { label: event.title, link: ManageVideoDetailsRoute.url({ videoId: event.id }) },
+            { label: event.title, link: ManageVideoDetailsRoute.url({ id: event.id }) },
         ]}>
             <EventAclEditor {...{ event, data }} />
         </AclPage>
@@ -91,7 +91,7 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
             <Card kind="info" iconPos="left" css={{ fontSize: 14, marginBottom: 10 }}>
                 <Trans i18nKey="acl.locked-to-series">
                     series
-                    <Link to={ManageSeriesAccessRoute.url({ seriesId: event.series.id })} />
+                    <Link to={ManageSeriesAccessRoute.url({ id: event.series.id })} />
                 </Trans>
             </Card>
         )}

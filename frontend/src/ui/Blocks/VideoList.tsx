@@ -19,7 +19,7 @@ import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
 import {
     LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
-    LuRss, LuLink,
+    LuRss, LuLink, LuSettings,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
@@ -45,6 +45,7 @@ import { isRealUser, useUser } from "../../User";
 import { LoginLink } from "../../routes/util";
 import { QrCodeButton, ShareButton } from "../ShareButton";
 import { CopyableInput } from "../Input";
+import { LinkButton } from "../LinkButton";
 
 
 
@@ -95,40 +96,47 @@ type Entries = Extract<
     { __typename: "AuthorizedPlaylist" }
 >["entries"];
 
-export type VideoListBlockProps = {
-    listId?: string;
-    realmPath: string | null;
-    activeEventId?: string;
-    allowOriginalOrder: boolean;
-    initialOrder: Order;
-    initialLayout?: VideoListLayout;
+export type VideoListMetadata = {
     title?: string;
     description?: string;
     timestamp?: string;
     creators?: string[];
+    canWrite?: boolean;
+};
+
+export type VideoListDisplayOptions = {
+    initialOrder: Order;
+    allowOriginalOrder: boolean;
+    initialLayout?: VideoListLayout;
+};
+
+export type VideoListBlockProps = {
+    listId?: string;
+    realmPath: string | null;
+    activeEventId?: string;
+    displayOptions: VideoListDisplayOptions;
+    metadata?: VideoListMetadata;
     shareInfo: VideoListShareButtonProps,
     isPlaylist?: boolean;
     listEntries: Entries;
     editMode: boolean;
+    linkToManagePage?: string;
 }
 
 export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     listId,
     realmPath,
     activeEventId,
-    allowOriginalOrder,
-    initialOrder,
-    initialLayout = "GALLERY",
-    title,
-    description,
-    timestamp,
-    creators,
+    displayOptions,
+    metadata,
     shareInfo,
     isPlaylist = false,
     listEntries,
     editMode,
+    linkToManagePage,
 }) => {
     const { t, i18n } = useTranslation();
+    const { initialOrder, allowOriginalOrder, initialLayout = "GALLERY" } = displayOptions;
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
     const user = useUser();
 
@@ -164,11 +172,14 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
 
     const eventsNotEmpty = items.length > 0;
     const hasHiddenItems = missingItems + unauthorizedItems > 0;
+    const showManageLink = metadata?.canWrite && linkToManagePage
+        && user !== "none" && user !== "unknown";
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
-            {...{ title, description, timestamp, creators, shareInfo, initialLayout, isPlaylist }}
+            {...showManageLink && { linkToManagePage }}
+            {...{ metadata, shareInfo, initialLayout, isPlaylist }}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
@@ -302,17 +313,14 @@ const orderItems = (
     return { mainItems, upcomingLiveEvents, missingItems, unauthorizedItems };
 };
 
-
 type VideoListBlockContainerProps = {
-    title?: string;
-    description?: string | null;
-    timestamp?: string;
-    creators?: string[];
+    metadata?: VideoListMetadata;
     shareInfo?: VideoListShareButtonProps,
     children: ReactNode;
     showViewOptions: boolean;
     initialLayout?: VideoListLayout;
     isPlaylist?: boolean;
+    linkToManagePage?: string;
 };
 
 type LayoutContext = {
@@ -326,9 +334,10 @@ const LayoutContext = createContext<LayoutContext>({
 });
 
 export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = ({
-    title, description, timestamp, creators, shareInfo, children,
-    showViewOptions, initialLayout = "GALLERY",
+    metadata, shareInfo, children, showViewOptions,
+    initialLayout = "GALLERY", linkToManagePage,
 }) => {
+    const { title, description, creators, timestamp } = metadata ?? {};
     const [layoutState, setLayoutState] = useState<VideoListLayout>(initialLayout);
     const isDark = useColorScheme().scheme === "dark";
     const hasMetadata = description || timestamp || (creators && creators.length > 0);
@@ -400,6 +409,7 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                                 flexWrap: "wrap",
                             },
                         }}>
+                            {linkToManagePage && <VideoListManageButton link={linkToManagePage} />}
                             {shareInfo && <VideoListShareButton {...shareInfo} />}
                             {showViewOptions && <>
                                 <OrderMenu />
@@ -452,6 +462,21 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
         height: 31,
         borderRadius: 4,
     }} />;
+};
+
+
+export const VideoListManageButton: React.FC<{ link: string }> = ({ link }) => {
+    const { t } = useTranslation();
+    return <LinkButton to={link} css={{
+        // Todo: why/when would this be disabled?
+        "&:not([disabled])": { color: COLORS.primary0 },
+        padding: 12,
+        height: 31,
+        borderRadius: 4,
+    }}>
+        <LuSettings size={16} />
+        {t("user.manage")}
+    </LinkButton>;
 };
 
 
