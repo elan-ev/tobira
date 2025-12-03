@@ -1071,11 +1071,12 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
 
                 return <>
                     <div>
+                        <CopyableInput label={t("share.copy-embed-url")} value={url.toString()} />
                         <CopyableInput
                             label={t("share.copy-embed-code")}
                             value={embedCode}
                             multiline
-                            css={{ height: 75 }}
+                            css={{ height: 45 }}
                         />
                         {!event.isLive && <TimeInputWithCheckbox
                             checkboxChecked={addEmbedTimestamp}
