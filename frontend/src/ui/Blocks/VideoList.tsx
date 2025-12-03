@@ -172,11 +172,14 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
 
     const eventsNotEmpty = items.length > 0;
     const hasHiddenItems = missingItems + unauthorizedItems > 0;
+    const showManageLink = metadata?.canWrite && linkToManagePage
+        && user !== "none" && user !== "unknown";
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
-            {...{ metadata, shareInfo, initialLayout, isPlaylist, linkToManagePage }}
+            {...showManageLink && { linkToManagePage }}
+            {...{ metadata, shareInfo, initialLayout, isPlaylist }}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
@@ -468,6 +471,8 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
 export const VideoListManageButton: React.FC<{ link: string }> = ({ link }) => {
     const { t } = useTranslation();
     return <LinkButton to={link} css={{
+        // Todo: why/when would this be disabled?
+        "&:not([disabled])": { color: COLORS.primary0 },
         padding: 12,
         height: 31,
         borderRadius: 4,
