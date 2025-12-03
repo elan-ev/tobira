@@ -216,6 +216,7 @@ share:
   show-qr-code: QR Code anzeigen
   copy-link: Link in Zwischenablage kopieren
   copy-rss: RSS Link in Zwischenablage kopieren
+  copy-embed-url: Einbettungs-URL in Zwischenablage kopieren
   copy-embed-code: Einbettungscode in Zwischenablage kopieren
   copy-direct-link-to-clipboard: Videolink in Zwischenablage kopieren
   set-time: 'Starten bei: '

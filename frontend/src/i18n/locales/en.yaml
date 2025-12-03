@@ -214,6 +214,7 @@ share:
   show-qr-code: Show QR code
   copy-link: Copy link to clipboard
   copy-rss: Copy RSS link to clipboard
+  copy-embed-url: Copy embed url to clipboard
   copy-embed-code: Copy embed code to clipboard
   copy-direct-link-to-clipboard: Copy video link to clipboard
   set-time: 'Start at: '
