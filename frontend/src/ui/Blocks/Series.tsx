@@ -12,6 +12,7 @@ import {
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
 import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
+import { ManageSeriesDetailsRoute } from "../../routes/manage/Series/SeriesDetails";
 
 
 // ==============================================================================================
@@ -128,5 +129,6 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
                 : `${props.realmPath.replace(/\/$/u, "")}/s/${seriesKey}`,
             rssUrl: `/~rss/series/${seriesKey}`,
         }}
+        linkToManagePage={ManageSeriesDetailsRoute.url({ id: series.id })}
     />;
 };

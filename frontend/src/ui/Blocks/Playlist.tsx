@@ -130,5 +130,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
             shareUrl: `/!p/${playlistKey}`,
             rssUrl: `/~rss/playlist/${playlistKey}`,
         }}
+        // TODO: Once playlist PR is merged, add:
+        // linkToManagePage={ManagePlaylistDetailsRoute.url({ id: playlist.id })}
     />;
 };
