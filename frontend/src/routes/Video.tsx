@@ -1072,18 +1072,17 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
                 return <>
                     <div>
                         <CopyableInput
-                            label={t("share.copy-embed-code")}
-                            value={embedCode}
-                            multiline
-                            css={{ height: 75 }}
+                            label={t("share.copy-embed-url")}
+                            value={url.toString()}
+                            css={{ marginBottom: 14 }}
                         />
-                        {!event.isLive && <TimeInputWithCheckbox
-                            checkboxChecked={addEmbedTimestamp}
-                            setCheckboxChecked={setAddEmbedTimestamp}
-                            {...{ timestamp, setTimestamp }}
-                        />}
+                        <CopyableInput label={t("share.copy-embed-code")} value={embedCode} />
                     </div>
-                    <QrCodeButton target={embedCode} label={t("share.embed")} />
+                    {!event.isLive && <TimeInputWithCheckbox
+                        checkboxChecked={addEmbedTimestamp}
+                        setCheckboxChecked={setAddEmbedTimestamp}
+                        {...{ timestamp, setTimestamp }}
+                    />}
                 </>;
             },
         },
