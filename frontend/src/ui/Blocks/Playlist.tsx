@@ -108,14 +108,17 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
 
     const playlistKey = keyOfId(playlist.id);
     return <VideoListBlock
-        initialLayout={props.layout}
-        initialOrder={
-            (props.order === "%future added value" ? undefined : props.order) ?? "ORIGINAL"
-        }
-        allowOriginalOrder
-        {...{ title }}
-        description={(props.showMetadata && playlist.description) || undefined}
-        creators={props.showMetadata ? [playlist.creator] : undefined}
+        displayOptions={{
+            initialLayout: props.layout,
+            initialOrder: (props.order === "%future added value" ? undefined : props.order)
+                ?? "ORIGINAL",
+            allowOriginalOrder: true,
+        }}
+        metadata={{
+            title,
+            description: (props.showMetadata && playlist.description) || undefined,
+            creators: props.showMetadata ? [playlist.creator] : undefined,
+        }}
         activeEventId={props.activeEventId}
         realmPath={props.realmPath}
         isPlaylist
@@ -131,6 +134,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
             rssUrl: `/~rss/playlist/${playlistKey}`,
         }}
         // TODO: Once playlist PR is merged, add:
+        // (or just add that to the PR if this is merged prior)
         // linkToManagePage={ManagePlaylistDetailsRoute.url({ id: playlist.id })}
     />;
 };
