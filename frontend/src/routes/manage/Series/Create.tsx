@@ -61,7 +61,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
         {...{ commit, inFlight, knownRolesRef, canUserCreateList }}
         kind="series"
         returnPath={response =>
-            ManageSeriesDetailsRoute.url({ seriesId: response.createSeries.id })
+            ManageSeriesDetailsRoute.url({ id: response.createSeries.id })
         }
     />;
 };

@@ -96,17 +96,26 @@ type Entries = Extract<
     { __typename: "AuthorizedPlaylist" }
 >["entries"];
 
-export type VideoListBlockProps = {
-    listId?: string;
-    realmPath: string | null;
-    activeEventId?: string;
-    allowOriginalOrder: boolean;
-    initialOrder: Order;
-    initialLayout?: VideoListLayout;
+export type VideoListMetadata = {
     title?: string;
     description?: string;
     timestamp?: string;
     creators?: string[];
+    canWrite?: boolean;
+};
+
+export type VideoListDisplayOptions = {
+    initialOrder: Order;
+    allowOriginalOrder: boolean;
+    initialLayout?: VideoListLayout;
+};
+
+export type VideoListBlockProps = {
+    listId?: string;
+    realmPath: string | null;
+    activeEventId?: string;
+    displayOptions: VideoListDisplayOptions;
+    metadata?: VideoListMetadata;
     shareInfo: VideoListShareButtonProps,
     isPlaylist?: boolean;
     listEntries: Entries;
@@ -118,13 +127,8 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     listId,
     realmPath,
     activeEventId,
-    allowOriginalOrder,
-    initialOrder,
-    initialLayout = "GALLERY",
-    title,
-    description,
-    timestamp,
-    creators,
+    displayOptions,
+    metadata,
     shareInfo,
     isPlaylist = false,
     listEntries,
@@ -132,6 +136,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     linkToManagePage,
 }) => {
     const { t, i18n } = useTranslation();
+    const { initialOrder, allowOriginalOrder, initialLayout = "GALLERY" } = displayOptions;
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
     const user = useUser();
 
@@ -167,7 +172,6 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
 
     const eventsNotEmpty = items.length > 0;
     const hasHiddenItems = missingItems + unauthorizedItems > 0;
-    const metadata = { title, description, creators, timestamp };
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
         <VideoListBlockContainer
@@ -309,15 +313,8 @@ const orderItems = (
     return { mainItems, upcomingLiveEvents, missingItems, unauthorizedItems };
 };
 
-type ItemMetadata = {
-    title?: string;
-    description?: string | null;
-    creators?: string[];
-    timestamp?: string;
-}
-
 type VideoListBlockContainerProps = {
-    metadata?: ItemMetadata;
+    metadata?: VideoListMetadata;
     shareInfo?: VideoListShareButtonProps,
     children: ReactNode;
     showViewOptions: boolean;
