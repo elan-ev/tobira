@@ -128,15 +128,3 @@ export const NotReadyNote: React.FC<{ kind: "series" | "video"}> = ({ kind }) =>
         tooltip={t(`${kind}.not-ready.text`)}
     />;
 };
-
-/**
- * Returns `true` if the current route is a video, series or playlist page.
- * Why not use `[svp]` instead of the prefix?
- * When navigating to one of these single item pages which renders an element
- * depending on this condition, the element could pop in for a (split-)second.
- * This mainly became apparent when clicking on a video in a (non series page)
- * series block which uses this condition to decide whether to show a button.
- */
-
-export const isSingleItemPage = (prefix: "s" | "v" | "p") =>
-    new RegExp(`/!?${prefix}/`).test(window.location.pathname);
