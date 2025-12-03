@@ -3,7 +3,7 @@ import { LuInfo, LuShieldCheck, LuPlay, LuPenLine } from "react-icons/lu";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
-import { makeRoute, Route } from "../../../rauta";
+import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import { NotFound } from "../../NotFound";
@@ -15,6 +15,7 @@ import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
 import { ReturnLink, ManageNav, ManageSubPageType } from "../Shared/Nav";
+import { ManageRoute } from "../Shared/Details";
 
 
 export const PAGE_WIDTH = 1100;
@@ -31,9 +32,9 @@ export const makeManageVideoRoute = (
     path: `/${string}` | "",
     render: (event: AuthorizedEvent, data: QueryResponse) => JSX.Element,
     options?: { fetchWorkflowState?: boolean },
-): Route & { url: (args: { videoId: string }) => string } => (
+): ManageRoute => (
     makeRoute({
-        url: ({ videoId }: { videoId: string }) => `/~manage/videos/${keyOfId(videoId)}${path}`,
+        url: ({ id }: { id: string }) => `/~manage/videos/${keyOfId(id)}${path}`,
         match: url => {
             const regex = new RegExp(`^/~manage/videos/(${b64regex}+)${path}/?$`, "u");
             const params = regex.exec(url.pathname);

@@ -3,7 +3,7 @@ import { LuShieldCheck, LuPenLine, LuEye, LuTrash } from "react-icons/lu";
 import { graphql } from "react-relay";
 
 import { RootLoader } from "../../../layout/Root";
-import { makeRoute, Route } from "../../../rauta";
+import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotFound } from "../../NotFound";
 import { b64regex } from "../../util";
@@ -17,6 +17,7 @@ import { COLORS } from "../../../color";
 import { ThumbnailStack } from "../../../ui/ThumbnailStack";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { MovingTruck } from "../../../ui/Waiting";
+import { ManageRoute } from "../Shared/Details";
 
 
 export const PAGE_WIDTH = 1100;
@@ -31,9 +32,9 @@ export const makeManageSeriesRoute = (
     page: ManageSeriesSubPageType,
     path: `/${string}` | "",
     render: (series: Series, data: QueryResponse) => JSX.Element,
-): Route & { url: (args: { seriesId: string }) => string } => (
+): ManageRoute => (
     makeRoute({
-        url: ({ seriesId }: { seriesId: string }) => `/~manage/series/${keyOfId(seriesId)}${path}`,
+        url: ({ id }: { id: string }) => `/~manage/series/${keyOfId(id)}${path}`,
         match: url => {
             const regex = new RegExp(`^/~manage/series/(${b64regex}+)${path}/?$`, "u");
             const params = regex.exec(url.pathname);

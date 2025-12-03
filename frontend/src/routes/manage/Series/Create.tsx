@@ -108,7 +108,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
             },
             onCompleted: response => {
                 const returnPath = ManageSeriesDetailsRoute.url({
-                    seriesId: response.createSeries.id,
+                    id: response.createSeries.id,
                 });
                 setSuccess(true);
                 setNotification({
