@@ -20,6 +20,7 @@ import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 import { Link, useRouter } from "../../../router";
 import { useNotification } from "../../../ui/NotificationContext";
 import { preciseDateTime, preferredLocaleForLang } from "../../../ui/time";
+import { Route } from "../../../rauta";
 
 
 type Item = OpencastEntity & {
@@ -37,6 +38,8 @@ type PageProps<T> = {
     };
     sections: (item: T) => ReactNode[];
 };
+
+export type ManageRoute = Route & { url: (args: { id: string }) => string };
 
 export const DetailsPage = <T extends Item>({
     item,
