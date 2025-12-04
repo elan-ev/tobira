@@ -201,6 +201,9 @@ series:
       Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
       in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
     label: nicht synchronisiert
+  manage: Diese Serie verwalten
+  share: Diese Serie teilen
+
 
 playlist:
   singular: Playlist

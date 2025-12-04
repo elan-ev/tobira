@@ -199,6 +199,8 @@ series:
       completamente. Questo dovrebbe avvenire automaticamente a breve. Riprovare
       tra qualche minuto.
     label: non sincronizzata
+  manage: Gestire questa serie # confirm
+  share: Condividere questa serie # confirm
 
 playlist:
   singular: Playlist
