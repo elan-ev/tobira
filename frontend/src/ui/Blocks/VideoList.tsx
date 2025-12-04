@@ -352,71 +352,96 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
         }}>
             <>
                 <div css={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    ...title && hasMetadata && { flexDirection: "column" },
+                    display: "grid",
+                    gridTemplateColumns: (title || hasMetadata)
+                        ? "minmax(200px, 1fr) fit-content(40%)"
+                        : "1fr",
+                    gridTemplateRows: "auto auto",
+                    columnGap: 12,
+                    rowGap: 8,
+                    alignItems: "start",
+
+                    // Stack vertically on small screens
                     [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
-                        flexWrap: "wrap",
+                        gridTemplateColumns: "1fr",
+                        gridTemplateRows: "auto auto auto",
                     },
                 }}>
+                    {/* Title */}
                     {title && <h2 css={{
-                        display: "inline-block",
                         padding: "8px 12px",
                         color: isDark ? COLORS.neutral90 : COLORS.neutral80,
                         fontSize: 20,
                         lineHeight: 1.3,
-                        maxWidth: "100%",
+                        minWidth: 0,
                     }}>{title}</h2>}
+
+                    {/* Buttons */}
                     <div css={{
+                        gridColumn: (title || hasMetadata) ? 2 : 1,
+                        gridRow: (title || hasMetadata) ? "1 / 3" : 1,
                         display: "flex",
-                        flexDirection: "row",
-                        flexGrow: 1,
-                        maxWidth: "100%",
+                        justifyContent: "flex-end",
+                        alignItems: "flex-start",
+                        alignContent: "space-between",
+                        flexWrap: "wrap-reverse",
+                        gap: 8,
+                        padding: 5,
+                        fontSize: 14,
+
+                        // Move buttons to bottom row on small screens
                         [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
+                            gridColumn: 1,
+                            gridRow: 3,
+                            alignContent: "flex-start",
                             flexWrap: "wrap",
                         },
                     }}>
-                        <div>
-                            {(timestamp || (creators && creators.length > 0)) && <DateAndCreators
-                                timestamp={timestamp}
-                                isLive={false}
-                                creators={creators}
-                                css={{
-                                    margin: "0px 12px",
-                                    gap: 16,
-                                    "> *": {
-                                        padding: "4px 6px",
-                                        borderRadius: 4,
-                                        background: COLORS.neutral15,
-                                    },
-                                }}
-                            />}
-                            {description && <CollapsibleDescription
-                                type="series"
-                                bottomPadding={32}
-                                {...{ description }}
-                            />}
-                        </div>
-                        <div css={{
+                        {(linkToManagePage || shareInfo) && <div css={{
                             display: "flex",
-                            alignItems: "center",
-                            alignSelf: description ? "flex-end" : "flex-start",
-                            marginLeft: "auto",
-                            fontSize: 14,
-                            gap: 16,
-                            padding: 5,
-                            [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
-                                flexWrap: "wrap",
-                            },
+                            gap: 8,
+                            flexShrink: 0,
+                            minWidth: "fit-content",
                         }}>
-                            {linkToManagePage && <VideoListManageButton link={linkToManagePage} />}
-                            {shareInfo && <VideoListShareButton {...shareInfo} />}
-                            {showViewOptions && <>
-                                <OrderMenu />
-                                <LayoutMenu />
-                            </>}
-                        </div>
+                            {linkToManagePage && <VideoListManageButton
+                                link={linkToManagePage}
+                                hideLabel
+                            />}
+                            {shareInfo && <VideoListShareButton {...shareInfo} hideLabel />}
+                        </div>}
+                        {showViewOptions && <div css={{
+                            display: "flex",
+                            gap: 8,
+                            flexShrink: 0,
+                            minWidth: "fit-content",
+                        }}>
+                            <OrderMenu />
+                            <LayoutMenu />
+                        </div>}
                     </div>
+
+                    {/* Metadata */}
+                    {hasMetadata && <div css={{ gridRow: 2, maxWidth: "85ch" }}>
+                        {(timestamp || (creators && creators.length > 0)) && <DateAndCreators
+                            timestamp={timestamp}
+                            isLive={false}
+                            creators={creators}
+                            css={{
+                                margin: "0px 12px",
+                                gap: 16,
+                                "> *": {
+                                    padding: "4px 6px",
+                                    borderRadius: 4,
+                                    background: COLORS.neutral15,
+                                },
+                            }}
+                        />}
+                        {description && <CollapsibleDescription
+                            type="series"
+                            bottomPadding={32}
+                            {...{ description }}
+                        />}
+                    </div>}
                 </div>
                 {hasMetadata && <hr css={{ margin: "12px 6px 20px 6px" }} />}
             </>
@@ -429,10 +454,11 @@ type VideoListShareButtonProps = {
     shareUrl: string;
     rssUrl: string;
     className?: string;
+    hideLabel?: boolean;
 };
 
 export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
-    shareUrl, rssUrl, className,
+    shareUrl, rssUrl, className, hideLabel = false,
 }) => {
     const { t } = useTranslation();
 
@@ -457,15 +483,22 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
             </>,
         },
     };
-    return <ShareButton height={180} {...{ tabs, className }} css={{
+    return <ShareButton height={180} {...{ tabs, className, hideLabel }} css={{
         padding: 12,
         height: 31,
         borderRadius: 4,
     }} />;
 };
 
+type VideoListManageButtonProps = {
+    link: string;
+    hideLabel?: boolean;
+}
 
-export const VideoListManageButton: React.FC<{ link: string }> = ({ link }) => {
+
+export const VideoListManageButton: React.FC<VideoListManageButtonProps> = ({
+    link, hideLabel = false,
+}) => {
     const { t } = useTranslation();
     return <LinkButton to={link} css={{
         // Todo: why/when would this be disabled?
@@ -475,7 +508,7 @@ export const VideoListManageButton: React.FC<{ link: string }> = ({ link }) => {
         borderRadius: 4,
     }}>
         <LuSettings size={16} />
-        {t("user.manage")}
+        {!hideLabel && t("user.manage")}
     </LinkButton>;
 };
 
