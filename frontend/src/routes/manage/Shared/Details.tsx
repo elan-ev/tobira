@@ -199,7 +199,7 @@ export const ButtonSection: React.FC<PropsWithChildren> = ({ children }) => (
 type DeleteMutationParams = MutationParameters & { variables: { id: string } }
 type DeleteButtonProps<TMutation extends DeleteMutationParams> = PropsWithChildren<{
     item: Item
-    kind: OcEntity | "playlist";
+    kind: OcEntity;
     commit: (config: UseMutationConfig<TMutation>) => Disposable;
     returnPath: string;
 }>;
@@ -268,7 +268,7 @@ type HostRealmsProps = {
         readonly path: string;
     }[];
     itemLink: (path: string) => ReactNode;
-    kind: OcEntity | "playlist";
+    kind: OcEntity;
 };
 
 export const HostRealms: React.FC<HostRealmsProps> = ({ hostRealms, itemLink, kind }) => {

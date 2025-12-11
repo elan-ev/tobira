@@ -330,7 +330,7 @@ type TableRowItem = {
 });
 
 type TableRowProps<T extends TableRowItem> = {
-    itemType: OcEntity | "playlist";
+    itemType: OcEntity;
     thumbnail: (state: ThumbnailItemState) => ReactNode;
     link: string;
     item: T;
