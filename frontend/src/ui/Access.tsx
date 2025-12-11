@@ -65,7 +65,7 @@ type SelectOption = {
     label: string;
 }
 
-export type AclSubject = OcEntity | "playlist" | "realm";
+export type AclSubject = OcEntity | "realm";
 
 type AclContext = {
     itemType: AclSubject;

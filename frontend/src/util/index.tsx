@@ -328,7 +328,7 @@ export const Inertable: React.FC<InertableProps> = ({ children, isInert, classNa
     </div>
 );
 
-export type OcEntity = "series" | "video";
+export type OcEntity = "series" | "video" | "playlist";
 
 export const floatingMenuProps = (isDark: boolean) => ({
     padding: 0,
