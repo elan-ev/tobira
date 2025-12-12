@@ -17,6 +17,8 @@ use tap::TapFallible;
 use crate::{
     api::{model::acl::AclInputEntry, Context},
     config::{Config, HttpHost},
+    db::types::PlaylistEntry,
+    model::OpencastId,
     prelude::*,
     sync::harvest::HarvestResponse,
     util::download_body,
@@ -54,7 +56,7 @@ impl OcClient {
 
     pub(crate) async fn get_tobira_api_version(&self) -> Result<VersionResponse> {
         trace!("Sending request to '{}'", Self::VERSION_PATH);
-        let (uri, req) = self.build_authed_req(&self.sync_node, Self::VERSION_PATH);
+        let (req, uri) = self.build_authed_req(&self.sync_node, Self::VERSION_PATH);
 
         let response = self.http_client.request(req)
             .await
@@ -86,7 +88,7 @@ impl OcClient {
             since.timestamp_millis(),
             preferred_amount,
         );
-        let (uri, req) = self.build_authed_req(&self.sync_node, &pq);
+        let (req, uri) = self.build_authed_req(&self.sync_node, &pq);
 
         trace!("Sending harvest request (since = {:?}): GET {}", since, uri);
 
@@ -119,7 +121,8 @@ impl OcClient {
     /// Sends the given serialized JSON to the `/stats` endpoint in Opencast.
     pub async fn send_stats(&self, stats: String) -> Result<Response<Incoming>> {
         // TODO: maybe introduce configurable node for this
-        let req = self.authed_req_builder(&self.external_api_node, Self::STATS_PATH)
+        let (builder, _) = self.authed_req_builder(&self.external_api_node, Self::STATS_PATH);
+        let req = builder
             .method(http::Method::POST)
             .header(http::header::CONTENT_TYPE, "application/json")
             .body(stats.into())
@@ -129,10 +132,10 @@ impl OcClient {
     }
 
     pub async fn external_api_versions(&self) -> Result<ExternalApiVersions> {
-        let req = self.authed_req_builder(&self.external_api_node, "/api/version")
+        let (builder, uri) = self.authed_req_builder(&self.external_api_node, "/api/version");
+        let req = builder
             .body(RequestBody::empty())
             .expect("failed to build request");
-        let uri = req.uri().clone();
         let response = self.http_client.request(req)
             .await
             .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
@@ -147,7 +150,8 @@ impl OcClient {
             endpoint = endpoint.endpoint_path(),
             oc_id = endpoint.id(),
         );
-        let req = self.authed_req_builder(&self.external_api_node, &pq)
+        let (builder, _) = self.authed_req_builder(&self.external_api_node, &pq);
+        let req = builder
             .method(http::Method::DELETE)
             .body(RequestBody::empty())
             .expect("failed to build request");
@@ -163,28 +167,16 @@ impl OcClient {
     ) -> Result<Response<Incoming>> {
         let oc_id = endpoint.id();
         let pq = format!("/api/{}/{oc_id}/acl", endpoint.endpoint_path());
-        let mut access_policy = Vec::new();
 
-        // Temporary solution to add custom and preview roles
+        let mut access_policy = build_access_policy(acl);
+        // Temporary solution to add custom and preview roles (`extra roles`).
         // Todo: remove again once frontend sends these roles.
-        let extra_roles = endpoint.extra_roles(context, oc_id).await?;
-        access_policy.extend(extra_roles);
+        access_policy.extend(endpoint.extra_roles(context, oc_id).await?);
 
-        for entry in acl {
-            access_policy.extend(
-                entry.actions.iter().map(|action| AclInput {
-                    allow: true,
-                    action: action.clone(),
-                    role: entry.role.clone(),
-                }),
-            );
-        }
+        let acl_json = serde_json::to_string(&access_policy).expect("Failed to serialize");
 
-        let params = Serializer::new(String::new())
-            .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
-            .finish();
-
-        self.send_put_request(&pq, params).await
+        let (req, _uri) = self.build_form_request(&pq, http::Method::PUT, &[("acl", &acl_json)]);
+        self.http_client.request(req).await.map_err(Into::into)
     }
 
    pub async fn update_metadata<T: OpencastItem>(
@@ -199,33 +191,28 @@ impl OcClient {
             flavor = endpoint.metadata_flavor(),
         );
 
-        let params = Serializer::new(String::new())
-            .append_pair("metadata", &serde_json::to_string(metadata).expect("Failed to serialize"))
-            .finish();
+        let metadata_json = serde_json::to_string(metadata).expect("Failed to serialize");
 
-        self.send_put_request(&pq, params).await
+        let (req, _uri) = self.build_form_request(&pq, http::Method::PUT, &[
+            ("metadata", &metadata_json),
+        ]);
+        self.http_client.request(req).await.map_err(Into::into)
     }
 
     pub async fn start_workflow(&self, oc_id: &str, workflow_id: &str) -> Result<Response<Incoming>> {
-        let params = Serializer::new(String::new())
-            .append_pair("event_identifier", &oc_id)
-            .append_pair("workflow_definition_identifier", &workflow_id)
-            .finish();
-        let req = self.authed_req_builder(&self.external_api_node, "/api/workflows")
-            .method(http::Method::POST)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
-
+        let (req, _uri) = self.build_form_request("/api/workflows", http::Method::POST, &[
+            ("event_identifier", oc_id),
+            ("workflow_definition_identifier", workflow_id),
+        ]);
         self.http_client.request(req).await.map_err(Into::into)
     }
 
     pub async fn has_active_workflows(&self, oc_id: &str) -> Result<bool> {
         let pq = format!("/api/events/{oc_id}");
-        let req = self.authed_req_builder(&self.external_api_node, &pq)
+        let (builder, uri) = self.authed_req_builder(&self.external_api_node, &pq);
+        let req = builder
             .body(RequestBody::empty())
             .expect("failed to build request");
-        let uri = req.uri().clone();
         let response = self.http_client.request(req)
             .await
             .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
@@ -243,14 +230,7 @@ impl OcClient {
         title: &str,
         description: Option<&str>,
     ) -> Result<CreateSeriesResponse> {
-        let access_policy: Vec<AclInput> = acl.iter()
-            .flat_map(|entry| entry.actions.iter()
-                .map(|action| AclInput {
-                    allow: true,
-                    action: action.clone(),
-                    role: entry.role.clone(),
-                }))
-            .collect();
+        let access_policy = build_access_policy(acl);
 
         let metadata = serde_json::json!([{
             "flavor": "dublincore/series",
@@ -266,18 +246,13 @@ impl OcClient {
             ]
         }]);
 
-        let params = Serializer::new(String::new())
-            .append_pair("acl", &serde_json::to_string(&access_policy).expect("Failed to serialize"))
-            .append_pair("metadata", &serde_json::to_string(&metadata).expect("Failed to serialize"))
-            .finish();
+        let acl_json = serde_json::to_string(&access_policy).expect("Failed to serialize");
+        let metadata_json = serde_json::to_string(&metadata).expect("Failed to serialize");
 
-        let req = self.authed_req_builder(&self.external_api_node, "/api/series")
-            .method(http::Method::POST)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
-
-        let uri = req.uri().clone();
+        let (req, uri) = self.build_form_request("/api/series", http::Method::POST, &[
+            ("acl", &acl_json),
+            ("metadata", &metadata_json),
+        ]);
         let response = self.http_client.request(req).await
             .with_context(|| format!("HTTP request failed (uri: '{uri}'"))?;
 
@@ -287,38 +262,126 @@ impl OcClient {
     }
 
 
-    async fn send_put_request(&self, path_and_query: &str, params: String) -> Result<Response<Incoming>> {
-        let req = self.authed_req_builder(&self.external_api_node, &path_and_query)
-            .method(http::Method::PUT)
-            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(params.into())
-            .expect("failed to build request");
+    pub async fn create_playlist(
+        &self,
+        title: &str,
+        description: Option<&str>,
+        creator: &str,
+        entries: &[OpencastId],
+        acl: &[AclInputEntry],
+    ) -> Result<CreatePlaylistResponse> {
+        let access_policy = build_access_policy(acl);
 
-        self.http_client.request(req).await.map_err(Into::into)
+        let playlist = serde_json::json!({
+            "title": title,
+            "description": description,
+            "creator": creator,
+            "entries": entries_to_json(entries),
+            "accessControlEntries": access_policy,
+        });
+
+        let playlist_json = serde_json::to_string(&playlist).expect("Failed to serialize");
+
+        let (req, uri) = self.build_form_request("/api/playlists/", http::Method::POST, &[
+            ("playlist", &playlist_json),
+        ]);
+        let response = self.http_client.request(req).await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}'"))?;
+
+        let (out, _) = self.deserialize_response::<CreatePlaylistResponse>(response, &uri).await?;
+
+        Ok(out)
     }
 
-    fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Uri, Request<RequestBody>) {
-        let req = self.authed_req_builder(node, path_and_query)
-            .body(RequestBody::empty())
-            .expect("bug: failed to build request");
+    pub async fn update_playlist(
+        &self,
+        playlist_id: OpencastId,
+        title: Option<&str>,
+        description: Option<&str>,
+        entries: Option<&[OpencastId]>,
+        acl: Option<&[AclInputEntry]>,
+    ) -> Result<CreatePlaylistResponse> {
+        let mut payload = serde_json::Map::new();
 
-        (req.uri().clone(), req)
+        if let Some(title) = title {
+            payload.insert("title".into(), title.into());
+        }
+
+        if let Some(description) = description {
+            payload.insert("description".into(), description.into());
+        }
+
+        if let Some(entries) = entries {
+            payload.insert("entries".into(), entries_to_json(entries));
+        }
+
+        if let Some(acl_entries) = acl {
+            payload.insert(
+                "accessControlEntries".into(),
+                serde_json::to_value(build_access_policy(acl_entries))?,
+            );
+        }
+
+        let playlist_json = serde_json::to_string(&payload)?;
+
+        let pq = format!("/api/playlists/{playlist_id}");
+        let (req, uri) = self.build_form_request(&pq, http::Method::PUT, &[
+            ("playlist", &playlist_json),
+        ]);
+        let response = self.http_client.request(req).await
+            .with_context(|| format!("HTTP request failed (uri: '{uri}')"))?;
+
+        let (out, _) = self.deserialize_response::<CreatePlaylistResponse>(response, &uri).await?;
+
+        Ok(out)
     }
 
-    fn authed_req_builder(&self, node: &HttpHost, path_and_query: &str) -> request::Builder {
-        self.req_builder(node, path_and_query)
-            .header("Authorization", self.auth_header.expose_secret())
-    }
-
-    fn req_builder(&self, node: &HttpHost, path_and_query: &str) -> request::Builder {
+    fn authed_req_builder(&self, node: &HttpHost, path_and_query: &str) -> (request::Builder, Uri) {
         let uri = Uri::builder()
             .scheme(node.scheme.clone())
             .authority(node.authority.clone())
             .path_and_query(path_and_query)
             .build()
-            .expect("bug: failed build URI");
+            .expect("bug: failed to build URI");
+        let builder = Request::builder()
+            .uri(&uri)
+            .header("Authorization", self.auth_header.expose_secret());
+        (builder, uri)
+    }
 
-        Request::builder().uri(&uri)
+    fn build_authed_req(&self, node: &HttpHost, path_and_query: &str) -> (Request<RequestBody>, Uri) {
+        let (builder, uri) = self.authed_req_builder(node, path_and_query);
+        let req = builder
+            .body(RequestBody::empty())
+            .expect("bug: failed to build request");
+        (req, uri)
+    }
+
+    fn form_encoded_req_builder(
+        &self,
+        node: &HttpHost,
+        path_and_query: &str,
+        method: http::Method,
+    ) -> (request::Builder, Uri) {
+        let (builder, uri) = self.authed_req_builder(node, path_and_query);
+        let builder = builder
+            .method(method)
+            .header(http::header::CONTENT_TYPE, "application/x-www-form-urlencoded");
+        (builder, uri)
+    }
+
+    fn build_form_request(&self, path_and_query: &str, method: http::Method, params: &[(&str, &str)]) -> (Request<RequestBody>, Uri) {
+        let mut serializer = Serializer::new(String::new());
+        for (key, value) in params {
+            serializer.append_pair(key, value);
+        }
+        let encoded = serializer.finish();
+
+        let (builder, uri) = self.form_encoded_req_builder(&self.external_api_node, path_and_query, method);
+        let req = builder
+            .body(encoded.into())
+            .expect("failed to build request");
+        (req, uri)
     }
 
     async fn deserialize_response<T: for<'de> serde::Deserialize<'de>>(
@@ -360,7 +423,8 @@ pub struct ExternalApiVersions {
     pub versions: Vec<String>,
 }
 
-#[derive(Debug, Serialize)]
+/// ACL structure used in Opencast (different from the structure used in Tobira)
+#[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct AclInput {
     pub allow: bool,
     pub action: String,
@@ -369,7 +433,18 @@ pub(crate) struct AclInput {
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct CreateSeriesResponse {
-    pub identifier: String,
+    pub identifier: OpencastId,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreatePlaylistResponse {
+    pub id: OpencastId,
+    pub entries: Vec<PlaylistEntry>,
+    pub title: String,
+    pub description: Option<String>,
+    pub creator: String,
+    #[serde(rename = "accessControlEntries")]
+    pub acl: Vec<AclInput>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -377,16 +452,16 @@ pub struct EventStatus {
     pub processing_state: String,
 }
 
-/// Trait for items that can be harvested from Opencast (currently used for events and series,
-/// but can also be used for playlists).
-/// Their api endpoint paths generally shares the same structure (`/api/{endpoint_path}/{id}/...`).
+/// Trait for items that can be harvested from Opencast.
+/// Their api endpoint paths generally share the same structure (`/api/{endpoint_path}/{id}/...`).
 /// Implementing the below methods helps with making some endpoints like `update_acl` and
 /// `update_metadata` generic by just passing the item instead of multiple props.
+/// Playlists however only use the generic `delete` endpoint.
 pub(crate) trait OpencastItem {
     /// Name used in endpoint path.
     fn endpoint_path(&self) -> &'static str;
     /// Opencast ID of the item.
-    fn id(&self) -> &str;
+    fn id(&self) -> &str; // TODO: also change to OpencastId?
     /// Metadata flavor needed for the `update_metadata` endpoint of the item
     /// (i.e. `dublincore/series` or `dublincore/episode`).
     fn metadata_flavor(&self) -> &'static str;
@@ -396,4 +471,34 @@ pub(crate) trait OpencastItem {
     /// But it's a temporary solution and having this in the trait helps to keep the acl
     /// code at least *somewhat* lean.
     async fn extra_roles(&self, context: &Context, oc_id: &str) -> Result<Vec<AclInput>>;
+}
+
+
+/// Builds the Opencast ACL from the input structure used in Tobira.
+pub(crate) fn build_access_policy(acl: &[AclInputEntry]) -> Vec<AclInput> {
+    acl
+        .iter()
+        .flat_map(|entry| {
+            entry.actions.iter().map(|action| AclInput {
+                allow: true,
+                action: action.clone(),
+                role: entry.role.clone(),
+            })
+        })
+        .collect()
+}
+
+/// Maps a collection of content IDs to the JSON structure expected by the Opencast API.
+fn entries_to_json(ids: &[OpencastId]) -> serde_json::Value {
+    serde_json::Value::Array(
+        ids
+            .iter()
+            .map(|e| {
+                serde_json::json!({
+                    "contentId": e,
+                    "type": "EVENT",
+                })
+            })
+            .collect()
+    )
 }

@@ -694,7 +694,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
         if (actionOption === "admin" || actionOption === "moderate") {
             return `acl.table.permissions.realm-${actionOption}-description`;
         }
-        if (itemType === "video" || itemType === "series") {
+        if (itemType === "video" || itemType === "series" || itemType === "playlist") {
             return `acl.table.permissions.${itemType}-${actionOption}-description`;
         }
         return "acl.table.permissions.unknown-description";

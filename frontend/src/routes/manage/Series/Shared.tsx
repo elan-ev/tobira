@@ -19,8 +19,6 @@ import { ThumbnailItemState } from "../../../ui/Video";
 import { MovingTruck } from "../../../ui/Waiting";
 
 
-export const PAGE_WIDTH = 1100;
-
 export type QueryResponse = SharedSeriesManageQuery["response"];
 export type Series = NonNullable<QueryResponse["series"]>;
 
@@ -170,7 +168,7 @@ type SeriesThumbnailProps = {
 export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, seriesState }) => (
     <div css={{ position: "relative", "> div": { width: "100%" } }}>
         <ThumbnailStack
-            thumbnails={series.thumbnailStack.thumbnails}
+            thumbnails={series.thumbnailStack?.thumbnails}
             title={series.title}
             css={seriesState === "DELETED" && { filter: "blur(2px)" }}
         />

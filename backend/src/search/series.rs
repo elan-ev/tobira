@@ -5,8 +5,7 @@ use tokio_postgres::GenericClient;
 
 use crate::{
     prelude::*,
-    model::Key,
-    model::SearchThumbnailInfo,
+    model::{Key, OpencastId, SearchThumbnailInfo},
     db::util::{collect_rows_mapped, impl_from_db},
 };
 
@@ -17,7 +16,7 @@ use super::{realm::Realm, util::{self, FieldAbilities}, IndexItem, IndexItemKind
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct Series {
     pub(crate) id: SearchId,
-    pub(crate) opencast_id: String,
+    pub(crate) opencast_id: OpencastId,
     pub(crate) title: String,
     pub(crate) description: Option<String>,
     pub(crate) updated: DateTime<Utc>,
