@@ -165,6 +165,7 @@ impl Series {
         series: NewSeries,
         acl: Option<AclForDB>,
         context: &Context,
+        state: SeriesState,
     ) -> ApiResult<Self> {
         let (read_roles, write_roles) = match &acl {
             Some(roles) => (Some(&roles.read_roles), Some(&roles.write_roles)),
@@ -172,12 +173,18 @@ impl Series {
         };
 
         let selection = Self::select().with_renamed_table("series", "all_series");
+        let updated = if state == SeriesState::Ready {
+            "now()"
+        } else {
+            "'-infinity'"
+        };
+
         let query = format!(
             "insert into all_series ( \
                 opencast_id, title, description, state, \
                 created, updated, read_roles, write_roles \
             ) \
-            values ($1, $2, $3, 'waiting', now(), '-infinity', $4, $5) \
+            values ($1, $2, $3, $4, now(), {updated}, $5, $6) \
             returning {selection}",
         );
 
@@ -187,6 +194,7 @@ impl Series {
                     &series.opencast_id,
                     &series.title,
                     &series.description,
+                    &state,
                     &read_roles,
                     &write_roles,
                 ]).await?
@@ -227,6 +235,7 @@ impl Series {
             },
             db_acl,
             context,
+            SeriesState::Ready,
         ).await?;
 
         Ok(series)
@@ -234,7 +243,7 @@ impl Series {
 
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
         context.auth.state.required_trusted_external()?;
-        Self::create(series, None, context).await
+        Self::create(series, None, context, SeriesState::Waiting).await
     }
 
     pub(crate) async fn add_mount_point(
@@ -355,7 +364,7 @@ impl Series {
         }
 
         // Create series
-        let series = Series::create(series, None, context).await?;
+        let series = Series::create(series, None, context, SeriesState::Waiting).await?;
 
         // Create realms
         let target_realm = {
