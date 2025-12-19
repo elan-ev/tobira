@@ -51,7 +51,7 @@ import CONFIG from "../config";
 import { Link, useRouter } from "../router";
 import { isRealUser, useUser } from "../User";
 import { b64regex } from "./util";
-import { ErrorPage } from "../ui/error";
+import { NotAuthorized } from "../ui/error";
 import { CopyableInput, TimeInputWithCheckbox } from "../ui/Input";
 import { VideoPageInRealmQuery } from "./__generated__/VideoPageInRealmQuery.graphql";
 import {
@@ -540,7 +540,7 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
     }
 
     if (event.__typename === "NotAllowed") {
-        return <ErrorPage title={t("api-remote-errors.view.event")} />;
+        return <NotAuthorized />;
     }
     if (event.__typename !== "AuthorizedEvent") {
         return unreachable();
