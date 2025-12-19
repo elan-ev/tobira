@@ -1,18 +1,27 @@
 import { ReactNode } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import { Card } from "@opencast/appkit";
 
 import { useUser } from "../User";
 import { useTitle } from "../util";
-import { Card, ErrorBox } from "@opencast/appkit";
+import { LoginLink } from "../routes/util";
+import { COLORS } from "../color";
+
 
 export const NotAuthorized: React.FC = () => {
     const { t } = useTranslation();
     const user = useUser();
 
-    return <ErrorBox>
-        {t("errors.not-authorized-to-view-page")}
-        {user === "none" && " " + t("errors.might-need-to-login")}
-    </ErrorBox>;
+    return <div css={{ textAlign: "center" }}>
+        <Card kind="info" css={{ backgroundColor: COLORS.neutral25, textAlign: "left" }}>
+            {t("errors.not-authorized-to-view-page")}
+            <div>
+                {user === "none" && <Trans i18nKey="errors.might-need-to-login-link">
+                    You might need to <LoginLink css={{ color: COLORS.primary1 }} />
+                </Trans>}
+            </div>
+        </Card>
+    </div>;
 };
 
 
