@@ -180,7 +180,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
         return () => {
             paellaSnapshot.removeUiHandlers?.();
             unregister(paellaSnapshot.player);
-            paella.current = undefined;
+            paella.current = null;
             paellaSnapshot.loadPromise.then(() => {
                 paellaSnapshot.player.unload();
             });

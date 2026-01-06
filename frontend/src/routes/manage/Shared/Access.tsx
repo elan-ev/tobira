@@ -66,7 +66,7 @@ export const AclPage: React.FC<AclPageProps> = ({ children, note, breadcrumbTail
 
 export type SubmitAclProps = {
     selections: Acl;
-    saveModalRef: RefObject<ConfirmationModalHandle>;
+    saveModalRef: RefObject<ConfirmationModalHandle | null>;
     setCommitError: (value: SetStateAction<JSX.Element | null>) => void;
 }
 

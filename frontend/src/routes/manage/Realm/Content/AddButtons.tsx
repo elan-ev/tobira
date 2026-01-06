@@ -72,7 +72,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
     );
 };
 
-const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}> = ({
+const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle | null>}> = ({
     index, realm, floatingRef,
 }) => {
     const isDark = useColorScheme().scheme === "dark";
