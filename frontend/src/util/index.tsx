@@ -323,7 +323,7 @@ type InertableProps = PropsWithChildren<{
 
 /** Can be used to conditionally disable and grey out control elements. */
 export const Inertable: React.FC<InertableProps> = ({ children, isInert, className }) => (
-    <div {...{ className }} {...isInert && { inert: "true", css: { opacity: 0.7 } }}>
+    <div {...{ className }} inert={isInert} {...isInert && { css: { opacity: 0.7 } }}>
         {children}
     </div>
 );

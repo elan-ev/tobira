@@ -130,7 +130,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
         <Form
             noValidate
             onSubmit={e => e.preventDefault()}
-            {...(commitError && { inert: "true" })}
+            inert={!!commitError}
             css={{
                 margin: "32px 2px",
                 "label": {
