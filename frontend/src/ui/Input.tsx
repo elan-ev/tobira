@@ -219,7 +219,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
             >
                 <input
                     {...{ disabled }}
-                    ref={ref => (inputRefs.current[index] = ref)}
+                    ref={ref => { inputRefs.current[index] = ref; }}
                     value={time}
                     inputMode="numeric"
                     onChange={e => handleInput(Number(e.target.value), unit, index)}
