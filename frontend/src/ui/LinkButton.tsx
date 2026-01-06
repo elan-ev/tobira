@@ -1,5 +1,5 @@
 import { Interpolation, Theme } from "@emotion/react";
-import React from "react";
+import React, { JSX } from "react";
 import { buttonStyle, Kind, useAppkitConfig, useColorScheme } from "@opencast/appkit";
 
 import { Link } from "../router";

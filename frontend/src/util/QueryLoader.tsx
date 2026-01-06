@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { GraphQLTaggedNode, PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { OperationType } from "relay-runtime";
 

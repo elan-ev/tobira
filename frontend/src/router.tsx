@@ -1,3 +1,5 @@
+import React, { JSX } from "react";
+
 import { makeRouter } from "./rauta";
 import { AboutRoute } from "./routes/About";
 import { LoginRoute } from "./routes/Login";
@@ -26,7 +28,6 @@ import { InvalidUrlRoute } from "./routes/InvalidUrl";
 import { BlockEmbedRoute, EmbedOpencastVideoRoute, EmbedVideoRoute } from "./routes/Embed";
 import { ManageVideoDetailsRoute } from "./routes/manage/Video/VideoDetails";
 import { ManageVideoTechnicalDetailsRoute } from "./routes/manage/Video/TechnicalDetails";
-import React from "react";
 import { ManageVideoAccessRoute } from "./routes/manage/Video/VideoAccess";
 import { DirectPlaylistOCRoute, DirectPlaylistRoute } from "./routes/Playlist";
 import { ManageSeriesRoute } from "./routes/manage/Series";

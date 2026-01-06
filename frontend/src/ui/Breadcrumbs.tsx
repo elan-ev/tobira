@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { JSX, ReactNode } from "react";
 import { LuHouse, LuChevronRight } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
 import { BreadcrumbList, WithContext } from "schema-dts";

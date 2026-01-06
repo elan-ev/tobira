@@ -1,4 +1,4 @@
-import React, { ReactNode, useId, useImperativeHandle, useRef, useState } from "react";
+import React, { JSX, ReactNode, useId, useImperativeHandle, useRef, useState } from "react";
 import { LuCheck, LuCopy } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 

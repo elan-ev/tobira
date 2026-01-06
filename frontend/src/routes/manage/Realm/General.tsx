@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
-import { useState } from "react";
+import { JSX, useState } from "react";
 import { bug, match } from "@opencast/appkit";
 
 import type {

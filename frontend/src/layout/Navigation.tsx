@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { JSX, ReactNode } from "react";
 import { LuChevronRight } from "react-icons/lu";
 import { graphql, useFragment } from "react-relay";
 

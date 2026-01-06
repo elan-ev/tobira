@@ -1,3 +1,6 @@
+import { JSX } from "react";
+
+
 export const Form: React.FC<JSX.IntrinsicElements["form"]> = ({ children, ...rest }) => (
     <form
         css={{

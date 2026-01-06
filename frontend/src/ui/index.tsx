@@ -1,6 +1,6 @@
 import { match, WithTooltip, screenWidthAbove, useColorScheme } from "@opencast/appkit";
 import { LuTriangleAlert, LuInfo } from "react-icons/lu";
-import { ReactNode } from "react";
+import { JSX, ReactNode } from "react";
 import { CSSObject } from "@emotion/react";
 
 import { Link } from "../router";

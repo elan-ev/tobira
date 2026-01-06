@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { JSX, ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 import { currentRef, match, screenWidthAtMost } from "@opencast/appkit";

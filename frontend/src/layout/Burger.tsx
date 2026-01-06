@@ -1,4 +1,7 @@
+import { JSX } from "react";
+
 import { COLORS } from "../color";
+
 
 type BurgerMenuProps = {
     hide: () => void;

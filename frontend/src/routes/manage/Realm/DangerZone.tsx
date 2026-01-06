@@ -1,4 +1,4 @@
-import { ReactNode, useRef } from "react";
+import { JSX, ReactNode, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useForm } from "react-hook-form";

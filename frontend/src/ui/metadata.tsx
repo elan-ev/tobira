@@ -1,4 +1,5 @@
 import {
+    JSX,
     PropsWithChildren,
     ReactNode,
     forwardRef,

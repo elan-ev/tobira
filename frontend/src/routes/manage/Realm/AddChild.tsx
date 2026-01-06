@@ -1,4 +1,4 @@
-import React, { useId, useState } from "react";
+import React, { JSX, useId, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 

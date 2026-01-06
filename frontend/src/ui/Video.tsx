@@ -1,4 +1,4 @@
-import { Fragment, PropsWithChildren, useState } from "react";
+import { Fragment, JSX, PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuCircleUser, LuVolume2 } from "react-icons/lu";
 import { Spinner, useColorScheme } from "@opencast/appkit";
