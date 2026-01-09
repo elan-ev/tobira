@@ -268,9 +268,7 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
                     menuIsOpen
                     additionalOptions={{
                         excludeSeriesMembers: !isPlaylist,
-                        excludedIds: events
-                            .filter(e => e.action !== "remove")
-                            .map(e => keyOfId(e.id)),
+                        excludedIds: events.map(e => keyOfId(e.id)),
                     }}
                 />
             </Floating>
