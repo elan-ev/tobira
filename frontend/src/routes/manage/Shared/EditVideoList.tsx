@@ -2,7 +2,16 @@ import { PropsWithChildren, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UseMutationConfig } from "react-relay";
 import { MutationParameters, Disposable } from "relay-runtime";
-import { LuCalendar, LuCircleUser, LuListPlus, LuListX, LuUndo2, LuUpload } from "react-icons/lu";
+import {
+    LuArrowDown,
+    LuArrowUp,
+    LuCalendar,
+    LuCircleUser,
+    LuListPlus,
+    LuListX,
+    LuUndo2,
+    LuUpload,
+} from "react-icons/lu";
 import {
     boxError,
     bug,
@@ -15,6 +24,7 @@ import {
     match,
     useColorScheme,
     useOnOutsideClick,
+    WithTooltip,
 } from "@opencast/appkit";
 import { css } from "@emotion/react";
 
@@ -71,9 +81,26 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
     const { t } = useTranslation();
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [success, setSuccess] = useState(false);
-    const [events, setEvents] = useState(mapItems(listEntries));
+    const isPlaylist = listId.startsWith("pl");
+    const [events, setEvents] = useState(mapItems(listEntries, isPlaylist));
 
-    useNavBlocker(() => events.some(e => e.action !== "none") || inFlight);
+    const initialOrderRef = useRef(
+        isPlaylist ? listEntries.filter(isAuthorizedEvent).map(e => e.id) : [],
+    );
+
+    const isOrderChanged = () => {
+        if (!isPlaylist) {
+            return false;
+        }
+        const currentOrder = events.filter(e => e.action !== "remove").map(e => e.id);
+        const initialOrder = initialOrderRef.current;
+        return currentOrder.length === initialOrder.length
+            && currentOrder.some((id, i) => id !== initialOrder[i]);
+    };
+
+    const hasChanges = events.some(e => e.action !== "none") || isOrderChanged();
+
+    useNavBlocker(() => hasChanges || inFlight);
 
     const user = useUser();
     if (!isRealUser(user)) {
@@ -81,7 +108,6 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
     }
 
     const unknownItemsCount = listEntries.filter(e => e.__typename !== "AuthorizedEvent").length;
-    const isPlaylist = listId.startsWith("pl");
 
     const updatedEntries = isPlaylist ? {
         entries: events.filter(e => e.action !== "remove").map(e => e.id),
@@ -97,7 +123,11 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         },
         onCompleted: data => {
             setSuccess(true);
-            setEvents(mapItems(getUpdatedEntries(data)));
+            const newEntries = getUpdatedEntries(data);
+            if (isPlaylist) {
+                initialOrderRef.current = newEntries.filter(isAuthorizedEvent).map(e => e.id);
+            }
+            setEvents(mapItems(newEntries, isPlaylist));
         },
         onError: e => {
             setSuccess(false);
@@ -127,7 +157,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         {events.length > 0 && <SubmitButtonWithStatus
             label={t("manage.video-list.edit.save")}
             onClick={onSubmit}
-            disabled={!!commitError || events.every(e => e.action === "none") || inFlight}
+            disabled={!!commitError || !hasChanges || inFlight}
             {...{ inFlight, success, setSuccess }}
         />}
         {boxError(commitError)}
@@ -173,11 +203,19 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                 border: `1px solid ${COLORS.neutral25}`,
                 borderRadius: 8,
             }}>
-                {events.map(event => (
+                {events.map((event, index) => (
                     <EventEntry
                         key={event.id}
                         event={event}
+                        index={index}
+                        totalEvents={events.length}
                         isPlaylistEntry={isPlaylist}
+                        onMove={isPlaylist
+                            ? direction => setEvents(
+                                prev => moveItem(prev, index, index + direction),
+                            )
+                            : undefined
+                        }
                         onChange={() => setEvents(prev => match(event.action, {
                             // Undo "add" -> remove from list again
                             "add": () => prev.filter(e => e.id !== event.id),
@@ -279,18 +317,47 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
 
 type EventEntryProps = {
     event: ListEvent;
+    index: number;
+    totalEvents: number;
     onChange: () => void;
+    onMove?: (direction: -1 | 1) => void;
     isPlaylistEntry: boolean;
 };
 
-const EventEntry: React.FC<EventEntryProps> = ({ event, onChange, isPlaylistEntry }) => {
+const EventEntry: React.FC<EventEntryProps> = ({
+    event, index, totalEvents, onChange, onMove, isPlaylistEntry,
+}) => {
     const { t, i18n } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
 
     const buttonStyle = css({
         fontSize: 12,
         padding: "4px 8px",
         marginTop: "auto",
         gap: 5,
+    });
+
+    const moveButtonStyle = css({
+        display: "flex",
+        padding: 6,
+        border: "none",
+        borderRadius: 8,
+        color: COLORS.neutral60,
+        backgroundColor: "inherit",
+        "&[disabled]": {
+            color: COLORS.neutral25,
+        },
+        "&:not([disabled])": {
+            cursor: "pointer",
+            "&:hover, &:focus": {
+                backgroundColor: COLORS.neutral10,
+                ...isDark && {
+                    backgroundColor: COLORS.neutral15,
+                    color: COLORS.neutral80,
+                },
+            },
+            ...focusStyle({}),
+        },
     });
 
     const date = new Date(event.syncedData?.startTime ?? event.created);
@@ -438,15 +505,61 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange, isPlaylistEntr
                     </div>
                 </div>
             </div>
+            {/* Only show move buttons for playlists */}
+            {onMove && (
+                <div css={{ marginLeft: -2 }}>
+                    <WithTooltip tooltip={t("manage.realm.content.move-up")} placement="left">
+                        <button
+                            aria-label={t("manage.realm.content.move-up")}
+                            disabled={index === 0 || event.action === "remove"}
+                            onClick={e => {
+                                e.currentTarget.blur();
+                                onMove(-1);
+                            }}
+                            css={moveButtonStyle}
+                        >
+                            <LuArrowUp size={16} />
+                        </button>
+                    </WithTooltip>
+                    <WithTooltip tooltip={t("manage.realm.content.move-down")} placement="left">
+                        <button
+                            aria-label={t("manage.realm.content.move-down")}
+                            disabled={index === totalEvents - 1 || event.action === "remove"}
+                            onClick={e => {
+                                e.currentTarget.blur();
+                                onMove(1);
+                            }}
+                            css={moveButtonStyle}
+                        >
+                            <LuArrowDown size={16} />
+                        </button>
+                    </WithTooltip>
+                </div>
+            )}
         </div>
     );
 };
 
 
 const isAuthorizedEvent = (e: Entry): e is AuthEvent => e.__typename === "AuthorizedEvent";
-const mapItems = (entries: readonly Entry[]): ListEvent[] => entries
-    .filter(isAuthorizedEvent)
-    .sort((a, b) => a.created === b.created
-        ? 0
-        : (a.created > b.created ? 1 : -1))
-    .map(e => ({ ...e, action: "none" }));
+
+/** Sorts series by date of creation but preserves manual order for playlists */
+const mapItems = (entries: readonly Entry[], isPlaylist: boolean): ListEvent[] => {
+    const authorized = entries.filter(isAuthorizedEvent);
+    const sorted = isPlaylist
+        ? authorized
+        : [...authorized].sort((a, b) =>
+            a.created === b.created ? 0 : (a.created > b.created ? 1 : -1));
+    return sorted.map(e => ({ ...e, action: "none" }));
+};
+
+/** Swap two items in the video list */
+const moveItem = (arr: ListEvent[], from: number, to: number): ListEvent[] => {
+    if (to < 0 || to >= arr.length) {
+        return arr;
+    }
+    const result = [...arr];
+    result[from] = arr[to];
+    result[to] = arr[from];
+    return result;
+};

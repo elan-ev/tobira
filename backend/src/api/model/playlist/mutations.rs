@@ -216,9 +216,14 @@ pub(crate) struct RemovedPlaylist {
 
 async fn load_entries(entries: Vec<Id>, context: &Context) -> ApiResult<Vec<OpencastId>> {
     let entry_keys: Vec<_> = entries.iter().map(|id| id.key_for(Id::EVENT_KIND)).collect();
+
+    // `unnest` with ordinality preserves input order.
     let entry_ids = context.db
         .query_mapped(
-            "select opencast_id from events where id = any($1)",
+            "select e.opencast_id \
+                from unnest($1::bigint[]) with ordinality as t(id, ord) \
+                join events e on e.id = t.id \
+                order by t.ord",
             dbargs![&entry_keys],
             |row| row.get(0),
         )
