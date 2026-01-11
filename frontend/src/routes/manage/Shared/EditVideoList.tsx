@@ -22,6 +22,8 @@ import {
     FloatingHandle,
     FloatingTrigger,
     match,
+    screenWidthAbove,
+    screenWidthAtMost,
     useColorScheme,
     useOnOutsideClick,
     WithTooltip,
@@ -44,6 +46,7 @@ import { UploadRoute } from "../../Upload";
 import { LinkButton } from "../../../ui/LinkButton";
 import { isRealUser, useUser } from "../../../User";
 import CONFIG from "../../../config";
+import { BREAKPOINT_SMALL } from "../../../GlobalStyle";
 
 
 type Entry = Series["entries"][number];
@@ -202,6 +205,9 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                 overflowY: "auto",
                 border: `1px solid ${COLORS.neutral25}`,
                 borderRadius: 8,
+                [screenWidthAtMost(420)]: {
+                    margin: "0 -12px",
+                },
             }}>
                 {events.map((event, index) => (
                     <EventEntry
@@ -335,6 +341,9 @@ const EventEntry: React.FC<EventEntryProps> = ({
         padding: "4px 8px",
         marginTop: "auto",
         gap: 5,
+        [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+            span: { display: "none" },
+        },
     });
 
     const moveButtonStyle = css({
@@ -393,6 +402,9 @@ const EventEntry: React.FC<EventEntryProps> = ({
                 width: 100,
                 flexShrink: 0,
                 ...thumbnailLinkStyle,
+                [screenWidthAtMost(420)]: {
+                    width: "min(100px, 25%)",
+                },
             }}>
                 <Thumbnail {...{ event }} />
             </Link>
@@ -445,16 +457,24 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                     marginLeft: 2,
                                     maxWidth: 200,
                                     ...ellipsisOverflowCss(1),
-                                    "&:after": {
-                                        content: "'•'",
-                                        padding: "0 4px",
+                                    [screenWidthAbove(BREAKPOINT_SMALL)]: {
+                                        "&:after": {
+                                            content: "'•'",
+                                            padding: "0 4px",
+                                        },
                                     },
                                 }}>{event.creators.join(", ")}</span>
                             </>}
-                            <LuCalendar />
-                            <time dateTime={date.toISOString()} css={{ marginLeft: 2 }}>
-                                {date.toLocaleDateString(i18n.language)}
-                            </time>
+                            <span css={{
+                                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                                    display: "none",
+                                },
+                            }}>
+                                <LuCalendar />
+                                <time dateTime={date.toISOString()} css={{ marginLeft: 2 }}>
+                                    {date.toLocaleDateString(i18n.language)}
+                                </time>
+                            </span>
                         </div>
                     </div>
 
@@ -463,8 +483,10 @@ const EventEntry: React.FC<EventEntryProps> = ({
                         flexDirection: "column",
                         alignContent: "space-between",
                         alignItems: "flex-end",
-                        minWidth: 75,
                         i: { fontSize: 10, whiteSpace: "nowrap" },
+                        [screenWidthAbove(BREAKPOINT_SMALL)]: {
+                            minWidth: 75,
+                        },
                     }}>
                         {event.action === "remove" && <>
                             <i css={{ color: COLORS.danger0 }}>
@@ -472,7 +494,7 @@ const EventEntry: React.FC<EventEntryProps> = ({
                             </i>
                             <Button css={buttonStyle} onClick={onChange}>
                                 <LuUndo2 size={16} />
-                                {t("manage.video-list.edit.undo")}
+                                <span>{t("manage.video-list.edit.undo")}</span>
                             </Button>
                         </>}
                         {event.action === "add" && <>
@@ -481,7 +503,7 @@ const EventEntry: React.FC<EventEntryProps> = ({
                             </i>
                             <Button css={buttonStyle} onClick={onChange}>
                                 <LuUndo2 size={16} />
-                                {t("manage.video-list.edit.undo")}
+                                <span>{t("manage.video-list.edit.undo")}</span>
                             </Button>
                         </>}
                         {event.action === "none" && <>
@@ -499,7 +521,7 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                 onClick={onChange}
                             >
                                 <LuListX />
-                                {t("manage.video-list.edit.remove")}
+                                <span>{t("manage.video-list.edit.remove")}</span>
                             </Button>
                         </>}
                     </div>
