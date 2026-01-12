@@ -51,7 +51,7 @@ impl<'de> Deserialize<'de> for TranslatedString {
         let map = <HashMap<LangKey, String>>::deserialize(deserializer).map_err(|e| {
             let hint = "\
                 this is a 'translated label', a lang -> string map is expected, \
-                e.g. '{ default = \"Dog\", de = \"Hund\" }'";
+                e.g. `value = { default = \"Dog\", de = \"Hund\" }`";
             D::Error::custom(format!("{e} (HINT: {hint})"))
         })?;
         map.try_into().map_err(|e| D::Error::custom(e))
