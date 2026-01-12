@@ -193,7 +193,10 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
                         &nbsp;
                         {!isRealUser(user) && <>
                             <Trans i18nKey="errors.might-need-to-login-link">
-                                You might need to <LoginLink />
+                                You might need to <LoginLink css={{
+                                    color: COLORS.primary1,
+                                    ":hover, :focus": { color: COLORS.primary2 },
+                                }} />
                             </Trans>
                         </>}
                     </span>
@@ -206,7 +209,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
 const HiddenItemsInfo: React.FC<PropsWithChildren> = ({ children }) => <div css={{
     fontSize: 14,
     marginTop: 8,
-    backgroundColor: COLORS.neutral15,
+    backgroundColor: COLORS.neutral20,
     padding: "8px 16px",
     borderRadius: 4,
     display: "flex",

@@ -14,7 +14,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PlaylistByOpencastIdQuery } from "./__generated__/PlaylistByOpencastIdQuery.graphql";
 import { PlaylistRouteData$key } from "./__generated__/PlaylistRouteData.graphql";
 import { PlaylistByIdQuery } from "./__generated__/PlaylistByIdQuery.graphql";
-import { ErrorPage } from "../ui/error";
+import { NotAuthorized } from "../ui/error";
 import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
 
 
@@ -119,7 +119,7 @@ const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag, realmPath }) 
     }
 
     if (playlist.__typename === "NotAllowed") {
-        return <ErrorPage title={t("playlist.not-allowed")} />;
+        return <NotAuthorized />;
     }
     if (playlist.__typename !== "AuthorizedPlaylist") {
         return unreachable();
