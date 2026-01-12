@@ -1,4 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import React, {
+    JSX,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    useTransition,
+} from "react";
 import { bug } from "@opencast/appkit";
 
 

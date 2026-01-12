@@ -1,4 +1,4 @@
-import React, { ReactNode, useId } from "react";
+import React, { JSX, ReactNode, useId } from "react";
 import { COLORS } from "../../../../../../color";
 import { screenWidthAbove, screenWidthAtMost } from "@opencast/appkit";
 import { BREAKPOINT_SMALL } from "../../../../../../GlobalStyle";

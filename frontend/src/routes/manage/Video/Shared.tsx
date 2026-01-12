@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { LuInfo, LuShieldCheck, LuPlay, LuPenLine } from "react-icons/lu";
 import { graphql } from "react-relay";

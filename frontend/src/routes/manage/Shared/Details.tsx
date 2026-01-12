@@ -1,5 +1,5 @@
 import { ParseKeys } from "i18next";
-import { ReactNode, PropsWithChildren, useState, useRef } from "react";
+import { ReactNode, PropsWithChildren, useState, useRef, JSX } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { FormProvider, useForm } from "react-hook-form";
 import { UseMutationConfig } from "react-relay";

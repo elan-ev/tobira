@@ -93,7 +93,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
 
 type SearchInputProps = Partial<SearchFieldProps> & {
     search: (q: string) => void;
-    inputRef: React.RefObject<HTMLInputElement>;
+    inputRef: React.RefObject<HTMLInputElement | null>;
     clear: () => void;
     inputProps: React.InputHTMLAttributes<HTMLInputElement>;
     defaultValue?: string;

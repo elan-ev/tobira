@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { JSX, useId, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { useTranslation } from "react-i18next";
@@ -130,7 +130,7 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
         <Form
             noValidate
             onSubmit={e => e.preventDefault()}
-            {...(commitError && { inert: "true" })}
+            inert={!!commitError}
             css={{
                 margin: "32px 2px",
                 "label": {

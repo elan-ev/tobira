@@ -1,4 +1,4 @@
-import React, { ReactNode, useId, useImperativeHandle, useRef, useState } from "react";
+import React, { JSX, ReactNode, useId, useImperativeHandle, useRef, useState } from "react";
 import { LuCheck, LuCopy } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 
@@ -219,7 +219,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
             >
                 <input
                     {...{ disabled }}
-                    ref={ref => (inputRefs.current[index] = ref)}
+                    ref={ref => { inputRefs.current[index] = ref; }}
                     value={time}
                     inputMode="numeric"
                     onChange={e => handleInput(Number(e.target.value), unit, index)}

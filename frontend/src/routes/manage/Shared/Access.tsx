@@ -1,4 +1,12 @@
-import { useRef, useState, RefObject, SetStateAction, PropsWithChildren, ReactNode } from "react";
+import {
+    useRef,
+    useState,
+    RefObject,
+    SetStateAction,
+    PropsWithChildren,
+    ReactNode,
+    JSX,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { Card, ConfirmationModalHandle, boxError } from "@opencast/appkit";
@@ -58,7 +66,7 @@ export const AclPage: React.FC<AclPageProps> = ({ children, note, breadcrumbTail
 
 export type SubmitAclProps = {
     selections: Acl;
-    saveModalRef: RefObject<ConfirmationModalHandle>;
+    saveModalRef: RefObject<ConfirmationModalHandle | null>;
     setCommitError: (value: SetStateAction<JSX.Element | null>) => void;
 }
 

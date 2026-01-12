@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from "react";
+import React, { JSX, ReactElement, useState } from "react";
 
 import { graphql, loadQuery, useMutation } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";

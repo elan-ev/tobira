@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { TFunction } from "i18next";
 import { match } from "@opencast/appkit";
 

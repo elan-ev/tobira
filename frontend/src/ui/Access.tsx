@@ -19,6 +19,7 @@ import {
     Dispatch,
     SetStateAction,
     PropsWithChildren,
+    JSX,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { LuX } from "react-icons/lu";
@@ -835,7 +836,7 @@ type AclEditButtonsProps = {
     inheritedAcl?: Acl;
     userIsOwner?: boolean;
     kind: "write" | "admin";
-    saveModalRef: React.RefObject<ConfirmationModalHandle>;
+    saveModalRef: React.RefObject<ConfirmationModalHandle | null>;
 }
 
 export const AclEditButtons: React.FC<AclEditButtonsProps> = ({

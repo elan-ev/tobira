@@ -1,7 +1,7 @@
 import {
     Dispatch,
-    MutableRefObject,
     PropsWithChildren,
+    RefObject,
     SetStateAction,
     createContext,
     useContext,
@@ -12,7 +12,7 @@ import { PaellaState } from "./Paella";
 import { bug } from "@opencast/appkit";
 
 type PlayerContext = {
-    paella: MutableRefObject<PaellaState | undefined>;
+    paella: RefObject<PaellaState | null>;
     playerIsLoaded: boolean;
     setPlayerIsLoaded: Dispatch<SetStateAction<boolean>>;
 };
@@ -20,7 +20,7 @@ type PlayerContext = {
 const PlayerContext = createContext<PlayerContext | null>(null);
 
 export const PlayerContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
-    const paella = useRef<PaellaState>();
+    const paella = useRef<PaellaState>(null);
     const [playerIsLoaded, setPlayerIsLoaded] = useState(false);
 
     return <PlayerContext.Provider value={{ paella, playerIsLoaded, setPlayerIsLoaded }}>
