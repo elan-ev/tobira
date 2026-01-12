@@ -13,11 +13,18 @@ export const NotAuthorized: React.FC = () => {
     const user = useUser();
 
     return <div css={{ textAlign: "center" }}>
-        <Card kind="info" css={{ backgroundColor: COLORS.neutral25, textAlign: "left" }}>
+        <Card kind="info" css={{
+            backgroundColor: COLORS.neutral20,
+            textAlign: "left",
+            svg: { color: COLORS.neutral70 },
+        }}>
             {t("errors.not-authorized-to-view-page")}
             <div>
                 {user === "none" && <Trans i18nKey="errors.might-need-to-login-link">
-                    You might need to <LoginLink css={{ color: COLORS.primary1 }} />
+                    You might need to <LoginLink css={{
+                        color: COLORS.primary1,
+                        ":hover, :focus": { color: COLORS.primary2 },
+                    }} />
                 </Trans>}
             </div>
         </Card>
