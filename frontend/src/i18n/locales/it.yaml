@@ -214,6 +214,7 @@ share:
   show-qr-code: Mostra QR Code
   copy-link: Copia il link negli appunti
   copy-rss: Copia il link RSS negli appunti
+  copy-embed-url: Copia l'URL incorporato negli appunti # verify
   copy-embed-code: Copia il codice incorporato negli appunti
   copy-direct-link-to-clipboard: Copia il link del video negli appunti
   set-time: 'Iniziare da:'

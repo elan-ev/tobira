@@ -218,6 +218,7 @@ share:
   show-qr-code: Afficher le code QR
   copy-link: Copier le lien dans le presse-papiers
   copy-rss: Copier le lien RSS dans le presse-papiers
+  copy-embed-url: Copier l’URL d’intégration dans le presse-papiers # verify
   copy-embed-code: Copier le code d’intégration dans le presse-papiers
   copy-direct-link-to-clipboard: Copier le lien vidéo dans le presse-papiers
   set-time: 'Commencer à :'
