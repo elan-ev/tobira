@@ -378,7 +378,7 @@ const prettyDate = (date: string | null | undefined) => {
 
     const d = new Date(date);
     // Sweden happens to have a very nice, almost ISO format
-    const precise = new Date().toLocaleString("sv-SE");
+    const precise = d.toLocaleString("sv-SE");
     const secsAgo = Math.floor((Date.now() - d.getTime()) / 1000);
     let rel;
     if (secsAgo < 90) {
