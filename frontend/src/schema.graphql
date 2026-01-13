@@ -323,6 +323,7 @@ type AdminInfo {
   searchIndex: AdminSearchIndexInfo!
   sync: AdminSyncInfo!
   problems: AdminProblemInfo!
+  userRealms: [AdminUserRealmInfo!]!
 }
 
 type AdminMeiliInfo {
@@ -365,6 +366,12 @@ type AdminSyncInfo {
   requiredTobiraApiVersion: String!
   tobiraApiVersion: String
   externalApiVersion: String
+}
+
+type AdminUserRealmInfo {
+  path: String!
+  numSubpages: Int!
+  ownerDisplayName: String!
 }
 
 type ArrayMatch {

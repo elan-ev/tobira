@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use juniper::GraphQLObject;
+use juniper::{GraphQLObject, graphql_object};
 use meilisearch_sdk::documents::DocumentsQuery;
 
 use crate::{
@@ -7,12 +7,56 @@ use crate::{
 };
 
 
-#[derive(GraphQLObject)]
-pub struct AdminInfo {
+pub(crate) struct AdminInfo {
     db: AdminDbInfo,
     search_index: AdminSearchIndexInfo,
     sync: AdminSyncInfo,
     problems: AdminProblemInfo,
+}
+
+#[graphql_object(Context = Context)]
+impl AdminInfo {
+    fn db(&self) -> &AdminDbInfo {
+        &self.db
+    }
+    fn search_index(&self) -> &AdminSearchIndexInfo {
+        &self.search_index
+    }
+    fn sync(&self) -> &AdminSyncInfo {
+        &self.sync
+    }
+    fn problems(&self) -> &AdminProblemInfo {
+        &self.problems
+    }
+
+    async fn user_realms(&self, context: &Context) -> ApiResult<Vec<AdminUserRealmInfo>> {
+        let (selection, mapping) = crate::db::util::select!(
+           	full_path,
+           	owner_display_name,
+           	num_subpages: "(select count(*) from realms c where c.full_path like realms.full_path || '/%')",
+        );
+        let query = format!("
+            select {selection}
+            from realms
+            where parent is null and full_path like '/@%'
+            order by full_path
+        ");
+
+        let out = context.db.query_mapped(&query, dbargs![], |row| AdminUserRealmInfo {
+            path: mapping.full_path.of(&row),
+            owner_display_name: mapping.owner_display_name.of(&row),
+            num_subpages: mapping.num_subpages.of::<i64>(&row) as i32,
+        }).await?;
+
+        Ok(out)
+    }
+}
+
+#[derive(GraphQLObject)]
+struct AdminUserRealmInfo {
+    path: String,
+    num_subpages: i32,
+    owner_display_name: String,
 }
 
 pub async fn dashboard_info(context: &Context) -> ApiResult<Option<AdminInfo>> {

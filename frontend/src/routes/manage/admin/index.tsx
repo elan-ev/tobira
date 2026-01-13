@@ -16,6 +16,7 @@ import { ReactNode } from "react";
 import CONFIG from "../../../config";
 import { Link } from "../../../router";
 import { ManageRealmContentRoute } from "../Realm/Content";
+import { PATH as USER_REALM_SUBPAGE_PATH } from "./UserRealm";
 
 
 
@@ -112,33 +113,53 @@ type Props = {
 // work for now, especially while this is still frequently changed, we don't
 // use translations. However, to easily find translatable strings later, I
 // use this fake function.
-const t = (s: string) => s;
+export const t = (s: string) => s;
+
+export const AdminDashboardContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
+    <div css={{
+        maxWidth: 1000,
+        margin: "0 auto",
+        h2: {
+            marginTop: 24,
+            marginBottom: 8,
+            fontSize: 21,
+        },
+        h3: {
+            marginTop: 8,
+            fontSize: 18,
+        },
+    }}>
+        {children}
+    </div>
+);
+
+export const SimpleTable: React.FC<React.PropsWithChildren> = ({ children }) => (
+    <table css={{
+        margin: "16px 0",
+        borderCollapse: "collapse",
+        "th, td": {
+            border: `1px solid ${COLORS.neutral25}`,
+            padding: "2px 10px",
+        },
+        "td:not(:first-child)": {
+            textAlign: "right",
+        },
+    }}>
+        {children}
+    </table>
+);
 
 const AdminDashboard: React.FC<Props> = ({ info }) => {
     const { i18n } = useTranslation();
 
-    return <>
-        <div css={{
-            maxWidth: 1000,
-            margin: "0 auto",
-            h2: {
-                marginTop: 24,
-                marginBottom: 8,
-                fontSize: 21,
-            },
-            h3: {
-                marginTop: 8,
-                fontSize: 18,
-            },
-        }}>
-            <PageTitle title={i18n.t("manage.admin-dashboard")} />
-            <MainInfos info={info} />
-            <SyncSection info={info} />
-            <SearchIndexSection info={info} />
-            <ContentSection info={info} />
-            <VersionSection />
-        </div>
-    </>;
+    return <AdminDashboardContainer>
+        <PageTitle title={i18n.t("manage.admin-dashboard")} />
+        <MainInfos info={info} />
+        <SyncSection info={info} />
+        <SearchIndexSection info={info} />
+        <ContentSection info={info} />
+        <VersionSection />
+    </AdminDashboardContainer>;
 };
 
 const MainInfos: React.FC<Props> = ({ info }) => (
@@ -235,17 +256,7 @@ const SearchIndexSection: React.FC<Props> = ({ info }) => {
                 value: si.state ?? "?",
             },
         ]} />
-        <table css={{
-            margin: "16px 0",
-            borderCollapse: "collapse",
-            "th, td": {
-                border: `1px solid ${COLORS.neutral25}`,
-                padding: "2px 10px",
-            },
-            "td:not(:first-child)": {
-                textAlign: "right",
-            },
-        }}>
+        <SimpleTable>
             <thead>
                 <tr>
                     <th></th>
@@ -264,7 +275,7 @@ const SearchIndexSection: React.FC<Props> = ({ info }) => {
                     <td>{boolToYesNo(si?.isIndexing)}</td>
                 </tr>)}
             </tbody>
-        </table>
+        </SimpleTable>
     </>;
 };
 
@@ -299,7 +310,11 @@ const ContentSection: React.FC<Props> = ({ info }) => {
             <li>
                 {t("Pages: ") + db.numRealms}
                 <ul>
-                    <li>{t("User pages: ") + db.numUserRealms}</li>
+                    <li>
+                        <Link to={USER_REALM_SUBPAGE_PATH}>
+                            {t("User pages: ") + db.numUserRealms}
+                        </Link>
+                    </li>
                 </ul>
             </li>
             <li>{t("Blocks: ") + db.numBlocks}</li>
