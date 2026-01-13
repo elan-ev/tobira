@@ -116,7 +116,7 @@ export const AclSelector: React.FC<AclSelectorProps> = ({
     itemType = "video",
 }) => {
     const { i18n } = useTranslation();
-    let knownGroups = [...knownRoles.knownGroups];
+    let knownGroups = [...knownRoles.knownGroupsForUser];
     [acl, inheritedAcl].forEach(list => insertBuiltinRoleInfo(list, knownGroups, i18n));
     if (disallowAnonymous) {
         knownGroups = knownGroups.filter(g => g.role !== COMMON_ROLES.ANONYMOUS);
@@ -166,7 +166,7 @@ type RoleKind = "group" | "user";
 
 export const knownRolesFragment = graphql`
     fragment AccessKnownRolesData on Query {
-        knownGroups { role label implies sortKey large }
+        knownGroupsForUser { role label implies sortKey large }
     }
 `;
 
@@ -973,7 +973,7 @@ const splitAcl = (initialAcl: Acl): [Acl, Acl] => {
 
 const insertBuiltinRoleInfo = (
     acl: Acl,
-    knownGroups: AccessKnownRolesData$data["knownGroups"][number][],
+    knownGroups: AccessKnownRolesData$data["knownGroupsForUser"][number][],
     i18n: i18n,
 ) => {
     const keyToTranslatedString = (key: ParseKeys): TranslatedLabel => ({
@@ -1036,7 +1036,7 @@ interface GroupDag {
     sort<T extends { role: string }>(groups: T[]): T[];
 }
 
-const buildDag = (groups: AccessKnownRolesData$data["knownGroups"]): GroupDag => {
+const buildDag = (groups: AccessKnownRolesData$data["knownGroupsForUser"]): GroupDag => {
     const vertices = new Map<string, Set<string>>();
     vertices.set(COMMON_ROLES.ANONYMOUS, new Set());
     vertices.set(COMMON_ROLES.USER, new Set([COMMON_ROLES.ANONYMOUS]));

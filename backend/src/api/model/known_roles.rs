@@ -47,6 +47,16 @@ impl KnownGroup {
             .await?
             .pipe(Ok)
     }
+
+    pub(crate) async fn load_for_user(context: &Context) -> ApiResult<Vec<Self>> {
+        let selection = Self::select();
+        let user_roles = context.auth.state.roles().into_iter().collect::<Vec<_>>();
+        let query = format!("select {selection} from known_groups where role = any($1)");
+
+        context.db.query_mapped(&query, dbargs![&user_roles], |row| Self::from_row_start(&row))
+            .await?
+            .pipe(Ok)
+    }
 }
 
 // ===== Users ===============================================================

@@ -809,6 +809,11 @@ type Query {
   searchKnownUsers(query: String!): KnownUsersSearchOutcome!
   "Returns all known groups selectable in the ACL UI."
   knownGroups: [KnownGroup!]!
+  """
+    Returns all known groups that a user is part of and which are
+    selectable in the ACL UI.
+  """
+  knownGroupsForUser: [KnownGroup!]!
   "Returns information for the admin dashboard."
   adminDashboardInfo: AdminInfo
 }

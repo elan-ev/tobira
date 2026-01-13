@@ -1,7 +1,7 @@
 use juniper::graphql_object;
 
 
-use crate::{auth::{AuthState, User}, model::OpencastId};
+use crate::{auth::{AuthState, HasRoles, User}, model::OpencastId};
 
 use super::{
     err::ApiResult,
@@ -196,6 +196,16 @@ impl Query {
     /// Returns all known groups selectable in the ACL UI.
     async fn known_groups(context: &Context) -> ApiResult<Vec<KnownGroup>> {
         KnownGroup::load_all(context).await
+    }
+
+    /// Returns all known groups that a user is part of and which are
+    /// selectable in the ACL UI.
+    async fn known_groups_for_user(context: &Context) -> ApiResult<Vec<KnownGroup>> {
+        if context.auth.is_admin(&context.config.auth) {
+            KnownGroup::load_all(context).await
+        } else {
+            KnownGroup::load_for_user(context).await
+        }
     }
 
     /// Returns information for the admin dashboard.
