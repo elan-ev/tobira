@@ -6,7 +6,7 @@ import { Card } from "@opencast/appkit";
 import { OcEntity } from "../util";
 
 
-export const WaitingPage: React.FC<{ type: OcEntity }> = ({ type }) => {
+export const WaitingPage: React.FC<{ type: Exclude<OcEntity, "playlist"> }> = ({ type }) => {
     const { t } = useTranslation();
 
     return (

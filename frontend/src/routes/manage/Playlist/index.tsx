@@ -1,5 +1,3 @@
-import { useTranslation } from "react-i18next";
-import { LuCirclePlus } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { match } from "@opencast/appkit";
 
@@ -16,35 +14,38 @@ import {
     ManageItems,
     TableRow,
 } from "../Shared/Table";
-import {
-    SeriesManageQuery,
-    SeriesManageQuery$data,
-    SeriesSortColumn,
-} from "./__generated__/SeriesManageQuery.graphql";
+
 import { keyOfId } from "../../../util";
-import { SeriesThumbnail } from "./Shared";
-import { CREATE_SERIES_PATH } from "./Create";
-import { LinkButton } from "../../../ui/LinkButton";
+import {
+    PlaylistsManageQuery,
+    PlaylistsManageQuery$data,
+    PlaylistsSortColumn,
+} from "./__generated__/PlaylistsManageQuery.graphql";
+import { PlaylistThumbnail } from "./Shared";
+import { useTranslation } from "react-i18next";
 import { isRealUser, useUser } from "../../../User";
+import { LinkButton } from "../../../ui/LinkButton";
+import { LuCirclePlus } from "react-icons/lu";
+import { CREATE_PLAYLIST_PATH } from "./Create";
 
 
-export const PATH = "/~manage/series" as const;
+export const PATH = "/~manage/playlists" as const;
 
-export const ManageSeriesRoute = makeRoute({
+export const ManagePlaylistsRoute = makeRoute({
     url: PATH,
     match: url => {
         if (url.pathname !== PATH) {
             return null;
         }
 
-        const vars = queryParamsToSeriesVars(url.searchParams);
+        const vars = queryParamsToPlaylistsVars(url.searchParams);
         const titleFilter = vars.filters?.title ?? null;
         const queryVars = {
             ...vars,
             // Todo: Adjust when more filter options are added
             filter: titleFilter ? { title: titleFilter } : null,
         };
-        const queryRef = loadQuery<SeriesManageQuery>(query, queryVars);
+        const queryRef = loadQuery<PlaylistsManageQuery>(query, queryVars);
 
         return {
             render: () => <RootLoader
@@ -55,12 +56,12 @@ export const ManageSeriesRoute = makeRoute({
                     ? <NotAuthorized />
                     : <ManageItems
                         vars={vars}
-                        connection={data.currentUser.mySeries}
-                        titleKey="manage.series.table.title"
-                        additionalColumns={seriesColumns}
-                        RenderRow={SeriesRow}
+                        connection={data.currentUser.myPlaylists}
+                        titleKey="manage.playlist.table.title"
+                        additionalColumns={playlistColumns}
+                        RenderRow={PlaylistRow}
                     >
-                        <CreateSeriesLink />
+                        <CreatePlaylistLink />
                     </ManageItems>
                 }
             />,
@@ -70,27 +71,24 @@ export const ManageSeriesRoute = makeRoute({
 });
 
 const query = graphql`
-    query SeriesManageQuery(
-        $order: SeriesSortOrder!,
+    query PlaylistsManageQuery(
+        $order: PlaylistsSortOrder!,
         $offset: Int!,
         $limit: Int!,
         $filter: SearchFilter,
     ) {
         ...UserData
         currentUser {
-            mySeries(order: $order, offset: $offset, limit: $limit, filter: $filter) {
+            myPlaylists(order: $order, offset: $offset, limit: $limit, filter: $filter) {
                 __typename
                 totalCount
                 pageInfo { hasNextPage hasPrevPage }
                 items {
                     id
                     title
-                    created
                     updated
-                    tobiraDeletionTimestamp
                     description
-                    state
-                    numVideos
+                    numEntries
                     thumbnailStack { thumbnails { url live audioOnly state }}
                 }
             }
@@ -98,30 +96,32 @@ const query = graphql`
     }
 `;
 
-const CreateSeriesLink: React.FC = () => {
+const CreatePlaylistLink: React.FC = () => {
     const { t } = useTranslation();
     const user = useUser();
 
-    return (!isRealUser(user) || !user.canCreateSeries)
+    return (!isRealUser(user) || !user.canCreatePlaylists)
         ? null
-        : <LinkButton to={CREATE_SERIES_PATH} css={{ width: "fit-content" }}>
-            {t("manage.series.table.create")}
+        : <LinkButton to={CREATE_PLAYLIST_PATH} css={{ width: "fit-content" }}>
+            {t("manage.playlist.table.create")}
             <LuCirclePlus />
         </LinkButton>;
 };
 
 
-export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]>["mySeries"];
-export type Series = SeriesConnection["items"];
-export type SingleSeries = Series[number];
 
-const seriesColumns: ColumnProps<SingleSeries>[] = [
+export type PlaylistConnection
+    = NonNullable<PlaylistsManageQuery$data["currentUser"]>["myPlaylists"];
+export type Playlists = PlaylistConnection["items"];
+export type SinglePlaylist = Playlists[number];
+
+const playlistColumns: ColumnProps<SinglePlaylist>[] = [
     {
         key: "ENTRY_COUNT",
         label: "video.plural",
         headerWidth: 112,
         column: ({ item }) => <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.video-list.no-of-videos", { count: item.numVideos })}
+            {i18n.t("manage.video-list.no-of-videos", { count: item.numEntries })}
         </td>,
     },
     {
@@ -129,32 +129,26 @@ const seriesColumns: ColumnProps<SingleSeries>[] = [
         label: "manage.table.columns.updated",
         column: ({ item }) => <DateColumn date={item.updated} />,
     },
-    {
-        key: "CREATED",
-        label: "manage.table.columns.created",
-        column: ({ item }) => <DateColumn date={item.created} />,
-    },
 ];
 
 
-const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
-    itemType="series"
-    item={item}
-    thumbnail={state => <SeriesThumbnail series={item} seriesState={state} />}
+const PlaylistRow: React.FC<{ item: SinglePlaylist }> = ({ item }) => <TableRow
+    itemType="playlist"
+    item={{ ...item, state: "READY" }}
+    thumbnail={_ => <PlaylistThumbnail playlist={item} />}
     link={`${PATH}/${keyOfId(item.id)}`}
-    customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
+    customColumns={playlistColumns.map(col => <col.column key={col.key} item={item} />)}
 />;
 
 
-
-const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>
+const parsePlaylistColumn = (sortBy: string | null): PlaylistsSortColumn =>
     sortBy !== null
         ? match(sortBy, {
             "title": () => "TITLE" as const,
-            "created": () => "CREATED" as const,
             "updated": () => "UPDATED" as const,
-            "event_count": () => "EVENT_COUNT" as const,
-        }) ?? "CREATED"
-        : "CREATED";
+            "entry_count": () => "ENTRY_COUNT" as const,
+        }) ?? "UPDATED"
+        : "UPDATED";
 
-const queryParamsToSeriesVars = createQueryParamsParser<SeriesSortColumn>(parseSeriesColumn);
+const queryParamsToPlaylistsVars
+    = createQueryParamsParser<PlaylistsSortColumn>(parsePlaylistColumn);

@@ -27,6 +27,12 @@ enum JwtService {
   EDITOR
 }
 
+enum PlaylistsSortColumn {
+  TITLE
+  UPDATED
+  ENTRY_COUNT
+}
+
 enum RealmOrder {
   BY_INDEX
   ALPHABETIC_ASC
@@ -111,7 +117,7 @@ input Filters {
 }
 
 input NewEvent {
-  opencastId: String!
+  opencastId: OpencastId!
   title: String!
   description: String
   seriesId: ID
@@ -133,7 +139,7 @@ input NewRealm {
 }
 
 input NewSeries {
-  opencastId: String!
+  opencastId: OpencastId!
   title: String!
   description: String
 }
@@ -156,6 +162,11 @@ input NewTitleBlock {
 input NewVideoBlock {
   event: ID!
   displayOptions: DisplayOptions!
+}
+
+input PlaylistsSortOrder {
+  column: PlaylistsSortColumn!
+  direction: SortDirection!
 }
 
 input RealmLineageComponent {
@@ -258,6 +269,12 @@ scalar DateTime
 
 "Arbitrary metadata for events/series. Serialized as JSON object."
 scalar ExtraMetadata
+
+"""
+  Wrapper around Opencast IDs.
+  Should prevent using a regular String where an Opencast ID is expected.
+"""
+scalar OpencastId
 
 "A string specified in different languages. Entry 'default' is required."
 scalar TranslatedString
@@ -419,7 +436,23 @@ type AuthorizedPlaylist implements Node {
   title: String!
   description: String
   creator: String!
+  updated: DateTime!
+  """
+    Returns the number of entries in this playlist. Note: this is lazily loaded
+    and only available in certain contexts (e.g., playlist listings).
+  """
+  numEntries: Int!
+  """
+    Returns a stack of thumbnails from the events in this playlist.
+    This is lazily loaded and pre-loaded in certain contexts (like in `load_writable_for_user`).
+    In other contexts the thumbnails will be fetched from the database on demand.
+  """
+  thumbnailStack: ThumbnailStack!
+  acl: [AclItem!]!
   entries: [VideoListEntry!]!
+  hostRealms: [Realm!]!
+  "Whether the current user has write access to this playlist."
+  canWrite: Boolean!
 }
 
 type Caption {
@@ -507,7 +540,7 @@ type Mutation {
     and accepted, not that the deletion itself succeeded, which is instead checked
     in subsequent harvesting results.
   """
-  deleteVideo(id: ID!): AuthorizedEvent!
+  deleteEvent(id: ID!): AuthorizedEvent!
   """
     Updates the acl of a given event by sending the changes to Opencast.
     The `acl` parameter can include `read` and `write` roles, as these are the
@@ -549,6 +582,15 @@ type Mutation {
     and stores the series in Tobira's DB.
   """
   createSeries(metadata: BasicMetadata!, acl: [AclInputEntry!]!): Series!
+  "Creates a new playlist in Opencast and stores it in Tobira's DB."
+  createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [ID!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
+  """
+    Updates a playlist's metadata, entries or acl by sending the changes to Opencast
+    and updating the playlist in Tobira's DB.
+  """
+  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [ID!], acl: [AclInputEntry!]): AuthorizedPlaylist!
+  "Deletes the given playlist by sending a delete request to Opencast."
+  deletePlaylist(id: ID!): RemovedPlaylist!
   """
     Sets the order of all children of a specific realm.
 
@@ -622,7 +664,7 @@ type Mutation {
   "Stores series information in Tobira's DB, so it can be mounted without having to be harvested first."
   announceSeries(series: NewSeries!): Series!
   "Adds a series block to an empty realm and makes that realm derive its name from said series."
-  addSeriesMountPoint(seriesOcId: String!, targetPath: String!): Realm!
+  addSeriesMountPoint(seriesOcId: OpencastId!, targetPath: String!): Realm!
   """
     Removes the series block of given series from the given realm.
     If the realm has sub-realms and used to derive its name from the block,
@@ -631,7 +673,7 @@ type Mutation {
     Errors if the given realm does not have exactly one series block referring to the
     specified series.
   """
-  removeSeriesMountPoint(seriesOcId: String!, path: String!): RemoveMountedSeriesOutcome!
+  removeSeriesMountPoint(seriesOcId: OpencastId!, path: String!): RemoveMountedSeriesOutcome!
   """
     Atomically mount a series into an (empty) realm.
     Creates all the necessary realms on the path to the target
@@ -668,6 +710,12 @@ type PlaylistBlock implements Block {
   id: ID!
   index: Int!
   realm: Realm!
+}
+
+type PlaylistConnection {
+  pageInfo: PageInfo!
+  items: [AuthorizedPlaylist!]!
+  totalCount: Int!
 }
 
 type PlaylistSearchResults {
@@ -894,6 +942,10 @@ type RemovedBlock {
   realm: Realm!
 }
 
+type RemovedPlaylist {
+  id: ID!
+}
+
 type RemovedRealm {
   parent: Realm
 }
@@ -976,11 +1028,11 @@ type SearchResults {
 
 type SearchSeries implements Node {
   id: ID!
-  opencastId: String!
+  opencastId: OpencastId!
   title: String!
   description: String
   hostRealms: [SearchRealm!]!
-  thumbnailStack: SeriesThumbnailStack!
+  thumbnailStack: ThumbnailStack!
   matches: SearchSeriesMatches!
   created: DateTime
 }
@@ -1013,9 +1065,18 @@ type Series implements Node {
   metadata: ExtraMetadata
   description: String
   state: SeriesState!
+  """
+    Returns the number of entries in this series. Note: this is lazily loaded
+    and only available in certain contexts (e.g., series listings).
+  """
   numVideos: Int!
-  thumbnailStack: SeriesThumbnailStack!
-  acl: [AclItem!]
+  """
+    Returns a stack of thumbnails from the events in this series.
+    This is lazily loaded and pre-loaded in certain contexts (like in `load_writable_for_user`).
+    In other contexts the thumbnails will be fetched from the database on demand.
+  """
+  thumbnailStack: ThumbnailStack!
+  acl: [AclItem!]!
   "Whether the current user has write access to this series."
   canWrite: Boolean!
   tobiraDeletionTimestamp: DateTime
@@ -1051,10 +1112,6 @@ type SeriesSearchResults {
   totalHits: Int!
   "How long searching took in ms."
   duration: Int!
-}
-
-type SeriesThumbnailStack {
-  thumbnails: [ThumbnailInfo!]!
 }
 
 type SyncedEventData {
@@ -1101,6 +1158,10 @@ type ThumbnailInfo {
   live: Boolean!
   audioOnly: Boolean!
   state: EventState!
+}
+
+type ThumbnailStack {
+  thumbnails: [ThumbnailInfo!]!
 }
 
 "A block just showing some title."
@@ -1153,6 +1214,8 @@ type User {
   canFindUnlisted: Boolean!
   "`True` if the user has the permission to create new series."
   canCreateSeries: Boolean!
+  "`True` if the user has the permission to create new playlists."
+  canCreatePlaylists: Boolean!
   """
     `True` if user is a global Tobira admin, i.e. having `ROLE_ADMIN` or the
     configured Tobira admin role.
@@ -1170,6 +1233,11 @@ type User {
     on the "my series" page.
   """
   mySeries(order: SeriesSortOrder! = {column: "CREATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): SeriesConnection!
+  """
+    Returns all playlists that somehow "belong" to the user, i.e. that appear
+    on the "my playlists" page.
+  """
+  myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
 }
 
 "A block for presenting a single Opencast event"

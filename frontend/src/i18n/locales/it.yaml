@@ -189,7 +189,7 @@ video:
 series:
   singular: Serie
   plural: Serie
-  series-page: Pagina serie “{{series}}”
+  series-page: 'Pagina serie: “{{series}}”'
   deleted-block: La serie a cui si fa riferimento è stata cancellata.
   entry-of-series-thumbnail: Anteprima per la voce “{{series}}”
   not-ready:
@@ -202,6 +202,7 @@ series:
 
 playlist:
   singular: Playlist
+  playlist-page: 'Pagina playlist: “{{playlist}}”' # needs verification
   deleted-block: La playlist a cui si fa riferimento è stata cancellata.
   not-allowed: Non è autorizzato a visualizzare questa playlist.
   not-allowed-block: Non è autorizzato a visualizzare la playlist incorporata qui.
@@ -402,6 +403,14 @@ acl:
       series-write-description_other: >
         Possono cancellare la serie, modificare i metadati e aggiungere o
         rimuovere video.
+      playlist-read-description_one: Può trovare il playlist e vedere i metadati. # needs verification
+      playlist-read-description_other: Possono trovare il playlist e vedere i metadati. # needs verification
+      playlist-write-description_one: > # needs verification
+        Può cancellare la playlist, modificare i metadati e aggiungere o rimuovere
+        video.
+      playlist-write-description_other: > # needs verification
+         Possono cancellare la playlist, modificare i metadati e aggiungere o
+         rimuovere video.
       realm-moderate-description: —
       realm-moderate-description_one: >
         Può modificare il contenuto, aggiungere sottopagine e cambiare il nome e
@@ -511,7 +520,7 @@ manage:
   series:
     created-note: La serie è stata creata.
     table:
-      title: Le mie serie
+      title: I miei serie # needs verification. Should be plural.
       create: Creare serie
     details:
       title: Dettagli serie
@@ -529,11 +538,32 @@ manage:
         rimozione di un video da questo elenco non elimina il video stesso, ma
         lo rimuove semplicemente da questa serie.
 
+  playlist:
+    created-note: La playlist è stata creata.
+    table:
+      title: I miei playlist # needs verification. Should be plural.
+      create: Creare playlist
+    details:
+      title: Dettagli playlist # needs verification
+      delete: Cancellare playlist # needs verification
+      delete-note: I video di questa playlist non verranno eliminati. # needs verification
+      confirm-delete: Cancellare playlist? # needs verification
+      referencing-pages-explanation: 'Questa playlist è citata nelle pagine seguenti:' # needs verification
+      no-referencing-pages: Nessuna pagina fa riferimento a questa playlist. # needs verification
+      edit-note: > # needs verification
+        La rimozione di un video da questo elenco non elimina il video stesso, ma
+        lo rimuove semplicemente da questa playlist.
+
   video-list:
     no-content: Nessun video
     no-of-videos_one: '{{count}} video'
     no-of-videos_other: '{{count}} video'
     removing-disabled: La rimozione dei video è disabilitata.
+    details:
+      unknown_one: Un video è mancante o richiede ulteriori autorizzazioni per essere visualizzato. # needs verification
+      unknown_other: > # needs verificarion
+        {{count}} video sono mancanti o richiedono ulteriori autorizzazioni per
+        essere visualizzati.
     edit:
       add-video: Aggiungere video
       to-be-added: sarà aggiunto
@@ -578,6 +608,7 @@ manage:
       failed-maybe: Cancellazione possibilmente non riuscita.
       pending: Cancellazione in programma.
       in-progress: '"{{itemTitle}}“  sarà cancellato.'
+      success: '"{{itemTitle}}“ è stato cancellato.' # needs verification
       tooltip:
         failed: >
           La cancellazione di questa voce è stata richiesta {{time}} ma non è
@@ -750,10 +781,12 @@ manage:
 embed:
   not-supported: Questa pagina non può essere incorporata.
 
+
 # These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:
   view:
     event: Non sei autorizzato a vedere questo video.
+    playlist: Non sei autorizzato a vedere questa playlist. # needs verification
   mutation:
     not-logged-in: Per eseguire questa azione è necessario aver effettuato il login.
   realm:
@@ -775,3 +808,7 @@ api-remote-errors:
   series:
     not-found: 'Azione fallita: serie non trovata'
     not-allowed: Non siete autorizzati a eseguire questa azione in serie.
+  playlist:
+    not-found: 'Azione fallita: playlist non trovata' # needs verification
+    entry-not-found: 'Azione fallita: voci della playlist non trovata' # needs verification
+    not-allowed: Non siete autorizzati a eseguire questa azione sulla playlist. # needs verification

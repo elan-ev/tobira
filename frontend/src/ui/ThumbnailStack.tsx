@@ -14,7 +14,7 @@ import { COLORS } from "../color";
 
 type ThumbnailStackProps = {
     title: string;
-    thumbnails: readonly ThumbnailInfo[];
+    thumbnails?: readonly ThumbnailInfo[];
     className?: string;
 }
 
@@ -66,12 +66,12 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
                 gridRow: "1 / span 10",
             },
         }}>
-            {thumbnails.slice(0, 3).map((info, idx) => <div key={idx}>
+            {thumbnails && thumbnails.slice(0, 3).map((info, idx) => <div key={idx}>
                 <SeriesThumbnail {...{ info, title }} />
             </div>)}
             {/* Add fake thumbnails to always have 3. The visual image of 3 things behind each other
                 is more important than actually showing the correct number of thumbnails. */}
-            {[...Array(Math.max(0, 3 - thumbnails.length))].map((_, idx) => (
+            {[...Array(Math.max(0, 3 - (thumbnails?.length ?? 0)))].map((_, idx) => (
                 <div key={"dummy" + idx}>
                     <DummySeriesStackThumbnail {...{ isDarkScheme }} />
                 </div>

@@ -47,6 +47,14 @@ pub(crate) struct RoleInfo {
     pub large: bool,
 }
 
+pub(crate) fn query_for(table: &str) -> String {
+    format!("\
+        select unnest(read_roles) as role, 'read' as action from {table} where id = $1
+        union
+        select unnest(write_roles) as role, 'write' as action from {table} where id = $1
+    ")
+}
+
 pub(crate) async fn load_for<P, I>(
     context: &Context,
     raw_roles: &str,

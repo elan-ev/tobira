@@ -1,8 +1,17 @@
-import { useRef, useState } from "react";
+import { PropsWithChildren, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UseMutationConfig } from "react-relay";
 import { MutationParameters, Disposable } from "relay-runtime";
-import { LuCalendar, LuCircleUser, LuListPlus, LuListX, LuUndo2, LuUpload } from "react-icons/lu";
+import {
+    LuArrowDown,
+    LuArrowUp,
+    LuCalendar,
+    LuCircleUser,
+    LuListPlus,
+    LuListX,
+    LuUndo2,
+    LuUpload,
+} from "react-icons/lu";
 import {
     boxError,
     bug,
@@ -13,8 +22,11 @@ import {
     FloatingHandle,
     FloatingTrigger,
     match,
+    screenWidthAbove,
+    screenWidthAtMost,
     useColorScheme,
     useOnOutsideClick,
+    WithTooltip,
 } from "@opencast/appkit";
 import { css } from "@emotion/react";
 
@@ -34,18 +46,22 @@ import { UploadRoute } from "../../Upload";
 import { LinkButton } from "../../../ui/LinkButton";
 import { isRealUser, useUser } from "../../../User";
 import CONFIG from "../../../config";
+import { BREAKPOINT_SMALL } from "../../../GlobalStyle";
 
 
 type Entry = Series["entries"][number];
 type AuthEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
-type ListEvent = AuthEvent & { action: "add" | "remove" | "none" };
+export type ListEvent = AuthEvent & { action: "add" | "remove" | "none" };
 
 
 type VideoListMutationParams = MutationParameters & {
     variables: {
         id: string;
+    } & {
         addedEvents: readonly string[];
         removedEvents: readonly string[];
+    } | {
+        entries: readonly string[];
     }
 };
 type ManageVideoListProps<TMutation extends VideoListMutationParams> = {
@@ -68,24 +84,53 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
     const { t } = useTranslation();
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [success, setSuccess] = useState(false);
-    const [events, setEvents] = useState(mapItems(listEntries));
+    const isPlaylist = listId.startsWith("pl");
+    const [events, setEvents] = useState(mapItems(listEntries, isPlaylist));
 
-    useNavBlocker(() => events.some(e => e.action !== "none") || inFlight);
+    const initialOrderRef = useRef(
+        isPlaylist ? listEntries.filter(isAuthorizedEvent).map(e => e.id) : [],
+    );
+
+    const isOrderChanged = () => {
+        if (!isPlaylist) {
+            return false;
+        }
+        const currentOrder = events.filter(e => e.action !== "remove").map(e => e.id);
+        const initialOrder = initialOrderRef.current;
+        return currentOrder.length === initialOrder.length
+            && currentOrder.some((id, i) => id !== initialOrder[i]);
+    };
+
+    const hasChanges = events.some(e => e.action !== "none") || isOrderChanged();
+
+    useNavBlocker(() => hasChanges || inFlight);
 
     const user = useUser();
     if (!isRealUser(user)) {
         return bug("Used <ManageVideoListContent> without user");
     }
 
+    const unknownItemsCount = listEntries.filter(e => e.__typename !== "AuthorizedEvent").length;
+
+    const updatedEntries = isPlaylist ? {
+        entries: events.filter(e => e.action !== "remove").map(e => e.id),
+    } : {
+        addedEvents: events.filter(e => e.action === "add").map(e => e.id),
+        removedEvents: events.filter(e => e.action === "remove").map(e => e.id),
+    };
+
     const onSubmit = () => commit({
         variables: {
             id: listId,
-            addedEvents: events.filter(e => e.action === "add").map(e => e.id),
-            removedEvents: events.filter(e => e.action === "remove").map(e => e.id),
+            ...updatedEntries,
         },
         onCompleted: data => {
             setSuccess(true);
-            setEvents(mapItems(getUpdatedEntries(data)));
+            const newEntries = getUpdatedEntries(data);
+            if (isPlaylist) {
+                initialOrderRef.current = newEntries.filter(isAuthorizedEvent).map(e => e.id);
+            }
+            setEvents(mapItems(newEntries, isPlaylist));
         },
         onError: e => {
             setSuccess(false);
@@ -95,30 +140,64 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
 
     return <Inertable isInert={inFlight || !!commitError} css={{ marginBottom: 32, maxWidth: 750 }}>
+        <VideoListMenu {...{ listEntries, isPlaylist, events, setEvents }} seriesLink={
+            user.canUpload && !isPlaylist && <LinkButton
+                to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
+                <LuUpload />
+                {t("upload.title")}
+            </LinkButton>
+        }>
+            {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
+                {description}
+            </p>}
+            {!CONFIG.allowSeriesEventRemoval && <Card kind="info">
+                {t("manage.video-list.removing-disabled")}
+            </Card>}
+        </VideoListMenu>
+        {unknownItemsCount > 0 && <Card css={{ marginTop: 12 }} kind="info">
+            {t("manage.video-list.details.unknown", { count: unknownItemsCount })}
+        </Card>}
+        {events.length > 0 && <SubmitButtonWithStatus
+            label={t("manage.video-list.edit.save")}
+            onClick={onSubmit}
+            disabled={!!commitError || !hasChanges || inFlight}
+            {...{ inFlight, success, setSuccess }}
+        />}
+        {boxError(commitError)}
+    </Inertable>;
+};
+
+type VideoListMenuProps = PropsWithChildren<{
+    isPlaylist: boolean;
+    events: ListEvent[];
+    setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    seriesLink?: React.ReactNode;
+}>;
+
+export const VideoListMenu: React.FC<VideoListMenuProps> = ({
+    isPlaylist,
+    events,
+    setEvents,
+    children,
+    seriesLink,
+}) => {
+    const { t } = useTranslation();
+    return <>
         <div css={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <h2 css={{ fontSize: 20 }}>
                 {t("video.plural")}
             </h2>
             <i css={{ fontSize: 14, color: COLORS.neutral50 }}>
-                ({listEntries.length > 0
-                    ? t("manage.video-list.no-of-videos", { count: listEntries.length })
+                ({events.length > 0
+                    ? t("manage.video-list.no-of-videos", { count: events.length })
                     : <i>{t("manage.video-list.no-content")}</i>
                 })
             </i>
         </div>
-        {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
-            {description}
-        </p>}
-        {!CONFIG.allowSeriesEventRemoval && <Card kind="info">
-            {t("manage.video-list.removing-disabled")}
-        </Card>}
+        {children}
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <AddVideoMenu {...{ setEvents, events }} />
-            {/* // Todo: Omit upload button when adding this route for playlists */}
-            {user.canUpload && <LinkButton to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
-                <LuUpload />
-                {t("upload.title")}
-            </LinkButton>}
+            <AddVideoMenu {...{ setEvents, events, isPlaylist }} />
+            {seriesLink}
         </div>
         {events.length > 0 && <>
             <div css={{
@@ -126,11 +205,23 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
                 overflowY: "auto",
                 border: `1px solid ${COLORS.neutral25}`,
                 borderRadius: 8,
+                [screenWidthAtMost(420)]: {
+                    margin: "0 -12px",
+                },
             }}>
-                {events.map(event => (
+                {events.map((event, index) => (
                     <EventEntry
                         key={event.id}
                         event={event}
+                        index={index}
+                        totalEvents={events.length}
+                        isPlaylistEntry={isPlaylist}
+                        onMove={isPlaylist
+                            ? direction => setEvents(
+                                prev => moveItem(prev, index, index + direction),
+                            )
+                            : undefined
+                        }
                         onChange={() => setEvents(prev => match(event.action, {
                             // Undo "add" -> remove from list again
                             "add": () => prev.filter(e => e.id !== event.id),
@@ -144,23 +235,17 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
                     />
                 ))}
             </div>
-            <SubmitButtonWithStatus
-                label={t("manage.video-list.edit.save")}
-                onClick={onSubmit}
-                disabled={!!commitError || events.every(e => e.action === "none") || inFlight}
-                {...{ inFlight, success, setSuccess }}
-            />
         </>}
-        {boxError(commitError)}
-    </Inertable>;
+    </>;
 };
 
 type AddVideoMenuProps = {
     events: ListEvent[];
     setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    isPlaylist: boolean;
 };
 
-const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
+const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlaylist }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const [buttonIsActive, setButtonIsActive] = useState(false);
@@ -201,7 +286,7 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
                 hideArrowTip
             >
                 <EventSelector
-                    writableOnly
+                    writableOnly={!isPlaylist}
                     css={{ position: "relative" }}
                     onChange={event => {
                         if (!event) {
@@ -226,8 +311,8 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
                     isClearable={false}
                     menuIsOpen
                     additionalOptions={{
-                        excludeSeriesMembers: true,
-                        excludedIds: events.filter(e => e.action === "add").map(e => keyOfId(e.id)),
+                        excludeSeriesMembers: !isPlaylist,
+                        excludedIds: events.map(e => keyOfId(e.id)),
                     }}
                 />
             </Floating>
@@ -238,17 +323,50 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents }) => {
 
 type EventEntryProps = {
     event: ListEvent;
+    index: number;
+    totalEvents: number;
     onChange: () => void;
+    onMove?: (direction: -1 | 1) => void;
+    isPlaylistEntry: boolean;
 };
 
-const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
+const EventEntry: React.FC<EventEntryProps> = ({
+    event, index, totalEvents, onChange, onMove, isPlaylistEntry,
+}) => {
     const { t, i18n } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
 
     const buttonStyle = css({
         fontSize: 12,
         padding: "4px 8px",
         marginTop: "auto",
         gap: 5,
+        [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+            span: { display: "none" },
+        },
+    });
+
+    const moveButtonStyle = css({
+        display: "flex",
+        padding: 6,
+        border: "none",
+        borderRadius: 8,
+        color: COLORS.neutral60,
+        backgroundColor: "inherit",
+        "&[disabled]": {
+            color: COLORS.neutral25,
+        },
+        "&:not([disabled])": {
+            cursor: "pointer",
+            "&:hover, &:focus": {
+                backgroundColor: COLORS.neutral10,
+                ...isDark && {
+                    backgroundColor: COLORS.neutral15,
+                    color: COLORS.neutral80,
+                },
+            },
+            ...focusStyle({}),
+        },
     });
 
     const date = new Date(event.syncedData?.startTime ?? event.created);
@@ -284,6 +402,9 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                 width: 100,
                 flexShrink: 0,
                 ...thumbnailLinkStyle,
+                [screenWidthAtMost(420)]: {
+                    width: "min(100px, 25%)",
+                },
             }}>
                 <Thumbnail {...{ event }} />
             </Link>
@@ -336,16 +457,24 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                                     marginLeft: 2,
                                     maxWidth: 200,
                                     ...ellipsisOverflowCss(1),
-                                    "&:after": {
-                                        content: "'•'",
-                                        padding: "0 4px",
+                                    [screenWidthAbove(BREAKPOINT_SMALL)]: {
+                                        "&:after": {
+                                            content: "'•'",
+                                            padding: "0 4px",
+                                        },
                                     },
                                 }}>{event.creators.join(", ")}</span>
                             </>}
-                            <LuCalendar />
-                            <time dateTime={date.toISOString()} css={{ marginLeft: 2 }}>
-                                {date.toLocaleDateString(i18n.language)}
-                            </time>
+                            <span css={{
+                                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                                    display: "none",
+                                },
+                            }}>
+                                <LuCalendar />
+                                <time dateTime={date.toISOString()} css={{ marginLeft: 2 }}>
+                                    {date.toLocaleDateString(i18n.language)}
+                                </time>
+                            </span>
                         </div>
                     </div>
 
@@ -354,8 +483,10 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                         flexDirection: "column",
                         alignContent: "space-between",
                         alignItems: "flex-end",
-                        minWidth: 75,
                         i: { fontSize: 10, whiteSpace: "nowrap" },
+                        [screenWidthAbove(BREAKPOINT_SMALL)]: {
+                            minWidth: 75,
+                        },
                     }}>
                         {event.action === "remove" && <>
                             <i css={{ color: COLORS.danger0 }}>
@@ -363,7 +494,7 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                             </i>
                             <Button css={buttonStyle} onClick={onChange}>
                                 <LuUndo2 size={16} />
-                                {t("manage.video-list.edit.undo")}
+                                <span>{t("manage.video-list.edit.undo")}</span>
                             </Button>
                         </>}
                         {event.action === "add" && <>
@@ -372,35 +503,85 @@ const EventEntry: React.FC<EventEntryProps> = ({ event, onChange }) => {
                             </i>
                             <Button css={buttonStyle} onClick={onChange}>
                                 <LuUndo2 size={16} />
-                                {t("manage.video-list.edit.undo")}
+                                <span>{t("manage.video-list.edit.undo")}</span>
                             </Button>
                         </>}
                         {event.action === "none" && <>
-                            {!event.canWrite && <i css={{ color: COLORS.neutral50 }}>
+                            {!event.canWrite && !isPlaylistEntry
+                                && <i css={{ color: COLORS.neutral50 }}>
                                 ({t("manage.video-list.edit.cannot-be-removed")})
-                            </i>}
+                                </i>
+                            }
                             <Button
-                                disabled={!event.canWrite || !CONFIG.allowSeriesEventRemoval}
+                                disabled={!isPlaylistEntry && (
+                                    !event.canWrite || !CONFIG.allowSeriesEventRemoval
+                                )}
                                 kind="danger"
                                 css={buttonStyle}
                                 onClick={onChange}
                             >
                                 <LuListX />
-                                {t("manage.video-list.edit.remove")}
+                                <span>{t("manage.video-list.edit.remove")}</span>
                             </Button>
                         </>}
                     </div>
                 </div>
             </div>
+            {/* Only show move buttons for playlists */}
+            {onMove && (
+                <div css={{ marginLeft: -2 }}>
+                    <WithTooltip tooltip={t("manage.realm.content.move-up")} placement="left">
+                        <button
+                            aria-label={t("manage.realm.content.move-up")}
+                            disabled={index === 0 || event.action === "remove"}
+                            onClick={e => {
+                                e.currentTarget.blur();
+                                onMove(-1);
+                            }}
+                            css={moveButtonStyle}
+                        >
+                            <LuArrowUp size={16} />
+                        </button>
+                    </WithTooltip>
+                    <WithTooltip tooltip={t("manage.realm.content.move-down")} placement="left">
+                        <button
+                            aria-label={t("manage.realm.content.move-down")}
+                            disabled={index === totalEvents - 1 || event.action === "remove"}
+                            onClick={e => {
+                                e.currentTarget.blur();
+                                onMove(1);
+                            }}
+                            css={moveButtonStyle}
+                        >
+                            <LuArrowDown size={16} />
+                        </button>
+                    </WithTooltip>
+                </div>
+            )}
         </div>
     );
 };
 
 
 const isAuthorizedEvent = (e: Entry): e is AuthEvent => e.__typename === "AuthorizedEvent";
-const mapItems = (entries: readonly Entry[]): ListEvent[] => entries
-    .filter(isAuthorizedEvent)
-    .sort((a, b) => a.created === b.created
-        ? 0
-        : (a.created > b.created ? 1 : -1))
-    .map(e => ({ ...e, action: "none" }));
+
+/** Sorts series by date of creation but preserves manual order for playlists */
+const mapItems = (entries: readonly Entry[], isPlaylist: boolean): ListEvent[] => {
+    const authorized = entries.filter(isAuthorizedEvent);
+    const sorted = isPlaylist
+        ? authorized
+        : [...authorized].sort((a, b) =>
+            a.created === b.created ? 0 : (a.created > b.created ? 1 : -1));
+    return sorted.map(e => ({ ...e, action: "none" }));
+};
+
+/** Swap two items in the video list */
+const moveItem = (arr: ListEvent[], from: number, to: number): ListEvent[] => {
+    if (to < 0 || to >= arr.length) {
+        return arr;
+    }
+    const result = [...arr];
+    result[from] = arr[to];
+    result[to] = arr[from];
+    return result;
+};

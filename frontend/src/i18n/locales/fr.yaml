@@ -206,6 +206,7 @@ series:
 
 playlist:
   singular: Playlist
+  playlist-page: 'Page de la playlist : « {{playlist}} »' # needs verification
   deleted-block: La playlist référencée ici a été supprimée.
   not-allowed: Vous n'êtes pas autorisé(e) à voir cette playlist.
   not-allowed-block: Vous n'êtes pas autorisé(e) à voir la playlist intégrée ici.
@@ -386,27 +387,17 @@ acl:
       unknown: Autorisation inconnue
       unknown-description: Cette autorisation n'est pas connue.
       video-read-description: Possibilité de regarder la vidéo et de voir les métadonnées.
-      video-read-description_one: Possibilité de regarder la vidéo et de voir les métadonnées.
-      video-read-description_other: Possibilité de regarder la vidéo et de voir les métadonnées.
       video-write-description: >
         Possibilité d'éditer et de supprimer la vidéo, les métadonnées et
         d'autres détails.
-      video-write-description_one: >
-        Peut également éditer la vidéo, la supprimer et modifier les métadonnées
-        ainsi que d'autres détails de la vidéo.
-      video-write-description_other: >
-        Peuvent également modifier la vidéo, la supprimer et changer les
-        métadonnées ainsi que d'autres détails de la vidéo.
       series-read-description: Peut être utilisé comme exemple pour les vidéos de cette série.
       series-write-description: >
         Il est possible de supprimer la série, de modifier les métadonnées et
         d'ajouter ou de supprimer des vidéos.
-      series-write-description_one: >
-        Peut supprimer des séries, modifier les métadonnées et ajouter ou
-        supprimer des vidéos à la série.
-      series-write-description_other: >
-        Peuvent supprimer des séries, modifier les métadonnées et ajouter ou
-        supprimer des vidéos à la série.
+      playlist-read-description: Possibilité de trouver la playlist et de voir les métadonnées. # needs verification
+      playlist-write-description: > # needs verification
+        Il est possible de supprimer la playlist, de modifier les métadonnées et
+        d'ajouter ou de supprimer des vidéos.
       realm-moderate-description: >
         Peut modifier le contenu, ajouter des sous-pages et changer le nom et
         l'ordre des sous-pages.
@@ -507,11 +498,34 @@ manage:
         série peuvent être ajoutées. Les vidéos retirées ne sont pas supprimées,
         mais simplement retirées de la série.
 
+  playlist:
+    created-note: La playlist a été créée. # needs verification... in theory.
+    # Most of these additions just copy the series text and replace the word "series" with "playlist".
+    # The word "playlist" uses the same gender as the word "series" in translations made by the ETH translator,
+    # so this should be fine. The same applies to the new italian translations.
+    table:
+      title: Mes playlists # needs verification
+      create: Créer une playlist
+      details:
+        title: Détails de la playlist # needs verification
+        delete: Supprimer la playlist # needs verification
+        delete-note: Les vidéos de cette playlist ne seront pas supprimées. # needs verification
+        confirm-delete: Supprimer la playlist? # needs verification
+        referencing-pages-explanation: 'Cette playlist est référencée dans les pages suivantes:' # needs verfification
+        no-referencing-pages: Aucune page ne mentionne cette playlist. # needs verification
+        edit-note: > # needs verification
+          Les vidéos retirées ne sont pas supprimées, mais simplement retirées de la playlist.
+
   video-list:
     no-content: pas de vidéos
     no-of-videos_one: '{{count}} Vidéos'
     no-of-videos_other: '{{count}} Vidéos'
     removing-disabled: La suppression des vidéos est désactivée. # needs verification
+    details:
+      unknown_one: Vous n'avez pas les droits d'accès à une vidéo ou elle n'existe plus. # needs verification
+      unknown_other: > # needs verification
+        Pour {{count}} vous n'avez pas les droits d'accès aux vidéos
+        ou elles n'existent plus.
     edit:
       add-video: Ajouter une vidéo
       to-be-added: sera ajouté
@@ -557,6 +571,7 @@ manage:
       failed-maybe: La suppression a peut-être échoué.
       pending: La suppression est en cours.
       in-progress: « {{itemTitle}} » est en cours de suppression.
+      success: '« {{itemTitle}} » a été supprimé.' # needs verificaton
       tooltip:
         failed: >
           La suppression de cette entrée a été demandée {{time}} mais n'a
@@ -708,9 +723,12 @@ manage:
 embed:
   not-supported: Cette page ne peut pas être intégrée.
 
+
+# These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:
   view:
     event: Vous n'êtes pas autorisé(e) à regarder cette vidéo.
+    playlist: Vous n'êtes pas autorisé(e) à voir cette playlist. # needs verification
   mutation:
     not-logged-in: Vous devez être connecté(e) pour effectuer cette action.
   realm:
@@ -732,3 +750,7 @@ api-remote-errors:
   series:
     not-found: 'Action échouée : la série n''a pas été trouvée.'
     not-allowed: Vous n'avez pas l'autorisation d'effectuer cette action en série.
+  playlist:
+    not-found: 'Action échouée : la playlist n''a pas été trouvée.' # needs verification
+    entry-not-found: 'Action échouée : les entrées de la playlist n''a pas été trouvée.' # needs verification
+    not-allowed: Vous n'avez pas l'autorisation d'effectuer cette action de playlist. # needs verification

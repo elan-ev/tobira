@@ -28,6 +28,7 @@ import { OcEntity } from "../../../util";
 import { isSynced } from "../../../util";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
+import { PlaylistsSortColumn } from "../Playlist/__generated__/PlaylistsManageQuery.graphql";
 
 
 type ItemVars = {
@@ -167,7 +168,7 @@ const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
 
 const THUMBNAIL_WIDTH = 16 * 8;
 
-type SortColumn = VideosSortColumn | SeriesSortColumn;
+type SortColumn = VideosSortColumn | SeriesSortColumn | PlaylistsSortColumn;
 type SortDirection = "ASCENDING" | "DESCENDING" | "%future added value";
 
 export type ColumnProps<T> = {
@@ -391,7 +392,7 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
                         : <Link to={props.link} css={{ ...titleLinkStyle }}>{item.title}</Link>
                     }
                 </div>
-                {!isSynced(item) && (
+                {!isSynced(item) && props.itemType !== "playlist" && (
                     <span css={{
                         padding: "0 8px",
                         fontSize: "small",

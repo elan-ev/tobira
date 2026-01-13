@@ -14,12 +14,12 @@ import { NotAuthorized } from "../../../ui/error";
 import { MetadataFields, MetadataForm, SubmitButtonWithStatus } from "../../../ui/metadata";
 import { useUser, isRealUser } from "../../../User";
 import { OcEntity, Inertable, isSynced, OpencastEntity } from "../../../util";
-import { PAGE_WIDTH } from "./Nav";
 import { displayCommitError } from "../Realm/util";
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
 import { Link, useRouter } from "../../../router";
 import { useNotification } from "../../../ui/NotificationContext";
 import { preciseDateTime, preferredLocaleForLang } from "../../../ui/time";
+import { PAGE_WIDTH } from "./consts";
 
 
 type Item = OpencastEntity & {
@@ -227,7 +227,9 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
                 setNotification({
                     kind: "info",
                     message: i18n => i18n.t(
-                        "manage.table.deletion.in-progress", { itemTitle: item.title },
+                        `manage.table.deletion.${
+                            kind === "playlist" ? "success" : "in-progress"
+                        }`, { itemTitle: item.title },
                     ),
                     scope: returnPath,
                 });

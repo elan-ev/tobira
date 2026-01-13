@@ -8,18 +8,17 @@ import { CSSObject } from "@emotion/react";
 
 import { ellipsisOverflowCss, LinkList, LinkWithIcon } from "../../../ui";
 import { Link } from "../../../router";
+import { ManageVideoSubPageType } from "../Video/Shared";
 
 
 
-export const PAGE_WIDTH = 1100;
-export type ManageSubPageType = "details" | "technical-details" | "acl";
 export type SharedManageNavProps = {
-    active: ManageSubPageType;
+    active: ManageVideoSubPageType;
 };
 
 /** Simple nav element linking back to the item table overview page. */
 type ReturnLinkProps = {
-    url: "/~manage/series" | "/~manage/videos";
+    url: "/~manage/series" | "/~manage/videos" | "/~manage/playlists";
     title: ParseKeys;
 };
 

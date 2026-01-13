@@ -5,6 +5,7 @@ use crate::{
     api::err::{invalid_input, not_authorized},
     auth::AuthState,
     db::util::select,
+    model::OpencastId,
     prelude::*,
 };
 
@@ -37,6 +38,7 @@ pub(crate) async fn service_jwt(
     opencast_id: Option<String>,
     context: &Context,
 ) -> ApiResult<String> {
+    let opencast_id = opencast_id.map(OpencastId::from);
     let AuthState::User(user) = &context.auth.state else {
         return Err(not_authorized!("only logged in users can get a JWT"));
     };
@@ -60,8 +62,8 @@ pub(crate) async fn service_jwt(
                 let key = format!("e:{opencast_id}");
 
                 // TODO: remove once OC18 is released
-                let read_role = format!("ROLE_EPISODE_{}_READ", opencast_id);
-                let write_role = format!("ROLE_EPISODE_{}_WRITE", opencast_id);
+                let read_role = format!("ROLE_EPISODE_{opencast_id}_READ");
+                let write_role = format!("ROLE_EPISODE_{opencast_id}_WRITE");
 
                 json!({
                     "oc": {
@@ -105,7 +107,7 @@ pub(crate) async fn service_jwt(
             let Some(row) = row else {
                 return Err(invalid_input!("'event' does not exist"));
             };
-            let opencast_id: String = mapping.opencast_id.of(&row);
+            let opencast_id: OpencastId = mapping.opencast_id.of(&row);
             let write_roles: Vec<String> = mapping.write_roles.of(&row);
 
             if !context.auth.overlaps_roles(&write_roles) {

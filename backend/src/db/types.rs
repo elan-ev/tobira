@@ -55,20 +55,24 @@ pub enum EventState {
 
 
 /// Represents the `playlist_entry_type` type defined in `31-playlists.sql`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, Deserialize)]
 #[postgres(name = "playlist_entry_type")]
 pub enum PlaylistEntryType {
     #[postgres(name = "event")]
+    #[serde(rename = "EVENT")]
     Event,
 }
 
 /// Represents the `playlist_entry` type defined in `31-playlists.sql`.
-#[derive(Debug, FromSql, ToSql, Clone)]
+#[derive(Debug, FromSql, ToSql, Clone, Deserialize)]
 #[postgres(name = "playlist_entry")]
 pub struct PlaylistEntry {
+    #[serde(rename = "id")]
     pub entry_id: i64,
     #[postgres(name = "type")]
+    #[serde(rename = "type")]
     pub ty: PlaylistEntryType,
+    #[serde(rename = "contentId")]
     pub content_id: String,
 }
 

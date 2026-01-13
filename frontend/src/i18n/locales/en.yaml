@@ -202,6 +202,7 @@ series:
 
 playlist:
   singular: Playlist
+  playlist-page: 'Playlist page: “{{playlist}}”'
   deleted-block: The playlist referenced here was deleted.
   not-allowed: You are not authorized to view this playlist.
   not-allowed-block: You are not authorized to view the playlist embedded here.
@@ -372,6 +373,8 @@ acl:
       video-write-description: Can also edit and delete the video, metadata and other details.
       series-read-description: Usable as template for videos in this series.
       series-write-description: Can delete the series, change metadata and add or remove videos.
+      playlist-read-description: Can find the playlist and view metadata.
+      playlist-write-description: Can delete the playlist, change metadata and add or remove videos.
       realm-moderate-description: Can edit content, add subpages and change the name and subpage order.
       realm-admin-description: Can moderate, delete pages and edit permissions.
       write-access: write-access
@@ -488,11 +491,30 @@ manage:
         Removing a video from this list does not delete the video itself but just removes it from
         this series.
 
+  playlist:
+    created-note: Playlist has been created.
+    table:
+      title: My playlists
+      create: Create playlist
+    details:
+      title: Playlist details
+      delete: Delete playlist
+      delete-note: Videos in this playlist will not be deleted.
+      confirm-delete: Delete playlist?
+      referencing-pages-explanation: 'This playlist is referenced on the following pages:'
+      no-referencing-pages: No pages reference this playlist.
+      edit-note: >
+        Removing a video from this list does not delete the video itself but just removes it from
+        this playlist.
+
   video-list:
     no-content: No videos
     no-of-videos_one: '{{count}} video'
     no-of-videos_other: '{{count}} videos'
     removing-disabled: Removing videos is disabled.
+    details:
+      unknown_one: One video is missing or requires additional permissions to view.
+      unknown_other: '{{count}} videos are missing or require additional permissions to view.'
     edit:
       add-video: Add video
       to-be-added: will be added
@@ -537,6 +559,7 @@ manage:
       failed-maybe: Deletion possibly failed.
       pending: Deletion is pending.
       in-progress: '“{{itemTitle}}” is being deleted.'
+      success: '“{{itemTitle}}” has been deleted.'
       tooltip:
         failed: >
           The deletion of this entry was requested {{time}} but still has not happened, so it might have failed.
@@ -693,6 +716,7 @@ embed:
 api-remote-errors:
   view:
     event: You are not authorized to view this video.
+    playlist: You are not authorized to view this playlist.
   mutation:
     not-logged-in: You have to be logged in to perform this action.
   realm:
@@ -716,3 +740,7 @@ api-remote-errors:
   series:
     not-found: "Action failed: series not found."
     not-allowed: You are not allowed to perform this series action.
+  playlist:
+    not-found: "Action failed: playlist not found."
+    entry-not-found: Attempted to add unknown entries.
+    not-allowed: You are not allowed to perform this playlist action.
