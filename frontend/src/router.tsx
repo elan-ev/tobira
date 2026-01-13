@@ -33,7 +33,7 @@ import { ManageSeriesRoute } from "./routes/manage/Series";
 import { ManageSeriesDetailsRoute } from "./routes/manage/Series/SeriesDetails";
 import { ManageSeriesAccessRoute } from "./routes/manage/Series/SeriesAccess";
 import { CreateSeriesRoute } from "./routes/manage/Series/Create";
-import { AdminDashboardRoute } from "./routes/manage/Admin";
+import { AdminDashboardRoute } from "./routes/manage/admin";
 import { ManagePlaylistsRoute } from "./routes/manage/Playlist";
 import { ManagePlaylistDetailsRoute } from "./routes/manage/Playlist/PlaylistDetails";
 import { ManagePlaylistAccessRoute } from "./routes/manage/Playlist/PlaylistAccess";

@@ -1,21 +1,21 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
-import { RootLoader } from "../../layout/Root";
-import { makeRoute } from "../../rauta";
-import { loadQuery } from "../../relay";
-import { NotAuthorized } from "../../ui/error";
-import { PageTitle } from "../../layout/header/ui";
+import { RootLoader } from "../../../layout/Root";
+import { makeRoute } from "../../../rauta";
+import { loadQuery } from "../../../relay";
+import { NotAuthorized } from "../../../ui/error";
+import { PageTitle } from "../../../layout/header/ui";
 import {
-    AdminDashboardQuery, AdminDashboardQuery$data,
-} from "./__generated__/AdminDashboardQuery.graphql";
-import { COLORS } from "../../color";
+    adminDashboardQuery, adminDashboardQuery$data,
+} from "./__generated__/adminDashboardQuery.graphql";
+import { COLORS } from "../../../color";
 import { LuTriangleAlert } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 import { ReactNode } from "react";
-import CONFIG from "../../config";
-import { Link } from "../../router";
-import { ManageRealmContentRoute } from "./Realm/Content";
+import CONFIG from "../../../config";
+import { Link } from "../../../router";
+import { ManageRealmContentRoute } from "../Realm/Content";
 
 
 
@@ -29,7 +29,7 @@ export const AdminDashboardRoute = makeRoute({
             return null;
         }
 
-        const queryRef = loadQuery<AdminDashboardQuery>(query, {});
+        const queryRef = loadQuery<adminDashboardQuery>(query, {});
         return {
             render: () => <RootLoader
                 {...{ query, queryRef }}
@@ -46,7 +46,7 @@ export const AdminDashboardRoute = makeRoute({
 
 
 const query = graphql`
-    query AdminDashboardQuery {
+    query adminDashboardQuery {
         ...UserData
         adminDashboardInfo {
             db {
@@ -105,7 +105,7 @@ const query = graphql`
 `;
 
 type Props = {
-    info: NonNullable<AdminDashboardQuery$data["adminDashboardInfo"]>;
+    info: NonNullable<adminDashboardQuery$data["adminDashboardInfo"]>;
 };
 
 // The admin dashboard is only for admins, so to cut down an translation
