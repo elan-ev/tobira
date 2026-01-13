@@ -9,26 +9,31 @@ use crate::{
 };
 
 
-pub(crate) struct AdminInfo {
-    db: AdminDbInfo,
-    search_index: AdminSearchIndexInfo,
-    sync: AdminSyncInfo,
-    problems: AdminProblemInfo,
+pub(crate) struct AdminInfo {}
+
+impl AdminInfo {
+    pub async fn new(context: &Context) -> Option<Self> {
+        if !context.auth.is_tobira_admin(&context.config.auth) {
+            return None;
+        }
+
+        Some(Self {})
+    }
 }
 
 #[graphql_object(Context = Context)]
 impl AdminInfo {
-    fn db(&self) -> &AdminDbInfo {
-        &self.db
+    async fn db(&self, context: &Context) -> ApiResult<AdminDbInfo> {
+        AdminDbInfo::fetch(context).await
     }
-    fn search_index(&self) -> &AdminSearchIndexInfo {
-        &self.search_index
+    async fn search_index(&self, context: &Context) -> ApiResult<AdminSearchIndexInfo> {
+        AdminSearchIndexInfo::fetch(context).await
     }
-    fn sync(&self) -> &AdminSyncInfo {
-        &self.sync
+    async fn sync(&self, context: &Context) -> ApiResult<AdminSyncInfo> {
+        AdminSyncInfo::fetch(context).await
     }
-    fn problems(&self) -> &AdminProblemInfo {
-        &self.problems
+    async fn problems(&self, context: &Context) -> ApiResult<AdminProblemInfo> {
+        AdminProblemInfo::fetch(context).await
     }
 
     async fn user_realms(&self, context: &Context) -> ApiResult<Vec<AdminUserRealmInfo>> {
@@ -104,24 +109,6 @@ struct UserSessionInfo {
     email: Option<String>,
     user_role: String,
     user_realm_handle: Option<String>,
-}
-
-pub async fn dashboard_info(context: &Context) -> ApiResult<Option<AdminInfo>> {
-    if !context.auth.is_tobira_admin(&context.config.auth) {
-        return Ok(None);
-    }
-
-    let db_info = AdminDbInfo::fetch(context).await?;
-    let search_index = AdminSearchIndexInfo::fetch(context).await?;
-    let sync = AdminSyncInfo::fetch(context).await?;
-    let problems = AdminProblemInfo::fetch(context).await?;
-
-    Ok(Some(AdminInfo {
-        db: db_info,
-        search_index,
-        sync,
-        problems,
-    }))
 }
 
 #[derive(GraphQLObject)]
