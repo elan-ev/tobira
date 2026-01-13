@@ -1,4 +1,6 @@
-use chrono::{DateTime, Utc};
+use std::{collections::BTreeMap, future};
+
+use chrono::{DateTime, NaiveDateTime, Utc};
 use juniper::{GraphQLObject, graphql_object};
 use meilisearch_sdk::documents::DocumentsQuery;
 
@@ -50,6 +52,35 @@ impl AdminInfo {
 
         Ok(out)
     }
+
+    async fn user_sessions(&self, context: &Context) -> ApiResult<Vec<UserInfo>> {
+        let (selection, mapping) = crate::db::util::select!(
+           	username,
+            display_name,
+            roles,
+            created,
+            email,
+            user_role,
+            user_realm_handle,
+        );
+        let query = format!("select {selection} from user_sessions order by username");
+
+        let mut out = <BTreeMap<String, Vec<_>>>::new();
+        context.db.query_raw(&query, dbargs![]).await?.try_for_each(|row| {
+            let username = mapping.username.of::<String>(&row);
+            out.entry(username).or_default().push(UserSessionInfo {
+                display_name: mapping.display_name.of(&row),
+                roles: mapping.roles.of(&row),
+                created: mapping.created.of::<NaiveDateTime>(&row).and_utc(),
+                email: mapping.email.of(&row),
+                user_role: mapping.user_role.of(&row),
+                user_realm_handle: mapping.user_realm_handle.of(&row),
+            });
+            future::ready(Ok(()))
+        }).await?;
+
+        Ok(out.into_iter().map(|(username, sessions)| UserInfo { username, sessions }).collect())
+    }
 }
 
 #[derive(GraphQLObject)]
@@ -57,6 +88,22 @@ struct AdminUserRealmInfo {
     path: String,
     num_subpages: i32,
     owner_display_name: String,
+}
+
+#[derive(GraphQLObject)]
+struct UserInfo {
+    username: String,
+    sessions: Vec<UserSessionInfo>,
+}
+
+#[derive(GraphQLObject)]
+struct UserSessionInfo {
+    display_name: String,
+    roles: Vec<String>,
+    created: DateTime<Utc>,
+    email: Option<String>,
+    user_role: String,
+    user_realm_handle: Option<String>,
 }
 
 pub async fn dashboard_info(context: &Context) -> ApiResult<Option<AdminInfo>> {

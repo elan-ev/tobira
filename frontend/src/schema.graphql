@@ -324,6 +324,7 @@ type AdminInfo {
   sync: AdminSyncInfo!
   problems: AdminProblemInfo!
   userRealms: [AdminUserRealmInfo!]!
+  userSessions: [UserInfo!]!
 }
 
 type AdminMeiliInfo {
@@ -1245,6 +1246,20 @@ type User {
     on the "my playlists" page.
   """
   myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
+}
+
+type UserInfo {
+  username: String!
+  sessions: [UserSessionInfo!]!
+}
+
+type UserSessionInfo {
+  displayName: String!
+  roles: [String!]!
+  created: DateTime!
+  email: String
+  userRole: String!
+  userRealmHandle: String
 }
 
 "A block for presenting a single Opencast event"

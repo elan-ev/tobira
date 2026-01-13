@@ -17,6 +17,7 @@ import CONFIG from "../../../config";
 import { Link } from "../../../router";
 import { ManageRealmContentRoute } from "../Realm/Content";
 import { PATH as USER_REALM_SUBPAGE_PATH } from "./UserRealm";
+import { PATH as USER_SESSIONS_SUBPAGE_PATH } from "./UserSessions";
 
 
 
@@ -115,8 +116,11 @@ type Props = {
 // use this fake function.
 export const t = (s: string) => s;
 
-export const AdminDashboardContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
-    <div css={{
+export const AdminDashboardContainer: React.FC<JSX.IntrinsicElements["div"]> = ({
+    children,
+    className,
+}) => (
+    <div {...{ className }} css={{
         maxWidth: 1000,
         margin: "0 auto",
         h2: {
@@ -140,9 +144,6 @@ export const SimpleTable: React.FC<React.PropsWithChildren> = ({ children }) => 
         "th, td": {
             border: `1px solid ${COLORS.neutral25}`,
             padding: "2px 10px",
-        },
-        "td:not(:first-child)": {
-            textAlign: "right",
         },
     }}>
         {children}
@@ -266,7 +267,11 @@ const SearchIndexSection: React.FC<Props> = ({ info }) => {
                     <th>{t("Indexing")}</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody css={{
+                "td:not(:first-child)": {
+                    textAlign: "right",
+                },
+            }}>
                 {rows.map(([name, db, si, siq], i) => <tr key={i}>
                     <td>{name}</td>
                     <td>{db}</td>
@@ -320,7 +325,11 @@ const ContentSection: React.FC<Props> = ({ info }) => {
             <li>{t("Blocks: ") + db.numBlocks}</li>
             <li>{t("Known groups: ") + db.numKnownGroups}</li>
             <li>{t("Known users: ") + db.numKnownUsers}</li>
-            <li>{t("User sessions: ") + db.numUserSessions}</li>
+            <li>
+                <Link to={USER_SESSIONS_SUBPAGE_PATH}>
+                    {t("User sessions: ") + db.numUserSessions}
+                </Link>
+            </li>
         </ul>
 
         <h3>Problems</h3>
