@@ -121,7 +121,6 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         }}
         activeEventId={props.activeEventId}
         realmPath={props.realmPath}
-        isPlaylist
         listId={playlist.id}
         listEntries={playlist.entries}
         editMode={props.editMode ?? false}
@@ -130,6 +129,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
             // shareUrl: props.realmPath == null
             //     ? `/!p/${playlistKey}`
             //     : `${props.realmPath}p/${playlistKey}`,
+            kind: "playlist",
             shareUrl: `/!p/${playlistKey}`,
             rssUrl: `/~rss/playlist/${playlistKey}`,
         }}

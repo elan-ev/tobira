@@ -23,10 +23,11 @@ export type ShareButtonProps = {
     height: number;
     className?: string;
     hideLabel?: boolean;
+    kind: "series" | "playlist" | "video";
 };
 
 export const ShareButton: React.FC<ShareButtonProps> = ({
-    tabs, onOpen, height, className, hideLabel = false,
+    tabs, onOpen, height, className, hideLabel = false, kind,
 }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -110,7 +111,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         >
             {/* Share Button */}
             <FloatingTrigger>
-                <Button aria-label={t("series.share")} {...{ className }} onClick={() => {
+                <Button aria-label={t(`${kind}.share`)} {...{ className }} onClick={() => {
                     setActiveTab(state => state === null ? Object.keys(tabs)[0] : null);
                     if (activeTab == null) {
                         onOpen?.();

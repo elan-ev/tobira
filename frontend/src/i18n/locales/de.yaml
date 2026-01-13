@@ -188,6 +188,8 @@ video:
       id: Kennung
       submit: Freischalten
     invalid-credentials: Ungültige Zugangsdaten.
+  manage: Video verwalten
+  share: Video teilen
 
 series:
   singular: Serie
@@ -201,8 +203,8 @@ series:
       Die Daten der gewünschten Serie wurden leider noch nicht vollständig übertragen. Dies sollte
       in Kürze automatisch passieren. Versuchen Sie es in wenigen Minuten noch einmal!
     label: nicht synchronisiert
-  manage: Diese Serie verwalten
-  share: Diese Serie teilen
+  manage: Serie verwalten
+  share: Serie teilen
 
 
 playlist:
@@ -211,6 +213,8 @@ playlist:
   deleted-block: Die hier referenzierte Playlist wurde gelöscht.
   not-allowed: Sie sind nicht autorisiert, diese Playlist zu sehen.
   not-allowed-block: Sie sind nicht autorisiert, die hier eingebettete Playlist zu sehen.
+  manage: Playlist verwalten
+  share: Playlist teilen
 
 share:
   share-direct-link: Via Direktlink teilen

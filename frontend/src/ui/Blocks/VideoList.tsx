@@ -71,6 +71,8 @@ export const videoListEventFragment = graphql`
     }
 `;
 type Event = VideoListEventData$data;
+type ListKind = "series" | "playlist";
+
 
 // ==============================================================================================
 // ===== Main components defining UI
@@ -116,7 +118,6 @@ export type VideoListBlockProps = {
     displayOptions: VideoListDisplayOptions;
     metadata?: VideoListMetadata;
     shareInfo: VideoListShareButtonProps,
-    isPlaylist?: boolean;
     listEntries: Entries;
     editMode: boolean;
     linkToManagePage?: string;
@@ -129,7 +130,6 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     displayOptions,
     metadata,
     shareInfo,
-    isPlaylist = false,
     listEntries,
     editMode,
     linkToManagePage,
@@ -158,7 +158,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     const renderEvents = (events: readonly VideoListItem[]) => (
         <Items
             basePath={basePath}
-            showSeries={isPlaylist}
+            showSeries={shareInfo.kind === "series"}
             {...{ listId }}
             items={events.map(item => ({
                 item,
@@ -178,7 +178,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
             {...showManageLink && { linkToManagePage }}
-            {...{ metadata, shareInfo, initialLayout, isPlaylist }}
+            {...{ metadata, shareInfo, initialLayout }}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
@@ -321,7 +321,6 @@ type VideoListBlockContainerProps = {
     children: ReactNode;
     showViewOptions: boolean;
     initialLayout?: VideoListLayout;
-    isPlaylist?: boolean;
     linkToManagePage?: string;
 };
 
@@ -405,7 +404,8 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                             flexShrink: 0,
                             minWidth: "fit-content",
                         }}>
-                            {linkToManagePage && <VideoListManageButton
+                            {linkToManagePage && shareInfo && <VideoListManageButton
+                                kind={shareInfo.kind}
                                 link={linkToManagePage}
                                 hideLabel
                             />}
@@ -461,12 +461,13 @@ const buttonStyle = {
 type VideoListShareButtonProps = {
     shareUrl: string;
     rssUrl: string;
+    kind: ListKind;
     className?: string;
     hideLabel?: boolean;
 };
 
 export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
-    shareUrl, rssUrl, className, hideLabel = false,
+    shareUrl, rssUrl, className, hideLabel = false, kind,
 }) => {
     const { t } = useTranslation();
 
@@ -491,20 +492,21 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
             </>,
         },
     };
-    return <ShareButton height={180} {...{ tabs, className, hideLabel }} css={buttonStyle} />;
+    return <ShareButton height={180} {...{ tabs, className, hideLabel, kind }} css={buttonStyle} />;
 };
 
 type VideoListManageButtonProps = {
     link: string;
     hideLabel?: boolean;
+    kind: ListKind;
 }
 
 
 export const VideoListManageButton: React.FC<VideoListManageButtonProps> = ({
-    link, hideLabel = false,
+    link, hideLabel = false, kind,
 }) => {
     const { t } = useTranslation();
-    return <LinkButton aria-label={t("series.manage")} to={link} css={{
+    return <LinkButton aria-label={t(`${kind}.manage`)} to={link} css={{
         color: COLORS.primary0,
         svg: { color: COLORS.primary0 },
         ...buttonStyle,

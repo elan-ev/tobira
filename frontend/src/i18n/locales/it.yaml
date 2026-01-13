@@ -185,6 +185,8 @@ video:
       id: Identificativo
       submit: Verifica
     invalid-credentials: Credenziali non valide.
+  manage: Gestire questo video # confirm
+  share: Condividere questo video # confirm
 
 series:
   singular: Serie
@@ -208,6 +210,8 @@ playlist:
   deleted-block: La playlist a cui si fa riferimento è stata cancellata.
   not-allowed: Non è autorizzato a visualizzare questa playlist.
   not-allowed-block: Non è autorizzato a visualizzare la playlist incorporata qui.
+  manage: Gestire questa playlist # confirm
+  share: Condividere questa playlist # confirm
 
 share:
   share-direct-link: Condividi tramite link diretto

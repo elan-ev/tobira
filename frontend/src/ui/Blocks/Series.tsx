@@ -129,6 +129,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         listEntries={series.entries}
         editMode={props.editMode ?? false}
         shareInfo={{
+            kind: "series",
             shareUrl: props.realmPath == null
                 ? `/!s/${seriesKey}`
                 : `${props.realmPath.replace(/\/$/u, "")}/s/${seriesKey}`,

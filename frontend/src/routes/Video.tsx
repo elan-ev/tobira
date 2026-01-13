@@ -1102,7 +1102,12 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
         },
     };
 
-    return <ShareButton {...{ tabs }} onOpen={() => onOpen?.(setTimestamp)} height={250} />;
+    return <ShareButton
+        kind="video"
+        {...{ tabs }}
+        onOpen={() => onOpen?.(setTimestamp)}
+        height={250}
+    />;
 };
 
 
