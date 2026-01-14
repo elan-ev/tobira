@@ -459,6 +459,10 @@ shortcuts:
     shift: Shift
     tab: Tab
 
+license:
+  all-rights: Alle Rechte vorbehalten
+
+
 manage:
   admin-dashboard: Admin dashboard
   dashboard:
