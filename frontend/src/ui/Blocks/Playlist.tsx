@@ -1,17 +1,19 @@
 import { graphql, useFragment } from "react-relay";
 import { Fields } from "../../relay";
 import { useTranslation } from "react-i18next";
+import { Card, unreachable } from "@opencast/appkit";
+
 import {
     PlaylistBlockData$data,
     PlaylistBlockData$key,
 } from "./__generated__/PlaylistBlockData.graphql";
-import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
 import {
     PlaylistBlockPlaylistData$data,
     PlaylistBlockPlaylistData$key,
 } from "./__generated__/PlaylistBlockPlaylistData.graphql";
-import { Card, unreachable } from "@opencast/appkit";
+import { ManagePlaylistDetailsRoute } from "../../routes/manage/Playlist/PlaylistDetails";
 import { keyOfId } from "../../util";
+import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
 
 
 type SharedProps = {
@@ -39,6 +41,7 @@ const playlistFragment = graphql`
             title
             description
             creator
+            canWrite
             entries {
                 __typename
                 ... on AuthorizedEvent { id, ...VideoListEventData }
@@ -107,6 +110,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         : undefined;
 
     const playlistKey = keyOfId(playlist.id);
+
     return <VideoListBlock
         displayOptions={{
             initialLayout: props.layout,
@@ -118,6 +122,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
             title,
             description: (props.showMetadata && playlist.description) || undefined,
             creators: props.showMetadata ? [playlist.creator] : undefined,
+            canWrite: playlist.canWrite,
         }}
         activeEventId={props.activeEventId}
         realmPath={props.realmPath}
@@ -125,16 +130,14 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         listEntries={playlist.entries}
         editMode={props.editMode ?? false}
         shareInfo={{
+            kind: "playlist",
             // TODO: once we have the `/path/to/realm/p/<id>` route
             // shareUrl: props.realmPath == null
             //     ? `/!p/${playlistKey}`
             //     : `${props.realmPath}p/${playlistKey}`,
-            kind: "playlist",
             shareUrl: `/!p/${playlistKey}`,
             rssUrl: `/~rss/playlist/${playlistKey}`,
         }}
-        // TODO: Once playlist PR is merged, add:
-        // (or just add that to the PR if this is merged prior)
-        // linkToManagePage={ManagePlaylistDetailsRoute.url({ id: playlist.id })}
+        linkToManagePage={ManagePlaylistDetailsRoute.url({ id: playlist.id })}
     />;
 };
