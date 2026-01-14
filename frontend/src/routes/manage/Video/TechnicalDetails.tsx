@@ -32,7 +32,7 @@ const Page: React.FC<Props> = ({ event }) => {
     const breadcrumbs = [
         { label: t("user.manage"), link: ManageRoute.url },
         { label: t("manage.video.table"), link: ManageVideosRoute.url },
-        { label: event.title, link: ManageVideoDetailsRoute.url({ videoId: event.id }) },
+        { label: event.title, link: ManageVideoDetailsRoute.url({ id: event.id }) },
     ];
 
     const user = useUser();

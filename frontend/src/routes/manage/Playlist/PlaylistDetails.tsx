@@ -113,6 +113,7 @@ const PlaylistButtonSection: React.FC<{ playlist: AuthorizedPlaylist }> = ({ pla
 
     const playlistKey = keyOfId(playlist.id);
     const shareInfo = {
+        kind: "playlist" as const,
         shareUrl: `/!p/${playlistKey}`,
         rssUrl: `/~rss/playlist/${playlistKey}`,
     };

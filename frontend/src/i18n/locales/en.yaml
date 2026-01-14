@@ -186,6 +186,8 @@ video:
       id: Identifier
       submit: Verify
     invalid-credentials: Invalid credentials.
+  manage: Manage video
+  share: Share video
 
 series:
   singular: Series
@@ -199,6 +201,8 @@ series:
       The data of the requested series has not been fully transferred yet. This should
       happen automatically soon. Try again in a few minutes.
     label: not synchronized
+  manage: Manage series
+  share: Share series
 
 playlist:
   singular: Playlist
@@ -206,6 +210,8 @@ playlist:
   deleted-block: The playlist referenced here was deleted.
   not-allowed: You are not authorized to view this playlist.
   not-allowed-block: You are not authorized to view the playlist embedded here.
+  manage: Manage playlist
+  share: Share playlist
 
 share:
   share-direct-link: Share via direct link

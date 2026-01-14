@@ -915,7 +915,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                 "> button": { ...shrinkOnMobile },
             }}>
                 {event.canWrite && user !== "none" && user !== "unknown" && (
-                    <LinkButton to={ManageVideoDetailsRoute.url({ videoId: event.id })} css={{
+                    <LinkButton to={ManageVideoDetailsRoute.url({ id: event.id })} css={{
                         "&:not([disabled])": { color: COLORS.primary0 },
                         ...shrinkOnMobile,
                     }}>
@@ -1102,7 +1102,12 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
         },
     };
 
-    return <ShareButton {...{ tabs }} onOpen={() => onOpen?.(setTimestamp)} height={250} />;
+    return <ShareButton
+        kind="video"
+        {...{ tabs }}
+        onOpen={() => onOpen?.(setTimestamp)}
+        height={250}
+    />;
 };
 
 

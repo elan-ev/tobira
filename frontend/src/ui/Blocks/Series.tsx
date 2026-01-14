@@ -12,6 +12,7 @@ import {
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
 import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
+import { ManageSeriesDetailsRoute } from "../../routes/manage/Series/SeriesDetails";
 
 
 // ==============================================================================================
@@ -43,6 +44,7 @@ const seriesFragment = graphql`
         description
         state
         metadata
+        canWrite
         entries {
             __typename
             ...on AuthorizedEvent { id, ...VideoListEventData }
@@ -109,24 +111,30 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
 
     const seriesKey = keyOfId(series.id);
     return <VideoListBlock
-        initialLayout={props.layout}
-        initialOrder={
-            (props.order === "%future added value" ? undefined : props.order) ?? "NEW_TO_OLD"
-        }
-        allowOriginalOrder={false}
-        title={props.title ?? (props.showTitle ? series.title : undefined)}
-        description={(props.showMetadata && series.description) || undefined}
-        timestamp={props.showMetadata ? series.created ?? undefined : undefined}
-        creators={props.showMetadata ? creators : undefined}
+        displayOptions={{
+            initialLayout: props.layout,
+            initialOrder: (props.order === "%future added value" ? undefined : props.order)
+                ?? "NEW_TO_OLD",
+            allowOriginalOrder: false,
+        }}
+        metadata={{
+            title: props.title ?? (props.showTitle ? series.title : undefined),
+            description: (props.showMetadata && series.description) || undefined,
+            timestamp: props.showMetadata ? series.created ?? undefined : undefined,
+            creators: props.showMetadata ? creators : undefined,
+            canWrite: series.canWrite,
+        }}
         activeEventId={props.activeEventId}
         realmPath={props.realmPath}
         listEntries={series.entries}
         editMode={props.editMode ?? false}
         shareInfo={{
+            kind: "series",
             shareUrl: props.realmPath == null
                 ? `/!s/${seriesKey}`
                 : `${props.realmPath.replace(/\/$/u, "")}/s/${seriesKey}`,
             rssUrl: `/~rss/series/${seriesKey}`,
         }}
+        linkToManagePage={ManageSeriesDetailsRoute.url({ id: series.id })}
     />;
 };

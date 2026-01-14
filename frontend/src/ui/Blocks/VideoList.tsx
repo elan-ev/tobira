@@ -19,7 +19,7 @@ import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
 import {
     LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
-    LuRss, LuLink,
+    LuRss, LuLink, LuSettings,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
@@ -45,6 +45,7 @@ import { isRealUser, useUser } from "../../User";
 import { LoginLink } from "../../routes/util";
 import { QrCodeButton, ShareButton } from "../ShareButton";
 import { CopyableInput } from "../Input";
+import { LinkButton } from "../LinkButton";
 
 
 
@@ -70,6 +71,7 @@ export const videoListEventFragment = graphql`
     }
 `;
 type Event = VideoListEventData$data;
+type ListKind = "series" | "playlist";
 
 
 // ==============================================================================================
@@ -95,40 +97,45 @@ type Entries = Extract<
     { __typename: "AuthorizedPlaylist" }
 >["entries"];
 
-export type VideoListBlockProps = {
-    listId?: string;
-    realmPath: string | null;
-    activeEventId?: string;
-    allowOriginalOrder: boolean;
-    initialOrder: Order;
-    initialLayout?: VideoListLayout;
+export type VideoListMetadata = {
     title?: string;
     description?: string;
     timestamp?: string;
     creators?: string[];
+    canWrite?: boolean;
+};
+
+export type VideoListDisplayOptions = {
+    initialOrder: Order;
+    allowOriginalOrder: boolean;
+    initialLayout?: VideoListLayout;
+};
+
+export type VideoListBlockProps = {
+    listId?: string;
+    realmPath: string | null;
+    activeEventId?: string;
+    displayOptions: VideoListDisplayOptions;
+    metadata?: VideoListMetadata;
     shareInfo: VideoListShareButtonProps,
-    isPlaylist?: boolean;
     listEntries: Entries;
     editMode: boolean;
+    linkToManagePage?: string;
 }
 
 export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     listId,
     realmPath,
     activeEventId,
-    allowOriginalOrder,
-    initialOrder,
-    initialLayout = "GALLERY",
-    title,
-    description,
-    timestamp,
-    creators,
+    displayOptions,
+    metadata,
     shareInfo,
-    isPlaylist = false,
     listEntries,
     editMode,
+    linkToManagePage,
 }) => {
     const { t, i18n } = useTranslation();
+    const { initialOrder, allowOriginalOrder, initialLayout = "GALLERY" } = displayOptions;
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
     const user = useUser();
 
@@ -151,7 +158,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     const renderEvents = (events: readonly VideoListItem[]) => (
         <Items
             basePath={basePath}
-            showSeries={isPlaylist}
+            showSeries={shareInfo.kind === "series"}
             {...{ listId }}
             items={events.map(item => ({
                 item,
@@ -164,11 +171,14 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
 
     const eventsNotEmpty = items.length > 0;
     const hasHiddenItems = missingItems + unauthorizedItems > 0;
+    const showManageLink = metadata?.canWrite && linkToManagePage
+        && user !== "none" && user !== "unknown";
 
     return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
-            {...{ title, description, timestamp, creators, shareInfo, initialLayout, isPlaylist }}
+            {...showManageLink && { linkToManagePage }}
+            {...{ metadata, shareInfo, initialLayout }}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
@@ -305,17 +315,13 @@ const orderItems = (
     return { mainItems, upcomingLiveEvents, missingItems, unauthorizedItems };
 };
 
-
 type VideoListBlockContainerProps = {
-    title?: string;
-    description?: string | null;
-    timestamp?: string;
-    creators?: string[];
+    metadata?: VideoListMetadata;
     shareInfo?: VideoListShareButtonProps,
     children: ReactNode;
     showViewOptions: boolean;
     initialLayout?: VideoListLayout;
-    isPlaylist?: boolean;
+    linkToManagePage?: string;
 };
 
 type LayoutContext = {
@@ -329,9 +335,10 @@ const LayoutContext = createContext<LayoutContext>({
 });
 
 export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = ({
-    title, description, timestamp, creators, shareInfo, children,
-    showViewOptions, initialLayout = "GALLERY",
+    metadata, shareInfo, children, showViewOptions,
+    initialLayout = "GALLERY", linkToManagePage,
 }) => {
+    const { title, description, creators, timestamp } = metadata ?? {};
     const [layoutState, setLayoutState] = useState<VideoListLayout>(initialLayout);
     const isDark = useColorScheme().scheme === "dark";
     const hasMetadata = description || timestamp || (creators && creators.length > 0);
@@ -346,70 +353,97 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
         }}>
             <>
                 <div css={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    ...title && hasMetadata && { flexDirection: "column" },
+                    display: "grid",
+                    gridTemplateColumns: (title || hasMetadata)
+                        ? "minmax(200px, 1fr) fit-content(40%)"
+                        : "1fr",
+                    gridTemplateRows: "auto auto",
+                    columnGap: 12,
+                    rowGap: 8,
+                    alignItems: "start",
+
+                    // Stack vertically on small screens
                     [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
-                        flexWrap: "wrap",
+                        gridTemplateColumns: "1fr",
+                        gridTemplateRows: "auto auto auto",
                     },
                 }}>
+                    {/* Title */}
                     {title && <h2 css={{
-                        display: "inline-block",
                         padding: "8px 12px",
                         color: isDark ? COLORS.neutral90 : COLORS.neutral80,
                         fontSize: 20,
                         lineHeight: 1.3,
-                        maxWidth: "100%",
+                        minWidth: 0,
                     }}>{title}</h2>}
+
+                    {/* Buttons */}
                     <div css={{
+                        gridColumn: (title || hasMetadata) ? 2 : 1,
+                        gridRow: (title || hasMetadata) ? "1 / 3" : 1,
                         display: "flex",
-                        flexDirection: "row",
-                        flexGrow: 1,
-                        maxWidth: "100%",
+                        justifyContent: "flex-end",
+                        alignItems: "flex-start",
+                        alignContent: "space-between",
+                        flexWrap: "wrap-reverse",
+                        gap: 8,
+                        padding: 5,
+                        fontSize: 14,
+
+                        // Move buttons to bottom row on small screens
                         [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
+                            gridColumn: 1,
+                            gridRow: 3,
+                            alignContent: "flex-start",
                             flexWrap: "wrap",
                         },
                     }}>
-                        <div>
-                            {(timestamp || (creators && creators.length > 0)) && <DateAndCreators
-                                timestamp={timestamp}
-                                isLive={false}
-                                creators={creators}
-                                css={{
-                                    margin: "0px 12px",
-                                    gap: 16,
-                                    "> *": {
-                                        padding: "4px 6px",
-                                        borderRadius: 4,
-                                        background: COLORS.neutral15,
-                                    },
-                                }}
-                            />}
-                            {description && <CollapsibleDescription
-                                type="series"
-                                bottomPadding={32}
-                                {...{ description }}
-                            />}
-                        </div>
-                        <div css={{
+                        {(linkToManagePage || shareInfo) && <div css={{
                             display: "flex",
-                            alignItems: "center",
-                            alignSelf: description ? "flex-end" : "flex-start",
-                            marginLeft: "auto",
-                            fontSize: 14,
-                            gap: 16,
-                            padding: 5,
-                            [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
-                                flexWrap: "wrap",
-                            },
+                            gap: 8,
+                            flexShrink: 0,
+                            minWidth: "fit-content",
                         }}>
-                            {shareInfo && <VideoListShareButton {...shareInfo} />}
-                            {showViewOptions && <>
-                                <OrderMenu />
-                                <LayoutMenu />
-                            </>}
-                        </div>
+                            {linkToManagePage && shareInfo && <VideoListManageButton
+                                kind={shareInfo.kind}
+                                link={linkToManagePage}
+                                hideLabel
+                            />}
+                            {shareInfo && <VideoListShareButton {...shareInfo} hideLabel />}
+                        </div>}
+                        {showViewOptions && <div css={{
+                            display: "flex",
+                            gap: 8,
+                            flexShrink: 0,
+                            minWidth: "fit-content",
+                        }}>
+                            <OrderMenu />
+                            <LayoutMenu />
+                        </div>}
                     </div>
+
+                    {/* Metadata */}
+                    {hasMetadata && <div css={{ gridRow: 2, maxWidth: "85ch" }}>
+                        {(timestamp || (creators && creators.length > 0)) && <DateAndCreators
+                            timestamp={timestamp}
+                            isLive={false}
+                            creators={creators}
+                            css={{
+                                margin: "0px 12px",
+                                gap: 16,
+                                "> *": {
+                                    padding: "4px 6px",
+                                    borderRadius: 4,
+                                    background: COLORS.neutral15,
+                                },
+                            }}
+                        />}
+                        {description && <CollapsibleDescription
+                            type="series"
+                            bottomPadding={32}
+                            {...{ description }}
+                        />}
+                    </div>}
                 </div>
                 {hasMetadata && <hr css={{ margin: "12px 6px 20px 6px" }} />}
             </>
@@ -418,14 +452,22 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
     </LayoutContext.Provider>;
 };
 
+const buttonStyle = {
+    padding: 12,
+    height: 31,
+    borderRadius: 4,
+};
+
 type VideoListShareButtonProps = {
     shareUrl: string;
     rssUrl: string;
+    kind: ListKind;
     className?: string;
+    hideLabel?: boolean;
 };
 
 export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
-    shareUrl, rssUrl, className,
+    shareUrl, rssUrl, className, hideLabel = false, kind,
 }) => {
     const { t } = useTranslation();
 
@@ -450,11 +492,28 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
             </>,
         },
     };
-    return <ShareButton height={180} {...{ tabs, className }} css={{
-        padding: 12,
-        height: 31,
-        borderRadius: 4,
-    }} />;
+    return <ShareButton height={180} {...{ tabs, className, hideLabel, kind }} css={buttonStyle} />;
+};
+
+type VideoListManageButtonProps = {
+    link: string;
+    hideLabel?: boolean;
+    kind: ListKind;
+}
+
+
+export const VideoListManageButton: React.FC<VideoListManageButtonProps> = ({
+    link, hideLabel = false, kind,
+}) => {
+    const { t } = useTranslation();
+    return <LinkButton aria-label={t(`${kind}.manage`)} to={link} css={{
+        color: COLORS.primary0,
+        svg: { color: COLORS.primary0 },
+        ...buttonStyle,
+    }}>
+        <LuSettings size={16} />
+        {!hideLabel && t("user.manage")}
+    </LinkButton>;
 };
 
 

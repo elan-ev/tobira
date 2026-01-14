@@ -99,6 +99,7 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
 
     const seriesKey = keyOfId(series.id);
     const shareInfo = {
+        kind: "series" as const,
         shareUrl: `/!s/${seriesKey}`,
         rssUrl: `/~rss/series/${seriesKey}`,
     };

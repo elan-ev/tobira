@@ -189,6 +189,8 @@ video:
       id: Identifiant
       submit: Vérifier
     invalid-credentials: Identifiants invalides.
+  manage: Gérer cette vidéo # confirm
+  share: Partager cette vidéo # confirm
 
 series:
   singular: Série
@@ -203,6 +205,8 @@ series:
       entièrement transférées. Cela devrait se faire automatiquement d'ici peu.
       Réessayez dans quelques minutes !
     label: non synchronisé
+  manage: Gérer cette série # confirm
+  share: Partager cette série # confirm
 
 playlist:
   singular: Playlist
@@ -210,6 +214,8 @@ playlist:
   deleted-block: La playlist référencée ici a été supprimée.
   not-allowed: Vous n'êtes pas autorisé(e) à voir cette playlist.
   not-allowed-block: Vous n'êtes pas autorisé(e) à voir la playlist intégrée ici.
+  manage: Gérer cette playlist # confirm
+  share: Partager cette playlist # confirm
 
 share:
   share-direct-link: Partager via un lien direct
