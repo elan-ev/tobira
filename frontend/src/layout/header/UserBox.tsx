@@ -34,7 +34,7 @@ import SeriesIcon from "../../icons/series.svg";
 import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
 import { SHORTCUTS, ShortcutsOverview, useShortcut } from "../../ui/Shortcuts";
 import { ModalHandle } from "../../ui/Modal";
-import { AdminDashboardRoute } from "../../routes/manage/Admin";
+import { AdminDashboardRoute } from "../../routes/manage/admin";
 import { ManagePlaylistsRoute } from "../../routes/manage/Playlist";
 import { CreatePlaylistRoute } from "../../routes/manage/Playlist/Create";
 

@@ -1,5 +1,7 @@
-use chrono::{DateTime, Utc};
-use juniper::GraphQLObject;
+use std::{collections::BTreeMap, future};
+
+use chrono::{DateTime, NaiveDateTime, Utc};
+use juniper::{GraphQLObject, graphql_object};
 use meilisearch_sdk::documents::DocumentsQuery;
 
 use crate::{
@@ -7,30 +9,106 @@ use crate::{
 };
 
 
-#[derive(GraphQLObject)]
-pub struct AdminInfo {
-    db: AdminDbInfo,
-    search_index: AdminSearchIndexInfo,
-    sync: AdminSyncInfo,
-    problems: AdminProblemInfo,
+pub(crate) struct AdminInfo {}
+
+impl AdminInfo {
+    pub async fn new(context: &Context) -> Option<Self> {
+        if !context.auth.is_tobira_admin(&context.config.auth) {
+            return None;
+        }
+
+        Some(Self {})
+    }
 }
 
-pub async fn dashboard_info(context: &Context) -> ApiResult<Option<AdminInfo>> {
-    if !context.auth.is_tobira_admin(&context.config.auth) {
-        return Ok(None);
+#[graphql_object(Context = Context)]
+impl AdminInfo {
+    async fn db(&self, context: &Context) -> ApiResult<AdminDbInfo> {
+        AdminDbInfo::fetch(context).await
+    }
+    async fn search_index(&self, context: &Context) -> ApiResult<AdminSearchIndexInfo> {
+        AdminSearchIndexInfo::fetch(context).await
+    }
+    async fn sync(&self, context: &Context) -> ApiResult<AdminSyncInfo> {
+        AdminSyncInfo::fetch(context).await
+    }
+    async fn problems(&self, context: &Context) -> ApiResult<AdminProblemInfo> {
+        AdminProblemInfo::fetch(context).await
     }
 
-    let db_info = AdminDbInfo::fetch(context).await?;
-    let search_index = AdminSearchIndexInfo::fetch(context).await?;
-    let sync = AdminSyncInfo::fetch(context).await?;
-    let problems = AdminProblemInfo::fetch(context).await?;
+    async fn user_realms(&self, context: &Context) -> ApiResult<Vec<AdminUserRealmInfo>> {
+        let (selection, mapping) = crate::db::util::select!(
+           	full_path,
+           	owner_display_name,
+           	num_subpages: "(select count(*) from realms c where c.full_path like realms.full_path || '/%')",
+        );
+        let query = format!("
+            select {selection}
+            from realms
+            where parent is null and full_path like '/@%'
+            order by full_path
+        ");
 
-    Ok(Some(AdminInfo {
-        db: db_info,
-        search_index,
-        sync,
-        problems,
-    }))
+        let out = context.db.query_mapped(&query, dbargs![], |row| AdminUserRealmInfo {
+            path: mapping.full_path.of(&row),
+            owner_display_name: mapping.owner_display_name.of(&row),
+            num_subpages: mapping.num_subpages.of::<i64>(&row) as i32,
+        }).await?;
+
+        Ok(out)
+    }
+
+    async fn user_sessions(&self, context: &Context) -> ApiResult<Vec<UserInfo>> {
+        let (selection, mapping) = crate::db::util::select!(
+           	username,
+            display_name,
+            roles,
+            created,
+            email,
+            user_role,
+            user_realm_handle,
+        );
+        let query = format!("select {selection} from user_sessions order by username");
+
+        let mut out = <BTreeMap<String, Vec<_>>>::new();
+        context.db.query_raw(&query, dbargs![]).await?.try_for_each(|row| {
+            let username = mapping.username.of::<String>(&row);
+            out.entry(username).or_default().push(UserSessionInfo {
+                display_name: mapping.display_name.of(&row),
+                roles: mapping.roles.of(&row),
+                created: mapping.created.of::<NaiveDateTime>(&row).and_utc(),
+                email: mapping.email.of(&row),
+                user_role: mapping.user_role.of(&row),
+                user_realm_handle: mapping.user_realm_handle.of(&row),
+            });
+            future::ready(Ok(()))
+        }).await?;
+
+        Ok(out.into_iter().map(|(username, sessions)| UserInfo { username, sessions }).collect())
+    }
+}
+
+#[derive(GraphQLObject)]
+struct AdminUserRealmInfo {
+    path: String,
+    num_subpages: i32,
+    owner_display_name: String,
+}
+
+#[derive(GraphQLObject)]
+struct UserInfo {
+    username: String,
+    sessions: Vec<UserSessionInfo>,
+}
+
+#[derive(GraphQLObject)]
+struct UserSessionInfo {
+    display_name: String,
+    roles: Vec<String>,
+    created: DateTime<Utc>,
+    email: Option<String>,
+    user_role: String,
+    user_realm_handle: Option<String>,
 }
 
 #[derive(GraphQLObject)]

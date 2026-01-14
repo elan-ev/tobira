@@ -199,7 +199,7 @@ impl Query {
     }
 
     /// Returns information for the admin dashboard.
-    async fn admin_dashboard_info(context: &Context) -> ApiResult<Option<AdminInfo>> {
-        model::admin::dashboard_info(context).await
+    async fn admin_dashboard_info(context: &Context) -> Option<AdminInfo> {
+        model::admin::AdminInfo::new(context).await
     }
 }

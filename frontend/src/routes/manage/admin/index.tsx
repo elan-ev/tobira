@@ -1,21 +1,23 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
-import { RootLoader } from "../../layout/Root";
-import { makeRoute } from "../../rauta";
-import { loadQuery } from "../../relay";
-import { NotAuthorized } from "../../ui/error";
-import { PageTitle } from "../../layout/header/ui";
+import { RootLoader } from "../../../layout/Root";
+import { makeRoute } from "../../../rauta";
+import { loadQuery } from "../../../relay";
+import { NotAuthorized } from "../../../ui/error";
+import { PageTitle } from "../../../layout/header/ui";
 import {
-    AdminDashboardQuery, AdminDashboardQuery$data,
-} from "./__generated__/AdminDashboardQuery.graphql";
-import { COLORS } from "../../color";
+    adminDashboardQuery, adminDashboardQuery$data,
+} from "./__generated__/adminDashboardQuery.graphql";
+import { COLORS } from "../../../color";
 import { LuTriangleAlert } from "react-icons/lu";
 import { WithTooltip } from "@opencast/appkit";
 import { ReactNode } from "react";
-import CONFIG from "../../config";
-import { Link } from "../../router";
-import { ManageRealmContentRoute } from "./Realm/Content";
+import CONFIG from "../../../config";
+import { Link } from "../../../router";
+import { ManageRealmContentRoute } from "../Realm/Content";
+import { PATH as USER_REALM_SUBPAGE_PATH } from "./UserRealm";
+import { PATH as USER_SESSIONS_SUBPAGE_PATH } from "./UserSessions";
 
 
 
@@ -29,7 +31,7 @@ export const AdminDashboardRoute = makeRoute({
             return null;
         }
 
-        const queryRef = loadQuery<AdminDashboardQuery>(query, {});
+        const queryRef = loadQuery<adminDashboardQuery>(query, {});
         return {
             render: () => <RootLoader
                 {...{ query, queryRef }}
@@ -46,7 +48,7 @@ export const AdminDashboardRoute = makeRoute({
 
 
 const query = graphql`
-    query AdminDashboardQuery {
+    query adminDashboardQuery {
         ...UserData
         adminDashboardInfo {
             db {
@@ -105,40 +107,60 @@ const query = graphql`
 `;
 
 type Props = {
-    info: NonNullable<AdminDashboardQuery$data["adminDashboardInfo"]>;
+    info: NonNullable<adminDashboardQuery$data["adminDashboardInfo"]>;
 };
 
 // The admin dashboard is only for admins, so to cut down an translation
 // work for now, especially while this is still frequently changed, we don't
 // use translations. However, to easily find translatable strings later, I
 // use this fake function.
-const t = (s: string) => s;
+export const t = (s: string) => s;
+
+export const AdminDashboardContainer: React.FC<JSX.IntrinsicElements["div"]> = ({
+    children,
+    className,
+}) => (
+    <div {...{ className }} css={{
+        maxWidth: 1000,
+        margin: "0 auto",
+        h2: {
+            marginTop: 24,
+            marginBottom: 8,
+            fontSize: 21,
+        },
+        h3: {
+            marginTop: 8,
+            fontSize: 18,
+        },
+    }}>
+        {children}
+    </div>
+);
+
+export const SimpleTable: React.FC<React.PropsWithChildren> = ({ children }) => (
+    <table css={{
+        margin: "16px 0",
+        borderCollapse: "collapse",
+        "th, td": {
+            border: `1px solid ${COLORS.neutral25}`,
+            padding: "2px 10px",
+        },
+    }}>
+        {children}
+    </table>
+);
 
 const AdminDashboard: React.FC<Props> = ({ info }) => {
     const { i18n } = useTranslation();
 
-    return <>
-        <div css={{
-            maxWidth: 1000,
-            margin: "0 auto",
-            h2: {
-                marginTop: 24,
-                marginBottom: 8,
-                fontSize: 21,
-            },
-            h3: {
-                marginTop: 8,
-                fontSize: 18,
-            },
-        }}>
-            <PageTitle title={i18n.t("manage.admin-dashboard")} />
-            <MainInfos info={info} />
-            <SyncSection info={info} />
-            <SearchIndexSection info={info} />
-            <ContentSection info={info} />
-            <VersionSection />
-        </div>
-    </>;
+    return <AdminDashboardContainer>
+        <PageTitle title={i18n.t("manage.admin-dashboard")} />
+        <MainInfos info={info} />
+        <SyncSection info={info} />
+        <SearchIndexSection info={info} />
+        <ContentSection info={info} />
+        <VersionSection />
+    </AdminDashboardContainer>;
 };
 
 const MainInfos: React.FC<Props> = ({ info }) => (
@@ -235,17 +257,7 @@ const SearchIndexSection: React.FC<Props> = ({ info }) => {
                 value: si.state ?? "?",
             },
         ]} />
-        <table css={{
-            margin: "16px 0",
-            borderCollapse: "collapse",
-            "th, td": {
-                border: `1px solid ${COLORS.neutral25}`,
-                padding: "2px 10px",
-            },
-            "td:not(:first-child)": {
-                textAlign: "right",
-            },
-        }}>
+        <SimpleTable>
             <thead>
                 <tr>
                     <th></th>
@@ -255,7 +267,11 @@ const SearchIndexSection: React.FC<Props> = ({ info }) => {
                     <th>{t("Indexing")}</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody css={{
+                "td:not(:first-child)": {
+                    textAlign: "right",
+                },
+            }}>
                 {rows.map(([name, db, si, siq], i) => <tr key={i}>
                     <td>{name}</td>
                     <td>{db}</td>
@@ -264,7 +280,7 @@ const SearchIndexSection: React.FC<Props> = ({ info }) => {
                     <td>{boolToYesNo(si?.isIndexing)}</td>
                 </tr>)}
             </tbody>
-        </table>
+        </SimpleTable>
     </>;
 };
 
@@ -299,13 +315,21 @@ const ContentSection: React.FC<Props> = ({ info }) => {
             <li>
                 {t("Pages: ") + db.numRealms}
                 <ul>
-                    <li>{t("User pages: ") + db.numUserRealms}</li>
+                    <li>
+                        <Link to={USER_REALM_SUBPAGE_PATH}>
+                            {t("User pages: ") + db.numUserRealms}
+                        </Link>
+                    </li>
                 </ul>
             </li>
             <li>{t("Blocks: ") + db.numBlocks}</li>
             <li>{t("Known groups: ") + db.numKnownGroups}</li>
             <li>{t("Known users: ") + db.numKnownUsers}</li>
-            <li>{t("User sessions: ") + db.numUserSessions}</li>
+            <li>
+                <Link to={USER_SESSIONS_SUBPAGE_PATH}>
+                    {t("User sessions: ") + db.numUserSessions}
+                </Link>
+            </li>
         </ul>
 
         <h3>Problems</h3>
@@ -378,7 +402,7 @@ const prettyDate = (date: string | null | undefined) => {
 
     const d = new Date(date);
     // Sweden happens to have a very nice, almost ISO format
-    const precise = new Date().toLocaleString("sv-SE");
+    const precise = d.toLocaleString("sv-SE");
     const secsAgo = Math.floor((Date.now() - d.getTime()) / 1000);
     let rel;
     if (secsAgo < 90) {
