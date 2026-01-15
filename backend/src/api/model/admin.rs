@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, future};
 
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use juniper::{GraphQLObject, graphql_object};
 use meilisearch_sdk::documents::DocumentsQuery;
 
@@ -76,7 +76,7 @@ impl AdminInfo {
             out.entry(username).or_default().push(UserSessionInfo {
                 display_name: mapping.display_name.of(&row),
                 roles: mapping.roles.of(&row),
-                created: mapping.created.of::<NaiveDateTime>(&row).and_utc(),
+                created: mapping.created.of::<DateTime<Utc>>(&row),
                 email: mapping.email.of(&row),
                 user_role: mapping.user_role.of(&row),
                 user_realm_handle: mapping.user_realm_handle.of(&row),
