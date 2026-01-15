@@ -8,6 +8,18 @@ dcterms.source = "builtin:source"
 dcterms.license = "builtin:license"
 dcterms.spatial = { default = "Location", de = "Ort", it = "Luogo", fr = "Lieu" }
 
+[general.global_banner]
+icon = "warning"
+color = "danger"
+text.default = """
+Attention! Dolphins declared **war** on our IT infrastructure.
+Expect service outages while we try to acquire enough fish to pay the ransom.
+"""
+text.de = """
+Obacht! Delfine haben unserer IT Infrastruktur soeben den **Krieg** erklärt.
+Es sind Ausfälle zu erwarten, bis wir die nötige Menge an Fisch als Lösegeldzahlung gesammelt haben.
+"""
+
 [db]
 database = "tobira-{{ id }}"
 user = "tobira-{{ id }}"

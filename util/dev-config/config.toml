@@ -6,6 +6,18 @@ site_title.default = "Tobira Videoportal"
 tobira_url = "http://localhost:8030"
 users_searchable = true
 
+[general.global_banner]
+icon = "warning"
+color = "danger"
+text.default = """
+Attention! Dolphins declared **war** on our IT infrastructure.
+Expect service outages while we try to acquire enough fish to pay the ransom.
+"""
+text.de = """
+Obacht! Delfine haben unserer IT Infrastruktur soeben den **Krieg** erklärt.
+Es sind Ausfälle zu erwarten, bis wir die nötige Menge an Fisch als Lösegeldzahlung gesammelt haben.
+"""
+
 [http]
 # To make our Docker based development setup work, Tobira needs to listen
 # on every interface. This is an unfortunate side effect of us trying to avoid

@@ -30,6 +30,11 @@ type Config = {
     allowAclEdit: boolean;
     lockAclToSeries: boolean;
     allowSeriesEventRemoval: boolean;
+    globalBanner: null | {
+        text: TranslatedString,
+        color: "neutral" | "primary" | "danger",
+        icon: "warning" | "info",
+    },
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
     metadataLabels: Record<string, Record<string, MetadataLabel>>;

@@ -159,6 +159,22 @@
 #allow_series_event_removal = true
 
 
+[general.global_banner]
+# Color of the global banner: "neutral", "primary" or "danger".
+#
+# Default value: "primary"
+#color = "primary"
+
+# Icon in global banner: "info" or "warning".
+#
+# Default value: "info"
+#icon = "info"
+
+# If set, show a global banner on every page with the specified text.
+# Rendered as markdown.
+#text =
+
+
 [db]
 # The username of the database user.
 #
