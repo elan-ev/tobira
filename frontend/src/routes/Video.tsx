@@ -19,6 +19,7 @@ import {
     notNullish,
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
+import { TFunction } from "i18next";
 
 import { fetchQuery, loadQuery } from "../relay";
 import { InitialLoading, RootLoader } from "../layout/Root";
@@ -1229,10 +1230,19 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({
                         "builtin:source": () => t("video.source"),
                     });
 
-                const values = metadataNs[field].map((value, i) => <React.Fragment key={i}>
-                    {i > 0 && <br />}
-                    {isValidLink(value) ? <Link to={value}>{value}</Link> : value}
-                </React.Fragment>);
+                const values = metadataNs[field].map((value, i) => {
+                    const displayValue = (
+                        label === "builtin:license" && value in LICENSE_TRANSLATIONS
+                    ) ? LICENSE_TRANSLATIONS[value](t) : value;
+
+                    return <React.Fragment key={i}>
+                        {i > 0 && <br />}
+                        {isValidLink(displayValue)
+                            ? <Link to={displayValue}>{displayValue}</Link>
+                            : displayValue
+                        }
+                    </React.Fragment>;
+                });
 
                 pairs.push([translatedLabel, values]);
             }
@@ -1268,6 +1278,16 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({
         </dl>
     );
 });
+
+const LICENSE_TRANSLATIONS: Record<string, (t: TFunction) => string> = {
+    "ALLRIGHTS": (t: TFunction) => t("license.all-rights"),
+    "CC-BY": () => "CC BY",
+    "CC-BY-SA": () => "CC BY-SA",
+    "CC-BY-ND": () => "CC BY-ND",
+    "CC-BY-NC": () => "CC BY-NC",
+    "CC-BY-NC-SA": () => "CC BY-NC-SA",
+    "CC-BY-NC-ND": () => "CC BY-NC-ND",
+};
 
 const isValidLink = (s: string): boolean => {
     const trimmed = s.trim();

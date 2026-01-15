@@ -445,6 +445,10 @@ player:
     title: Options
     label: Afficher les options
 
+license:
+  all-rights: Tous droits réservés # verify
+
+
 manage:
   dashboard:
     title: Dashboard
