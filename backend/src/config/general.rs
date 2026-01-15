@@ -141,7 +141,42 @@ pub(crate) struct GeneralConfig {
     /// be part of a series, as removing wouldn't work in that case.
     #[config(default = true)]
     pub allow_series_event_removal: bool,
+
+    #[config(nested)]
+    pub global_banner: GlobalBannerConfig,
 }
+
+#[derive(Debug, confique::Config)]
+pub(crate) struct GlobalBannerConfig {
+    /// Color of the global banner: "neutral", "primary" or "danger".
+    #[config(default = "primary")]
+    pub color: GlobalBannerColor,
+
+    /// Icon in global banner: "info" or "warning".
+    #[config(default = "info")]
+    pub icon: GlobalBannerIcon,
+
+    /// If set, show a global banner on every page with the specified text.
+    /// Rendered as markdown.
+    pub text: Option<TranslatedString>,
+
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum GlobalBannerColor {
+    Neutral,
+    Primary,
+    Danger,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum GlobalBannerIcon {
+    Warning,
+    Info,
+}
+
 
 const INTERNAL_RESERVED_PATHS: &[&str] = &["favicon.ico", "robots.txt", ".well-known"];
 
