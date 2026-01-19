@@ -305,7 +305,6 @@ upload:
   specified-series-not-found: Serie specificata non trovata.
   missing-series-write-permission: Non hai l'autorizzazione a caricare in questa serie.
   select-files: Seleziona file
-  reselect: Seleziona di nuovo il file
   too-many-files: >
     Sono stati selezionati troppi file. Attualmente è supportato solo un singolo
     file.

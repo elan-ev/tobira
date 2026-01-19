@@ -304,7 +304,6 @@ upload:
   missing-series-write-permission: >
     Sie haben nicht die Berechtigung, in die angegebene Serie hochzuladen.
   select-files: Datei auswählen
-  reselect: Datei erneut auswählen
   upload-another: Weiteres Video hochladen
   too-many-files: >
     Sie haben zu viele Dateien ausgewählt. Zurzeit werden nur einzelne Dateien unterstützt.

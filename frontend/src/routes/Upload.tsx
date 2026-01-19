@@ -665,7 +665,7 @@ const UploadState: React.FC<UploadStateProps> = ({ state, seriesId }) => {
             <LinkButton kind="call-to-action" to={UploadRoute.url({
                 seriesId: seriesId ? keyOfId(seriesId) : null,
             })}>
-                {t("upload.reselect")}
+                {t("upload.select-files")}
             </LinkButton>
         </div>;
     } else if (state.state === "error") {

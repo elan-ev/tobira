@@ -306,7 +306,6 @@ upload:
   specified-series-not-found: La série spécifiée n'a pas été trouvée.
   missing-series-write-permission: Vous n’avez pas l’autorisation d’importer dans la série indiquée.
   select-files: Sélectionner un fichier
-  reselect: Re-sélectionner le fichier
   too-many-files: >
     Vous avez sélectionné trop de fichiers. Actuellement, seul un fichier unique
     est supporté.
