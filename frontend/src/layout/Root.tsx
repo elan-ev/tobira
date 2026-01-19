@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 import { currentRef, match, screenWidthAtMost } from "@opencast/appkit";
@@ -14,8 +14,13 @@ import { userDataFragment, UserProvider } from "../User";
 import { GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { OperationType } from "relay-runtime";
 import { UserData$key } from "../__generated__/UserData.graphql";
-import { useNoindexTag } from "../util";
+import { translatedConfig, useNoindexTag } from "../util";
 import { useRouter } from "../router";
+import CONFIG from "../config";
+import { RenderMarkdown } from "../ui/Blocks/Text";
+import { COLORS } from "../color";
+import { LuInfo, LuTriangleAlert, LuX } from "react-icons/lu";
+import { BREAKPOINT_SMALL } from "../GlobalStyle";
 
 
 export const MAIN_PADDING = 16;
@@ -44,6 +49,7 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
 
                 {/* Main part */}
                 <div css={{ width: "100%", minWidth: 0, flex: "12 0 0" }}>
+                    <GlobalBanner />
                     {children}
                 </div>
             </Main>
@@ -249,6 +255,82 @@ export const InitialLoading: React.FC = () => {
             </Main>
             <Footer />
         </Outer>
+    );
+};
+
+const GlobalBanner: React.FC = () => {
+    const { i18n } = useTranslation();
+    const [hidden, setHidden] = useState(false);
+
+    if (!CONFIG.globalBanner || hidden) {
+        return null;
+    }
+
+    const text = translatedConfig(CONFIG.globalBanner.text, i18n);
+
+    return (
+        <div css={{
+            position: "relative",
+            border: "1px solid",
+            borderRadius: 8,
+            padding: "12px 16px",
+            paddingRight: 32, // For the X button
+            marginBottom: 20,
+            maxWidth: 800,
+            display: "flex",
+            alignItems: "center",
+            gap: 24,
+            svg: {
+                flexShrink: 0,
+            },
+            lineHeight: 1.3,
+            ...match(CONFIG.globalBanner.color, {
+                "neutral": () => ({
+                    backgroundColor: COLORS.neutral15,
+                    color: COLORS.neutral90,
+                    borderColor: COLORS.neutral30,
+                }),
+                "primary": () => ({
+                    backgroundColor: COLORS.primary1,
+                    color: COLORS.primary1BwInverted,
+                    borderColor: COLORS.primary2,
+                }),
+                "danger": () => ({
+                    backgroundColor: COLORS.danger0,
+                    color: COLORS.danger0BwInverted,
+                    borderColor: COLORS.danger1,
+                }),
+            }),
+            [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                fontSize: 15,
+                padding: "8px 8px",
+                gap: 16,
+                flexDirection: "column",
+            },
+        }}>
+            <button onClick={() => setHidden(true)} css={{
+                position: "absolute",
+                top: 4,
+                right: 4,
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+                color: "inherit",
+                padding: 0,
+                lineHeight: 1,
+            }}><LuX size={22} /></button>
+            {match(CONFIG.globalBanner.icon, {
+                "warning": () => <LuTriangleAlert size={28} />,
+                "info": () => <LuInfo size={28} />,
+            })}
+            <div css={{
+                "& > *:first-child": { marginTop: 0 },
+                "& > *:last-child": { marginBottom: 0 },
+                p: { color: "inherit" },
+            }}>
+                <RenderMarkdown>{text}</RenderMarkdown>
+            </div>
+        </div>
     );
 };
 

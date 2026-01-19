@@ -343,6 +343,11 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         "sync": {
             "pollPeriod": config.sync.poll_period.as_secs_f64(),
         },
+        "globalBanner": config.general.global_banner.text.as_ref().map(|text| json!({
+            "text": text,
+            "color": config.general.global_banner.color,
+            "icon": config.general.global_banner.icon,
+        })),
     })
 }
 
