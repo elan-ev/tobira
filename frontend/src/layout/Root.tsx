@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 import { currentRef, match, screenWidthAtMost } from "@opencast/appkit";
@@ -19,7 +19,7 @@ import { useRouter } from "../router";
 import CONFIG from "../config";
 import { RenderMarkdown } from "../ui/Blocks/Text";
 import { COLORS } from "../color";
-import { LuInfo, LuTriangleAlert } from "react-icons/lu";
+import { LuInfo, LuTriangleAlert, LuX } from "react-icons/lu";
 import { BREAKPOINT_SMALL } from "../GlobalStyle";
 
 
@@ -260,8 +260,9 @@ export const InitialLoading: React.FC = () => {
 
 const GlobalBanner: React.FC = () => {
     const { i18n } = useTranslation();
+    const [hidden, setHidden] = useState(false);
 
-    if (!CONFIG.globalBanner) {
+    if (!CONFIG.globalBanner || hidden) {
         return null;
     }
 
@@ -269,9 +270,11 @@ const GlobalBanner: React.FC = () => {
 
     return (
         <div css={{
+            position: "relative",
             border: "1px solid",
             borderRadius: 8,
             padding: "12px 16px",
+            paddingRight: 32, // For the X button
             marginBottom: 20,
             maxWidth: 800,
             display: "flex",
@@ -305,6 +308,17 @@ const GlobalBanner: React.FC = () => {
                 flexDirection: "column",
             },
         }}>
+            <button onClick={() => setHidden(true)} css={{
+                position: "absolute",
+                top: 4,
+                right: 4,
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+                color: "inherit",
+                padding: 0,
+                lineHeight: 1,
+            }}><LuX size={22} /></button>
             {match(CONFIG.globalBanner.icon, {
                 "warning": () => <LuTriangleAlert size={28} />,
                 "info": () => <LuInfo size={28} />,
