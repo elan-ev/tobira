@@ -78,6 +78,13 @@ impl Mutation {
         AuthorizedEvent::delete(id, context).await
     }
 
+    /// Deletes events that are waiting for sync from our DB. It will also call the Opencast API
+    /// to request a deletion over there but ignores the outcome, as the event might have already
+    /// been deleted there.
+    async fn delete_pending_event(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
+        AuthorizedEvent::delete_pending(id, context).await
+    }
+
     /// Updates the acl of a given event by sending the changes to Opencast.
     /// The `acl` parameter can include `read` and `write` roles, as these are the
     /// only roles that can be assigned in frontend for now. `preview` and
@@ -106,6 +113,13 @@ impl Mutation {
     /// Returns the preliminary deletion timestamp.
     async fn delete_series(id: Id, context: &Context) -> ApiResult<Series> {
         Series::delete(id, context).await
+    }
+
+    /// Can be used to delete series that are waiting for sync... if those existed. Right now this is useless.
+    /// The plan was to also use this to delete items whose deletion was already started once but failed.
+    /// However that requires loading the series from another table (`all_series`).
+    async fn delete_pending_series(id: Id, context: &Context) -> ApiResult<Series> {
+        Series::delete_pending(id, context).await
     }
 
     /// Updates the acl of a given series by sending the changes to Opencast.

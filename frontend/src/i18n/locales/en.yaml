@@ -563,6 +563,15 @@ manage:
     no-entries-found: No entries found.
     missing-date: Unknown
     updated: Last updated
+    sync:
+      failed: Synchronization failed
+      failed-maybe: Synchronization possibly failed
+      pending: Synchronization pending.
+      tooltip:
+        failed: >
+          This entry was created {{time}} but still hasn't been synchronized, so processing might have failed.
+        pending: >
+          Synchronization of this entry is pending. The list will be updated upon success. You might need to reload the page.
     deletion:
       failed: Deletion failed.
       failed-maybe: Deletion possibly failed.
@@ -574,6 +583,10 @@ manage:
           The deletion of this entry was requested {{time}} but still has not happened, so it might have failed.
         pending: >
           The deletion of this entry was requested in Opencast and it will be removed from this list upon success.
+    delete-video-from-db: >
+      This will trigger a new delete request in Opencast. The video will be removed here regardless of that request's success.
+    delete-series-from-db: >
+      This will trigger a new delete request in Opencast. The series will be removed here regardless of that request's success.
 
   realm:
     invalid-path: 'Error: invalid path to page. Was the page deleted or its path changed?'

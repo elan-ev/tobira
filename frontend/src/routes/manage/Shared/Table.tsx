@@ -1,14 +1,25 @@
-import { Card, currentRef, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
+import {
+    Card,
+    currentRef,
+    match,
+    ProtoButton,
+    screenWidthAtMost,
+    useColorScheme,
+    WithTooltip,
+} from "@opencast/appkit";
 import { useRef, ReactNode, ComponentType, useEffect, PropsWithChildren, useState } from "react";
 import { ParseKeys } from "i18next";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import {
     LuArrowDownNarrowWide,
     LuArrowUpWideNarrow,
     LuChevronLeft,
     LuChevronRight,
+    LuTrash,
 } from "react-icons/lu";
 import { LucideFunnel } from "lucide-react";
+import { MutationParameters, Disposable } from "relay-runtime";
+import { UseMutationConfig } from "react-relay";
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
@@ -29,6 +40,8 @@ import { isSynced } from "../../../util";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
 import { PlaylistsSortColumn } from "../Playlist/__generated__/PlaylistsManageQuery.graphql";
+import { ConfirmationModal, ConfirmationModalHandle } from "../../../ui/Modal";
+import { displayCommitError } from "../Realm/util";
 
 
 type ItemVars = {
@@ -278,7 +291,9 @@ const ItemTable = <T extends Item>({
                 </tr>
             </thead>
             <tbody>
-                {connection.items.map(item => <RenderRow key={item.id} item={item}/>)}
+                {connection.items
+                    .filter(item => item != null)
+                    .map(item => <RenderRow key={item.id} item={item}/>)}
             </tbody>
         </table>
     </div>;
@@ -335,6 +350,7 @@ type TableRowProps<T extends TableRowItem> = {
     link: string;
     item: T;
     customColumns?: ReactNode[];
+    deleteButton?: ReactNode;
 };
 
 /**
@@ -344,10 +360,13 @@ type TableRowProps<T extends TableRowItem> = {
  * Additional columns can be declared in the respective item column arrays.
  */
 export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowProps<T>) => {
-    const { t } = useTranslation();
     const deletionTimestamp = item.tobiraDeletionTimestamp;
     const deletionIsPending = Boolean(deletionTimestamp);
     const deletionDate = new Date(deletionTimestamp ?? "");
+    const creationTimestamp = ("created" in item && typeof item.created === "string")
+        ? item.created
+        : null;
+    const creationDate = new Date(creationTimestamp ?? "");
     const thumbnailState = deletionIsPending ? "DELETED" : (
         !isSynced(item) ? "WAITING" : "READY"
     );
@@ -359,6 +378,13 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
     const pollPeriod = CONFIG.sync.pollPeriod * 1000;
     const deletionFailed = Boolean(deletionTimestamp
         && Date.parse(deletionTimestamp) + pollPeriod * 2 + 60000 < Date.now());
+
+    // Figuring out an appropriate time after which sync of a waiting event has possibly failed
+    // is a littler harder, since for videos, processing time is proportionally dependent on the
+    // size of the uploaded file and length of the video. So this is rather arbitrarily set to 2.5
+    // hours.
+    const syncFailed = Boolean(!isSynced(item) && creationTimestamp
+        && Date.parse(creationTimestamp) + 150 * 60000 < Date.now());
 
     return <tr>
         {/* Thumbnail */}
@@ -392,45 +418,58 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
                         : <Link to={props.link} css={{ ...titleLinkStyle }}>{item.title}</Link>
                     }
                 </div>
-                {!isSynced(item) && props.itemType !== "playlist" && (
-                    <span css={{
-                        padding: "0 8px",
-                        fontSize: "small",
-                        borderRadius: 10,
-                        backgroundColor: COLORS.neutral10,
-                    }}>
-                        {t(`${props.itemType}.not-ready.label`)}
-                    </span>
-                )}
             </div>
             {/* Description */}
-            {deletionIsPending
-                ? <PendingDeletionBody {...{ deletionFailed, deletionDate }} />
-                : <SmallDescription
-                    css={{ ...descriptionStyle }}
-                    text={item.description}
+            {!isSynced(item) && props.itemType !== "playlist"
+                ? <StatusPendingDescription
+                    action={"sync"}
+                    itemType={props.itemType}
+                    hasFailed={syncFailed}
+                    actionDate={creationDate}
+                    deleteFromDbButton={props.deleteButton}
                 />
+                : (deletionIsPending && props.itemType !== "playlist"
+                    ? <StatusPendingDescription
+                        action={"deletion"}
+                        itemType={props.itemType}
+                        hasFailed={deletionFailed}
+                        actionDate={deletionDate}
+                        deleteFromDbButton={props.deleteButton}
+                    />
+                    : <SmallDescription
+                        css={{ ...descriptionStyle }}
+                        text={item.description}
+                    />
+                )
             }
         </td>
         {props.customColumns}
     </tr>;
 };
 
-type PendingDeleteBodyProps = {
-    deletionFailed: boolean;
-    deletionDate: Date;
+type PendingDescriptionProps = {
+    action: "sync" | "deletion";
+    itemType: "series" | "video";
+    hasFailed: boolean;
+    actionDate: Date;
+    deleteFromDbButton: ReactNode;
 }
 
-const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
-    deletionFailed,
-    deletionDate,
+const StatusPendingDescription: React.FC<PendingDescriptionProps> = ({
+    action, itemType, hasFailed, actionDate, deleteFromDbButton,
 }) => {
     const isDark = useColorScheme().scheme === "dark";
     const { t, i18n } = useTranslation();
 
-    const [date] = prettyDate(deletionDate, new Date(), i18n);
+    // TODO: Reevaluate use of prettyDate here. The recent-ish changes to that function
+    // makes the date unfit to be used in the middle of a sentence because it is capitalized.
+    const [date] = prettyDate(actionDate, new Date(), i18n);
 
-    return (
+    const pendingText = action === "sync" && !hasFailed && itemType
+        ? t(`${itemType}.not-ready.title`)
+        : t(`manage.table.${action}.${hasFailed ? "failed-maybe" : "pending"}`);
+
+    return <div css={{ display: "flex" }}>
         <div css={{
             color: isDark ? COLORS.neutral60 : COLORS.neutral50,
             display: "flex",
@@ -439,19 +478,83 @@ const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
             padding: "0 4px",
         }}>
             <span css={{ fontStyle: "italic" }}>
-                {t(`manage.table.deletion.${
-                    deletionFailed ? "failed-maybe" : "pending"
-                }`)}
+                {pendingText}
             </span>
             <IconWithTooltip
-                tooltip={t(`manage.table.deletion.tooltip.${
-                    deletionFailed ? "failed" : "pending"
+                tooltip={t(`manage.table.${action}.tooltip.${
+                    hasFailed ? "failed" : "pending"
                 }`, { time: date })}
-                mode={deletionFailed ? "warning" : "info"}
+                mode={hasFailed ? "warning" : "info"}
             />
         </div>
-    );
+        {/* Unsynced items can be deleted immediately, but items that are pending deletion
+        will have to wait until it is determined that a failure is likely. */}
+        {/* TODO: Add for deleted items. Needs backend changes (load items from `all_` table) */}
+        {/* {(action === "sync" || hasFailed) && deleteFromDbButton} */}
+        {(action === "sync") && deleteFromDbButton}
+    </div>;
 };
+
+type DeleteMutationParams = MutationParameters & { variables: { id: string } }
+type DeleteButtonProps<TMutation extends DeleteMutationParams> = PropsWithChildren<{
+    item: Item & { title: string };
+    itemKind: OcEntity;
+    commit: (config: UseMutationConfig<TMutation>) => Disposable;
+}>;
+
+export const DeletePendingItemButton = <TMutation extends DeleteMutationParams>({
+    item, itemKind, commit,
+}: DeleteButtonProps<TMutation>) => {
+    const { t } = useTranslation();
+    const { setNotification } = useNotification();
+    const modalRef = useRef<ConfirmationModalHandle>(null);
+
+    if (itemKind === "playlist") {
+        // There are no pending playlists.
+        return;
+    }
+
+    const buttonText = t(`manage.${itemKind}.details.delete`);
+
+    const onSubmit = () => {
+        commit({
+            variables: { id: item.id },
+            onCompleted: () => {
+                currentRef(modalRef).done();
+                setNotification({
+                    kind: "info",
+                    message: () => `${item.title} has been deleted`,
+                    scope: window.location.href,
+                });
+            },
+            onError: error => {
+                const failedAction = t("manage.table.deletion.failed");
+                currentRef(modalRef).reportError(displayCommitError(error, failedAction));
+            },
+        });
+    };
+
+    return <>
+        <WithTooltip tooltip={buttonText} css={{ margin: "3px 0 -2px" }}>
+            <ProtoButton onClick={() => currentRef(modalRef).open()} css={{
+                color: COLORS.danger0,
+                marginLeft: 14,
+            }}>
+                <LuTrash />
+            </ProtoButton>
+        </WithTooltip>
+        <ConfirmationModal
+            title={t(`manage.${itemKind}.details.confirm-delete`)}
+            buttonContent={buttonText}
+            onSubmit={onSubmit}
+            ref={modalRef}
+        >
+            <p>{t(`manage.table.delete-${itemKind}-from-db`)}</p>
+            <p><Trans i18nKey="general.action.cannot-be-undone" /></p>
+        </ConfirmationModal>
+    </>;
+};
+
 
 type ColumnHeaderProps = {
     label: string;

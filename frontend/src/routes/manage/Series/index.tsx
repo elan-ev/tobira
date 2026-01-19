@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { LuCirclePlus } from "react-icons/lu";
-import { graphql } from "react-relay";
+import { graphql, useMutation } from "react-relay";
 import { match } from "@opencast/appkit";
 
 import i18n from "../../../i18n";
@@ -13,6 +13,7 @@ import {
     ColumnProps,
     createQueryParamsParser,
     DateColumn,
+    DeletePendingItemButton,
     ManageItems,
     TableRow,
 } from "../Shared/Table";
@@ -26,6 +27,7 @@ import { SeriesThumbnail } from "./Shared";
 import { CREATE_SERIES_PATH } from "./Create";
 import { LinkButton } from "../../../ui/LinkButton";
 import { isRealUser, useUser } from "../../../User";
+import { SeriesDeletePendingMutation } from "./__generated__/SeriesDeletePendingMutation.graphql";
 
 
 export const PATH = "/~manage/series" as const;
@@ -137,12 +139,27 @@ const seriesColumns: ColumnProps<SingleSeries>[] = [
 ];
 
 
+const deletePendingSeriesMutation = graphql`
+    mutation SeriesDeletePendingMutation($id: ID!) {
+        deletePendingSeries(id: $id) { id @deleteRecord }
+    }
+`;
+
+const DeletePendingSeriesButton: React.FC<{ item: SingleSeries }> = ({ item }) => {
+    const [commit] = useMutation<SeriesDeletePendingMutation>(deletePendingSeriesMutation);
+
+    return <DeletePendingItemButton {...{ item, commit }} itemKind={"series"} />;
+};
+
+
+
 const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
     itemType="series"
     item={item}
     thumbnail={state => <SeriesThumbnail series={item} seriesState={state} />}
     link={`${PATH}/${keyOfId(item.id)}`}
     customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
+    deleteButton={<DeletePendingSeriesButton {...{ item }} />}
 />;
 
 

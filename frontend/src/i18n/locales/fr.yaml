@@ -576,6 +576,15 @@ manage:
     no-entries-found: Aucune entrée trouvée.
     missing-date: Inconnu
     updated: Mis à jour le
+    # sync: Todo.
+    #   failed: Synchronization failed
+    #   failed-maybe: Synchronization possibly failed
+    #   pending: Synchronization pending.
+    #   tooltip:
+    #     failed: >
+    #       This entry was created {{time}} but still hasn't been synchronized, so processing might have failed.
+    #     pending: >
+    #       Synchronization of this entry is pending. The list will be updated upon success. You might need to reload the page.
     deletion:
       failed: Échec de la suppression.
       failed-maybe: La suppression a peut-être échoué.
@@ -589,6 +598,10 @@ manage:
         pending: >
           Cette entrée a été programmée pour être supprimée dans Opencast, ce
           qui sera fait après son succès.
+    # delete-video-from-db: >
+    #   This will trigger a new delete request in Opencast. The video will be removed here regardless of that request's success.
+    # delete-series-from-db: >
+    #   This will trigger a new delete request in Opencast. The series will be removed here regardless of that request's success.
 
   realm:
     invalid-path: >

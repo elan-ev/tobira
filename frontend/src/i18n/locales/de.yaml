@@ -594,6 +594,17 @@ manage:
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt
     updated: Zuletzt verändert
+    sync:
+      failed: Synchronisierung fehlgeschlagen.
+      failed-maybe: Synchronisierung möglicherweise fehlgeschlagen.
+      pending: Synchronisierung ausstehend.
+      tooltip:
+        failed: >
+          Dieser Eintrag wurde {{time}} erstellt, wurde aber bisher nicht synchronisert.
+          Dies ist möglicherweise fehlgeschlagen.
+        pending: >
+          Dieser Eintrag wurde nocht nicht synchronisiert. Die Liste wird aktualisiert, sobald dies geschehen ist.
+          Möglicherweise müssen Sie diese Seite neu laden.
     deletion:
       failed: Löschen fehlgeschlagen.
       failed-maybe: Löschen möglicherweise fehlgeschlagen.
@@ -607,6 +618,11 @@ manage:
         pending: >
           Der Löschvorgang dieses Eintrags in Opencast wurde angesetzt und es wird
           nach dessen Erfolg hier entfernt.
+    delete-video-from-db: >
+      Dies setzt einen neuen Löschvorgang in Opencast an. Das Video wird unabhängig davon hier gelöscht.
+    delete-series-from-db: >
+      Dies setzt einen neuen Löschvorgang in Opencast an. Die Serie wird unabhängig davon hier gelöscht.
+
 
   realm:
     invalid-path: >

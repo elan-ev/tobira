@@ -624,6 +624,40 @@ impl AuthorizedEvent {
         }
     }
 
+    pub(crate) async fn delete_pending(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
+        // Todo: load from `all_events` instead.
+        let event = Self::load_for_mutation(id, context).await?;
+
+        match context
+            .oc_client
+            .delete(&event)
+            .await
+        {
+            Ok(response) => {
+                if response.status() == StatusCode::ACCEPTED {
+                    // 202: The event was still present in OC and retraction of publications has started.
+                    info!(event_id = %id, "Requested deletion of event");
+                } else {
+                    // Anything else is not necessarily an error. It is possible that the event has
+                    // already been deleted prior to this request.
+                    warn!(
+                        event_id = %id,
+                        "Failed to delete event in OC, returned status: {}.
+                        Event will still be deleted in Tobira.",
+                        response.status()
+                    );
+                }
+            },
+            Err(e) => {
+                error!("Failed to send delete request: {}", e);
+            }
+        }
+
+        context.db.execute("delete from all_events where id = $1", &[&event.key]).await?;
+
+        Ok(event)
+    }
+
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
         if !context.config.general.allow_acl_edit {
             return Err(err::not_authorized!("editing ACLs is not allowed"));

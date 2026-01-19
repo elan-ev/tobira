@@ -550,6 +550,12 @@ type Mutation {
   """
   deleteEvent(id: ID!): AuthorizedEvent!
   """
+    Deletes events that are waiting for sync from our DB. It will also call the Opencast API
+    to request a deletion over there but ignores the outcome, as the event might have already
+    been deleted there.
+  """
+  deletePendingEvent(id: ID!): AuthorizedEvent!
+  """
     Updates the acl of a given event by sending the changes to Opencast.
     The `acl` parameter can include `read` and `write` roles, as these are the
     only roles that can be assigned in frontend for now. `preview` and
@@ -572,6 +578,12 @@ type Mutation {
     Returns the preliminary deletion timestamp.
   """
   deleteSeries(id: ID!): Series!
+  """
+    Can be used to delete series that are waiting for sync... if those existed. Right now this is useless.
+    The plan was to also use this to delete items whose deletion was already started once but failed.
+    However that requires loading the series from another table (`all_series`).
+  """
+  deletePendingSeries(id: ID!): Series!
   """
     Updates the acl of a given series by sending the changes to Opencast.
     The `acl` parameter can include `read` and `write` roles.

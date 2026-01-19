@@ -609,6 +609,15 @@ manage:
       descending: decrescente
       created: Creato
       updated: Aggiornato
+    # sync: Todo.
+    #  failed: Synchronization failed
+    #  failed-maybe: Sync possibly failed
+    #  pending: Synchronization pending.
+    #  tooltip:
+    #    failed: >
+    #      This entry was created {{time}} but still hasn't been synchronized, so processing might have failed.
+    #    pending: >
+    #      Synchronization of this entry is pending. The list will be updated upon success. You might need to reload the page.
     no-series-title: Titolo mancante
     no-entries-found: Nessuna voce trovata.
     missing-date: Sconosciuto
@@ -626,6 +635,10 @@ manage:
         pending: >
           La cancellazione di questa voce è stata richiesta in Opencast e sarà
           rimossa da questo elenco in caso di successo.
+   # delete-video-from-db: > Todo.
+   #  This will trigger a new delete request in Opencast. The video will be removed here regardless of that request's success.
+   # delete-series-from-db: >
+   #  This will trigger a new delete request in Opencast. The series will be removed here regardless of that request's success.
 
   realm:
     invalid-path: >
