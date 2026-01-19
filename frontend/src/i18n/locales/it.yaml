@@ -506,6 +506,8 @@ manage:
     details:
       delete: Cancellare il video
       confirm-delete: Cancellare il video?
+      # delete-from-db: > # Todo.
+      #  This will trigger a new delete request in Opencast. The video will be removed here regardless of that request's success.
       open-in-editor: Aprire nell'editor video
       referencing-pages-explanation: 'Questo video è citato nelle pagine seguenti:'
       no-referencing-pages: Nessuna pagina fa riferimento a questo video.
@@ -635,10 +637,6 @@ manage:
         pending: >
           La cancellazione di questa voce è stata richiesta in Opencast e sarà
           rimossa da questo elenco in caso di successo.
-   # delete-video-from-db: > Todo.
-   #  This will trigger a new delete request in Opencast. The video will be removed here regardless of that request's success.
-   # delete-series-from-db: >
-   #  This will trigger a new delete request in Opencast. The series will be removed here regardless of that request's success.
 
   realm:
     invalid-path: >

@@ -646,47 +646,6 @@ impl Series {
 
         Ok(series)
     }
-
-
-    pub(crate) async fn delete_pending(id: Id, context: &Context) -> ApiResult<Series> {
-        // Todo: load from `all_series` instead.
-        let series = Self::load_for_mutation(id, context).await?;
-
-        match context
-            .oc_client
-            .delete(&series)
-            .await
-        {
-            Ok(response) => {
-                if response.status() == StatusCode::NO_CONTENT {
-                    // 204: The series was still present in OC and was successfully deleted.
-                    info!(series_id = %id, "Series successfully deleted");
-                } else {
-                    // Anything else is not necessarily an error. It is possible that the series has
-                    // already been deleted prior to this request.
-                    warn!(
-                        series_id = %id,
-                        "Failed to delete series, Opencast returned status: {}",
-                        response.status()
-                    );
-                }
-            },
-            Err(e) => {
-                error!("Failed to send delete request: {}", e);
-            }
-        }
-
-        context.db.execute("delete from all_series where id = $1", &[&series.key]).await?;
-
-        context.db.execute("\
-            update all_events \
-            set series = null, part_of = null \
-            where series = $1 \
-        ", &[&series.key]).await?;
-
-        Ok(series)
-    }
-
 }
 
 /// Represents an Opencast series.

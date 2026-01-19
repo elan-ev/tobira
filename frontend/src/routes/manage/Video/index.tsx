@@ -1,4 +1,4 @@
-import { graphql, useMutation } from "react-relay";
+import { graphql } from "react-relay";
 import { useTranslation } from "react-i18next";
 import { match } from "@opencast/appkit";
 
@@ -18,7 +18,6 @@ import {
     ColumnProps,
     createQueryParamsParser,
     DateColumn,
-    DeletePendingItemButton,
     ManageItems,
     TableRow,
 } from "../Shared/Table";
@@ -26,7 +25,6 @@ import { ellipsisOverflowCss } from "../../../ui";
 import { Link } from "../../../router";
 import { DirectSeriesRoute } from "../../Series";
 import { COLORS } from "../../../color";
-import { VideoDeletePendingMutation } from "./__generated__/VideoDeletePendingMutation.graphql";
 
 
 const PATH = "/~manage/videos" as const;
@@ -159,26 +157,13 @@ const SeriesColumn: React.FC<SeriesColumnProps> = ({ title, seriesId }) => {
 };
 
 
-const deletePendingVideoMutation = graphql`
-    mutation VideoDeletePendingMutation($id: ID!) {
-        deletePendingEvent(id: $id) { id @deleteRecord }
-    }
-`;
-
-const DeletePendingVideoButton: React.FC<{ item: Event }> = ({ item }) => {
-    const [commit] = useMutation<VideoDeletePendingMutation>(deletePendingVideoMutation);
-
-    return <DeletePendingItemButton {...{ item, commit }} itemKind={"video"} />;
-};
-
-
 const EventRow: React.FC<{ item: Event }> = ({ item }) => <TableRow
     itemType="video"
     item={item}
     link={`${PATH}/${keyOfId(item.id)}`}
     thumbnail={state => <Thumbnail event={item} {...{ state }} />}
     customColumns={videoColumns.map(col => <col.column key={col.key} item={item} />)}
-    deleteButton={<DeletePendingVideoButton {...{ item }} />}
+    created={item.created}
 />;
 
 

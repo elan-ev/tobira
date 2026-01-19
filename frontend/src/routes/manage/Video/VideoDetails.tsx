@@ -113,13 +113,13 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
                     {t("manage.video.details.open-in-editor")}
                 </ExternalLink>
             )}
-            <DeleteButton
-                item={event}
-                kind="video"
-                returnPath="/~manage/videos"
-                commit={commit}
-            />
         </Inertable>
+        <DeleteButton
+            item={event}
+            kind="video"
+            returnPath="/~manage/videos"
+            commit={commit}
+        />
     </ButtonSection>;
 };
 
