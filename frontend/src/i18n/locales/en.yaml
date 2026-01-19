@@ -300,7 +300,6 @@ upload:
   specified-series-not-found: Specified series not found.
   missing-series-write-permission: You do not have the permission to upload into this series.
   select-files: Select file
-  reselect: Reselect file
   upload-another: Upload another video
   too-many-files: You selected too many files. Currently, only a single file is supported.
   not-a-file: You dropped something that's not a file.
@@ -318,8 +317,7 @@ upload:
     an-hour: an hour
     time-left: '{{time}} left'
   finished: >
-    Your video was uploaded successfully and is now being processed. It can be
-    watched as soon as processing is done. You may close this page now.
+    Your video was uploaded successfully and is now being processed. It can be found on the <1>My videos</1> page.
   metadata:
     save: Save and finish
     note-writable-series: >

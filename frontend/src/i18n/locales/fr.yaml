@@ -306,7 +306,6 @@ upload:
   specified-series-not-found: La série spécifiée n'a pas été trouvée.
   missing-series-write-permission: Vous n’avez pas l’autorisation d’importer dans la série indiquée.
   select-files: Sélectionner un fichier
-  reselect: Re-sélectionner le fichier
   too-many-files: >
     Vous avez sélectionné trop de fichiers. Actuellement, seul un fichier unique
     est supporté.
@@ -325,10 +324,9 @@ upload:
     a-minute: une minute
     an-hour: une heure
     time-left: encore {{time}}
-  finished: >
-    Votre vidéo a été importée avec succès et est en cours de traitement. Elle
-    pourra être visionnée normalement une fois le traitement terminé. Vous
-    pouvez maintenant fermer cette page.
+  finished: > # verify
+    Votre vidéo a été importée avec succès et est en cours de traitement.
+    Vous les trouverez dans la section <1>Mes vidéos</1>.
   metadata:
     save: Enregistrer et terminer
     note-writable-series: >
