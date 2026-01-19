@@ -325,10 +325,9 @@ upload:
     a-minute: une minute
     an-hour: une heure
     time-left: encore {{time}}
-  finished: >
-    Votre vidéo a été importée avec succès et est en cours de traitement. Elle
-    pourra être visionnée normalement une fois le traitement terminé. Vous
-    pouvez maintenant fermer cette page.
+  finished: > # verify
+    Votre vidéo a été importée avec succès et est en cours de traitement.
+    Vous les trouverez dans la section <1>Mes vidéos</1>.
   metadata:
     save: Enregistrer et terminer
     note-writable-series: >

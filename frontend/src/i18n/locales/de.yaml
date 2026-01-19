@@ -323,9 +323,7 @@ upload:
     an-hour: eine Stunde
     time-left: '{{time}} verbleibend'
   finished: >
-    Ihr Video wurde erfolgreich hochgeladen und wird nun verarbeitet. Es kann wie gewohnt
-    angeschaut werden, sobald die Verarbeitung abgeschlossen ist. Sie können diese
-    Seite jetzt schließen.
+    Ihr Video wurde erfolgreich hochgeladen und wird nun verarbeitet. Sie finden es unter <1>Meine Videos</1>.
   metadata:
     save: Speichern und fertigstellen
     note-writable-series: >

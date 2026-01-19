@@ -27,7 +27,7 @@ import {
     MetadataForm,
 } from "../ui/metadata";
 import { PageTitle } from "../layout/header/ui";
-import { useRouter } from "../router";
+import { Link, useRouter } from "../router";
 import { getJwt } from "../relay/auth";
 import { VideoListSelector } from "../ui/SearchableSelect";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -48,6 +48,7 @@ import {
     NewEvent,
     UploadCreatePlaceholderMutation,
 } from "./__generated__/UploadCreatePlaceholderMutation.graphql";
+import { ManageVideosRoute } from "./manage/Video";
 
 
 export const PATH = "/~manage/upload" as const;
@@ -281,7 +282,11 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
         }}>
             {selectedFileName}
             <LuCircleCheck css={{ fontSize: 64, color: COLORS.happy0 }} />
-            {t("upload.finished")}
+            <p>
+                <Trans i18nKey="upload.finished">
+                    It can be found on the <Link to={ManageVideosRoute.url} /> page.
+                </Trans>
+            </p>
             <LinkButton kind="call-to-action" to={UploadRoute.url({
                 seriesId: preselectedSeries ? keyOfId(preselectedSeries.id) : null,
             })}>

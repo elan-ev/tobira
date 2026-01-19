@@ -325,9 +325,8 @@ upload:
     an-hour: un'ora
     time-left: '{{time}} rimanenti'
   finished: >
-    Il video è stato caricato correttamente ed è in fase di elaborazione. Potrà
-    essere guardato non appena l'elaborazione sarà terminata. Ora è possibile
-    chiudere questa pagina.
+    Il video è stato caricato correttamente ed è in fase di elaborazione.
+    Li puoi trovare nella sezione <1>I miei video</1>.
   metadata:
     save: Salvare e terminare
     note-writable-series: >
