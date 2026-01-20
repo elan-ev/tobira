@@ -483,6 +483,7 @@ manage:
     details:
       delete: Video löschen
       confirm-delete: Video löschen?
+      delete-from-db: Dies weist Opencast an, das Video zu löschen, und entfernt es dann sofort aus diesem Videoportal.
       open-in-editor: Im Videoeditor öffnen
       referencing-pages-explanation: 'Dieses Video wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Dieses Video wird von keiner Seite referenziert.
@@ -591,6 +592,17 @@ manage:
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt
     updated: Zuletzt verändert
+    sync:
+      failed: Synchronisierung fehlgeschlagen.
+      failed-maybe: Synchronisierung möglicherweise fehlgeschlagen.
+      pending: Synchronisierung ausstehend.
+      tooltip:
+        failed: >
+          Dieser Eintrag wurde {{time}} erstellt, wurde aber bisher nicht synchronisert.
+          Dies ist möglicherweise fehlgeschlagen.
+        pending: >
+          Dieser Eintrag wurde noch nicht synchronisiert. Die Liste wird aktualisiert, sobald dies geschehen ist.
+          Möglicherweise müssen Sie diese Seite neu laden.
     deletion:
       failed: Löschen fehlgeschlagen.
       failed-maybe: Löschen möglicherweise fehlgeschlagen.
@@ -599,10 +611,10 @@ manage:
       success: '„{{itemTitle}}“ wurde gelöscht.'
       tooltip:
         failed: >
-          Der Löschvorgang für diesen Eintrag wurde {{time}} angesetzt, ist aber bisher nicht erfolgt
+          Der Löschvorgang für diesen Eintrag wurde {{time}} angestoßen, ist aber bisher nicht erfolgt
           und daher möglicherweise fehlgeschlagen.
         pending: >
-          Der Löschvorgang dieses Eintrags in Opencast wurde angesetzt und es wird
+          Der Löschvorgang dieses Eintrags in Opencast wurde angestoßen und es wird
           nach dessen Erfolg hier entfernt.
 
   realm:

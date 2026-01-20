@@ -596,32 +596,52 @@ impl AuthorizedEvent {
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_for_mutation(id, context).await?;
 
-        let response = context
-            .oc_client
-            .delete(&event)
-            .await
-            .map_err(|e| {
-                error!("Failed to send delete request: {}", e);
-                err::opencast_unavailable!("Failed to communicate with Opencast")
-            })?;
+        // Events in "waiting" state are not yet fully synced, so we delete them directly
+        // from Tobira without requiring a successful OC response.
+        let is_pending = event.synced_data.is_none();
 
-        if response.status() == StatusCode::ACCEPTED {
-            // 202: The retraction of publications has started.
-            info!(event_id = %id, "Requested deletion of event");
+        match context.oc_client.delete(&event).await {
+            Ok(response) => {
+                if response.status() == StatusCode::ACCEPTED {
+                    // 202: The retraction of publications has started.
+                    info!(event_id = %id, "Requested deletion of event");
+                } else if is_pending {
+                    // For pending events, non-202 is not necessarily an error.
+                    // The event may have already been deleted prior to this request.
+                    warn!(
+                        event_id = %id,
+                        "Failed to delete event in OC, returned status: {}. \
+                        Event will still be deleted in Tobira.",
+                        response.status()
+                    );
+                } else {
+                    warn!(
+                        event_id = %id,
+                        "Failed to delete event, OC returned status: {}",
+                        response.status()
+                    );
+                    return Err(err::opencast_unavailable!("Opencast API error: {}", response.status()));
+                }
+            },
+            Err(e) => {
+                error!("Failed to send delete request: {}", e);
+                if !is_pending {
+                    return Err(err::opencast_unavailable!("Failed to communicate with Opencast"));
+                }
+            }
+        }
+
+        if is_pending {
+            context.db.execute("delete from all_events where id = $1", &[&event.key]).await?;
+        } else {
             context.db.execute("\
                 update all_events \
                 set tobira_deletion_timestamp = current_timestamp \
                 where id = $1 \
             ", &[&event.key]).await?;
-            Ok(event)
-        } else {
-            warn!(
-                event_id = %id,
-                "Failed to delete event, OC returned status: {}",
-                response.status()
-            );
-            Err(err::opencast_unavailable!("Opencast API error: {}", response.status()))
         }
+
+        Ok(event)
     }
 
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {

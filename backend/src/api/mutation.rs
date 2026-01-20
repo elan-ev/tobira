@@ -74,6 +74,9 @@ impl Mutation {
     /// Note that "success" in this case only means the request was successfully sent
     /// and accepted, not that the deletion itself succeeded, which is instead checked
     /// in subsequent harvesting results.
+    ///
+    /// Special case: When a `waiting` event is deleted, this also sends a delete request to OC
+    /// but removes the event completely from our DB, regardless of that request's response.
     async fn delete_event(id: Id, context: &Context) -> ApiResult<AuthorizedEvent> {
         AuthorizedEvent::delete(id, context).await
     }

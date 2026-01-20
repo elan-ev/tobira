@@ -335,6 +335,7 @@ type TableRowProps<T extends TableRowItem> = {
     link: string;
     item: T;
     customColumns?: ReactNode[];
+    created?: string;
 };
 
 /**
@@ -344,10 +345,11 @@ type TableRowProps<T extends TableRowItem> = {
  * Additional columns can be declared in the respective item column arrays.
  */
 export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowProps<T>) => {
-    const { t } = useTranslation();
     const deletionTimestamp = item.tobiraDeletionTimestamp;
+    const createdTimestamp = props.created;
     const deletionIsPending = Boolean(deletionTimestamp);
     const deletionDate = new Date(deletionTimestamp ?? "");
+    const creationDate = new Date(props.created ?? "");
     const thumbnailState = deletionIsPending ? "DELETED" : (
         !isSynced(item) ? "WAITING" : "READY"
     );
@@ -359,6 +361,13 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
     const pollPeriod = CONFIG.sync.pollPeriod * 1000;
     const deletionFailed = Boolean(deletionTimestamp
         && Date.parse(deletionTimestamp) + pollPeriod * 2 + 60000 < Date.now());
+
+    // Figuring out an appropriate time after which sync of a waiting event has possibly failed
+    // is a littler harder, since for videos, processing time is proportionally dependent on the
+    // size of the uploaded file and length of the video. So this is rather arbitrarily set to 2.5
+    // hours.
+    const syncFailed = Boolean(!isSynced(item) && createdTimestamp
+        && Date.parse(createdTimestamp) + 150 * 60000 < Date.now());
 
     return <tr>
         {/* Thumbnail */}
@@ -392,45 +401,55 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
                         : <Link to={props.link} css={{ ...titleLinkStyle }}>{item.title}</Link>
                     }
                 </div>
-                {!isSynced(item) && props.itemType !== "playlist" && (
-                    <span css={{
-                        padding: "0 8px",
-                        fontSize: "small",
-                        borderRadius: 10,
-                        backgroundColor: COLORS.neutral10,
-                    }}>
-                        {t(`${props.itemType}.not-ready.label`)}
-                    </span>
-                )}
             </div>
             {/* Description */}
-            {deletionIsPending
-                ? <PendingDeletionBody {...{ deletionFailed, deletionDate }} />
-                : <SmallDescription
-                    css={{ ...descriptionStyle }}
-                    text={item.description}
+            {!isSynced(item) && props.itemType !== "playlist"
+                ? <StatusPendingDescription
+                    action={"sync"}
+                    itemType={props.itemType}
+                    hasFailed={syncFailed}
+                    actionDate={creationDate}
                 />
+                : (deletionIsPending && props.itemType !== "playlist"
+                    ? <StatusPendingDescription
+                        action={"deletion"}
+                        itemType={props.itemType}
+                        hasFailed={deletionFailed}
+                        actionDate={deletionDate}
+                    />
+                    : <SmallDescription
+                        css={{ ...descriptionStyle }}
+                        text={item.description}
+                    />
+                )
             }
         </td>
         {props.customColumns}
     </tr>;
 };
 
-type PendingDeleteBodyProps = {
-    deletionFailed: boolean;
-    deletionDate: Date;
+type PendingDescriptionProps = {
+    action: "sync" | "deletion";
+    itemType: Exclude<OcEntity, "playlist">;
+    hasFailed: boolean;
+    actionDate: Date;
 }
 
-const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
-    deletionFailed,
-    deletionDate,
+const StatusPendingDescription: React.FC<PendingDescriptionProps> = ({
+    action, itemType, hasFailed, actionDate,
 }) => {
     const isDark = useColorScheme().scheme === "dark";
     const { t, i18n } = useTranslation();
 
-    const [date] = prettyDate(deletionDate, new Date(), i18n);
+    // TODO: Reevaluate use of prettyDate here. The recent-ish changes to that function
+    // makes the date unfit to be used in the middle of a sentence because it is capitalized.
+    const [date] = prettyDate(actionDate, new Date(), i18n);
 
-    return (
+    const pendingText = action === "sync" && !hasFailed
+        ? t(`${itemType}.not-ready.title`)
+        : t(`manage.table.${action}.${hasFailed ? "failed-maybe" : "pending"}`);
+
+    return <div css={{ display: "flex" }}>
         <div css={{
             color: isDark ? COLORS.neutral60 : COLORS.neutral50,
             display: "flex",
@@ -439,19 +458,18 @@ const PendingDeletionBody: React.FC<PendingDeleteBodyProps> = ({
             padding: "0 4px",
         }}>
             <span css={{ fontStyle: "italic" }}>
-                {t(`manage.table.deletion.${
-                    deletionFailed ? "failed-maybe" : "pending"
-                }`)}
+                {pendingText}
             </span>
             <IconWithTooltip
-                tooltip={t(`manage.table.deletion.tooltip.${
-                    deletionFailed ? "failed" : "pending"
+                tooltip={t(`manage.table.${action}.tooltip.${
+                    hasFailed ? "failed" : "pending"
                 }`, { time: date })}
-                mode={deletionFailed ? "warning" : "info"}
+                mode={hasFailed ? "warning" : "info"}
             />
         </div>
-    );
+    </div>;
 };
+
 
 type ColumnHeaderProps = {
     label: string;

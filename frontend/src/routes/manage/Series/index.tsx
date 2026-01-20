@@ -143,8 +143,8 @@ const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
     thumbnail={state => <SeriesThumbnail series={item} seriesState={state} />}
     link={`${PATH}/${keyOfId(item.id)}`}
     customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
+    created={item.created ?? undefined}
 />;
-
 
 
 const parseSeriesColumn = (sortBy: string | null): SeriesSortColumn =>

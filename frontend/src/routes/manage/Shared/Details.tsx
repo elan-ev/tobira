@@ -230,8 +230,8 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
                 setNotification({
                     kind: "info",
                     message: i18n => i18n.t(
-                        `manage.table.deletion.${
-                            kind === "playlist" ? "success" : "in-progress"
+                        `manage.table.deletion.${(kind === "playlist" || !isSynced(item))
+                            ? "success" : "in-progress"
                         }`, { itemTitle: item.title },
                     ),
                     scope: returnPath,
@@ -245,7 +245,7 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
         });
     };
 
-    return <Inertable isInert={!isSynced(item)}>
+    return <Inertable isInert={kind !== "video" && !isSynced(item)}>
         <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
             <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
                 {buttonText}
@@ -257,6 +257,9 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
             onSubmit={onSubmit}
             ref={modalRef}
         >
+            {(!isSynced(item) && kind === "video") && <p>
+                {t("manage.video.details.delete-from-db")}
+            </p>}
             <p><Trans i18nKey="general.action.cannot-be-undone" /></p>
             {children}
         </ConfirmationModal>

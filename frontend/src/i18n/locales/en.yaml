@@ -455,6 +455,8 @@ manage:
     details:
       delete: Delete video
       confirm-delete: Delete video?
+      delete-from-db: >
+        This will trigger a new delete request in Opencast. The video will be removed here regardless of that request's success.
       open-in-editor: Open in video editor
       referencing-pages-explanation: 'This video is referenced on the following pages:'
       no-referencing-pages: No pages reference this video.
@@ -561,6 +563,15 @@ manage:
     no-entries-found: No entries found.
     missing-date: Unknown
     updated: Last updated
+    sync:
+      failed: Synchronization failed
+      failed-maybe: Synchronization possibly failed
+      pending: Synchronization pending.
+      tooltip:
+        failed: >
+          This entry was created {{time}} but still hasn't been synchronized, so processing might have failed.
+        pending: >
+          Synchronization of this entry is pending. The list will be updated upon success. You might need to reload the page.
     deletion:
       failed: Deletion failed.
       failed-maybe: Deletion possibly failed.
