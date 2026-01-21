@@ -28,7 +28,12 @@ import { ManageVideoDetailsRoute } from "./routes/manage/Video/VideoDetails";
 import { ManageVideoTechnicalDetailsRoute } from "./routes/manage/Video/TechnicalDetails";
 import React from "react";
 import { ManageVideoAccessRoute } from "./routes/manage/Video/VideoAccess";
-import { DirectPlaylistOCRoute, DirectPlaylistRoute } from "./routes/Playlist";
+import {
+    DirectPlaylistOCRoute,
+    DirectPlaylistRoute,
+    OpencastPlaylistRoute,
+    PlaylistRoute,
+} from "./routes/Playlist";
 import { ManageSeriesRoute } from "./routes/manage/Series";
 import { ManageSeriesDetailsRoute } from "./routes/manage/Series/SeriesDetails";
 import { ManageSeriesAccessRoute } from "./routes/manage/Series/SeriesAccess";
@@ -70,6 +75,8 @@ const {
         DirectSeriesOCRoute,
         DirectPlaylistRoute,
         DirectPlaylistOCRoute,
+        OpencastPlaylistRoute,
+        PlaylistRoute,
         ManageRoute,
         ManageVideosRoute,
         ManageVideoAccessRoute,

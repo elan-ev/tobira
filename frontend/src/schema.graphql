@@ -457,6 +457,11 @@ type AuthorizedPlaylist implements Node {
   """
   thumbnailStack: ThumbnailStack!
   acl: [AclItem!]!
+  """
+    Returns `true` if the realm has a playlist block with this playlist.
+    Otherwise, `false` is returned.
+  """
+  isReferencedByRealm(path: String!): Boolean!
   entries: [VideoListEntry!]!
   hostRealms: [Realm!]!
   "Whether the current user has write access to this playlist."
