@@ -17,6 +17,7 @@ import {
     match, unreachable, screenWidthAtMost, screenWidthAbove, useColorScheme,
     Floating, FloatingContainer, FloatingTrigger, WithTooltip, Card, Button,
     notNullish,
+    ProtoButton,
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
 import { TFunction } from "i18next";
@@ -888,6 +889,32 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
     const user = useUser();
     const { paella, playerIsLoaded } = usePlayerContext();
 
+    const autoTimestampProcessor = (text: string) => {
+        const timestampRegex = /((?<!\S)(?:\d?\d:)?\d?\d:\d{2}(?!\S))/g;
+        return <>{text.split(timestampRegex).map((part, index) => {
+            if (!part.match(timestampRegex)) {
+                return part;
+            }
+            const parts = part.split(":").map(Number);
+            const [hours, minutes, seconds] = parts.length === 2 ? [0, ...parts] : parts;
+            const timestamp = ((hours * 60) + minutes) * 60 + seconds;
+            if (timestamp * 1000 > event.syncedData.duration) {
+                return part;
+            }
+
+            return <ProtoButton
+                key={index}
+                onClick={() => paella.current?.player.videoContainer.setCurrentTime(timestamp)}
+                css={{
+                    color: COLORS.primary0,
+                    ":hover": {
+                        color: COLORS.primary1,
+                    },
+                }}
+            >{part}</ProtoButton>;
+        })}</>;
+    };
+
     const shrinkOnMobile = {
         [screenWidthAtMost(BREAKPOINT_SMALL)]: {
             padding: "5px 10px",
@@ -955,6 +982,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                 description={event.description}
                 creators={event.creators}
                 bottomPadding={40}
+                textProcessor={autoTimestampProcessor}
             />
             <div css={{ flex: "1 200px", alignSelf: "flex-start", padding: "20px 22px" }}>
                 <MetadataTable {...{ event, realmPath }} />
