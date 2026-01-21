@@ -90,7 +90,8 @@ const VIDEO_GRID_BREAKPOINT = 600;
 
 type VideoListItem = Event | "missing" | "unauthorized";
 
-type Order = "ORIGINAL" | "AZ" | "ZA" | "NEW_TO_OLD" | "OLD_TO_NEW";
+export const LIST_ORDERS = ["ORIGINAL", "AZ", "ZA", "NEW_TO_OLD", "OLD_TO_NEW"] as const;
+export type Order = typeof LIST_ORDERS[number];
 
 type Entries = Extract<
     PlaylistBlockPlaylistData$data,
@@ -136,23 +137,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
 }) => {
     const { t, i18n } = useTranslation();
     const { initialOrder, allowOriginalOrder, initialLayout = "GALLERY" } = displayOptions;
-
-    // Use layout/order from URL params if present, fallback to `displayOptions`.
-    const urlParams = new URLSearchParams(window.location.search);
-    const layoutParam = urlParams.get("layout")?.toUpperCase() ?? null;
-    const orderParam = urlParams.get("order")?.toUpperCase() ?? null;
-
-    const validLayouts = ["GALLERY", "LIST", "SLIDER"];
-    const isValidLayout = (v: string | null): v is VideoListLayout =>
-        v !== null && validLayouts.includes(v);
-    const resolvedInitialLayout = isValidLayout(layoutParam) ? layoutParam : initialLayout;
-
-    const validOrders = ["ORIGINAL", "AZ", "ZA", "NEW_TO_OLD", "OLD_TO_NEW"];
-    const isValidOrder = (v: string | null): v is Order =>
-        v !== null && validOrders.includes(v);
-    const resolvedInitialOrder = isValidOrder(orderParam) ? orderParam : initialOrder;
-
-    const [eventOrder, setEventOrder] = useState<Order>(resolvedInitialOrder);
+    const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
     const user = useUser();
 
     const items = listEntries.map(entry => matchTag(entry, "__typename", {
@@ -194,8 +179,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
             {...showManageLink && { linkToManagePage }}
-            {...{ metadata, shareInfo }}
-            initialLayout={resolvedInitialLayout}
+            {...{ metadata, shareInfo, initialLayout }}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
@@ -1232,11 +1216,23 @@ const Item: React.FC<ItemProps> = ({
         },
     } as const;
 
-    const listIdParam = listId ? `list=${keyOfId(listId)}` : "";
-    const layoutParam = `layout=${layoutState.toLowerCase()}`;
-    const orderParam = orderContext ? `order=${orderContext.eventOrder.toLowerCase()}` : "";
-    const queryParams = [listIdParam, layoutParam, orderParam].filter(Boolean).join("&");
-    const queryString = queryParams ? `?${queryParams}` : "";
+    const inPlaylist = listId?.substring(0, 2) === "pl";
+    const appendOrder = orderContext && (inPlaylist
+        ? orderContext.eventOrder !== "ORIGINAL"
+        : orderContext.eventOrder !== "NEW_TO_OLD"
+    );
+    const params = new URLSearchParams();
+    if (listId) {
+        params.set("list", keyOfId(listId));
+    }
+    if (layoutState !== "GALLERY") {
+        params.set("layout", layoutState.toLowerCase());
+    }
+    if (appendOrder) {
+        params.set("order", orderContext.eventOrder.toLowerCase());
+    }
+
+    const queryString = [...params].length > 0 ? `?${params.toString()}` : "";
 
     return <div css={containerStyle} {...{ className }}>
         {(!active && !isPlaceholder) && <Link
