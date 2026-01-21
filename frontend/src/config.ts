@@ -39,6 +39,7 @@ type Config = {
     footerLinks: FooterLink[];
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
     paellaSettingsIcon: string;
+    paellaThemeJson: string;
     logos: LogoConfig;
     favicon: string;
     plyr: PlyrConfig;

@@ -40,6 +40,7 @@ const INDEX_FILE: &str = "index.html";
 const FAVICON_FILE: &str = "favicon.svg";
 const FONTS_CSS_FILE: &str = "fonts.css";
 const PAELLA_SETTINGS_ICON: &str = "paella/icons/settings.svg";
+const PAELLA_THEME_JSON: &str = "paella/theme.json";
 
 pub(crate) struct Assets {
     assets: reinda::Assets,
@@ -72,7 +73,8 @@ impl Assets {
         // potentially hashed). We also insert other variables and code.
         let deps = logo_files.into_iter()
             .map(|(http_path, _)| http_path)
-            .chain([FAVICON_FILE, FONTS_CSS_FILE, PAELLA_SETTINGS_ICON].map(ToString::to_string));
+            .chain([FAVICON_FILE, FONTS_CSS_FILE, PAELLA_SETTINGS_ICON, PAELLA_THEME_JSON]
+                .map(ToString::to_string));
 
         builder.add_embedded(INDEX_FILE, &EMBEDS[INDEX_FILE]).with_modifier(deps, {
             let frontend_config = frontend_config(config);
@@ -92,6 +94,7 @@ impl Assets {
                     *v = format!("/~assets/{resolved}").into();
                 };
                 fix_path(&mut frontend_config["paellaSettingsIcon"]);
+                fix_path(&mut frontend_config["paellaThemeJson"]);
                 fix_path(&mut frontend_config["favicon"]);
                 for logo in frontend_config["logos"].as_array_mut().expect("logos is not an array") {
                     fix_path(&mut logo["path"]);
@@ -217,7 +220,8 @@ impl Assets {
                 );
 
                 out.into()
-            });
+            })
+            .with_hash();
 
 
         // Prepare all assets
@@ -344,6 +348,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         "metadataLabels": config.general.metadata,
         "paellaPluginConfig": config.player.paella_plugin_config,
         "paellaSettingsIcon": PAELLA_SETTINGS_ICON,
+        "paellaThemeJson": PAELLA_THEME_JSON,
         "opencast": {
             "presentationNode": config.opencast.sync_node().to_string(),
             "uploadNode": config.opencast.upload_node().to_string(),

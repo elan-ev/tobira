@@ -171,7 +171,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
 
             const removeUiHandlers = installUiActivityHandlers(player);
 
-            const loadPromise = player.skin.loadSkin("/~assets/paella/theme.json")
+            const loadPromise = player.skin.loadSkin(CONFIG.paellaThemeJson)
                 .then(() => player.loadManifest());
             paella.current = { player, loadPromise, removeUiHandlers };
         }
