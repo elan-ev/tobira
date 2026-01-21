@@ -6,6 +6,7 @@ import type { Options } from "react-markdown";
 import { TextBlockData$key } from "./__generated__/TextBlockData.graphql";
 import { COLORS } from "../../color";
 import { Link } from "../../router";
+import { TEXT_MAX_WIDTH } from ".";
 
 
 const fragment = graphql`
@@ -41,15 +42,12 @@ const CODE_BACKGROUND_COLOR = COLORS.neutral10;
 // We override some components emitted by the Markdown parser to add CSS.
 const MARKDOWN_COMPONENTS: Options["components"] = {
     p: ({ node, ...props }) => <p
-        css={{
-            margin: "16px 0",
-            maxWidth: 800,
-        }}
+        css={{ margin: "16px 0" }}
         {...props}
     />,
     a: ({ node, href, ...props }) => <Link to={href ?? ""} {...props} />,
-    ul: ({ node, ...props }) => <ul css={{ maxWidth: 800, paddingLeft: 32 }} {...props} />,
-    ol: ({ node, ...props }) => <ol css={{ maxWidth: 800, paddingLeft: 32 }} {...props} />,
+    ul: ({ node, ...props }) => <ul css={{ paddingLeft: 32 }} {...props} />,
+    ol: ({ node, ...props }) => <ol css={{ paddingLeft: 32 }} {...props} />,
     blockquote: ({ node, ...props }) => <blockquote
         css={{
             borderLeft: `4px solid ${COLORS.neutral25}`,
@@ -73,6 +71,7 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
             padding: "8px",
             overflowX: "auto",
             maxWidth: "100%",
+            fontSize: 14,
         }}
         {...props}
     />,
@@ -87,7 +86,7 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
 
 export const TextBlock: React.FC<Props> = ({ content }) => (
     <div css={{
-        maxWidth: 1200,
+        maxWidth: TEXT_MAX_WIDTH,
         "& > *:first-child": { marginTop: 0 },
         "& > *:last-child": { marginBottom: 0 },
         color: COLORS.neutral80,
