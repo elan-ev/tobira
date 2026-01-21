@@ -136,7 +136,23 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
 }) => {
     const { t, i18n } = useTranslation();
     const { initialOrder, allowOriginalOrder, initialLayout = "GALLERY" } = displayOptions;
-    const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
+
+    // Use layout/order from URL params if present, fallback to `displayOptions`.
+    const urlParams = new URLSearchParams(window.location.search);
+    const layoutParam = urlParams.get("layout")?.toUpperCase() ?? null;
+    const orderParam = urlParams.get("order")?.toUpperCase() ?? null;
+
+    const validLayouts = ["GALLERY", "LIST", "SLIDER"];
+    const isValidLayout = (v: string | null): v is VideoListLayout =>
+        v !== null && validLayouts.includes(v);
+    const resolvedInitialLayout = isValidLayout(layoutParam) ? layoutParam : initialLayout;
+
+    const validOrders = ["ORIGINAL", "AZ", "ZA", "NEW_TO_OLD", "OLD_TO_NEW"];
+    const isValidOrder = (v: string | null): v is Order =>
+        v !== null && validOrders.includes(v);
+    const resolvedInitialOrder = isValidOrder(orderParam) ? orderParam : initialOrder;
+
+    const [eventOrder, setEventOrder] = useState<Order>(resolvedInitialOrder);
     const user = useUser();
 
     const items = listEntries.map(entry => matchTag(entry, "__typename", {
@@ -178,7 +194,8 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         <VideoListBlockContainer
             showViewOptions={eventsNotEmpty}
             {...showManageLink && { linkToManagePage }}
-            {...{ metadata, shareInfo, initialLayout }}
+            {...{ metadata, shareInfo }}
+            initialLayout={resolvedInitialLayout}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
@@ -1037,6 +1054,8 @@ const Item: React.FC<ItemProps> = ({
     className,
 }) => {
     const { t } = useTranslation();
+    const { layoutState } = useContext(LayoutContext);
+    const orderContext = useContext(OrderContext);
     const isPlaceholder = item === "missing" || item === "unauthorized";
 
     const TRANSITION_IN_DURATION = "0.15s";
@@ -1213,11 +1232,15 @@ const Item: React.FC<ItemProps> = ({
         },
     } as const;
 
-    const listIdParam = listId ? `?list=${keyOfId(listId)}` : "";
+    const listIdParam = listId ? `list=${keyOfId(listId)}` : "";
+    const layoutParam = `layout=${layoutState.toLowerCase()}`;
+    const orderParam = orderContext ? `order=${orderContext.eventOrder.toLowerCase()}` : "";
+    const queryParams = [listIdParam, layoutParam, orderParam].filter(Boolean).join("&");
+    const queryString = queryParams ? `?${queryParams}` : "";
 
     return <div css={containerStyle} {...{ className }}>
         {(!active && !isPlaceholder) && <Link
-            to={`${basePath}/${keyOfId(item.id)}${listIdParam}`}
+            to={`${basePath}/${keyOfId(item.id)}${queryString}`}
             css={{
                 position: "absolute",
                 inset: 0,
