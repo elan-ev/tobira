@@ -675,7 +675,7 @@ type Mutation {
   "Stores series information in Tobira's DB, so it can be mounted without having to be harvested first."
   announceSeries(series: NewSeries!): Series!
   "Adds a series block to an empty realm and makes that realm derive its name from said series."
-  addSeriesMountPoint(seriesOcId: OpencastId!, targetPath: String!): Realm!
+  addSeriesMountPoint(seriesOcId: String!, targetPath: String!): Realm!
   """
     Removes the series block of given series from the given realm.
     If the realm has sub-realms and used to derive its name from the block,
@@ -684,7 +684,7 @@ type Mutation {
     Errors if the given realm does not have exactly one series block referring to the
     specified series.
   """
-  removeSeriesMountPoint(seriesOcId: OpencastId!, path: String!): RemoveMountedSeriesOutcome!
+  removeSeriesMountPoint(seriesOcId: String!, path: String!): RemoveMountedSeriesOutcome!
   """
     Atomically mount a series into an (empty) realm.
     Creates all the necessary realms on the path to the target
