@@ -315,6 +315,7 @@ type AdminDbInfo {
   numKnownUsers: Int!
   numKnownGroups: Int!
   numUserSessions: Int!
+  numUserSessionsUnique: Int!
   dbSize: Float!
 }
 
