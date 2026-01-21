@@ -10,10 +10,42 @@ import { AclArray } from "./Upload";
 import { RealmOrder } from "../layout/__generated__/NavigationData.graphql";
 import { NoteWithTooltip } from "../ui";
 import { Acl } from "../ui/Access";
+import { isValidRealmPath } from "./Realm";
 
 
 export const b64regex = "[a-zA-Z0-9\\-_]";
 
+/**
+ * Checks the path of a video, series or playlist and extracts
+ * their realm path and ID if the path is valid.
+ */
+export const checkRealmPath = (
+    url: URL,
+    marker: string,
+    idRegex: string,
+): { realmPath: string; id: string } | null => {
+    const urlPath = url.pathname.replace(/^\/|\/$/g, "");
+    const parts = urlPath.split("/").map(decodeURIComponent);
+    if (parts.length < 2) {
+        return null;
+    }
+    if (parts[parts.length - 2] !== marker) {
+        return null;
+    }
+    const id = parts[parts.length - 1];
+    if (!id.match(idRegex)) {
+        return null;
+    }
+
+    const realmPathParts = parts.slice(0, parts.length - 2);
+    if (!isValidRealmPath(realmPathParts)) {
+        return null;
+    }
+
+    const realmPath = "/" + realmPathParts.join("/");
+
+    return { realmPath, id };
+};
 
 /** Shows an italic "Missing name", intended for use whenever there is no realm name. */
 export const MissingRealmName: React.FC = () => {

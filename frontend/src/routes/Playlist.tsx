@@ -10,8 +10,7 @@ import { RealmNav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
 import { keyOfId, playlistId } from "../util";
 import { NotFound } from "./NotFound";
-import { b64regex } from "./util";
-import { isValidRealmPath } from "./Realm";
+import { b64regex, checkRealmPath } from "./util";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PlaylistByOpencastIdQuery } from "./__generated__/PlaylistByOpencastIdQuery.graphql";
 import { PlaylistRouteData$key } from "./__generated__/PlaylistRouteData.graphql";
@@ -29,7 +28,7 @@ export const PlaylistRoute = makeRoute({
     url: ({ realmPath, playlistId }: { realmPath: string; playlistId: string }) =>
         `${realmPath === "/" ? "" : realmPath}/p/${keyOfId(playlistId)}`,
     match: url => {
-        const params = checkPlaylistRealmPath(url, b64regex);
+        const params = checkRealmPath(url, "p", b64regex);
         if (params == null) {
             return null;
         }
@@ -50,7 +49,7 @@ export const PlaylistRoute = makeRoute({
             }
         `;
         const queryRef = loadQuery<PlaylistInRealmQuery>(query, {
-            id: playlistId(params.playlistId),
+            id: playlistId(params.id),
             realmPath: params.realmPath,
         });
 
@@ -63,7 +62,7 @@ export const PlaylistRoute = makeRoute({
                     const isReferencedByRealm = playlist?.__typename === "AuthorizedPlaylist"
                         && playlist.isReferencedByRealm;
                     if (!realm || !isReferencedByRealm) {
-                        return <ForwardToDirectRoute playlistId={params.playlistId} />;
+                        return <ForwardToDirectRoute playlistId={params.id} />;
                     }
 
                     return <PlaylistPage
@@ -82,11 +81,11 @@ export const OpencastPlaylistRoute = makeRoute({
     url: ({ realmPath, playlistOcId }: { realmPath: string; playlistOcId: string }) =>
         `${realmPath === "/" ? "" : realmPath}/p/:${playlistOcId}`,
     match: url => {
-        const params = checkPlaylistRealmPath(url, ":([^/]+)");
+        const params = checkRealmPath(url, "p", ":([^/]+)");
         if (params == null) {
             return null;
         }
-        params.playlistId = params.playlistId.substring(1);
+        const ocId = params.id.substring(1);
 
         const query = graphql`
             query PlaylistByOcIdInRealmQuery($id: String!, $realmPath: String!) {
@@ -105,7 +104,7 @@ export const OpencastPlaylistRoute = makeRoute({
             }
         `;
         const queryRef = loadQuery<PlaylistByOcIdInRealmQuery>(query, {
-            id: params.playlistId,
+            id: ocId,
             realmPath: params.realmPath,
         });
 
@@ -118,7 +117,7 @@ export const OpencastPlaylistRoute = makeRoute({
                     const isReferencedByRealm = playlist?.__typename === "AuthorizedPlaylist"
                         && playlist.isReferencedByRealm;
                     if (!realm || !isReferencedByRealm) {
-                        return <ForwardToDirectOCRoute ocID={params.playlistId} />;
+                        return <ForwardToDirectOCRoute ocID={ocId} />;
                     }
 
                     return <PlaylistPage
@@ -143,30 +142,6 @@ const ForwardToDirectOCRoute: React.FC<{ ocID: string }> = ({ ocID }) => {
     const router = useRouter();
     useEffect(() => router.goto(DirectPlaylistOCRoute.url({ ocID }), true));
     return <InitialLoading />;
-};
-
-const checkPlaylistRealmPath = (url: URL, idRegex: string) => {
-    const urlPath = url.pathname.replace(/^\/|\/$/g, "");
-    const parts = urlPath.split("/").map(decodeURIComponent);
-    if (parts.length < 2) {
-        return null;
-    }
-    if (parts[parts.length - 2] !== "p") {
-        return null;
-    }
-    const playlistId = parts[parts.length - 1];
-    if (!playlistId.match(idRegex)) {
-        return null;
-    }
-
-    const realmPathParts = parts.slice(0, parts.length - 2);
-    if (!isValidRealmPath(realmPathParts)) {
-        return null;
-    }
-
-    const realmPath = "/" + realmPathParts.join("/");
-
-    return { realmPath, playlistId };
 };
 
 export const DirectPlaylistOCRoute = makeRoute({

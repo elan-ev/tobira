@@ -29,7 +29,6 @@ import { WaitingPage } from "../ui/Waiting";
 import { getPlayerAspectRatio, InlinePlayer, PlayerPlaceholder } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
-import { isValidRealmPath } from "./Realm";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PageTitle } from "../layout/header/ui";
 import {
@@ -51,7 +50,7 @@ import { LinkButton } from "../ui/LinkButton";
 import CONFIG from "../config";
 import { Link, useRouter } from "../router";
 import { isRealUser, useUser } from "../User";
-import { b64regex } from "./util";
+import { b64regex, checkRealmPath } from "./util";
 import { NotAuthorized } from "../ui/error";
 import { CopyableInput, TimeInputWithCheckbox } from "../ui/Input";
 import { VideoPageInRealmQuery } from "./__generated__/VideoPageInRealmQuery.graphql";
@@ -343,29 +342,13 @@ type VideoParams = {
     listId: string;
 } | null;
 
-const getVideoDetailsFromUrl = (url: URL, regEx: string): VideoParams => {
-    const urlPath = url.pathname.replace(/^\/|\/$/g, "");
+const getVideoDetailsFromUrl = (url: URL, idRegex: string): VideoParams => {
+    const params = checkRealmPath(url, "v", idRegex);
+    if (params === null) {
+        return null;
+    }
     const listId = makeListId(url.searchParams.get("list"));
-    const parts = urlPath.split("/").map(decodeURIComponent);
-    if (parts.length < 2) {
-        return null;
-    }
-    if (parts[parts.length - 2] !== "v") {
-        return null;
-    }
-    const videoId = parts[parts.length - 1];
-    if (!videoId.match(regEx)) {
-        return null;
-    }
-
-    const realmPathParts = parts.slice(0, parts.length - 2);
-    if (!isValidRealmPath(realmPathParts)) {
-        return null;
-    }
-
-    const realmPath = "/" + realmPathParts.join("/");
-
-    return { realmPath, videoId, listId };
+    return { realmPath: params.realmPath, videoId: params.id, listId };
 };
 
 interface DirectRouteQuery extends OperationType {
