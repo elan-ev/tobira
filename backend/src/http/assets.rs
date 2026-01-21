@@ -190,21 +190,33 @@ impl Assets {
         let icon_paths = builder.add_embedded("paella/icons/", &EMBEDS["paella/icons/*.svg"])
             .with_hash()
             .http_paths();
-        builder.add_embedded("paella/theme.css", &EMBEDS["paella/theme.css"]);
+        let theme_css_path = builder.add_embedded("paella/theme.css", &EMBEDS["paella/theme.css"])
+            .with_hash()
+            .single_http_path()
+            .unwrap();
         builder.add_embedded("paella/theme.json", &EMBEDS["paella/theme.json"])
             // We cannot use `with_path_fixup` here, as the paths are without
             // the `paella` prefix and just relative to it.
-            .with_modifier(icon_paths, |original, ctx| {
-                reinda::util::replace_many_with(
+            .with_modifier(icon_paths.into_iter().chain([theme_css_path]), |original, ctx| {
+                let theme_css_path = ctx.dependencies().last().unwrap();
+                let icon_paths = &ctx.dependencies()[..ctx.dependencies().len() - 1];
+
+                let mut out = reinda::util::replace_many_with(
                     &original,
-                    ctx.dependencies().iter().map(|p| p.strip_prefix("paella").unwrap()),
+                    icon_paths.iter().map(|p| p.strip_prefix("paella").unwrap()),
                     |idx, _, out| {
                         let replacement = ctx.resolve_path(ctx.dependencies()[idx].as_ref())
                             .strip_prefix("paella")
                             .unwrap();
                         out.extend_from_slice(replacement.as_bytes());
                     },
-                ).into()
+                );
+                out = out.replace(b"theme.css", ctx.resolve_path(theme_css_path)
+                    .strip_prefix("paella/")
+                    .unwrap()
+                );
+
+                out.into()
             });
 
 
