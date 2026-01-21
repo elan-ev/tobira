@@ -359,11 +359,11 @@ impl Mutation {
 
     /// Adds a series block to an empty realm and makes that realm derive its name from said series.
     async fn add_series_mount_point(
-        series_oc_id: OpencastId,
+        series_oc_id: String,
         target_path: String,
         context: &Context,
     ) -> ApiResult<Realm> {
-        Series::add_mount_point(series_oc_id, target_path, context).await
+        Series::add_mount_point(OpencastId(series_oc_id), target_path, context).await
     }
 
     /// Removes the series block of given series from the given realm.
@@ -373,11 +373,11 @@ impl Mutation {
     /// Errors if the given realm does not have exactly one series block referring to the
     /// specified series.
     async fn remove_series_mount_point(
-        series_oc_id: OpencastId,
+        series_oc_id: String,
         path: String,
         context: &Context,
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
-        Series::remove_mount_point(series_oc_id, path, context).await
+        Series::remove_mount_point(OpencastId(series_oc_id), path, context).await
     }
 
     /// Atomically mount a series into an (empty) realm.
