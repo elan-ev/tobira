@@ -14,6 +14,7 @@ import {
 import { ManagePlaylistDetailsRoute } from "../../routes/manage/Playlist/PlaylistDetails";
 import { keyOfId } from "../../util";
 import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
+import { DirectPlaylistRoute, PlaylistRoute } from "../../routes/Playlist";
 
 
 type SharedProps = {
@@ -131,11 +132,9 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         editMode={props.editMode ?? false}
         shareInfo={{
             kind: "playlist",
-            // TODO: once we have the `/path/to/realm/p/<id>` route
-            // shareUrl: props.realmPath == null
-            //     ? `/!p/${playlistKey}`
-            //     : `${props.realmPath}p/${playlistKey}`,
-            shareUrl: `/!p/${playlistKey}`,
+            shareUrl: props.realmPath == null
+                ? DirectPlaylistRoute.url({ playlistId: playlist.id })
+                : PlaylistRoute.url({ realmPath: props.realmPath, playlistId: playlist.id }),
             rssUrl: `/~rss/playlist/${playlistKey}`,
         }}
         linkToManagePage={ManagePlaylistDetailsRoute.url({ id: playlist.id })}
