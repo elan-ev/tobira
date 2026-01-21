@@ -16,6 +16,8 @@ import { PlaylistBlockFromBlock } from "./Playlist";
 import { COLORS } from "../../color";
 
 
+export const TEXT_MAX_WIDTH = 800;
+
 type BlocksProps = {
     realm: BlocksData$key & RealmQuery$data["realm"];
 };
