@@ -2,11 +2,15 @@ import React from "react";
 import { graphql, useFragment } from "react-relay";
 import ReactMarkdown from "react-markdown";
 import type { Options } from "react-markdown";
+import { Root } from "mdast";
+import { Plugin } from "unified";
+import { CONTINUE, SKIP, visit } from "unist-util-visit";
 
 import { TextBlockData$key } from "./__generated__/TextBlockData.graphql";
 import { COLORS } from "../../color";
 import { Link } from "../../router";
 import { TEXT_MAX_WIDTH } from ".";
+import { autoLink, linkify } from "../text";
 
 
 const fragment = graphql`
@@ -100,7 +104,41 @@ export const TextBlock: React.FC<Props> = ({ content }) => (
 );
 
 export const RenderMarkdown: React.FC<{ children: string }> = ({ children }) => (
-    <ReactMarkdown allowedElements={ALLOWED_MARKDOWN_TAGS} components={MARKDOWN_COMPONENTS}>
+    <ReactMarkdown
+        allowedElements={ALLOWED_MARKDOWN_TAGS}
+        components={MARKDOWN_COMPONENTS}
+        remarkPlugins={[linkifyPlugin]}
+    >
         {children}
     </ReactMarkdown>
+);
+
+/** Small custom plugin to auto-detect and link some links. */
+const linkifyPlugin: Plugin<[], Root> = () => (
+    (tree: Root) => {
+        visit(tree, (node, index, parent) => {
+            // Stop traversing children of links or headings.
+            if (node.type === "link" || node.type === "linkReference" || node.type === "heading") {
+                return SKIP;
+            }
+
+            // Now we are just interested in text nodes with parents. Not sure
+            // when index would be undefined...
+            if (node.type !== "text" || parent == null || index == null) {
+                return CONTINUE;
+            }
+
+            // Check for links and don't do anything if there aren't any.
+            if (linkify.test(node.value)) {
+                const newNodes = autoLink(node.value).map(frag => frag.type === "text" ? frag : {
+                    type: "link" as const,
+                    url: frag.url,
+                    children: [{ type: "text" as const, value: frag.text }],
+                });
+                parent.children.splice(index!, 1, ...newNodes);
+            }
+
+            return CONTINUE;
+        });
+    }
 );

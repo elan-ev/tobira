@@ -19,6 +19,8 @@ import { Input, TextArea } from "./Input";
 import { Form } from "./Form";
 import { Inertable, OcEntity } from "../util";
 import { PrettyDate } from "./time";
+import { autoLink as makeAutoLink } from "./text";
+import { Link } from "../router";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -132,6 +134,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
 type DescriptionProps = {
     text?: string | null;
     className?: string;
+    autoLink?: boolean;
 };
 
 /**
@@ -139,7 +142,7 @@ type DescriptionProps = {
  * into proper paragraphs.
  */
 export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
-    ({ text, className }, ref) => {
+    ({ text, className, autoLink }, ref) => {
         const { t } = useTranslation();
 
         const stripped = text?.trim();
@@ -158,7 +161,17 @@ export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
         // via `white-space: pre-line` below.
         const paragraphs = stripped.split(/(\n{2,})/);
 
-        // TODO: auto link URL-like things?
+        const paragraph = (s: string) => {
+            if (!autoLink) {
+                return s;
+            }
+
+            const fragments = makeAutoLink(s);
+            return fragments.map((frag, i) => frag.type === "text"
+                ? frag.value
+                : <Link key={i} to={frag.url}>{frag.text}</Link>);
+        };
+
         return (
             <div ref ={ref} {...{ className }} css={{
                 lineHeight: "1.43em",
@@ -168,7 +181,7 @@ export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
                 },
             }}>
                 {paragraphs.map((s, i) => i % 2 === 0
-                    ? <p key={i}>{s}</p>
+                    ? <p key={i}>{paragraph(s)}</p>
                     : s.slice(2))}
             </div>
         );
@@ -218,6 +231,7 @@ export const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = (
         }} />}
         <Description
             text={description}
+            autoLink
             css={{
                 color: COLORS.neutral80,
                 fontSize: 14,
