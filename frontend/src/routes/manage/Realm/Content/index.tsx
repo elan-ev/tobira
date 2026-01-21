@@ -160,6 +160,7 @@ const ManageContent: React.FC<Props> = ({ data }) => {
                 padding: 0,
                 // To position the loading overlay
                 position: "relative",
+                marginBottom: 100,
             }}>
                 {blocks.filter(block => block != null).map((block, index) => (
                     <React.Fragment key={block.id}>
