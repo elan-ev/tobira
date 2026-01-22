@@ -61,6 +61,11 @@ pub(crate) struct OpencastConfig {
 
     /// Password of the user used to communicate with Opencast.
     password: SecretString,
+
+    /// ID of the workflow used to republish metadata.
+    #[config(default = "republish-metadata")]
+    pub(crate) republish_workflow_id: String,
+
 }
 
 impl OpencastConfig {

@@ -665,7 +665,7 @@ impl AuthorizedEvent {
 
         if response.status() == StatusCode::NO_CONTENT {
             // 204: The access control list for the specified event is updated.
-            Self::start_workflow(&event.opencast_id, "republish-metadata", &context).await?;
+            Self::start_workflow(&event.opencast_id, &context.config.opencast.republish_workflow_id, &context).await?;
             let db_acl = convert_acl_input(acl);
 
             // Todo: also update custom and preview roles once frontend sends these
@@ -718,7 +718,7 @@ impl AuthorizedEvent {
 
         if response.status() == StatusCode::NO_CONTENT {
             // 204: The metadata of the given namespace has been updated.
-            Self::start_workflow(&event.opencast_id, "republish-metadata", &context).await?;
+            Self::start_workflow(&event.opencast_id, &context.config.opencast.republish_workflow_id, &context).await?;
 
             context.db.execute("\
                 update all_events \
