@@ -135,6 +135,7 @@ type DescriptionProps = {
     text?: string | null;
     className?: string;
     autoLink?: boolean;
+    textProcessor?: (s: string) => JSX.Element;
 };
 
 /**
@@ -142,7 +143,7 @@ type DescriptionProps = {
  * into proper paragraphs.
  */
 export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
-    ({ text, className, autoLink }, ref) => {
+    ({ text, className, textProcessor }, ref) => {
         const { t } = useTranslation();
 
         const stripped = text?.trim();
@@ -162,13 +163,9 @@ export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
         const paragraphs = stripped.split(/(\n{2,})/);
 
         const paragraph = (s: string) => {
-            if (!autoLink) {
-                return s;
-            }
-
             const fragments = makeAutoLink(s);
             return fragments.map((frag, i) => frag.type === "text"
-                ? frag.value
+                ? (textProcessor ? textProcessor(frag.value) : frag.value)
                 : <Link key={i} to={frag.url}>{frag.text}</Link>);
         };
 
@@ -193,10 +190,11 @@ type CollapsibleDescriptionProps = {
     description?: string | null;
     creators?: readonly string[];
     bottomPadding: number;
+    textProcessor?: (s: string) => JSX.Element;
 }
 
 export const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = (
-    { type, description, creators, bottomPadding },
+    { type, description, creators, bottomPadding, textProcessor },
 ) => {
     const { t } = useTranslation();
     const isVideo = type === "video";
@@ -232,6 +230,7 @@ export const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = (
         <Description
             text={description}
             autoLink
+            textProcessor={textProcessor}
             css={{
                 color: COLORS.neutral80,
                 fontSize: 14,
