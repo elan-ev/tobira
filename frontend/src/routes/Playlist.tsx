@@ -1,22 +1,148 @@
 import { graphql, useFragment } from "react-relay";
 import { useTranslation } from "react-i18next";
 import { unreachable } from "@opencast/appkit";
+import { useEffect } from "react";
 
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
-import { RootLoader } from "../layout/Root";
+import { InitialLoading, RootLoader } from "../layout/Root";
 import { RealmNav } from "../layout/Navigation";
 import { PageTitle } from "../layout/header/ui";
 import { keyOfId, playlistId } from "../util";
 import { NotFound } from "./NotFound";
-import { b64regex } from "./util";
+import { b64regex, checkRealmPath } from "./util";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { PlaylistByOpencastIdQuery } from "./__generated__/PlaylistByOpencastIdQuery.graphql";
 import { PlaylistRouteData$key } from "./__generated__/PlaylistRouteData.graphql";
 import { PlaylistByIdQuery } from "./__generated__/PlaylistByIdQuery.graphql";
+import { PlaylistInRealmQuery } from "./__generated__/PlaylistInRealmQuery.graphql";
+import { PlaylistByOcIdInRealmQuery } from "./__generated__/PlaylistByOcIdInRealmQuery.graphql";
+import { PlaylistPageRealmData$key } from "./__generated__/PlaylistPageRealmData.graphql";
 import { NotAuthorized } from "../ui/error";
 import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
+import { useRouter } from "../router";
+import { realmBreadcrumbs } from "../util/realm";
 
+
+export const PlaylistRoute = makeRoute({
+    url: ({ realmPath, playlistId }: { realmPath: string; playlistId: string }) =>
+        `${realmPath === "/" ? "" : realmPath}/p/${keyOfId(playlistId)}`,
+    match: url => {
+        const params = checkRealmPath(url, "p", b64regex);
+        if (params == null) {
+            return null;
+        }
+        const query = graphql`
+            query PlaylistInRealmQuery($id: ID!, $realmPath: String!) {
+                ... UserData
+                playlist: playlistById(id: $id) {
+                    __typename
+                    ...PlaylistRouteData
+                    ... on AuthorizedPlaylist {
+                        isReferencedByRealm(path: $realmPath)
+                    }
+                }
+                realm: realmByPath(path: $realmPath) {
+                    ... NavigationData
+                    ... PlaylistPageRealmData
+                }
+            }
+        `;
+        const queryRef = loadQuery<PlaylistInRealmQuery>(query, {
+            id: playlistId(params.id),
+            realmPath: params.realmPath,
+        });
+
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
+                render={({ playlist, realm }) => {
+                    const isReferencedByRealm = playlist?.__typename === "AuthorizedPlaylist"
+                        && playlist.isReferencedByRealm;
+                    if (!realm || !isReferencedByRealm) {
+                        return <ForwardToDirectRoute playlistId={params.id} />;
+                    }
+
+                    return <PlaylistPage
+                        playlistFrag={playlist}
+                        realmRef={realm}
+                        realmPath={params.realmPath}
+                    />;
+                }}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
+});
+
+export const OpencastPlaylistRoute = makeRoute({
+    url: ({ realmPath, playlistOcId }: { realmPath: string; playlistOcId: string }) =>
+        `${realmPath === "/" ? "" : realmPath}/p/:${playlistOcId}`,
+    match: url => {
+        const params = checkRealmPath(url, "p", ":([^/]+)");
+        if (params == null) {
+            return null;
+        }
+        const ocId = params.id.substring(1);
+
+        const query = graphql`
+            query PlaylistByOcIdInRealmQuery($id: String!, $realmPath: String!) {
+                ... UserData
+                playlist: playlistByOpencastId(id: $id) {
+                    __typename
+                    ...PlaylistRouteData
+                    ... on AuthorizedPlaylist {
+                        isReferencedByRealm(path: $realmPath)
+                    }
+                }
+                realm: realmByPath(path: $realmPath) {
+                    ... NavigationData
+                    ... PlaylistPageRealmData
+                }
+            }
+        `;
+        const queryRef = loadQuery<PlaylistByOcIdInRealmQuery>(query, {
+            id: ocId,
+            realmPath: params.realmPath,
+        });
+
+        return {
+            render: () => <RootLoader
+                {...{ query, queryRef }}
+                noindex
+                nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
+                render={({ playlist, realm }) => {
+                    const isReferencedByRealm = playlist?.__typename === "AuthorizedPlaylist"
+                        && playlist.isReferencedByRealm;
+                    if (!realm || !isReferencedByRealm) {
+                        return <ForwardToDirectOCRoute ocID={ocId} />;
+                    }
+
+                    return <PlaylistPage
+                        playlistFrag={playlist}
+                        realmRef={realm}
+                        realmPath={params.realmPath}
+                    />;
+                }}
+            />,
+            dispose: () => queryRef.dispose(),
+        };
+    },
+});
+
+const ForwardToDirectRoute: React.FC<{ playlistId: string }> = ({ playlistId }) => {
+    const router = useRouter();
+    useEffect(() => router.goto(DirectPlaylistRoute.url({ playlistId }), true));
+    return <InitialLoading />;
+};
+
+const ForwardToDirectOCRoute: React.FC<{ ocID: string }> = ({ ocID }) => {
+    const router = useRouter();
+    useEffect(() => router.goto(DirectPlaylistOCRoute.url({ ocID }), true));
+    return <InitialLoading />;
+};
 
 export const DirectPlaylistOCRoute = makeRoute({
     url: ({ ocID }: { ocID: string }) => `/!p/:${ocID}`,
@@ -34,7 +160,7 @@ export const DirectPlaylistOCRoute = makeRoute({
             query PlaylistByOpencastIdQuery($id: String!) {
                 ... UserData
                 playlist: playlistByOpencastId(id: $id) { ...PlaylistRouteData }
-                rootRealm { ... NavigationData }
+                rootRealm { ... NavigationData, ... PlaylistPageRealmData }
             }
         `;
         const queryRef = loadQuery<PlaylistByOpencastIdQuery>(query, { id: opencastId });
@@ -45,7 +171,11 @@ export const DirectPlaylistOCRoute = makeRoute({
                 {...{ query, queryRef }}
                 noindex
                 nav={data => <RealmNav fragRef={data.rootRealm} />}
-                render={result => <PlaylistPage realmPath={null} playlistFrag={result.playlist} />}
+                render={result => <PlaylistPage
+                    playlistFrag={result.playlist}
+                    realmRef={result.rootRealm}
+                    realmPath={null}
+                />}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -68,7 +198,7 @@ export const DirectPlaylistRoute = makeRoute({
             query PlaylistByIdQuery($id: ID!) {
                 ... UserData
                 playlist: playlistById(id: $id) { ...PlaylistRouteData }
-                rootRealm { ... NavigationData }
+                rootRealm { ... NavigationData, ... PlaylistPageRealmData }
             }
         `;
         const queryRef = loadQuery<PlaylistByIdQuery>(query, { id: playlistId(id) });
@@ -79,12 +209,25 @@ export const DirectPlaylistRoute = makeRoute({
                 {...{ query, queryRef }}
                 noindex
                 nav={data => <RealmNav fragRef={data.rootRealm} />}
-                render={result => <PlaylistPage realmPath={null} playlistFrag={result.playlist} />}
+                render={result => <PlaylistPage
+                    playlistFrag={result.playlist}
+                    realmRef={result.rootRealm}
+                    realmPath={null}
+                />}
             />,
             dispose: () => queryRef.dispose(),
         };
     },
 });
+
+const realmFragment = graphql`
+    fragment PlaylistPageRealmData on Realm {
+        name
+        path
+        isMainRoot
+        ancestors { name path }
+    }
+`;
 
 const fragment = graphql`
     fragment PlaylistRouteData on Playlist {
@@ -107,15 +250,18 @@ const fragment = graphql`
 
 type PlaylistPageProps = {
     playlistFrag?: PlaylistRouteData$key | null;
+    realmRef: NonNullable<PlaylistPageRealmData$key>;
     realmPath: string | null;
 };
 
-const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag, realmPath }) => {
+const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag, realmRef, realmPath }) => {
     const { t } = useTranslation();
     const playlist = useFragment(fragment, playlistFrag ?? null);
+    const realm = useFragment(realmFragment, realmRef);
+    const breadcrumbs = realm.isMainRoot ? [] : realmBreadcrumbs(t, realm.ancestors.concat(realm));
 
     if (!playlist) {
-        return <NotFound kind="playlist" />;
+        return <NotFound kind="playlist" breadcrumbsPath={breadcrumbs} />;
     }
 
     if (playlist.__typename === "NotAllowed") {
@@ -125,13 +271,13 @@ const PlaylistPage: React.FC<PlaylistPageProps> = ({ playlistFrag, realmPath }) 
         return unreachable();
     }
 
+    // There is no point in repeating the same name twice in the breadcrumbs.
+    const tail = playlist.title === realm.name
+        ? <i>{t("playlist.singular")}</i>
+        : playlist.title ?? "";
+
     return <div css={{ display: "flex", flexDirection: "column" }}>
-        {/*
-            `playlist.title` is actually never undefined,
-            but the following assertions are necessary to work around
-            some graphql weirdness.
-        */}
-        <Breadcrumbs path={[]} tail={playlist.title ?? ""} />
+        <Breadcrumbs path={breadcrumbs} tail={tail} />
         <PageTitle title={playlist.title ?? ""} />
         <p css={{ maxWidth: "90ch" }}>{playlist.description}</p>
         <div css={{ marginTop: 12 }}>

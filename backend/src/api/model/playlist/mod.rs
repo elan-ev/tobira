@@ -262,6 +262,21 @@ impl AuthorizedPlaylist {
         acl::load_for(context, &acl::query_for("playlists"), dbargs![&self.key]).await
     }
 
+    /// Returns `true` if the realm has a playlist block with this playlist.
+    /// Otherwise, `false` is returned.
+    pub(crate) async fn is_referenced_by_realm(&self, path: String, context: &Context) -> ApiResult<bool> {
+       let query = "select exists(\
+            select 1 \
+            from blocks \
+            join realms on blocks.realm = realms.id \
+            where realms.full_path = $1 and blocks.playlist = $2 \
+        )";
+        context.db.query_one(&query, &[&path.trim_end_matches('/'), &self.key])
+            .await?
+            .get::<_, bool>(0)
+            .pipe(Ok)
+    }
+
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
         let (selection, mapping) = select!(
             found: "events.id is not null",

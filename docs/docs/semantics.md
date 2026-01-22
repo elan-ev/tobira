@@ -60,7 +60,7 @@ The values `in this style` are the URL paths, e.g. what the browser will show af
     - `/@peter/math-explanations`
 
 
-- **Videos in context**: `/<path/to/page>/v/<videoid>`.
+- **Videos in context**: `/<path/to/page>/v/<videoid>` or `/<path/to/page>/v/:<oc_id>`.
   Shows a video with *page context* (meaning: a video or its series is included on a *content page*).
   The navigation of that *content page* is shown.
   This is the normal route you reach by clicking on a video included in a *content page*.
@@ -69,6 +69,7 @@ The values `in this style` are the URL paths, e.g. what the browser will show af
     - `/lectures/biology/2023/v/L5CUekz9uQ0`
     - `/v/ENIGYvfETox`
     - `/@peter/dance-lessons/v/HFl9DghSw4x`
+    - `/@peter/dance-lessons/v/:25e82f02-db10-4ba6-937f-3252353cfbe8` (Opencast ID prefixed with `:`)
 
 
 - **Video direct links**: `/!v/<videoid>` or `/!v/:<oc_id>`.
@@ -80,9 +81,28 @@ The values `in this style` are the URL paths, e.g. what the browser will show af
     - `/!v/:25e82f02-db10-4ba6-937f-3252353cfbe8` (Opencast ID prefixed with `:`)
 
 
+- **Series in context**: `/<path/to/page>/s/<seriesid>` or `/<path/to/page>/s/:<oc_id>`.
+  Similar to video links, but can only be obtained by using the link from the series' share menu.
+
+
 - **Series direct links**: `/!s/<seriesid>` or `/!s/:<oc_id>`. Exactly like video direct links, but for series.
 
-- **Management routes**: `/~manage/<...>` and `/~upload`. For various "management" pages, like "my videos" or modifying a *content page*.
+
+- **Playlist in context**: `/<path/to/page>/p/<playlistid>` or `/<path/to/page>/p/:<oc_id>`. Exactly like series links, but for playlists.
+
+
+- **Playlist direct links**: `/!p/<playlistid>` or `/!p/:<oc_id>`. Exactly like video and series direct links.
+
+
+- **Management routes**: `/~manage/<...>`. For various "management" pages of videos, series and playlists or modifying a *content page*.
+    - `/~manage/<videos|series|playlists>`: Overview pages. Lists all items of the corresponding type that the user has write access for.
+    - `/~manage/<video|series|playlist>/<id>`: Details pages. Allows editing of title and description and in the case of series and playlists also their content.
+    - `/~manage/<video|series|playlist>/<id>/access`: Access policy page. Allows inspecting and editing the *permissions* of the corresponding item.
+    - `/~manage/create-<series|playlist>`: Create new series or playlists.
+    - `/~manage/upload`: Upload videos.
+    - `/~manage/realm?path=<...>`: Realm management. Allows editing realm name and path, ordering of sub pages and realm removal.
+    - `/~manage/realm/content?path=<...>`: Edit realm content. Allows adding or removing various content blocks.
+    - `/~manage/realm/add-child?parent=<...>`: Add sub page.
 
 - **Other internal routes**: `/~<...>`, e.g. `/~about`.
 

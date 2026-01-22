@@ -11,11 +11,10 @@ import { WaitingPage } from "../ui/Waiting";
 import { isSynced, keyOfId, seriesId } from "../util";
 
 import { NotFound } from "./NotFound";
-import { b64regex } from "./util";
+import { b64regex, checkRealmPath } from "./util";
 import { SeriesByIdQuery } from "./__generated__/SeriesByIdQuery.graphql";
 import { SeriesRouteData$key } from "./__generated__/SeriesRouteData.graphql";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
-import { isValidRealmPath } from "./Realm";
 import { useRouter } from "../router";
 import { useEffect } from "react";
 import { SeriesPageRealmData$key } from "./__generated__/SeriesPageRealmData.graphql";
@@ -31,7 +30,7 @@ export const SeriesRoute = makeRoute({
     url: ({ realmPath, seriesId }: { realmPath: string; seriesId: string }) =>
         `${realmPath === "/" ? "" : realmPath}/s/${keyOfId(seriesId)}`,
     match: url => {
-        const params = checkSeriesRealmPath(url, b64regex);
+        const params = checkRealmPath(url, "s", b64regex);
         if (params == null) {
             return null;
         }
@@ -49,7 +48,7 @@ export const SeriesRoute = makeRoute({
             }
         `;
         const queryRef = loadQuery<SeriesByIdQuery>(query, {
-            id: seriesId(params.seriesId),
+            id: seriesId(params.id),
             realmPath: params.realmPath,
         });
 
@@ -61,7 +60,7 @@ export const SeriesRoute = makeRoute({
                 nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
                 render={({ series, realm }) => {
                     if (!realm || series?.isReferencedByRealm === false) {
-                        return <ForwardToDirectRoute seriesId={params.seriesId} />;
+                        return <ForwardToDirectRoute seriesId={params.id} />;
                     }
 
                     return <SeriesPage
@@ -80,11 +79,11 @@ export const OpencastSeriesRoute = makeRoute({
     url: ({ realmPath, seriesOcId }: { realmPath: string; seriesOcId: string }) =>
         `${realmPath === "/" ? "" : realmPath}/s/:${seriesOcId}`,
     match: url => {
-        const params = checkSeriesRealmPath(url, ":([^/]+)");
+        const params = checkRealmPath(url, "s", ":([^/]+)");
         if (params == null) {
             return null;
         }
-        params.seriesId = params.seriesId.substring(1);
+        const ocId = params.id.substring(1);
 
         const query = graphql`
             query SeriesByOcIdQuery($id: String!, $realmPath: String!) {
@@ -100,7 +99,7 @@ export const OpencastSeriesRoute = makeRoute({
             }
         `;
         const queryRef = loadQuery<SeriesByOcIdQuery>(query, {
-            id: params.seriesId,
+            id: ocId,
             realmPath: params.realmPath,
         });
 
@@ -112,7 +111,7 @@ export const OpencastSeriesRoute = makeRoute({
                 nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
                 render={({ series, realm }) => {
                     if (!realm || series?.isReferencedByRealm === false) {
-                        return <ForwardToDirectRoute seriesId={params.seriesId} />;
+                        return <ForwardToDirectRoute seriesId={ocId} />;
                     }
 
                     return <SeriesPage
@@ -131,30 +130,6 @@ const ForwardToDirectRoute: React.FC<{ seriesId: string }> = ({ seriesId }) => {
     const router = useRouter();
     useEffect(() => router.goto(DirectSeriesRoute.url({ seriesId }), true));
     return <InitialLoading />;
-};
-
-const checkSeriesRealmPath = (url: URL, idRegex: string) => {
-    const urlPath = url.pathname.replace(/^\/|\/$/g, "");
-    const parts = urlPath.split("/").map(decodeURIComponent);
-    if (parts.length < 2) {
-        return null;
-    }
-    if (parts[parts.length - 2] !== "s") {
-        return null;
-    }
-    const seriesId = parts[parts.length - 1];
-    if (!seriesId.match(idRegex)) {
-        return null;
-    }
-
-    const realmPathParts = parts.slice(0, parts.length - 2);
-    if (!isValidRealmPath(realmPathParts)) {
-        return null;
-    }
-
-    const realmPath = "/" + realmPathParts.join("/");
-
-    return { realmPath, seriesId };
 };
 
 export const DirectSeriesOCRoute = makeRoute({

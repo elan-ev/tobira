@@ -13,6 +13,7 @@ import {
 } from "./__generated__/SeriesBlockSeriesData.graphql";
 import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
 import { ManageSeriesDetailsRoute } from "../../routes/manage/Series/SeriesDetails";
+import { DirectSeriesRoute, SeriesRoute } from "../../routes/Series";
 
 
 // ==============================================================================================
@@ -131,8 +132,8 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
         shareInfo={{
             kind: "series",
             shareUrl: props.realmPath == null
-                ? `/!s/${seriesKey}`
-                : `${props.realmPath.replace(/\/$/u, "")}/s/${seriesKey}`,
+                ? DirectSeriesRoute.url({ seriesId: series.id })
+                : SeriesRoute.url({ realmPath: props.realmPath, seriesId: series.id }),
             rssUrl: `/~rss/series/${seriesKey}`,
         }}
         linkToManagePage={ManageSeriesDetailsRoute.url({ id: series.id })}
