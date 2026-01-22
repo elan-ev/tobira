@@ -68,6 +68,7 @@ const query = graphql`
                 numKnownUsers
                 numKnownGroups
                 numUserSessions
+                numUserSessionsUnique
                 dbSize
             }
             searchIndex {
@@ -329,6 +330,11 @@ const ContentSection: React.FC<Props> = ({ info }) => {
                 <Link to={USER_SESSIONS_SUBPAGE_PATH}>
                     {t("User sessions: ") + db.numUserSessions}
                 </Link>
+                <ul>
+                    <li>
+                        {t("Unique users: ") + db.numUserSessionsUnique}
+                    </li>
+                </ul>
             </li>
         </ul>
 

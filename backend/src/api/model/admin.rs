@@ -129,6 +129,7 @@ pub struct AdminDbInfo {
     num_known_users: i32,
     num_known_groups: i32,
     num_user_sessions: i32,
+    num_user_sessions_unique: i32,
     db_size: NumBytes,
 }
 
@@ -152,6 +153,7 @@ impl AdminDbInfo {
             known_users: "(select count(*) from users)",
             known_groups: "(select count(*) from known_groups)",
             user_sessions: "(select count(*) from user_sessions)",
+            user_sessions_unique: "(select count(distinct username) from user_sessions)",
             db_size: "(select pg_database_size(current_database()))",
         );
         let row = ctx.db.query_one(&format!("select {selection}"), &[]).await?;
@@ -182,6 +184,7 @@ impl AdminDbInfo {
             num_known_users: mapping.known_users.of::<i64>(&row) as i32,
             num_known_groups: mapping.known_groups.of::<i64>(&row) as i32,
             num_user_sessions: mapping.user_sessions.of::<i64>(&row) as i32,
+            num_user_sessions_unique: mapping.user_sessions_unique.of::<i64>(&row) as i32,
             db_size: mapping.db_size.of::<i64>(&row) as f64,
         })
     }
