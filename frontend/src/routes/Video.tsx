@@ -94,6 +94,8 @@ import { QrCodeButton, ShareButton } from "../ui/ShareButton";
 import { SHORTCUTS, useShortcut } from "../ui/Shortcuts";
 import { usePlayerGroupContext } from "../ui/player/PlayerGroupContext";
 import { isSpaceOnInteractiveElement } from "../ui/player/PlayerShortcuts";
+import { VideoListLayout } from "../ui/Blocks/__generated__/SeriesBlockData.graphql";
+import { LIST_ORDERS, Order } from "../ui/Blocks/VideoList";
 
 
 // ===========================================================================================
@@ -109,7 +111,7 @@ export const VideoRoute = makeRoute({
         if (params === null) {
             return null;
         }
-        const { realmPath, videoId, listId } = params;
+        const { realmPath, videoId, listId, layout, order } = params;
         const id = eventId(videoId);
 
         const query = graphql`
@@ -159,6 +161,8 @@ export const VideoRoute = makeRoute({
                         realmRef={realm}
                         playlistRef={playlist ?? null}
                         realmPath={realmPath}
+                        layoutParam={layout}
+                        orderParam={order}
                     />;
                 }}
             />,
@@ -177,7 +181,7 @@ export const OpencastVideoRoute = makeRoute({
             return null;
         }
 
-        const { realmPath, videoId, listId } = params;
+        const { realmPath, videoId, listId, layout, order } = params;
         const id = videoId.substring(1);
 
         const query = graphql`
@@ -227,6 +231,8 @@ export const OpencastVideoRoute = makeRoute({
                         realmRef={realm}
                         playlistRef={playlist ?? null}
                         realmPath={realmPath}
+                        layoutParam={layout}
+                        orderParam={order}
                     />;
                 }}
             />,
@@ -337,19 +343,35 @@ export const DirectOpencastVideoRoute = makeRoute({
 
 const makeListId = (id: string | null) => id ? playlistId(id) : "";
 
+const VALID_LAYOUTS: VideoListLayout[] = ["GALLERY", "LIST", "SLIDER"];
+
 type VideoParams = {
     realmPath: string;
     videoId: string;
     listId: string;
+    layout?: VideoListLayout;
+    order?: Order;
 } | null;
 
-const getVideoDetailsFromUrl = (url: URL, idRegex: string): VideoParams => {
-    const params = checkRealmPath(url, "v", idRegex);
-    if (params === null) {
+const getVideoDetailsFromUrl = (url: URL, regEx: string): VideoParams => {
+    const params = checkRealmPath(url, "v", regEx);
+    if (!params) {
         return null;
     }
+    const { realmPath, id: videoId } = params;
     const listId = makeListId(url.searchParams.get("list"));
-    return { realmPath: params.realmPath, videoId: params.id, listId };
+    const layoutParam = url.searchParams.get("layout")?.toUpperCase();
+    const orderParam = url.searchParams.get("order")?.toUpperCase();
+
+    const isValidLayout = (v: string | undefined): v is VideoListLayout =>
+        v !== undefined && (VALID_LAYOUTS as string[]).includes(v);
+    const layout = isValidLayout(layoutParam) ? layoutParam : undefined;
+
+    const isValidOrder = (v: string | undefined): v is Order =>
+        v !== undefined && (LIST_ORDERS as readonly string[]).includes(v);
+    const order = isValidOrder(orderParam) ? orderParam : undefined;
+
+    return { realmPath, videoId, listId, layout, order };
 };
 
 interface DirectRouteQuery extends OperationType {
@@ -510,9 +532,13 @@ type Props = {
     realmRef: NonNullable<VideoPageRealmData$key>;
     playlistRef: PlaylistBlockPlaylistData$key | null;
     realmPath: string | null;
+    layoutParam?: VideoListLayout;
+    orderParam?: Order;
 };
 
-const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath }) => {
+const VideoPage: React.FC<Props> = ({
+    eventRef, realmRef, playlistRef, realmPath, layoutParam, orderParam,
+}) => {
     const { t } = useTranslation();
     const rerender = useForceRerender();
     const realm = useFragment(realmFragment, realmRef);
@@ -580,15 +606,15 @@ const VideoPage: React.FC<Props> = ({ eventRef, realmRef, playlistRef, realmPath
         {playlistRef
             ? <PlaylistBlockFromPlaylist
                 moreOfTitle
-                realmPath={realmPath}
                 fragRef={playlistRef}
                 activeEventId={event.id}
+                {...{ realmPath, layoutParam, orderParam }}
             />
             : event.series && <SeriesBlockFromSeries
-                realmPath={realmPath}
                 fragRef={event.series}
                 title={t("video.more-from-series", { series: event.series.title })}
                 activeEventId={event.id}
+                {...{ realmPath, layoutParam, orderParam }}
             />
         }
     </>;

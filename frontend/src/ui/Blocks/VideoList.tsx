@@ -90,7 +90,8 @@ const VIDEO_GRID_BREAKPOINT = 600;
 
 type VideoListItem = Event | "missing" | "unauthorized";
 
-type Order = "ORIGINAL" | "AZ" | "ZA" | "NEW_TO_OLD" | "OLD_TO_NEW";
+export const LIST_ORDERS = ["ORIGINAL", "AZ", "ZA", "NEW_TO_OLD", "OLD_TO_NEW"] as const;
+export type Order = typeof LIST_ORDERS[number];
 
 type Entries = Extract<
     PlaylistBlockPlaylistData$data,
@@ -1037,6 +1038,8 @@ const Item: React.FC<ItemProps> = ({
     className,
 }) => {
     const { t } = useTranslation();
+    const { layoutState } = useContext(LayoutContext);
+    const orderContext = useContext(OrderContext);
     const isPlaceholder = item === "missing" || item === "unauthorized";
 
     const TRANSITION_IN_DURATION = "0.15s";
@@ -1213,11 +1216,27 @@ const Item: React.FC<ItemProps> = ({
         },
     } as const;
 
-    const listIdParam = listId ? `?list=${keyOfId(listId)}` : "";
+    const inPlaylist = listId?.substring(0, 2) === "pl";
+    const appendOrder = orderContext && (inPlaylist
+        ? orderContext.eventOrder !== "ORIGINAL"
+        : orderContext.eventOrder !== "NEW_TO_OLD"
+    );
+    const params = new URLSearchParams();
+    if (listId) {
+        params.set("list", keyOfId(listId));
+    }
+    if (layoutState !== "GALLERY") {
+        params.set("layout", layoutState.toLowerCase());
+    }
+    if (appendOrder) {
+        params.set("order", orderContext.eventOrder.toLowerCase());
+    }
+
+    const queryString = [...params].length > 0 ? `?${params.toString()}` : "";
 
     return <div css={containerStyle} {...{ className }}>
         {(!active && !isPlaceholder) && <Link
-            to={`${basePath}/${keyOfId(item.id)}${listIdParam}`}
+            to={`${basePath}/${keyOfId(item.id)}${queryString}`}
             css={{
                 position: "absolute",
                 inset: 0,

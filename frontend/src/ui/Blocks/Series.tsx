@@ -11,7 +11,8 @@ import {
     SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
-import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
+import { VideoListBlock, VideoListBlockContainer, Order } from "./VideoList";
+import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
 import { ManageSeriesDetailsRoute } from "../../routes/manage/Series/SeriesDetails";
 import { DirectSeriesRoute, SeriesRoute } from "../../routes/Series";
 
@@ -23,6 +24,8 @@ import { DirectSeriesRoute, SeriesRoute } from "../../routes/Series";
 type SharedProps = {
     realmPath: string | null;
     editMode?: boolean;
+    layoutParam?: VideoListLayout;
+    orderParam?: Order;
 };
 
 const blockFragment = graphql`
@@ -113,8 +116,9 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const seriesKey = keyOfId(series.id);
     return <VideoListBlock
         displayOptions={{
-            initialLayout: props.layout,
-            initialOrder: (props.order === "%future added value" ? undefined : props.order)
+            initialLayout: props.layoutParam ?? props.layout,
+            initialOrder: props.orderParam
+                ?? (props.order === "%future added value" ? undefined : props.order)
                 ?? "NEW_TO_OLD",
             allowOriginalOrder: false,
         }}

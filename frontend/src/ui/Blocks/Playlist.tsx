@@ -13,7 +13,8 @@ import {
 } from "./__generated__/PlaylistBlockPlaylistData.graphql";
 import { ManagePlaylistDetailsRoute } from "../../routes/manage/Playlist/PlaylistDetails";
 import { keyOfId } from "../../util";
-import { VideoListBlock, VideoListBlockContainer } from "./VideoList";
+import { VideoListBlock, VideoListBlockContainer, Order } from "./VideoList";
+import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
 import { DirectPlaylistRoute, PlaylistRoute } from "../../routes/Playlist";
 
 
@@ -21,6 +22,8 @@ type SharedProps = {
     realmPath: string | null;
     moreOfTitle?: boolean;
     editMode?: boolean;
+    layoutParam?: VideoListLayout;
+    orderParam?: Order;
 };
 
 const blockFragment = graphql`
@@ -114,8 +117,9 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
 
     return <VideoListBlock
         displayOptions={{
-            initialLayout: props.layout,
-            initialOrder: (props.order === "%future added value" ? undefined : props.order)
+            initialLayout: props.layoutParam ?? props.layout,
+            initialOrder: props.orderParam
+                ?? (props.order === "%future added value" ? undefined : props.order)
                 ?? "ORIGINAL",
             allowOriginalOrder: true,
         }}
