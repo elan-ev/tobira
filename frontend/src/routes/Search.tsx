@@ -536,7 +536,7 @@ const SearchEvent: React.FC<EventItem> = ({
                 flexDirection: "column",
                 height: "100%",
             }}>
-                {hostRealms.length === 1 && (
+                {hostRealms.length === 1 && hostRealms[0].ancestorNames.length > 0 && (
                     <SearchBreadcrumbs parts={[
                         ...hostRealms[0].ancestorNames,
                         hostRealms[0].name,
@@ -834,7 +834,7 @@ const SearchSeries: React.FC<SeriesItem> = ({
             flexDirection: "column",
             minWidth: 0,
         }}>
-            {hostRealms.length === 1 && (
+            {hostRealms.length === 1 && hostRealms[0].ancestorNames.length > 0 && (
                 <SearchBreadcrumbs parts={[
                     ...hostRealms[0].ancestorNames,
                     // Oftentimes realms are named after the series. In that
