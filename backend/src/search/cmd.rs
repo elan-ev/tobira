@@ -21,7 +21,11 @@ pub(crate) enum SearchIndexCommand {
 
     /// Completely clears and rebuilds the search index from data in the DB. Can
     /// take a while!
-    Rebuild,
+    Rebuild {
+        /// If specified, skips the "Are you sure?" question.
+        #[clap(long)]
+        yes_absolutely_rebuild_index: bool,
+    },
 
     /// Reads queued updates from the DB and pushes them into the search index.
     Update {
@@ -47,7 +51,8 @@ pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()>
         SearchIndexCommand::Clear { yes_absolutely_clear_index: yes }
             => clear(meili, config, *yes).await?,
         SearchIndexCommand::Update { daemon } => update(&meili, config, *daemon).await?,
-        SearchIndexCommand::Rebuild => rebuild(&meili, config).await?,
+        SearchIndexCommand::Rebuild { yes_absolutely_rebuild_index: yes }
+            => rebuild(&meili, config, *yes).await?,
     }
 
     Ok(())
@@ -55,12 +60,14 @@ pub(crate) async fn run(cmd: &SearchIndexCommand, config: &Config) -> Result<()>
 
 // ===== Rebuild ===============================================================================
 
-async fn rebuild(meili: &Client, config: &Config) -> Result<()> {
+async fn rebuild(meili: &Client, config: &Config, yes: bool) -> Result<()> {
     let pool = db::create_pool(&config.db).await?;
     let mut db = pool.get().await?;
 
-    println!("Are you sure you want to clear and rebuild the search index? (type 'yes' to confirm)");
-    crate::cmd::prompt_for_yes()?;
+    if !yes {
+        println!("Are you sure you want to clear and rebuild the search index? (type 'yes' to confirm)");
+        crate::cmd::prompt_for_yes()?;
+    }
 
     super::writer::with_write_lock(&mut db, meili, |tx, meili| Box::pin(async move {
         let tasks = super::rebuild(&meili, tx).await?;

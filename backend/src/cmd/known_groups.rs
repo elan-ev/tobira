@@ -48,7 +48,11 @@ pub(crate) enum Args {
     },
 
     /// Removes all known groups.
-    Clear,
+    Clear {
+        /// If specified, skips the "Are you sure?" question.
+        #[clap(long)]
+        yes_absolutely_clear_known_groups: bool,
+    },
 }
 
 
@@ -66,7 +70,7 @@ pub(crate) async fn run(config: Config, args: &Args) -> Result<()> {
         Args::List => list(tx).await?,
         Args::Upsert { file } => upsert(&file, &config, tx).await?,
         Args::Remove { roles } => remove(roles, tx).await?,
-        Args::Clear => clear(tx).await?,
+        Args::Clear { yes_absolutely_clear_known_groups: yes } => clear(tx, *yes).await?,
     }
 
     Ok(())
@@ -173,9 +177,11 @@ async fn remove(roles: &[String], tx: Transaction<'_>) -> Result<()> {
     Ok(())
 }
 
-async fn clear(tx: Transaction<'_>) -> Result<()> {
-    println!("Remove all known groups? Type 'yes'");
-    prompt_for_yes()?;
+async fn clear(tx: Transaction<'_>, yes: bool) -> Result<()> {
+    if !yes {
+        println!("Remove all known groups? Type 'yes'");
+        prompt_for_yes()?;
+    }
 
     // We use `delete from` instead of `truncate` as we don't need the speed
     // here and `truncate` doesn't return the number of affected rows.
