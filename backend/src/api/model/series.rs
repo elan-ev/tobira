@@ -553,7 +553,7 @@ impl Series {
 
                 if let Err(e) = AuthorizedEvent::start_workflow(
                     &event.opencast_id,
-                    "republish-metadata",
+                    &context.config.opencast.republish_workflow_id,
                     context,
                 ).await {
                     warn!(
