@@ -603,12 +603,18 @@ manage:
       last: Ultima pagina
     filter:
       by-title: Filtrare per titolo
-    columns:
+    sorting:
+      label: Ordinare le voci # check
+      sort-by: Ordinare per # check
+      order: Organizzare # check
       description: Ordina per {{title}}, {{direction}}
       ascending: crescente
       descending: decrescente
+      ascending-cap: Crescente # check: does it need to be capitalized in context?
+      descending-cap: Decrescente # check: does it need to be capitalized in context?
       created: Creato
       updated: Aggiornato
+      unknown: Ordinamento sconosciuto # check
     # sync: Todo.
     #  failed: Synchronization failed
     #  failed-maybe: Sync possibly failed

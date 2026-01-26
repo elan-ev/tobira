@@ -7,13 +7,7 @@ import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
-import {
-    ColumnProps,
-    createQueryParamsParser,
-    DateColumn,
-    ManageItems,
-    TableRow,
-} from "../Shared/Table";
+import { createQueryParamsParser, ListItem, ManageItems } from "../Shared/Table";
 
 import { keyOfId } from "../../../util";
 import {
@@ -25,8 +19,10 @@ import { PlaylistThumbnail } from "./Shared";
 import { useTranslation } from "react-i18next";
 import { isRealUser, useUser } from "../../../User";
 import { LinkButton } from "../../../ui/LinkButton";
-import { LuCirclePlus } from "react-icons/lu";
+import { LuCalendar, LuCirclePlus, LuFilm } from "react-icons/lu";
 import { CREATE_PLAYLIST_PATH } from "./Create";
+import { COLORS } from "../../../color";
+import { PrettyDate } from "../../../ui/time";
 
 
 export const PATH = "/~manage/playlists" as const;
@@ -58,8 +54,11 @@ export const ManagePlaylistsRoute = makeRoute({
                         vars={vars}
                         connection={data.currentUser.myPlaylists}
                         titleKey="manage.playlist.table.title"
-                        additionalColumns={playlistColumns}
-                        RenderRow={PlaylistRow}
+                        additionalSortOptions={[
+                            { key: "ENTRY_COUNT", label: "manage.video-list.entries" },
+                            { key: "UPDATED", label: "manage.table.sorting.updated" },
+                        ]}
+                        RenderItem={PlaylistItem}
                     >
                         <CreatePlaylistLink />
                     </ManageItems>
@@ -90,6 +89,7 @@ const query = graphql`
                     description
                     numEntries
                     thumbnailStack { thumbnails { url live audioOnly state }}
+                    hostRealms { id }
                 }
             }
         }
@@ -115,30 +115,49 @@ export type PlaylistConnection
 export type Playlists = PlaylistConnection["items"];
 export type SinglePlaylist = Playlists[number];
 
-const playlistColumns: ColumnProps<SinglePlaylist>[] = [
-    {
-        key: "ENTRY_COUNT",
-        label: "video.plural",
-        headerWidth: 112,
-        column: ({ item }) => <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.video-list.no-of-videos", { count: item.numEntries })}
-        </td>,
-    },
-    {
-        key: "UPDATED",
-        label: "manage.table.columns.updated",
-        column: ({ item }) => <DateColumn date={item.updated} />,
-    },
-];
 
-
-const PlaylistRow: React.FC<{ item: SinglePlaylist }> = ({ item }) => <TableRow
+const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
     itemType="playlist"
     item={{ ...item, state: "READY" }}
-    thumbnail={_ => <PlaylistThumbnail playlist={item} />}
     link={`${PATH}/${keyOfId(item.id)}`}
-    customColumns={playlistColumns.map(col => <col.column key={col.key} item={item} />)}
+    thumbnail={_ => <PlaylistThumbnail playlist={item} />}
+    dateAndAdditionalInfo={<DateAndCount
+        timestamp={item.updated ?? undefined}
+        count={item.numEntries}
+    />}
 />;
+
+type DateAndCountProps = {
+    timestamp?: string;
+    count: number;
+    className?: string;
+};
+
+const DateAndCount: React.FC<DateAndCountProps> = ({
+    timestamp, count, className,
+}) => (
+    <div {...{ className }} css={{
+        display: "inline-flex",
+        color: COLORS.neutral80,
+        fontSize: 12,
+        gap: 24,
+        whiteSpace: "nowrap",
+    }}>
+        {timestamp && <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
+            <PrettyDate date={new Date(timestamp)} />
+        </div>}
+        <div css={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+        }}>
+            <LuFilm css={{ fontSize: 15, color: COLORS.neutral60, flexShrink: 0 }} />
+            {i18n.t("manage.video-list.no-of-videos", { count })}
+        </div>
+    </div>
+);
 
 
 const parsePlaylistColumn = (sortBy: string | null): PlaylistsSortColumn =>
