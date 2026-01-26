@@ -520,6 +520,9 @@ manage:
     no-content: No videos
     no-of-videos_one: '{{count}} video'
     no-of-videos_other: '{{count}} videos'
+    entries: Entries
+    no-of-entries_one: '{{count}} entry'
+    no-of-entries_other: '{{count}} entries'
     removing-disabled: Removing videos is disabled.
     details:
       unknown_one: One video is missing or requires additional permissions to view.
@@ -553,12 +556,18 @@ manage:
       last: Last page
     filter:
       by-title: Filter by title
-    columns:
-      description: 'Sort by {{title}}, {{direction}}'
+    sorting:
+      label: Sort entries
+      sort-by: Sort by
+      order: Order
+      description: 'Sort by {{column}}, {{direction}}'
       ascending: ascending
       descending: descending
+      ascending-cap: Ascending
+      descending-cap: Descending
       created: Created
       updated: Updated
+      unknown: Unknown column
     no-series-title: Missing title
     no-entries-found: No entries found.
     missing-date: Unknown
