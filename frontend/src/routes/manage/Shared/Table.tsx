@@ -106,23 +106,12 @@ export const ManageItems = <T extends Item>({
     let inner;
     if (connection.items.length === 0) {
         inner = <div css={{ display: "flex", flexDirection: "column" }}>
-            <Notification />
-            <SearchField {...{ vars }} />
             <Card kind="info" css={{ width: "fit-content", marginTop: 32 }}>
                 {t("manage.table.no-entries-found")}
             </Card>
         </div>;
     } else {
         inner = <>
-            <div css={{
-                display: "flex",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 16,
-            }}>
-                <Notification />
-                <SearchField {...{ vars }} />
-            </div>
             <div css={{ flex: "1 0 0", margin: "16px 0", marginTop: 0 }}>
                 <ul css={{ padding: 0 }}>
                     {connection.items.map(item => <RenderItem key={item.id} {... { item }} />)}
@@ -144,45 +133,25 @@ export const ManageItems = <T extends Item>({
                 label: t("user.manage"),
                 link: ManageRoute.url,
             }]} />
-            <div css={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: 32,
-                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                },
-            }}>
-                <PageTitle title={title} css={{ marginBottom: 0, flexShrink: 0 }} />
-                <div css={{
-                    [screenWidthAtMost(600)]: {
-                        "> div": {
-                            flexDirection: "column",
-                            gap: 0,
-                        },
-                    },
-                    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                        width: "100%",
-                        "> div": {
-                            justifyContent: "space-between",
-                            flexDirection: "row",
-                        },
-                    },
-                    alignContent: "flex-end",
-                }}>
-                    <PageNavigation {...{ vars, connection }} />
-                </div>
+
+            <Notification />
+
+            <div css={{ marginBottom: 12 }}>
+                <PageNavigation {...{ vars, connection }} />
             </div>
 
-            <div css={{ marginBottom: 0, display: "flex", justifyContent: "space-between" }}>
-                {/* TODO: search field for filtering */}
+            <div css={{
+                marginBottom: 0,
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 8,
+            }}>
                 {children && <div css={{ marginBottom: 24 }}>
                     {children}
-                    {/* <SearchField {...{ vars }} /> */}
                 </div>}
-                {/* <div>
-                    <SearchField {...{ vars }} />
-                </div> */}
+
+                <SearchField {...{ vars }} />
+
                 <div css={{ display: "flex", gap: 16, marginLeft: "auto" }}>
                     {/* TODO: additional dedicated filter menus (i.e. for date) */}
                     <FloatingBaseMenu
@@ -364,11 +333,13 @@ const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         }
     };
 
-    return <SearchInput
-        {...{ search, inputRef, clear }}
-        defaultValue={vars.filters.title}
-        inputProps={{ placeholder: t("manage.table.filter.by-title") }}
-    />;
+    return <div css={{ input: { height: 40 } }}>
+        <SearchInput
+            {...{ search, inputRef, clear }}
+            defaultValue={vars.filters.title}
+            inputProps={{ placeholder: t("manage.table.filter.by-title") }}
+        />
+    </div>;
 };
 
 

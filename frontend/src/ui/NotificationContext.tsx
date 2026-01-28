@@ -43,6 +43,12 @@ export const useNotification = () => {
     const context = useContext(NotificationContext) ?? bug("Not initialized!");
     const { notification, setNotification } = context;
 
+    // const notifMsg: NotificationMessage = {
+    //     kind: "info", message: () => "hi, my name is notif",
+    // };
+
+    // setNotification(notifMsg);
+
     const Notification: React.FC = () => notification && (
         <Card css={{ width: "fit-content", margin: "12px 0" }} kind={notification.kind}>
             {notification.message(i18n)}
