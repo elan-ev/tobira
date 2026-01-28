@@ -352,10 +352,8 @@ acl:
     users: Add users
     create: 'Create {{item}}'
   groups:
-    admins: Administrators
     everyone: Everyone
     logged-in-users: Logged in users
-    global-page-admins: Global page admins
   table:
     group: Group
     user: User

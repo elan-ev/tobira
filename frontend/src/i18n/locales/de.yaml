@@ -359,10 +359,8 @@ acl:
     users: Personen hinzufügen
     create: '{{item}} erstellen'
   groups:
-    admins: Administration
     everyone: Alle
     logged-in-users: Eingeloggte Nutzende
-    global-page-admins: "Globale Seiten\u00ADadministration"
   table:
     group: Gruppe
     user: Person
