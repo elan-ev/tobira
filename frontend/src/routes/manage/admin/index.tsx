@@ -296,7 +296,7 @@ const ContentSection: React.FC<Props> = ({ info }) => {
                 <ul>
                     <li>{t("Pending sync: ") + db.numEventsPendingSync}</li>
                     <li>{t("Pending deletion: ") + db.numEventsPendingDeletion}</li>
-                    <li>{t("Listed: ") + db.numEventsListed}</li>
+                    <li>{t("Listed: ") + (db.numEventsListed ?? "?")}</li>
                 </ul>
             </li>
             <li>
@@ -304,13 +304,13 @@ const ContentSection: React.FC<Props> = ({ info }) => {
                 <ul>
                     <li>{t("Pending sync: ") + db.numSeriesPendingSync}</li>
                     <li>{t("Pending deletion: ") + db.numSeriesPendingDeletion}</li>
-                    <li>{t("Listed: ") + db.numSeriesListed}</li>
+                    <li>{t("Listed: ") + (db.numSeriesListed ?? "?")}</li>
                 </ul>
             </li>
             <li>
                 {t("Playlists: ") + db.numPlaylists}
                 <ul>
-                    <li>{t("Listed: ") + db.numPlaylistsListed}</li>
+                    <li>{t("Listed: ") + (db.numPlaylistsListed ?? "?")}</li>
                 </ul>
             </li>
             <li>
