@@ -116,13 +116,13 @@ pub struct AdminDbInfo {
     num_events: i32,
     num_events_pending_sync: i32,
     num_events_pending_deletion: i32,
-    num_events_listed: i32,
+    num_events_listed: Option<i32>,
     num_series: i32,
     num_series_pending_sync: i32,
     num_series_pending_deletion: i32,
-    num_series_listed: i32,
+    num_series_listed: Option<i32>,
     num_playlists: i32,
-    num_playlists_listed: i32,
+    num_playlists_listed: Option<i32>,
     num_realms: i32,
     num_user_realms: i32,
     num_blocks: i32,
@@ -164,20 +164,21 @@ impl AdminDbInfo {
                 .with_limit(0)
                 .execute::<serde_json::Value>()
                 .await
-                .map(|res| res.total)
+                .map(|res| res.total as i32)
+                .ok()
         };
 
         Ok(Self {
             num_events: mapping.events.of::<i64>(&row) as i32,
             num_events_pending_sync: mapping.events_pending_sync.of::<i64>(&row) as i32,
             num_events_pending_deletion: mapping.events_pending_deletion.of::<i64>(&row) as i32,
-            num_events_listed: get_listed_count(&ctx.search.event_index).await? as i32,
+            num_events_listed: get_listed_count(&ctx.search.event_index).await,
             num_series: mapping.series.of::<i64>(&row) as i32,
             num_series_pending_sync: mapping.series_pending_sync.of::<i64>(&row) as i32,
             num_series_pending_deletion: mapping.series_pending_deletion.of::<i64>(&row) as i32,
-            num_series_listed: get_listed_count(&ctx.search.series_index).await? as i32,
+            num_series_listed: get_listed_count(&ctx.search.series_index).await,
             num_playlists: mapping.playlists.of::<i64>(&row) as i32,
-            num_playlists_listed: get_listed_count(&ctx.search.playlist_index).await? as i32,
+            num_playlists_listed: get_listed_count(&ctx.search.playlist_index).await,
             num_realms: mapping.realms.of::<i64>(&row) as i32,
             num_user_realms: mapping.user_realms.of::<i64>(&row) as i32,
             num_blocks: mapping.blocks.of::<i64>(&row) as i32,
