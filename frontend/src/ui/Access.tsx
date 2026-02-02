@@ -199,9 +199,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
     const isDark = useColorScheme().scheme === "dark";
     const user = useUser();
     const { t, i18n } = useTranslation();
-    const {
-        change, knownGroups, groupDag, permissionLevels, ownerDisplayName, itemType,
-    } = useAclContext();
+    const { change, knownGroups, groupDag, permissionLevels, ownerDisplayName } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
     const userIsOwner = isRealUser(user) && user.displayName === ownerDisplayName;
     const [error, setError] = useState<ReactNode>(null);
@@ -268,21 +266,8 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             large: false, // Don't show any warning on inherited entries as they can't be changed.
         }));
 
-    const userIsAdmin = isRealUser(user) && user.roles.includes(COMMON_ROLES.ADMIN);
-    const showAdminEntry = kind === "group"
-        && !entries.some(e => e.role === COMMON_ROLES.ADMIN)
-        && userIsAdmin;
-
-    const userIsGlobalPageAdmin = isRealUser(user)
-        && user.roles.includes(COMMON_ROLES.TOBIRA_GLOBAL_PAGE_ADMIN);
-    const showGlobalPageAdminEntry = kind === "group"
-        && itemType === "realm"
-        && !entries.some(e => e.role === COMMON_ROLES.TOBIRA_GLOBAL_PAGE_ADMIN)
-        && userIsGlobalPageAdmin;
-
     const showUserEntry = (kind === "user" && ownerDisplayName);
-    const noEntries = entries.length === 0
-        && !(showAdminEntry || showUserEntry || showGlobalPageAdminEntry);
+    const noEntries = entries.length === 0 && !showUserEntry;
 
     const remove = (item: Entry) => change(prev => prev.delete(item.role));
 
@@ -407,21 +392,8 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                 }
 
                 {/*
-                    The ACLs usually don't explicitly include admins, but showing that
-                    entry makes sense if the user is admin. Same for the global page admin.
-                */}
-                {showAdminEntry && <TableRow
-                    labelCol={<>{t("acl.groups.admins")}</>}
-                    actionCol={<UnchangeableAllActions />}
-                />}
-                {showGlobalPageAdminEntry && <TableRow
-                    labelCol={<>{t("acl.groups.global-page-admins")}</>}
-                    actionCol={<UnchangeableAllActions />}
-                />}
-
-                {/*
-                    Similarly to the above, the ACL for user realms does not explicitly
-                    include that realm's owning user, but it should still be shown in the UI.
+                    ACL for user realms do not explicitly include that realm's owning user,
+                    but it should still be shown in the UI.
                 */}
                 {showUserEntry && <TableRow
                     labelCol={!userIsOwner ? <>{ownerDisplayName}</> : <>

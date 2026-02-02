@@ -367,10 +367,8 @@ acl:
     users: Aggiungi persone
     create: Crea {{item}}
   groups:
-    admins: Amministratori
     everyone: Tutti
     logged-in-users: Utenti connessi
-    global-page-admins: Amministratori globali di pagine
   table:
     group: Gruppo
     user: Persona
