@@ -364,7 +364,7 @@ type AdminSingleSearchIndexInfo {
 type AdminSyncInfo {
   ocReachable: Boolean!
   harvestedUntil: DateTime!
-  lastUpdatedItem: DateTime!
+  lastUpdatedItem: DateTime
   requiredTobiraApiVersion: String!
   tobiraApiVersion: String
   externalApiVersion: String

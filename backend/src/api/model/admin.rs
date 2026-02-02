@@ -335,7 +335,7 @@ type NumBytes = f64;
 pub struct AdminSyncInfo {
     oc_reachable: bool,
     harvested_until: DateTime<Utc>,
-    last_updated_item: DateTime<Utc>,
+    last_updated_item: Option<DateTime<Utc>>,
     required_tobira_api_version: String,
     tobira_api_version: Option<String>,
     external_api_version: Option<String>,
