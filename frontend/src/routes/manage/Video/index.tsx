@@ -1,5 +1,6 @@
 import { graphql } from "react-relay";
 import { match } from "@opencast/appkit";
+import { LuUpload } from "react-icons/lu";
 
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
@@ -11,11 +12,12 @@ import {
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
-import { Thumbnail } from "../../../ui/Video";
+import { Creators, Thumbnail } from "../../../ui/Video";
 import { keyOfId } from "../../../util";
-import { createQueryParamsParser, ManageItems, ListItem } from "../Shared/Table";
+import { createQueryParamsParser, ManageItems, ListItem, CreateButton } from "../Shared/Table";
 import { PartOfSeriesLink } from "../../../ui/Blocks/VideoList";
-import { DateAndCreators } from "../../../ui/metadata";
+import { Timestamp } from "../../../ui/metadata";
+import { UploadRoute } from "../../Upload";
 
 
 const PATH = "/~manage/videos" as const;
@@ -53,6 +55,7 @@ export const ManageVideosRoute = makeRoute({
                             { key: "UPDATED", label: "manage.table.sorting.updated" },
                         ]}
                         RenderItem={VideoItem}
+                        createButton={<UploadLink />}
                     />
                 }
             />,
@@ -100,6 +103,14 @@ const query = graphql`
     }
 `;
 
+const UploadLink: React.FC = () => <CreateButton
+    condition="canUpload"
+    path={UploadRoute.url()}
+    text="upload.title"
+    Icon={LuUpload}
+/>;
+
+
 export type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
 export type Events = EventConnection["items"];
 export type Event = Events[number];
@@ -111,22 +122,40 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
     link={`${PATH}/${keyOfId(item.id)}`}
     thumbnail={state => <Thumbnail event={item} {...{ state }} />}
     created={item.created}
-    dateAndAdditionalInfo={
-        <DateAndCreators
+    metadata={[
+        <Creators key="creators" creators={[...item.creators]} css={{
+            minWidth: 0,
+            fontSize: 12,
+            svg: {
+                fontSize: 15,
+            },
+            ul: {
+                display: "inline-block",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+            },
+            li: {
+                display: "inline",
+            },
+        }} />,
+        <Timestamp
+            key="timestamp"
             timestamp={item.syncedData?.startTime ?? item.created}
             isLive={item.isLive}
-            creators={[...item.creators]}
-        />
-    }
-    partOf={item.series && <PartOfSeriesLink
-        css={{
-            fontSize: 11,
-            gap: 6,
-            svg: { fontSize: 15 },
-        }}
-        seriesTitle={item.series.title}
-        seriesId={item.series.id}
-    />}
+        />,
+        item.series && <PartOfSeriesLink
+            key="series"
+            css={{
+                fontSize: 11,
+                gap: 6,
+                svg: { fontSize: 15 },
+                paddingTop: "unset",
+            }}
+            seriesTitle={item.series.title}
+            seriesId={item.series.id}
+        />,
+    ]}
 />;
 
 

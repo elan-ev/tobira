@@ -9,7 +9,7 @@ import {
     useColorScheme,
     useFloatingItemProps,
 } from "@opencast/appkit";
-import { useRef, ReactNode, ComponentType, PropsWithChildren, useId } from "react";
+import { useRef, ReactNode, ComponentType, useId } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,30 +18,32 @@ import {
     LuChevronLeft,
     LuChevronRight,
 } from "react-icons/lu";
+import { IconType } from "react-icons";
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { prettyDate } from "../../../ui/time";
 import { ellipsisOverflowCss, IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
-import { SmallDescription } from "../../../ui/metadata";
+import { Metadata, SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
-import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { Link, useRouter } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
-import { floatingMenuProps, OcEntity } from "../../../util";
+import { floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
 import { isSynced } from "../../../util";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
 import { PlaylistsSortColumn } from "../Playlist/__generated__/PlaylistsManageQuery.graphql";
-import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../../GlobalStyle";
+import { BREAKPOINT_MEDIUM } from "../../../GlobalStyle";
 import { FloatingBaseMenu } from "../../../ui/FloatingBaseMenu";
 import { css } from "@emotion/react";
 import { MenuItem } from "../../../ui/Blocks/VideoList";
+import { LinkButton } from "../../../ui/LinkButton";
+import { isRealUser, useUser } from "../../../User";
 
 
 type ItemVars = {
@@ -74,9 +76,10 @@ type SortingProps<T> = {
     label: ParseKeys;
 }
 
-type ManageItemProps<T> = PropsWithChildren & SharedTableProps<T> & {
+type ManageItemProps<T> = SharedTableProps<T> & {
     titleKey: ParseKeys;
     additionalSortOptions: SortingProps<SortColumn>[];
+    createButton: ReactNode;
 }
 
 const LIMIT = 15;
@@ -85,9 +88,9 @@ export const ManageItems = <T extends Item>({
     connection,
     vars,
     titleKey,
-    children,
     RenderItem,
     additionalSortOptions,
+    createButton,
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
     const { Notification } = useNotification();
@@ -123,36 +126,63 @@ export const ManageItems = <T extends Item>({
 
     const title = t(titleKey);
 
+    const HEADER_BREAKPOINT = 389;
+
     return (
         <div css={{
             display: "flex",
             flexDirection: "column",
             height: "100%",
+            maxWidth: 1000,
         }}>
-            <Breadcrumbs tail={title} path={[{
-                label: t("user.manage"),
-                link: ManageRoute.url,
-            }]} />
+            <div css={{
+                marginBottom: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+            }}>
+                <Breadcrumbs tail={title} path={[{
+                    label: t("user.manage"),
+                    link: ManageRoute.url,
+                }]} />
+                <div css={{
+                    marginLeft: "auto",
+                    "> div": { gap: "min(5vw, 48px)" },
+                }}>
+                    <PageNavigation {...{ vars, connection }} />
+                </div>
+            </div>
+
+            <h1 css={visuallyHiddenStyle}>{title}</h1>
 
             <Notification />
 
-            <div css={{ marginBottom: 12 }}>
-                <PageNavigation {...{ vars, connection }} />
-            </div>
-
+            {/* Header */}
             <div css={{
-                marginBottom: 0,
                 display: "flex",
                 justifyContent: "space-between",
-                gap: 8,
+                gap: "12px 8px",
+                flexWrap: "wrap",
             }}>
-                {children && <div css={{ marginBottom: 24 }}>
-                    {children}
-                </div>}
+                <div css={{
+                    flex: "auto",
+                    [screenWidthAtMost(HEADER_BREAKPOINT)]: {
+                        order: 2,
+                    },
+                }}>
+                    {createButton}
+                </div>
 
-                <SearchField {...{ vars }} />
+                <div css={{ flex: "auto", "> div": { minWidth: 300 } }}>
+                    <SearchField {...{ vars }} />
+                </div>
 
-                <div css={{ display: "flex", gap: 16, marginLeft: "auto" }}>
+                <div css={{
+                    flex: "auto",
+                    [screenWidthAtMost(HEADER_BREAKPOINT)]: {
+                        order: 2,
+                    },
+                }}>
                     {/* TODO: additional dedicated filter menus (i.e. for date) */}
                     <FloatingBaseMenu
                         ref={listRef}
@@ -177,9 +207,36 @@ export const ManageItems = <T extends Item>({
                     />
                 </div>
             </div>
+
+            {/* Actual table */}
             {inner}
         </div>
     );
+};
+
+
+type CreateButtonProps = {
+    condition: "canUpload" | "canCreateSeries" | "canCreatePlaylists";
+    path: string;
+    text: ParseKeys;
+    Icon: IconType;
+}
+export const CreateButton: React.FC<CreateButtonProps> = ({
+    condition, path, text, Icon,
+}) => {
+    const { t } = useTranslation();
+    const user = useUser();
+
+    return (!isRealUser(user) || !user[condition])
+        ? null
+        : <LinkButton to={path} css={{ width: "fit-content", height: 40 }}>
+            <p css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                display: "none",
+            } }}>
+                {t(text)}
+            </p>
+            <Icon />
+        </LinkButton>;
 };
 
 type SortingMenuProps = {
@@ -371,9 +428,8 @@ type GenericListItemProps<T extends ListItemProps> = {
     link: string;
     item: T;
     customColumns?: ReactNode[];
-    dateAndAdditionalInfo?: ReactNode;
-    partOf?: ReactNode;
     created?: string;
+    metadata: ReactNode[];
 };
 
 export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericListItemProps<T>) => {
@@ -407,9 +463,8 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
         display: "flex",
         flexDirection: "row",
         borderRadius: 12,
-        padding: 8,
+        padding: "6px 8px",
         gap: 12,
-        height: 85,
         textDecoration: "none",
         transition: "background 200ms, outline-color 200ms",
         outline: "1px solid transparent",
@@ -447,6 +502,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             }
         </div>
 
+        {/* Main body  */}
         <div css={{
             minWidth: 0,
             display: "flex",
@@ -460,10 +516,11 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                 flexDirection: "column",
                 height: "100%",
                 flex: 1,
-                maxWidth: "calc(100% - 150px)",
                 minWidth: 0,
-                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                    maxWidth: 330,
+                maxWidth: 330,
+                [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
+                    marginRight: 12,
+                    maxWidth: 700,
                 },
             }}>
                 {/* Title */}
@@ -475,59 +532,43 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     ...ellipsisOverflowCss(1),
                 }}>{item.title}</h3>
 
-                {/* Metadata */}
-                <div css={{ "&& > *": {
-                    display: "flex",
-                    gap: 24,
-                    marginTop: 2,
+                {/* Description */}
+                <div css={{ marginBottom: 4 }}>
+                    {!isSynced(item) && props.itemType !== "playlist"
+                        ? <StatusPendingDescription
+                            action={"sync"}
+                            itemType={props.itemType}
+                            hasFailed={syncFailed}
+                            actionDate={creationDate}
+                        />
+                        : (deletionIsPending && props.itemType !== "playlist"
+                            ? <StatusPendingDescription
+                                action={"deletion"}
+                                itemType={props.itemType}
+                                hasFailed={deletionFailed}
+                                actionDate={deletionDate}
+                            />
+                            : <SmallDescription lines={1} text={item.description} css={{
+                                paddingLeft: 2,
+                                fontSize: 12,
+                                lineHeight: 1.4,
+                            }} />
+                        )
+                    }
+                </div>
+
+                <Metadata css={{
+                    marginTop: "auto",
+                    gap: "4px 24px",
+                    flexWrap: "wrap",
                     fontSize: 11,
                     "&& svg": { fontSize: 13 },
                     div: { gap: 6 },
-                    [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
-                        display: "none",
-                    },
-                } }}>
-                    {props.dateAndAdditionalInfo}
-                </div>
-
-                {/* Description */}
-                {!isSynced(item) && props.itemType !== "playlist"
-                    ? <StatusPendingDescription
-                        action={"sync"}
-                        itemType={props.itemType}
-                        hasFailed={syncFailed}
-                        actionDate={creationDate}
-                    />
-                    : (deletionIsPending && props.itemType !== "playlist"
-                        ? <StatusPendingDescription
-                            action={"deletion"}
-                            itemType={props.itemType}
-                            hasFailed={deletionFailed}
-                            actionDate={deletionDate}
-                        />
-                        : <SmallDescription lines={1} text={item.description} css={{
-                            paddingLeft: 2,
-                            fontSize: 12,
-                            lineHeight: 1.4,
-                            maxWidth: 600,
-                        }} />
-                    )
-                }
-
-                {/* More metadata (i.e. `part of series`) */}
-                {props.partOf}
-            </div>
-            {/* Even more metadata, usually at least date of creation. */}
-            <div css={{ "&& > *": {
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                width: 150,
-                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                    display: "none",
-                },
-            } }}>
-                {props.dateAndAdditionalInfo}
+                    backgroundColor: COLORS.neutral10,
+                    borderRadius: 8,
+                    padding: "2px 6px",
+                    width: "fit-content",
+                }}>{props.metadata}</Metadata>
             </div>
         </div>
     </li>;
