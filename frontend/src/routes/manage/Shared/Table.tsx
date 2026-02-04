@@ -1,5 +1,15 @@
-import { Card, currentRef, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
-import { useRef, ReactNode, ComponentType, useEffect, PropsWithChildren, useState } from "react";
+import {
+    Card,
+    currentRef,
+    Floating,
+    FloatingHandle,
+    match,
+    screenWidthAbove,
+    screenWidthAtMost,
+    useColorScheme,
+    useFloatingItemProps,
+} from "@opencast/appkit";
+import { useRef, ReactNode, ComponentType, useId } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -8,27 +18,32 @@ import {
     LuChevronLeft,
     LuChevronRight,
 } from "react-icons/lu";
-import { LucideFunnel } from "lucide-react";
+import { IconType } from "react-icons";
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
-import { PrettyDate, prettyDate } from "../../../ui/time";
-import { IconWithTooltip } from "../../../ui";
+import { prettyDate } from "../../../ui/time";
+import { ellipsisOverflowCss, IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
-import { SmallDescription } from "../../../ui/metadata";
+import { Metadata, SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
-import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { Link, useRouter } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
-import { OcEntity } from "../../../util";
+import { floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
 import { isSynced } from "../../../util";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
 import { PlaylistsSortColumn } from "../Playlist/__generated__/PlaylistsManageQuery.graphql";
+import { BREAKPOINT_MEDIUM } from "../../../GlobalStyle";
+import { FloatingBaseMenu } from "../../../ui/FloatingBaseMenu";
+import { css } from "@emotion/react";
+import { MenuItem } from "../../../ui/Blocks/VideoList";
+import { LinkButton } from "../../../ui/LinkButton";
+import { isRealUser, useUser } from "../../../User";
 
 
 type ItemVars = {
@@ -53,12 +68,18 @@ export type SharedManageProps<T> = {
 };
 
 type SharedTableProps<T> = SharedManageProps<T> & {
-    RenderRow: ComponentType<{ item: T }>;
-    additionalColumns?: ColumnProps<T>[];
+    RenderItem: ComponentType<{ item: T }>;
 }
 
-type ManageItemProps<T> = PropsWithChildren & SharedTableProps<T> & {
+type SortingProps<T> = {
+    key: T;
+    label: ParseKeys;
+}
+
+type ManageItemProps<T> = SharedTableProps<T> & {
     titleKey: ParseKeys;
+    additionalSortOptions: SortingProps<SortColumn>[];
+    createButton: ReactNode;
 }
 
 const LIMIT = 15;
@@ -67,38 +88,37 @@ export const ManageItems = <T extends Item>({
     connection,
     vars,
     titleKey,
-    additionalColumns,
-    children,
-    RenderRow,
+    RenderItem,
+    additionalSortOptions,
+    createButton,
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
     const { Notification } = useNotification();
+    const listRef = useRef<FloatingHandle>(null);
+
+    const sortOptions: SortingProps<SortColumn>[] = [
+        { key: "TITLE", label: "general.title" },
+        ...additionalSortOptions,
+    ];
+
+    const labelKey: ParseKeys = sortOptions
+        .find(o => o.key === vars.order.column)
+        ?.label
+        ?? "manage.table.sorting.unknown";
 
     let inner;
     if (connection.items.length === 0) {
         inner = <div css={{ display: "flex", flexDirection: "column" }}>
-            <Notification />
-            <SearchField {...{ vars }} />
             <Card kind="info" css={{ width: "fit-content", marginTop: 32 }}>
                 {t("manage.table.no-entries-found")}
             </Card>
         </div>;
     } else {
         inner = <>
-            <Notification />
-            <div css={{
-                display: "flex",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 16,
-            }}>
-                <SearchField {...{ vars }} />
-                <div css={{ marginLeft: "auto" }}>
-                    <PageNavigation {...{ vars, connection }} />
-                </div>
-            </div>
-            <div css={{ flex: "1 0 0", margin: "16px 0" }}>
-                <ItemTable {...{ vars, connection, additionalColumns, RenderRow }} />
+            <div css={{ flex: "1 0 0", margin: "16px 0", marginTop: 0 }}>
+                <ul css={{ padding: 0 }}>
+                    {connection.items.map(item => <RenderItem key={item.id} {... { item }} />)}
+                </ul>
             </div>
             <PageNavigation {...{ vars, connection }} />
         </>;
@@ -106,23 +126,234 @@ export const ManageItems = <T extends Item>({
 
     const title = t(titleKey);
 
+    const HEADER_BREAKPOINT = 389;
+
     return (
         <div css={{
             display: "flex",
             flexDirection: "column",
             height: "100%",
+            maxWidth: 1000,
         }}>
-            <Breadcrumbs tail={title} path={[{
-                label: t("user.manage"),
-                link: ManageRoute.url,
-            }]} />
-            <PageTitle title={title} css={{ marginBottom: 32 }} />
-            {children && <div css={{ marginBottom: 24 }}>
-                {children}
-            </div>}
+            <div css={{
+                marginBottom: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+            }}>
+                <Breadcrumbs tail={title} path={[{
+                    label: t("user.manage"),
+                    link: ManageRoute.url,
+                }]} />
+                <div css={{
+                    marginLeft: "auto",
+                    "> div": { gap: "min(5vw, 48px)" },
+                }}>
+                    <PageNavigation {...{ vars, connection }} />
+                </div>
+            </div>
+
+            <h1 css={visuallyHiddenStyle}>{title}</h1>
+
+            <Notification />
+
+            {/* Header */}
+            <div css={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "12px 8px",
+                flexWrap: "wrap",
+            }}>
+                <div css={{
+                    flex: "auto",
+                    [screenWidthAtMost(HEADER_BREAKPOINT)]: {
+                        order: 2,
+                    },
+                }}>
+                    {createButton}
+                </div>
+
+                <div css={{ flex: "auto", "> div": { minWidth: 300 } }}>
+                    <SearchField {...{ vars }} />
+                </div>
+
+                <div css={{
+                    flex: "auto",
+                    [screenWidthAtMost(HEADER_BREAKPOINT)]: {
+                        order: 2,
+                    },
+                }}>
+                    {/* TODO: additional dedicated filter menus (i.e. for date) */}
+                    <FloatingBaseMenu
+                        ref={listRef}
+                        triggerContent={<>{t(labelKey)}</>}
+                        triggerStyles={{
+                            height: 40,
+                            marginLeft: "auto",
+                            borderRadius: 8,
+                            padding: "7px 14px",
+                            gap: 12,
+
+                        }}
+                        list={<SortingMenu
+                            {...{ vars, sortOptions }}
+                            close={() => listRef.current?.close()}
+                        />}
+                        label={t("manage.table.sorting.label")}
+                        icon={vars.order.direction === "ASCENDING"
+                            ? <LuArrowDownNarrowWide />
+                            : <LuArrowUpWideNarrow />
+                        }
+                    />
+                </div>
+            </div>
+
+            {/* Actual table */}
             {inner}
         </div>
     );
+};
+
+
+type CreateButtonProps = {
+    condition: "canUpload" | "canCreateSeries" | "canCreatePlaylists";
+    path: string;
+    text: ParseKeys;
+    Icon: IconType;
+}
+export const CreateButton: React.FC<CreateButtonProps> = ({
+    condition, path, text, Icon,
+}) => {
+    const { t } = useTranslation();
+    const user = useUser();
+
+    return (!isRealUser(user) || !user[condition])
+        ? null
+        : <LinkButton to={path} css={{ width: "fit-content", height: 40 }}>
+            <p css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                display: "none",
+            } }}>
+                {t(text)}
+            </p>
+            <Icon />
+        </LinkButton>;
+};
+
+type SortingMenuProps = {
+    close: () => void;
+    vars: ItemVars;
+    sortOptions: SortingProps<SortColumn>[];
+}
+
+const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) => {
+    const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
+    const itemId = useId();
+    const router = useRouter();
+    const itemProps = useFloatingItemProps();
+
+    const directionTransKey = vars.order.direction === "ASCENDING" ? "ascending" : "descending";
+
+    const listStyle = {
+        minWidth: 125,
+        div: {
+            cursor: "default",
+            fontSize: 12,
+            padding: "8px 14px 4px 14px",
+            color: COLORS.neutral60,
+        },
+        ul: {
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+        },
+    };
+
+    const handleBlur = (event: React.FocusEvent<HTMLUListElement, Element>) => {
+        if (!event.currentTarget.contains(event.relatedTarget as HTMLUListElement)) {
+            close();
+        }
+    };
+
+    const sortDirections: SortingProps<SortDirection>[] = [
+        { key: "ASCENDING", label: "manage.table.sorting.ascending" },
+        { key: "DESCENDING", label: "manage.table.sorting.descending" },
+    ];
+
+    const extraStyles = css({
+        "&&": {
+            borderBottom: 0,
+        },
+        "&& button": {
+            padding: "4px 14px",
+        },
+    });
+
+    const list = (
+        <ul role="menu" onBlur={handleBlur} css={{
+            borderBottom: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}`,
+        }}>
+            <div>{t("manage.table.sorting.sort-by")}</div>
+            {sortOptions.map((option, index) =>
+                <MenuItem
+                    key={`${itemId}-${option.key}`}
+                    label={t(option.label)}
+                    aria-label={
+                        t("manage.table.sorting.description", {
+                            title: option,
+                            direction: t(`manage.table.sorting.${directionTransKey}`),
+                        })
+                    }
+                    disabled={option.key === vars.order.column}
+                    {...itemProps(index)}
+                    onClick={() => router.goto(varsToLink({
+                        ...vars,
+                        order: {
+                            column: option.key,
+                            direction: vars.order.direction,
+                        },
+                    }))}
+                    css={extraStyles}
+                />)
+            }
+            <div css={{ borderTop: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}` }}>
+                {t("manage.table.sorting.order")}
+            </div>
+            {sortDirections.map((direction, index) =>
+                <MenuItem
+                    key={`${itemId}-${direction.key}`}
+                    label={t(`manage.table.sorting.${direction.key === "ASCENDING"
+                        ? "ascending"
+                        : "descending"
+                    }-cap`)}
+                    aria-label={
+                        t("manage.table.sorting.description", {
+                            column: vars.order.column,
+                            direction: direction.label,
+                        })
+                    }
+                    disabled={direction.key === vars.order.direction}
+                    {...itemProps(sortOptions.length + index)}
+                    onClick={() => router.goto(varsToLink({
+                        ...vars,
+                        order: {
+                            column: vars.order.column,
+                            direction: direction.key,
+                        },
+                    }))}
+                    css={extraStyles}
+                />)
+            }
+        </ul>
+    );
+
+    return <Floating
+        {...floatingMenuProps(isDark)}
+        hideArrowTip
+        css={listStyle}
+    >
+        {list}
+    </Floating>;
 };
 
 const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
@@ -159,14 +390,15 @@ const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         }
     };
 
-    return <SearchInput
-        {...{ search, inputRef, clear }}
-        defaultValue={vars.filters.title}
-        inputProps={{ placeholder: t("manage.table.filter.by-title") }}
-    />;
+    return <div css={{ input: { height: 40 } }}>
+        <SearchInput
+            {...{ search, inputRef, clear }}
+            defaultValue={vars.filters.title}
+            inputProps={{ placeholder: t("manage.table.filter.by-title") }}
+        />
+    </div>;
 };
 
-const THUMBNAIL_WIDTH = 16 * 8;
 
 type SortColumn = VideosSortColumn | SeriesSortColumn | PlaylistsSortColumn;
 type SortDirection = "ASCENDING" | "DESCENDING" | "%future added value";
@@ -180,146 +412,7 @@ export type ColumnProps<T> = {
 
 type Item = { id: string }
 
-const ItemTable = <T extends Item>({
-    connection,
-    vars,
-    additionalColumns,
-    RenderRow,
-}: SharedTableProps<T>) => {
-    const { t } = useTranslation();
-
-    // We need to know whether the table header is in its "sticky" position to apply a box
-    // shadow to indicate that the user can still scroll up. This solution uses intersection
-    // observer. Compare: https://stackoverflow.com/a/57991537/2408867
-    const [headerSticks, setHeaderSticks] = useState(false);
-    const tableHeaderRef = useRef<HTMLTableSectionElement>(null);
-    useEffect(() => {
-        const tableHeader = tableHeaderRef.current;
-        if (tableHeader) {
-            const observer = new IntersectionObserver(
-                ([e]) => setHeaderSticks(!e.isIntersecting),
-                { threshold: [1], rootMargin: "-1px 0px 0px 0px" },
-            );
-
-            observer.observe(tableHeader);
-            return () => observer.unobserve(tableHeader);
-        }
-        return () => {};
-    });
-
-    return <div css={{ position: "relative", overflow: "auto" }}>
-        <table css={{
-            width: "100%",
-            borderSpacing: 0,
-            tableLayout: "fixed",
-            "& > thead": {
-                position: "sticky",
-                top: 0,
-                zIndex: 10,
-                backgroundColor: COLORS.neutral05,
-                "&  > tr > th": {
-                    borderBottom: `1px solid ${COLORS.neutral25}`,
-                    textAlign: "left",
-                    padding: "8px 12px",
-                },
-                ...headerSticks && {
-                    boxShadow: "0 0 20px rgba(0, 0, 0, 0.3)",
-                    clipPath: "inset(0px 0px -20px 0px)",
-                },
-            },
-            "& > tbody": {
-                "& > tr:hover, tr:focus-within": {
-                    backgroundColor: COLORS.neutral15,
-                },
-                "& > tr:not(:first-child) > td": {
-                    borderTop: `1px solid ${COLORS.neutral25}`,
-                },
-                "& td": {
-                    padding: 6,
-                    verticalAlign: "top",
-                    "&:not(:first-child)": {
-                        padding: "8px 12px 8px 8px",
-                    },
-                },
-            },
-        }}>
-            <colgroup>
-                {/* Each table has thumbnails, but their width might vary */}
-                <col span={1} css={{ width: THUMBNAIL_WIDTH + 2 * 6 }} />
-                {/* Each table has a column for title and description */}
-                <col span={1} css={{ [screenWidthAtMost(1000)]: { width: 135 } }} />
-                {/*
-                    Additional columns can be declared in the specific column array.
-                */}
-                {additionalColumns?.map(col =>
-                    <col key={col.key} span={1} css={{ width: col.headerWidth ?? 135 }} />)
-                }
-            </colgroup>
-
-            <thead ref={tableHeaderRef}>
-                <tr>
-                    {/* Thumbnail */}
-                    <th></th>
-                    {/* Title */}
-                    <ColumnHeader
-                        label={t("general.title")}
-                        sortKey="TITLE"
-                        {...{ vars }}
-                    />
-                    {/* Sort columns */}
-                    {additionalColumns?.map(col => (
-                        <ColumnHeader
-                            key={col.key}
-                            label={t(col.label)}
-                            sortKey={col.key}
-                            {...{ vars }}
-                        />
-                    ))}
-                </tr>
-            </thead>
-            <tbody>
-                {connection.items.map(item => <RenderRow key={item.id} item={item}/>)}
-            </tbody>
-        </table>
-    </div>;
-};
-
-// Some styles are used by more than one row component.
-// Declaring these here helps with keeping them in sync.
-export const thumbnailLinkStyle = {
-    ":focus-visible": { outline: "none" },
-    ":focus-within div:first-child": {
-        outline: `2.5px solid ${COLORS.focus}`,
-        outlineOffset: 1,
-    },
-} as const;
-
-export const titleLinkStyle = {
-    ":focus, :focus-visible": {
-        outline: "none",
-    },
-    textDecoration: "none",
-} as const;
-
-export const descriptionStyle = {
-    padding: "0 4px",
-} as const;
-
-// Used for both `EventRow` and `SeriesRow`.
-export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
-    const isDark = useColorScheme().scheme === "dark";
-    const parsedDate = date && new Date(date);
-    const greyColor = { color: isDark ? COLORS.neutral60 : COLORS.neutral50 };
-
-    return <td css={{ fontSize: 14 }}>
-        {parsedDate
-            ? <PrettyDate date={parsedDate} />
-            : <i css={greyColor}>{"—"}</i>
-        }
-    </td>;
-};
-
-type TableRowItem = {
+type ListItemProps = {
     tobiraDeletionTimestamp?: string | null;
     title: string;
     description?: string | null;
@@ -329,22 +422,17 @@ type TableRowItem = {
     state: "WAITING" | "READY" | "%future added value";
 });
 
-type TableRowProps<T extends TableRowItem> = {
+type GenericListItemProps<T extends ListItemProps> = {
     itemType: OcEntity;
-    thumbnail: (state: ThumbnailItemState) => ReactNode;
+    thumbnail: (status: ThumbnailItemState) => ReactNode;
     link: string;
     item: T;
     customColumns?: ReactNode[];
     created?: string;
+    metadata: ReactNode[];
 };
 
-/**
- * A row in the item table
- * This is assuming that each item (video, series, playlist) has a thumbnail, title,
- * and description. These can still be somewhat customized.
- * Additional columns can be declared in the respective item column arrays.
- */
-export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowProps<T>) => {
+export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericListItemProps<T>) => {
     const deletionTimestamp = item.tobiraDeletionTimestamp;
     const createdTimestamp = props.created;
     const deletionIsPending = Boolean(deletionTimestamp);
@@ -369,64 +457,133 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
     const syncFailed = Boolean(!isSynced(item) && createdTimestamp
         && Date.parse(createdTimestamp) + 150 * 60000 < Date.now());
 
-    return <tr>
+    return <li css={{
+        overflow: "hidden",
+        position: "relative",
+        display: "flex",
+        flexDirection: "row",
+        borderRadius: 12,
+        padding: "6px 8px",
+        gap: 12,
+        textDecoration: "none",
+        transition: "background 200ms, outline-color 200ms",
+        outline: "1px solid transparent",
+        "&:hover, &:focus-within": {
+            backgroundColor: COLORS.neutral15,
+            outlineColor: COLORS.neutral20,
+            transition: "background 50ms, outline-color 50ms",
+        },
+        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+            flexDirection: "column",
+            gap: 10,
+            margin: "8px auto",
+            height: "unset",
+            maxWidth: 330,
+        },
+    }}>
+        {/* Link overlay (invisible, covers item completely) */}
+        {!deletionIsPending && <Link
+            to={props.link}
+            css={{ position: "absolute", inset: 0, borderRadius: 12 }}
+        />}
+
         {/* Thumbnail */}
-        <td>
+        <div css={{
+            width: 130,
+            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                width: "100%",
+            },
+        }}>
             {deletionIsPending
                 ? props.thumbnail(thumbnailState)
-                : <Link to={props.link} css={{ ...thumbnailLinkStyle }}>
+                : <Link to={props.link}>
                     {props.thumbnail(thumbnailState)}
                 </Link>
             }
-        </td>
-        <td>
+        </div>
+
+        {/* Main body  */}
+        <div css={{
+            minWidth: 0,
+            display: "flex",
+            justifyContent: "space-between",
+            flex: "1",
+            gap: 6,
+        }}>
             <div css={{
+                color: COLORS.neutral90,
                 display: "flex",
-                alignItems: "baseline",
-                gap: 8,
+                flexDirection: "column",
+                height: "100%",
+                flex: 1,
+                minWidth: 0,
+                maxWidth: 330,
+                [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
+                    marginRight: 12,
+                    maxWidth: 700,
+                },
             }}>
-                <div css={{
-                    whiteSpace: "nowrap",
-                    textOverflow: "ellipsis",
-                    overflow: "hidden",
-                    padding: "0 4px",
-                    ":focus-within": {
-                        borderRadius: 4,
-                        outline: `2.5px solid ${COLORS.focus}`,
-                    },
-                }}>
-                    {/* Title */}
-                    {deletionIsPending
-                        ? <span css={{ color: COLORS.neutral60 }}>{item.title}</span>
-                        : <Link to={props.link} css={{ ...titleLinkStyle }}>{item.title}</Link>
+                {/* Title */}
+                <h3 css={{
+                    color: COLORS.primary1,
+                    fontSize: 15,
+                    lineHeight: 1.1,
+                    paddingBottom: 2,
+                    ...ellipsisOverflowCss(1),
+                }}>{item.title}</h3>
+
+                {/* Description */}
+                <div css={{ marginBottom: 4 }}>
+                    {!isSynced(item) && props.itemType !== "playlist"
+                        ? <StatusPendingDescription
+                            action={"sync"}
+                            itemType={props.itemType}
+                            hasFailed={syncFailed}
+                            actionDate={creationDate}
+                        />
+                        : (deletionIsPending && props.itemType !== "playlist"
+                            ? <StatusPendingDescription
+                                action={"deletion"}
+                                itemType={props.itemType}
+                                hasFailed={deletionFailed}
+                                actionDate={deletionDate}
+                            />
+                            : <SmallDescription lines={1} text={item.description} css={{
+                                paddingLeft: 2,
+                                fontSize: 12,
+                                lineHeight: 1.4,
+                            }} />
+                        )
                     }
                 </div>
+
+                <Metadata css={{
+                    marginTop: "auto",
+                    gap: "4px 24px",
+                    flexWrap: "wrap",
+                    fontSize: 11,
+                    "&& svg": { fontSize: 13 },
+                    div: { gap: 6 },
+                    backgroundColor: COLORS.neutral10,
+                    borderRadius: 8,
+                    padding: "2px 6px",
+                    width: "fit-content",
+                }}>{props.metadata}</Metadata>
             </div>
-            {/* Description */}
-            {!isSynced(item) && props.itemType !== "playlist"
-                ? <StatusPendingDescription
-                    action={"sync"}
-                    itemType={props.itemType}
-                    hasFailed={syncFailed}
-                    actionDate={creationDate}
-                />
-                : (deletionIsPending && props.itemType !== "playlist"
-                    ? <StatusPendingDescription
-                        action={"deletion"}
-                        itemType={props.itemType}
-                        hasFailed={deletionFailed}
-                        actionDate={deletionDate}
-                    />
-                    : <SmallDescription
-                        css={{ ...descriptionStyle }}
-                        text={item.description}
-                    />
-                )
-            }
-        </td>
-        {props.customColumns}
-    </tr>;
+        </div>
+    </li>;
 };
+
+
+// Some styles are used by more than one row component.
+// Declaring these here helps with keeping them in sync.
+export const thumbnailLinkStyle = {
+    ":focus-visible": { outline: "none" },
+    ":focus-within div:first-child": {
+        outline: `2.5px solid ${COLORS.focus}`,
+        outlineOffset: 1,
+    },
+} as const;
 
 type PendingDescriptionProps = {
     action: "sync" | "deletion";
@@ -449,7 +606,7 @@ const StatusPendingDescription: React.FC<PendingDescriptionProps> = ({
         ? t(`${itemType}.not-ready.title`)
         : t(`manage.table.${action}.${hasFailed ? "failed-maybe" : "pending"}`);
 
-    return <div css={{ display: "flex" }}>
+    return (
         <div css={{
             color: isDark ? COLORS.neutral60 : COLORS.neutral50,
             display: "flex",
@@ -467,64 +624,9 @@ const StatusPendingDescription: React.FC<PendingDescriptionProps> = ({
                 mode={hasFailed ? "warning" : "info"}
             />
         </div>
-    </div>;
+    );
 };
 
-
-type ColumnHeaderProps = {
-    label: string;
-    sortKey: SortColumn;
-    vars: ItemVars;
-};
-
-const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => {
-    const { t } = useTranslation();
-
-    const direction = vars.order.direction === "ASCENDING" ? "DESCENDING" : "ASCENDING";
-    const directionTransKey = direction === "ASCENDING" ? "ascending" : "descending";
-    const inFilters = sortKey.toLowerCase() in vars.filters;
-
-    return <th>
-        <Link
-            aria-label={
-                t("manage.table.columns.description", {
-                    title: label,
-                    direction: t(`manage.table.columns.${directionTransKey}`),
-                })
-            }
-            to={varsToLink({
-                order: {
-                    column: sortKey,
-                    direction,
-                },
-                page: vars.page,
-                filters: vars.filters,
-            })}
-            css={{
-                display: "inline-flex",
-                alignItems: "center",
-                cursor: "pointer",
-                transition: "color 70ms",
-                textDecoration: "none",
-                borderRadius: 4,
-                outlineOffset: 1,
-                "& > svg": {
-                    marginLeft: 6,
-                    fontSize: 22,
-                },
-            }}
-        >
-            {label}
-            {vars.order.column === sortKey && match(vars.order.direction, {
-                // Seems like this is flipped right? But no, a short internal
-                // poll showed that this matches the intuition of almost everyone.
-                "ASCENDING": () => <LuArrowDownNarrowWide />,
-                "DESCENDING": () => <LuArrowUpWideNarrow />,
-            })}
-            {inFilters && <LucideFunnel size={18} />}
-        </Link>
-    </th>;
-};
 
 const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
     const { t } = useTranslation();
@@ -623,6 +725,7 @@ type QueryVars = {
     sortColumn: string;
     direction: SortDirection;
 }
+
 export const parsePaginationAndDirection = (
     queryParams: URLSearchParams,
     defaultDirection: SortDirection = DEFAULT_SORT_DIRECTION,

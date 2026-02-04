@@ -564,12 +564,18 @@ manage:
       last: Dernière page
     filter:
       by-title: Filtrer par titre #todo: verify
-    columns:
+    sorting:
+      label: Trier les entrées # check
+      sort-by: Trier par # check
+      order: Organiser # check
       description: Trier par {{title}}, {{direction}}
       ascending: Croissant
       descending: Décroissant
+      ascending-cap: Croissant # check: does it need to be capitalized in context?
+      descending-cap: Décroissant # check: does it need to be capitalized in context?
       created: Créé
       updated: Actualisé
+      unknown: Tri inconnu # check
     no-series-title: Titre manquant
     no-entries-found: Aucune entrée trouvée.
     missing-date: Inconnu
