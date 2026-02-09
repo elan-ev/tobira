@@ -539,12 +539,13 @@ manage:
       delete-note: >
         I video di questa serie non verranno eliminati. Rimarranno nel sistema e
         potranno essere aggiunti a un'altra serie.
-      edit-note: >
-        Potete caricare nuovi video come parte di questa serie e aggiungere o
-        rimuovere i video esistenti per i quali avete accesso in scrittura. È
-        possibile aggiungere solo video che non fanno parte di altre serie. La
-        rimozione di un video da questo elenco non elimina il video stesso, ma
-        lo rimuove semplicemente da questa serie.
+      edit-note: > # verify
+        Potete caricare nuovi video come parte di questa serie e aggiungere,
+        rimuovere o spostarli direttamente in un'altra serie i video esistenti
+        per i quali avete accesso in scrittura. È possibile aggiungere solo video
+        che non fanno parte di altre serie. La rimozione di un video da questo
+        elenco non elimina il video stesso, ma lo rimuove semplicemente da questa
+        serie.
 
   playlist:
     created-note: La playlist è stata creata.
@@ -577,6 +578,8 @@ manage:
       to-be-added: sarà aggiunto
       remove: Rimuovere
       to-be-removed: sarà rimosso
+      move: Spostare in un'altra serie # verify
+      to-be-moved: "sarà spostato in: {{series}}" # verify
       cannot-be-removed: 'Non può essere rimosso: Manca l''accesso in scrittura'
       undo: Annulla
       save: Salvare le modifiche
