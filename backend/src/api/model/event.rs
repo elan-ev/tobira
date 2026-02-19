@@ -604,12 +604,17 @@ impl AuthorizedEvent {
             Ok(response) => {
                 if response.status() == StatusCode::ACCEPTED {
                     // 202: The retraction of publications has started.
-                    info!(event_id = %id, "Requested deletion of event");
+                    info!(
+                        event_id = %id,
+                        opencast_id = %event.opencast_id,
+                        "Requested deletion of event",
+                    );
                 } else if is_pending {
                     // For pending events, non-202 is not necessarily an error.
                     // The event may have already been deleted prior to this request.
                     warn!(
                         event_id = %id,
+                        opencast_id = %event.opencast_id,
                         "Failed to delete event in OC, returned status: {}. \
                         Event will still be deleted in Tobira.",
                         response.status()
@@ -617,6 +622,7 @@ impl AuthorizedEvent {
                 } else {
                     warn!(
                         event_id = %id,
+                        opencast_id = %event.opencast_id,
                         "Failed to delete event, OC returned status: {}",
                         response.status()
                     );
@@ -652,7 +658,11 @@ impl AuthorizedEvent {
         let event = Self::load_for_mutation(id, context).await?;
         event.require_idle(context).await?;
 
-        info!(event_id = %id, "Requesting ACL update of event");
+        info!(
+            event_id = %id,
+            opencast_id = %event.opencast_id,
+            "Requesting ACL update of event",
+        );
 
         let response = context
             .oc_client
@@ -679,6 +689,7 @@ impl AuthorizedEvent {
         } else {
             warn!(
                 event_id = %id,
+                opencast_id = %event.opencast_id,
                 "Failed to update event ACL, OC returned status: {}",
                 response.status(),
             );
@@ -705,7 +716,11 @@ impl AuthorizedEvent {
             },
         ]);
 
-        info!(event_id = %id, "Requesting metadata update of event");
+        info!(
+            event_id = %id,
+            opencast_id = %event.opencast_id,
+            "Requesting metadata update of event",
+        );
 
         let response = context
             .oc_client
@@ -730,6 +745,7 @@ impl AuthorizedEvent {
         } else {
             warn!(
                 event_id = %id,
+                opencast_id = %event.opencast_id,
                 "Failed to update event metadata, OC returned status: {}",
                 response.status(),
             );
