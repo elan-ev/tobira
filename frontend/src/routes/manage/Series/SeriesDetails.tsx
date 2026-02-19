@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
+import { WithTooltip } from "@opencast/appkit";
 
 import i18n from "../../../i18n";
 import { makeManageSeriesRoute, Series } from "./Shared";
@@ -23,6 +24,7 @@ import { SeriesDetailsContentMutation } from "./__generated__/SeriesDetailsConte
 import { Inertable, isSynced, keyOfId } from "../../../util";
 import { NotReadyNote } from "../../util";
 import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
+import CONFIG from "../../../config";
 
 
 const updateSeriesMetadata = graphql`
@@ -104,17 +106,41 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
         rssUrl: `/~rss/series/${seriesKey}`,
     };
 
+    const disableDelete = !CONFIG.allowSeriesEventRemoval && series.entries.length > 0;
+
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <VideoListShareButton {...shareInfo} css={{ height: 40, borderRadius: 8 }} />
-        <DeleteButton
-            item={series}
-            kind="series"
-            returnPath="/~manage/series"
-            commit={commit}
-        >
-            <br />
-            <p>{t("manage.series.details.delete-note")}</p>
-        </DeleteButton>
+        {disableDelete
+            ? <WithTooltip tooltip={<>{t("manage.series.details.deleting-disabled")}</>}>
+                {/*
+                  * There needs to be a div around the button for some reason,
+                  * otherwise the tooltip doesn't work.
+                  * The duplicated DeleteButton is also unfortunate, but necessary since an empty
+                  * tooltip would still get rendered (even with `display: none`).
+                  */}
+                <div>
+                    <DeleteButton
+                        item={series}
+                        kind="series"
+                        returnPath="/~manage/series"
+                        commit={commit}
+                        disabled={disableDelete}
+                    >
+                        <br />
+                        <p>{t("manage.series.details.delete-note")}</p>
+                    </DeleteButton>
+                </div>
+            </WithTooltip>
+            : <DeleteButton
+                item={series}
+                kind="series"
+                returnPath="/~manage/series"
+                commit={commit}
+            >
+                <br />
+                <p>{t("manage.series.details.delete-note")}</p>
+            </DeleteButton>
+        }
     </div>;
 };
 

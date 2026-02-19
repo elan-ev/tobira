@@ -534,6 +534,7 @@ manage:
       title: Dettagli serie
       delete: Cancellare serie
       confirm-delete: Cancellare serie?
+      deleting-disabled: Non è possibile eliminare una serie finché contiene video. # verify
       referencing-pages-explanation: 'Questa serie è citata nelle pagine seguenti:'
       no-referencing-pages: Nessuna pagina fa riferimento a questa serie.
       delete-note: >
