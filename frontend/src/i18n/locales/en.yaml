@@ -486,6 +486,7 @@ manage:
       title: Series details
       delete: Delete series
       confirm-delete: Delete series?
+      deleting-disabled: Series cannot be deleted as long as it contains videos.
       referencing-pages-explanation: 'This series is referenced on the following pages:'
       no-referencing-pages: No pages reference this series.
       delete-note: >
