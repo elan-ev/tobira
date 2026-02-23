@@ -893,6 +893,12 @@ pub(crate) struct NewEvent {
     acl: Vec<AclInputEntry>,
 }
 
+#[derive(Debug, GraphQLInputObject)]
+pub(crate) struct RemovedEvent {
+    pub id: Id,
+    pub series_id: Option<Id>,
+}
+
 #[derive(GraphQLEnum, PartialEq)]
 pub(crate) enum WorkflowStatus {
     Busy,
