@@ -1,31 +1,20 @@
-import { useTranslation } from "react-i18next";
 import { LuCirclePlus } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { match } from "@opencast/appkit";
 
-import i18n from "../../../i18n";
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
+import { CreateButton, createQueryParamsParser, ListItem, ManageItems } from "../Shared/Table";
 import {
-    ColumnProps,
-    createQueryParamsParser,
-    DateColumn,
-    ManageItems,
-    TableRow,
-} from "../Shared/Table";
-import {
-    SeriesManageQuery,
-    SeriesManageQuery$data,
-    SeriesSortColumn,
+    SeriesManageQuery, SeriesManageQuery$data, SeriesSortColumn,
 } from "./__generated__/SeriesManageQuery.graphql";
 import { keyOfId } from "../../../util";
 import { SeriesThumbnail } from "./Shared";
-import { CREATE_SERIES_PATH } from "./Create";
-import { LinkButton } from "../../../ui/LinkButton";
-import { isRealUser, useUser } from "../../../User";
+import { CreateSeriesRoute } from "./Create";
+import { EntryCount, Timestamp } from "../../../ui/metadata";
 
 
 export const PATH = "/~manage/series" as const;
@@ -57,11 +46,14 @@ export const ManageSeriesRoute = makeRoute({
                         vars={vars}
                         connection={data.currentUser.mySeries}
                         titleKey="manage.series.table.title"
-                        additionalColumns={seriesColumns}
-                        RenderRow={SeriesRow}
-                    >
-                        <CreateSeriesLink />
-                    </ManageItems>
+                        additionalSortOptions={[
+                            { key: "EVENT_COUNT", label: "video.plural" },
+                            { key: "CREATED", label: "manage.table.sorting.created" },
+                            { key: "UPDATED", label: "manage.table.sorting.updated" },
+                        ]}
+                        RenderItem={SeriesItem}
+                        createButton={<CreateLink />}
+                    />
                 }
             />,
             dispose: () => queryRef.dispose(),
@@ -92,58 +84,39 @@ const query = graphql`
                     state
                     numVideos
                     thumbnailStack { thumbnails { url live audioOnly state }}
+                    hostRealms { id }
                 }
             }
         }
     }
 `;
 
-const CreateSeriesLink: React.FC = () => {
-    const { t } = useTranslation();
-    const user = useUser();
-
-    return (!isRealUser(user) || !user.canCreateSeries)
-        ? null
-        : <LinkButton to={CREATE_SERIES_PATH} css={{ width: "fit-content" }}>
-            {t("manage.series.table.create")}
-            <LuCirclePlus />
-        </LinkButton>;
-};
+const CreateLink: React.FC = () => <CreateButton
+    condition="canCreateSeries"
+    path={CreateSeriesRoute.url}
+    text="manage.series.table.create"
+    Icon={LuCirclePlus}
+/>;
 
 
 export type SeriesConnection = NonNullable<SeriesManageQuery$data["currentUser"]>["mySeries"];
 export type Series = SeriesConnection["items"];
 export type SingleSeries = Series[number];
 
-const seriesColumns: ColumnProps<SingleSeries>[] = [
-    {
-        key: "ENTRY_COUNT",
-        label: "video.plural",
-        headerWidth: 112,
-        column: ({ item }) => <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.video-list.no-of-videos", { count: item.numVideos })}
-        </td>,
-    },
-    {
-        key: "UPDATED",
-        label: "manage.table.columns.updated",
-        column: ({ item }) => <DateColumn date={item.updated} />,
-    },
-    {
-        key: "CREATED",
-        label: "manage.table.columns.created",
-        column: ({ item }) => <DateColumn date={item.created} />,
-    },
-];
 
-
-const SeriesRow: React.FC<{ item: SingleSeries }> = ({ item }) => <TableRow
+const SeriesItem: React.FC<{ item: SingleSeries }> = ({ item }) => <ListItem
     itemType="series"
     item={item}
-    thumbnail={state => <SeriesThumbnail series={item} seriesState={state} />}
     link={`${PATH}/${keyOfId(item.id)}`}
-    customColumns={seriesColumns.map(col => <col.column key={col.key} item={item} />)}
+    thumbnail={state => <SeriesThumbnail series={item} seriesState={state} />}
     created={item.created ?? undefined}
+    metadata={[
+        <EntryCount key={"entry count"} count={item.numVideos} />,
+        <Timestamp
+            key="timestamp"
+            timestamp={item.created ?? undefined}
+        />,
+    ]}
 />;
 
 
