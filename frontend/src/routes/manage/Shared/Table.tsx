@@ -1,15 +1,20 @@
 import {
+    Button,
     Card,
     currentRef,
     Floating,
+    FloatingContainer,
     FloatingHandle,
+    FloatingTrigger,
     match,
+    ProtoButton,
     screenWidthAbove,
     screenWidthAtMost,
     useColorScheme,
     useFloatingItemProps,
+    WithTooltip,
 } from "@opencast/appkit";
-import { useRef, ReactNode, ComponentType, useId } from "react";
+import { useRef, ReactNode, ComponentType, useId, PropsWithChildren } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -17,8 +22,15 @@ import {
     LuArrowUpWideNarrow,
     LuChevronLeft,
     LuChevronRight,
+    LuCalendarRange,
+    LuShieldCheck,
+    LuBanana,
+    LuX,
+    LuTypeOutline,
 } from "react-icons/lu";
 import { IconType } from "react-icons";
+import { css } from "@emotion/react";
+
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
@@ -40,7 +52,6 @@ import { SearchInput } from "../../../layout/header/Search";
 import { PlaylistsSortColumn } from "../Playlist/__generated__/PlaylistsManageQuery.graphql";
 import { BREAKPOINT_MEDIUM } from "../../../GlobalStyle";
 import { FloatingBaseMenu } from "../../../ui/FloatingBaseMenu";
-import { css } from "@emotion/react";
 import { MenuItem } from "../../../ui/Blocks/VideoList";
 import { LinkButton } from "../../../ui/LinkButton";
 import { isRealUser, useUser } from "../../../User";
@@ -84,6 +95,9 @@ type ManageItemProps<T> = SharedTableProps<T> & {
 
 const LIMIT = 15;
 
+const HEADER_BREAKPOINT = 389;
+
+
 export const ManageItems = <T extends Item>({
     connection,
     vars,
@@ -95,6 +109,7 @@ export const ManageItems = <T extends Item>({
     const { t } = useTranslation();
     const { Notification } = useNotification();
     const listRef = useRef<FloatingHandle>(null);
+    const isDark = useColorScheme().scheme === "dark";
 
     const sortOptions: SortingProps<SortColumn>[] = [
         { key: "TITLE", label: "general.title" },
@@ -126,8 +141,6 @@ export const ManageItems = <T extends Item>({
 
     const title = t(titleKey);
 
-    const HEADER_BREAKPOINT = 389;
-
     return (
         <div css={{
             display: "flex",
@@ -149,7 +162,8 @@ export const ManageItems = <T extends Item>({
                     marginLeft: "auto",
                     "> div": { gap: "min(5vw, 48px)" },
                 }}>
-                    <PageNavigation {...{ vars, connection }} />
+                    {/* <PageNavigation {...{ vars, connection }} /> */}
+                    {createButton}
                 </div>
             </div>
 
@@ -157,54 +171,80 @@ export const ManageItems = <T extends Item>({
 
             <Notification />
 
+            {/* Applied filters (dummy -> todo) */}
+            <div css={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 6,
+                flexWrap: "wrap",
+            }}>
+                {["public", "read only", "20.07.1969 - 26.06.92", "title:Opencast"].map(filter => (
+                    <div key={filter} css={{
+                        backgroundColor: COLORS.neutral15,
+                        borderRadius: 8,
+                        padding: "2px 8px",
+                        display: "flex",
+                        alignItems: "center",
+                        fontSize: 14,
+                        gap: 8,
+                    }}>
+                        {filter}
+                        <ProtoButton css={{
+                            padding: 0,
+                            border: 0,
+                            display: "flex",
+                            borderRadius: 4,
+                        }}>
+                            <LuX />
+                        </ProtoButton>
+                    </div>
+                ))}
+            </div>
+
             {/* Header */}
             <div css={{
                 display: "flex",
                 justifyContent: "space-between",
+                backgroundColor: COLORS.neutral10,
                 gap: "12px 8px",
                 flexWrap: "wrap",
+                marginTop: 16,
+                ...isDark && { backgroundColor: COLORS.neutral10 },
+                borderRadius: 8,
+                padding: 4,
             }}>
                 <div css={{
                     flex: "auto",
-                    [screenWidthAtMost(HEADER_BREAKPOINT)]: {
-                        order: 2,
+                    "&& > div": { minWidth: 280,
+                        "> div": { maxWidth: "100%" },
+                    },
+                    input: {
+                        ...isDark && { backgroundColor: COLORS.neutral10 },
                     },
                 }}>
-                    {createButton}
-                </div>
-
-                <div css={{ flex: "auto", "> div": { minWidth: 300 } }}>
                     <SearchField {...{ vars }} />
                 </div>
 
-                <div css={{
-                    flex: "auto",
-                    [screenWidthAtMost(HEADER_BREAKPOINT)]: {
-                        order: 2,
-                    },
-                }}>
-                    {/* TODO: additional dedicated filter menus (i.e. for date) */}
-                    <FloatingBaseMenu
-                        ref={listRef}
-                        triggerContent={<>{t(labelKey)}</>}
-                        triggerStyles={{
-                            height: 40,
-                            marginLeft: "auto",
-                            borderRadius: 8,
-                            padding: "7px 14px",
-                            gap: 12,
-
-                        }}
-                        list={<SortingMenu
-                            {...{ vars, sortOptions }}
-                            close={() => listRef.current?.close()}
-                        />}
-                        label={t("manage.table.sorting.label")}
-                        icon={vars.order.direction === "ASCENDING"
-                            ? <LuArrowDownNarrowWide />
-                            : <LuArrowUpWideNarrow />
-                        }
+                <div css={{ display: "flex", gap: 12, marginLeft: "auto" }}>
+                    {/* Text filter attribute (i.e. title, description, series etc) */}
+                    <MockupMenu
+                        Icon={LuTypeOutline}
+                        tooltip="Text"
+                        menuItems={["Title", "Description", "Series"]}
+                        criterion="Search by text"
                     />
+
+                    {/* Datepicker */}
+                    <MockupMenu Icon={LuCalendarRange} tooltip="Date" />
+
+                    {/* Visibility */}
+                    <MockupMenu Icon={LuBanana} tooltip="Visibility" />
+
+                    {/* Access (read/write) */}
+                    <MockupMenu Icon={LuShieldCheck} tooltip="Access" />
+
+                    {/* Sorting & order */}
+                    <SortAndOrder {...{ additionalSortOptions, vars }} />
                 </div>
             </div>
 
@@ -212,6 +252,163 @@ export const ManageItems = <T extends Item>({
             {inner}
         </div>
     );
+};
+
+
+type SortAndOrderProps = {
+    additionalSortOptions: SortingProps<SortColumn>[];
+    vars: ItemVars;
+}
+const SortAndOrder: React.FC<SortAndOrderProps> = ({ additionalSortOptions, vars }) => {
+    const { t } = useTranslation();
+    const listRef = useRef<FloatingHandle>(null);
+
+    const sortOptions: SortingProps<SortColumn>[] = [
+        { key: "TITLE", label: "general.title" },
+        ...additionalSortOptions,
+    ];
+
+    const labelKey: ParseKeys = sortOptions
+        .find(o => o.key === vars.order.column)?.label ?? "manage.table.sorting.unknown";
+
+    return <div css={{
+        display: "flex",
+        alignItems: "center",
+    }}>
+        {/* TODO: additional dedicated filter menus (i.e. for date) */}
+
+        <FloatingBaseMenu
+            ref={listRef}
+            triggerContent={<>{t(labelKey)}</>}
+            triggerStyles={{
+                height: 30,
+                marginLeft: "auto",
+                padding: "4px 8px",
+                gap: 12,
+                border: 0,
+                backgroundColor: "transparent",
+            }}
+            tooltip="Sort & Order"
+            list={<SortingMenu
+                {...{ vars, sortOptions }}
+                close={() => listRef.current?.close()}
+            />}
+            label={t("manage.table.sorting.label")}
+            icon={vars.order.direction === "ASCENDING"
+                ? <LuArrowDownNarrowWide />
+                : <LuArrowUpWideNarrow />
+            }
+        />
+    </div>;
+};
+
+type MockupMenuProps = {
+    Icon: IconType;
+    tooltip: string;
+    criterion?: string;
+    // menu?: ReactNode;
+    menuItems?: string[];
+}
+
+const MockupMenu: React.FC<MockupMenuProps> = ({ Icon, tooltip, menuItems, criterion }) => {
+    const { t } = useTranslation();
+    const listRef = useRef<FloatingHandle>(null);
+
+    return <div css={{
+        display: "flex",
+        alignItems: "center",
+    }}>
+        {/* TODO: additional dedicated filter menus (i.e. for date) */}
+
+        <FloatingBaseMenu
+            ref={listRef}
+            triggerStyles={{
+                height: 30,
+                marginLeft: "auto",
+                padding: "4px 8px",
+                gap: 12,
+                border: 0,
+                backgroundColor: "transparent",
+            }}
+            tooltip={criterion}
+            list={<MockupList
+                close={() => listRef.current?.close()}
+                {...{ criterion, menuItems }}
+            />}
+            // label={t("manage.table.sorting.label")}
+            icon={<Icon />}
+        />
+    </div>;
+};
+
+type MockupListProps = {
+    close: () => void;
+    criterion?: string;
+    menuItems?: string[];
+}
+
+const MockupList: React.FC<MockupListProps> = ({ close, criterion, menuItems }) => {
+    const isDark = useColorScheme().scheme === "dark";
+    const itemId = useId();
+    const itemProps = useFloatingItemProps();
+
+    const listStyle = {
+        minWidth: 125,
+        div: {
+            cursor: "default",
+            fontSize: 12,
+            padding: "8px 14px 4px 14px",
+            color: COLORS.neutral60,
+        },
+        ul: {
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+        },
+    };
+
+    const handleBlur = (event: React.FocusEvent<HTMLUListElement, Element>) => {
+        if (!event.currentTarget.contains(event.relatedTarget as HTMLUListElement)) {
+            close();
+        }
+    };
+
+    const extraStyles = css({
+        "&&": {
+            borderBottom: 0,
+        },
+        "&& button": {
+            padding: "4px 14px 7px",
+        },
+    });
+
+    const list = <ul role="menu" onBlur={handleBlur}>
+        <div css={{ paddingTop: 6 }}>{criterion}</div>
+        {menuItems?.map((item, index) =>
+            <MenuItem
+                key={`${itemId}-${item}`}
+                label={item}
+                // aria-label={
+                //     t("manage.table.sorting.description", {
+                //         title: option,
+                //         direction: t(`manage.table.sorting.${directionTransKey}`),
+                //     })
+                // }
+                disabled={item === "Title"}
+                {...itemProps(index)}
+                onClick={() => {}}
+                css={extraStyles}
+            />)
+        }
+    </ul>;
+
+    return <Floating
+        {...floatingMenuProps(isDark)}
+        hideArrowTip
+        css={listStyle}
+    >
+        {list}
+    </Floating>;
 };
 
 
@@ -285,67 +482,66 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
             borderBottom: 0,
         },
         "&& button": {
-            padding: "4px 14px",
+            padding: "4px 14px 7px",
         },
     });
 
-    const list = (
-        <ul role="menu" onBlur={handleBlur} css={{
-            borderBottom: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}`,
+    const list = <ul role="menu" onBlur={handleBlur}>
+        <div css={{ paddingTop: 6 }}>{t("manage.table.sorting.sort-by")}</div>
+        {sortOptions.map((option, index) =>
+            <MenuItem
+                key={`${itemId}-${option.key}`}
+                label={t(option.label)}
+                aria-label={
+                    t("manage.table.sorting.description", {
+                        title: option,
+                        direction: t(`manage.table.sorting.${directionTransKey}`),
+                    })
+                }
+                disabled={option.key === vars.order.column}
+                {...itemProps(index)}
+                onClick={() => router.goto(varsToLink({
+                    ...vars,
+                    order: {
+                        column: option.key,
+                        direction: vars.order.direction,
+                    },
+                }))}
+                css={extraStyles}
+            />)
+        }
+        <div css={{
+            borderTop: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}`,
+            "&&": { paddingTop: 6 },
         }}>
-            <div>{t("manage.table.sorting.sort-by")}</div>
-            {sortOptions.map((option, index) =>
-                <MenuItem
-                    key={`${itemId}-${option.key}`}
-                    label={t(option.label)}
-                    aria-label={
-                        t("manage.table.sorting.description", {
-                            title: option,
-                            direction: t(`manage.table.sorting.${directionTransKey}`),
-                        })
-                    }
-                    disabled={option.key === vars.order.column}
-                    {...itemProps(index)}
-                    onClick={() => router.goto(varsToLink({
-                        ...vars,
-                        order: {
-                            column: option.key,
-                            direction: vars.order.direction,
-                        },
-                    }))}
-                    css={extraStyles}
-                />)
-            }
-            <div css={{ borderTop: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}` }}>
-                {t("manage.table.sorting.order")}
-            </div>
-            {sortDirections.map((direction, index) =>
-                <MenuItem
-                    key={`${itemId}-${direction.key}`}
-                    label={t(`manage.table.sorting.${direction.key === "ASCENDING"
-                        ? "ascending"
-                        : "descending"
-                    }-cap`)}
-                    aria-label={
-                        t("manage.table.sorting.description", {
-                            column: vars.order.column,
-                            direction: direction.label,
-                        })
-                    }
-                    disabled={direction.key === vars.order.direction}
-                    {...itemProps(sortOptions.length + index)}
-                    onClick={() => router.goto(varsToLink({
-                        ...vars,
-                        order: {
-                            column: vars.order.column,
-                            direction: direction.key,
-                        },
-                    }))}
-                    css={extraStyles}
-                />)
-            }
-        </ul>
-    );
+            {t("manage.table.sorting.order")}
+        </div>
+        {sortDirections.map((direction, index) =>
+            <MenuItem
+                key={`${itemId}-${direction.key}`}
+                label={t(`manage.table.sorting.${direction.key === "ASCENDING"
+                    ? "ascending"
+                    : "descending"
+                }-cap`)}
+                aria-label={
+                    t("manage.table.sorting.description", {
+                        column: vars.order.column,
+                        direction: direction.label,
+                    })
+                }
+                disabled={direction.key === vars.order.direction}
+                {...itemProps(sortOptions.length + index)}
+                onClick={() => router.goto(varsToLink({
+                    ...vars,
+                    order: {
+                        column: vars.order.column,
+                        direction: direction.key,
+                    },
+                }))}
+                css={extraStyles}
+            />)
+        }
+    </ul>;
 
     return <Floating
         {...floatingMenuProps(isDark)}
@@ -390,9 +586,23 @@ const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         }
     };
 
-    return <div css={{ input: { height: 40 } }}>
+    return <div css={{
+        // backgroundColor: COLORS.neutral10,
+        svg: {
+            left: 6,
+            fontSize: 18,
+        },
+        input: {
+            // height: 30,
+            border: 0,
+            paddingLeft: 34,
+            backgroundColor: COLORS.neutral10,
+        },
+    }}>
         <SearchInput
             {...{ search, inputRef, clear }}
+            height={30}
+            spinnerSize={20}
             defaultValue={vars.filters.title}
             inputProps={{ placeholder: t("manage.table.filter.by-title") }}
         />
@@ -433,6 +643,7 @@ type GenericListItemProps<T extends ListItemProps> = {
 };
 
 export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericListItemProps<T>) => {
+    const isDark = useColorScheme().scheme === "dark";
     const deletionTimestamp = item.tobiraDeletionTimestamp;
     const createdTimestamp = props.created;
     const deletionIsPending = Boolean(deletionTimestamp);
@@ -568,6 +779,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     borderRadius: 8,
                     padding: "2px 6px",
                     width: "fit-content",
+                    // ...isDark && { color: COLORS.neutral90 },
                 }}>{props.metadata}</Metadata>
             </div>
         </div>

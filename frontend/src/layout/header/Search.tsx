@@ -97,6 +97,8 @@ type SearchInputProps = Partial<SearchFieldProps> & {
     clear: () => void;
     inputProps: React.InputHTMLAttributes<HTMLInputElement>;
     defaultValue?: string;
+    height?: number;
+    spinnerSize?: number;
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({
@@ -106,6 +108,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     inputProps,
     defaultValue,
     variant,
+    height = 42,
+    spinnerSize = 24,
 }) => {
     const { t } = useTranslation();
     const [inputIsEmpty, setInputIsEmpty] = useState(!defaultValue);
@@ -115,8 +119,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         setInputIsEmpty(true);
     };
 
-    const height = 42;
-    const spinnerSize = 24;
     const paddingSpinner = (height - spinnerSize) / 2;
 
 
