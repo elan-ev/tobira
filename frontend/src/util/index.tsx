@@ -1,4 +1,3 @@
-import { i18n, TFunction } from "i18next";
 import {
     MutableRefObject,
     PropsWithChildren,
@@ -7,6 +6,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { i18n, TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { bug, match, useColorScheme } from "@opencast/appkit";
 import { css } from "@emotion/react";
@@ -381,4 +381,3 @@ export function ConditionalWrapper({
 }: ConditionalWrapperProps): ReactElement {
     return condition ? wrapper(children) : children;
 }
-

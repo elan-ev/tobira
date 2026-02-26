@@ -718,7 +718,6 @@ export const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
                     ...focusStyle({ inset: true }),
                     "&[disabled]": {
                         fontWeight: "bold",
-                        color: COLORS.neutral80,
                         pointerEvents: "none",
                         ...isDark && { backgroundColor: COLORS.neutral10 },
                     },
