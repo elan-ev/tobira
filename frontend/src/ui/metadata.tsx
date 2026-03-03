@@ -124,6 +124,7 @@ type SmallDescriptionProps = {
     text?: ReactNode | null;
     lines?: number;
     className?: string;
+    withoutPlaceholder?: boolean;
 };
 
 /**
@@ -134,6 +135,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
     text,
     className,
     lines = 2,
+    withoutPlaceholder = false,
 }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
@@ -143,7 +145,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
         color: COLORS.neutral60,
     };
 
-    if (text === null) {
+    if (text === null && !withoutPlaceholder) {
         return <div {...{ className }} css={{
             ...sharedStyle,
             fontStyle: "italic",

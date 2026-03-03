@@ -17,6 +17,10 @@ import {
 import { PlaylistThumbnail } from "./Shared";
 import { CreatePlaylistRoute } from "./Create";
 import { EntryCount, Timestamp } from "../../../ui/metadata";
+import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
+import { DirectPlaylistRoute } from "../../Playlist";
+import { COLORS } from "../../../color";
+import { ActualLinkButton } from "../Video";
 
 
 export const PATH = "/~manage/playlists" as const;
@@ -115,6 +119,39 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
             timestamp={item.updated ?? undefined}
         />,
     ]}
+    shareButton={<VideoListShareButton
+        kind="playlist"
+        shareUrl={new URL(DirectPlaylistRoute.url({ playlistId: item.id }), document.baseURI).href}
+        rssUrl={`/~rss/series/${keyOfId(item.id)}`}
+        hideLabel
+        css={{
+            background: "transparent",
+            padding: 4,
+            "&&, &&:hover, &&:focus-visible": { border: 0 },
+            "&&:hover": {
+                backgroundColor: COLORS.neutral20,
+            },
+            fontSize: 14,
+            "+ div": {
+                borderRadius: 12,
+                "> div": {
+                    button: { opacity: 1 },
+                    height: 165,
+                    width: 300,
+                    "> div + div": {
+                        gap: 8,
+                        padding: 12,
+                        "input, button": {
+                            fontSize: 14,
+                        },
+                    },
+                },
+            },
+        }}
+    />}
+    linkButton={<ActualLinkButton
+        to={new URL(DirectPlaylistRoute.url({ playlistId: item.id }), document.baseURI).href}
+    />}
 />;
 
 

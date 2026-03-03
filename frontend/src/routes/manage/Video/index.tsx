@@ -1,6 +1,6 @@
 import { graphql } from "react-relay";
-import { match } from "@opencast/appkit";
-import { LuUpload } from "react-icons/lu";
+import { match, ProtoButton } from "@opencast/appkit";
+import { LuCornerUpRight, LuUpload } from "react-icons/lu";
 
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
@@ -13,11 +13,15 @@ import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import { Creators, Thumbnail } from "../../../ui/Video";
-import { keyOfId } from "../../../util";
+import { AccessIcon, keyOfId } from "../../../util";
 import { createQueryParamsParser, ManageItems, ListItem, CreateButton } from "../Shared/Table";
 import { PartOfSeriesLink } from "../../../ui/Blocks/VideoList";
 import { Timestamp } from "../../../ui/metadata";
 import { UploadRoute } from "../../Upload";
+import { DirectVideoRoute, VideoShareButton } from "../../Video";
+import { useRouter } from "../../../router";
+import { COLORS } from "../../../color";
+import { focusStyle } from "../../../ui";
 
 
 const PATH = "/~manage/videos" as const;
@@ -85,7 +89,10 @@ const query = graphql`
                     description
                     isLive
                     tobiraDeletionTimestamp
-                    series { id title }
+                    series { id opencastId title }
+                    readRoles
+                    writeRoles
+                    previewRoles
                     syncedData {
                         duration
                         thumbnail
@@ -95,7 +102,7 @@ const query = graphql`
                         audioOnly
                     }
                     authorizedData {
-                        tracks { resolution }
+                        tracks { uri flavor resolution }
                     }
                 }
             }
@@ -139,6 +146,7 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
                 display: "inline",
             },
         }} />,
+        <AccessIcon key="access-indicator" {...{ item }} />,
         <Timestamp
             key="timestamp"
             timestamp={item.syncedData?.startTime ?? item.created}
@@ -156,7 +164,59 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
             seriesId={item.series.id}
         />,
     ]}
+    shareButton={<VideoShareButton
+        event={item}
+        videoLink={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
+        hideLabel
+        css={{
+            background: "transparent",
+            padding: 4,
+            "&&, &&:hover, &&:focus-visible": { border: 0 },
+            "&&:hover": {
+                backgroundColor: COLORS.neutral20,
+            },
+            fontSize: 14,
+            "+ div": {
+                borderRadius: 12,
+                "> div": {
+                    button: { opacity: 1 },
+                    height: 165,
+                    width: 300,
+                    "> div + div": {
+                        gap: 8,
+                        padding: 12,
+                        "input, button": {
+                            fontSize: 14,
+                        },
+                    },
+                },
+            },
+        }}
+    />}
+    linkButton={<ActualLinkButton
+        to={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
+    />}
 />;
+
+export const ActualLinkButton: React.FC<{ to: string }> = ({ to }) => {
+    const router = useRouter();
+
+    return (
+        <ProtoButton
+            onClick={() => router.goto(to)}
+            css={{
+                position: "relative",
+                zIndex: 5,
+                ":hover": { backgroundColor: COLORS.neutral20 },
+                borderRadius: 8,
+                ...focusStyle({ offset: -1 }),
+            }}
+        >
+            <LuCornerUpRight />
+        </ProtoButton>
+    );
+
+};
 
 
 const parseVideosColumn = (sortBy: string | null): VideosSortColumn =>
