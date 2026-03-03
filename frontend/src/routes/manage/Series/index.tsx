@@ -15,6 +15,10 @@ import { keyOfId } from "../../../util";
 import { SeriesThumbnail } from "./Shared";
 import { CreateSeriesRoute } from "./Create";
 import { EntryCount, Timestamp } from "../../../ui/metadata";
+import { ActualLinkButton } from "../Video";
+import { DirectSeriesRoute } from "../../Series";
+import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
+import { COLORS } from "../../../color";
 
 
 export const PATH = "/~manage/series" as const;
@@ -117,6 +121,39 @@ const SeriesItem: React.FC<{ item: SingleSeries }> = ({ item }) => <ListItem
             timestamp={item.created ?? undefined}
         />,
     ]}
+    shareButton={<VideoListShareButton
+        kind="series"
+        shareUrl={new URL(DirectSeriesRoute.url({ seriesId: item.id }), document.baseURI).href}
+        rssUrl={`/~rss/series/${keyOfId(item.id)}`}
+        hideLabel
+        css={{
+            background: "transparent",
+            padding: 4,
+            "&&, &&:hover, &&:focus-visible": { border: 0 },
+            "&&:hover": {
+                backgroundColor: COLORS.neutral20,
+            },
+            fontSize: 14,
+            "+ div": {
+                borderRadius: 12,
+                "> div": {
+                    button: { opacity: 1 },
+                    height: 165,
+                    width: 300,
+                    "> div + div": {
+                        gap: 8,
+                        padding: 12,
+                        "input, button": {
+                            fontSize: 14,
+                        },
+                    },
+                },
+            },
+        }}
+    />}
+    linkButton={<ActualLinkButton
+        to={new URL(DirectSeriesRoute.url({ seriesId: item.id }), document.baseURI).href}
+    />}
 />;
 
 

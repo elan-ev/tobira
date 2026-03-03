@@ -45,7 +45,7 @@ import { Link, useRouter } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
-import { floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
+import { AccessIcon, AccessProps, floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
 import { isSynced } from "../../../util";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
@@ -108,18 +108,12 @@ export const ManageItems = <T extends Item>({
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
     const { Notification } = useNotification();
-    const listRef = useRef<FloatingHandle>(null);
     const isDark = useColorScheme().scheme === "dark";
 
     const sortOptions: SortingProps<SortColumn>[] = [
         { key: "TITLE", label: "general.title" },
         ...additionalSortOptions,
     ];
-
-    const labelKey: ParseKeys = sortOptions
-        .find(o => o.key === vars.order.column)
-        ?.label
-        ?? "manage.table.sorting.unknown";
 
     let inner;
     if (connection.items.length === 0) {
@@ -130,7 +124,7 @@ export const ManageItems = <T extends Item>({
         </div>;
     } else {
         inner = <>
-            <div css={{ flex: "1 0 0", margin: "16px 0", marginTop: 0 }}>
+            <div css={{ flex: "1 0 0", margin: "16px 0", marginTop: 4 }}>
                 <ul css={{ padding: 0 }}>
                     {connection.items.map(item => <RenderItem key={item.id} {... { item }} />)}
                 </ul>
@@ -162,7 +156,6 @@ export const ManageItems = <T extends Item>({
                     marginLeft: "auto",
                     "> div": { gap: "min(5vw, 48px)" },
                 }}>
-                    {/* <PageNavigation {...{ vars, connection }} /> */}
                     {createButton}
                 </div>
             </div>
@@ -170,36 +163,6 @@ export const ManageItems = <T extends Item>({
             <h1 css={visuallyHiddenStyle}>{title}</h1>
 
             <Notification />
-
-            {/* Applied filters (dummy -> todo) */}
-            <div css={{
-                display: "flex",
-                flexDirection: "row",
-                gap: 6,
-                flexWrap: "wrap",
-            }}>
-                {["public", "read only", "20.07.1969 - 26.06.92", "title:Opencast"].map(filter => (
-                    <div key={filter} css={{
-                        backgroundColor: COLORS.neutral15,
-                        borderRadius: 8,
-                        padding: "2px 8px",
-                        display: "flex",
-                        alignItems: "center",
-                        fontSize: 14,
-                        gap: 8,
-                    }}>
-                        {filter}
-                        <ProtoButton css={{
-                            padding: 0,
-                            border: 0,
-                            display: "flex",
-                            borderRadius: 4,
-                        }}>
-                            <LuX />
-                        </ProtoButton>
-                    </div>
-                ))}
-            </div>
 
             {/* Header */}
             <div css={{
@@ -225,27 +188,59 @@ export const ManageItems = <T extends Item>({
                     <SearchField {...{ vars }} />
                 </div>
 
-                <div css={{ display: "flex", gap: 12, marginLeft: "auto" }}>
+                <div css={{ display: "flex", gap: 12, marginLeft: "auto", flexWrap: "wrap" }}>
                     {/* Text filter attribute (i.e. title, description, series etc) */}
                     <MockupMenu
                         Icon={LuTypeOutline}
                         tooltip="Text"
                         menuItems={["Title", "Description", "Series"]}
                         criterion="Search by text"
+                        label={"Text"}
                     />
 
                     {/* Datepicker */}
-                    <MockupMenu Icon={LuCalendarRange} tooltip="Date" />
+                    <MockupMenu Icon={LuCalendarRange} tooltip="Date" label="Date" />
 
                     {/* Visibility */}
-                    <MockupMenu Icon={LuBanana} tooltip="Visibility" />
+                    <MockupMenu Icon={LuBanana} tooltip="Visibility" label="Visibility" />
 
                     {/* Access (read/write) */}
-                    <MockupMenu Icon={LuShieldCheck} tooltip="Access" />
+                    <MockupMenu Icon={LuShieldCheck} tooltip="Access" label="Access" />
 
                     {/* Sorting & order */}
                     <SortAndOrder {...{ additionalSortOptions, vars }} />
                 </div>
+            </div>
+
+            {/* Applied filters (dummy -> todo) */}
+            <div css={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 6,
+                flexWrap: "wrap",
+                margin: "8px 10px",
+            }}>
+                {["public", "read only", "20.07.1969 - 26.06.92", "title:Opencast"].map(filter => (
+                    <div key={filter} css={{
+                        backgroundColor: COLORS.neutral15,
+                        borderRadius: 8,
+                        padding: "2px 8px",
+                        display: "flex",
+                        alignItems: "center",
+                        fontSize: 14,
+                        gap: 8,
+                    }}>
+                        {filter}
+                        <ProtoButton css={{
+                            padding: 0,
+                            border: 0,
+                            display: "flex",
+                            borderRadius: 4,
+                        }}>
+                            <LuX />
+                        </ProtoButton>
+                    </div>
+                ))}
             </div>
 
             {/* Actual table */}
@@ -275,8 +270,6 @@ const SortAndOrder: React.FC<SortAndOrderProps> = ({ additionalSortOptions, vars
         display: "flex",
         alignItems: "center",
     }}>
-        {/* TODO: additional dedicated filter menus (i.e. for date) */}
-
         <FloatingBaseMenu
             ref={listRef}
             triggerContent={<>{t(labelKey)}</>}
@@ -287,6 +280,7 @@ const SortAndOrder: React.FC<SortAndOrderProps> = ({ additionalSortOptions, vars
                 gap: 12,
                 border: 0,
                 backgroundColor: "transparent",
+                fontSize: 14,
             }}
             tooltip="Sort & Order"
             list={<SortingMenu
@@ -308,9 +302,10 @@ type MockupMenuProps = {
     criterion?: string;
     // menu?: ReactNode;
     menuItems?: string[];
+    label: string;
 }
 
-const MockupMenu: React.FC<MockupMenuProps> = ({ Icon, tooltip, menuItems, criterion }) => {
+const MockupMenu: React.FC<MockupMenuProps> = ({ Icon, tooltip, menuItems, criterion, label }) => {
     const { t } = useTranslation();
     const listRef = useRef<FloatingHandle>(null);
 
@@ -318,8 +313,6 @@ const MockupMenu: React.FC<MockupMenuProps> = ({ Icon, tooltip, menuItems, crite
         display: "flex",
         alignItems: "center",
     }}>
-        {/* TODO: additional dedicated filter menus (i.e. for date) */}
-
         <FloatingBaseMenu
             ref={listRef}
             triggerStyles={{
@@ -335,7 +328,7 @@ const MockupMenu: React.FC<MockupMenuProps> = ({ Icon, tooltip, menuItems, crite
                 close={() => listRef.current?.close()}
                 {...{ criterion, menuItems }}
             />}
-            // label={t("manage.table.sorting.label")}
+            triggerContent={<span css={{ fontSize: 14, marginRight: -2 }}>{label}</span>}
             icon={<Icon />}
         />
     </div>;
@@ -640,6 +633,8 @@ type GenericListItemProps<T extends ListItemProps> = {
     customColumns?: ReactNode[];
     created?: string;
     metadata: ReactNode[];
+    shareButton: ReactNode;
+    linkButton: ReactNode;
 };
 
 export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericListItemProps<T>) => {
@@ -662,19 +657,19 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
         && Date.parse(deletionTimestamp) + pollPeriod * 2 + 60000 < Date.now());
 
     // Figuring out an appropriate time after which sync of a waiting event has possibly failed
-    // is a littler harder, since for videos, processing time is proportionally dependent on the
+    // is a little harder, since for videos, processing time is proportionally dependent on the
     // size of the uploaded file and length of the video. So this is rather arbitrarily set to 2.5
     // hours.
     const syncFailed = Boolean(!isSynced(item) && createdTimestamp
         && Date.parse(createdTimestamp) + 150 * 60000 < Date.now());
 
     return <li css={{
-        overflow: "hidden",
+        // overflow: "hidden",
         position: "relative",
         display: "flex",
         flexDirection: "row",
         borderRadius: 12,
-        padding: "6px 8px",
+        padding: 6,
         gap: 12,
         textDecoration: "none",
         transition: "background 200ms, outline-color 200ms",
@@ -691,6 +686,10 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             height: "unset",
             maxWidth: 330,
         },
+
+        "&:hover > div:last-of-type, &:focus-within > div:last-of-type": {
+            button: { opacity: 1 },
+        },
     }}>
         {/* Link overlay (invisible, covers item completely) */}
         {!deletionIsPending && <Link
@@ -700,7 +699,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
 
         {/* Thumbnail */}
         <div css={{
-            width: 130,
+            width: 136,
             [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                 width: "100%",
             },
@@ -735,13 +734,20 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                 },
             }}>
                 {/* Title */}
-                <h3 css={{
-                    color: COLORS.primary1,
-                    fontSize: 15,
-                    lineHeight: 1.1,
-                    paddingBottom: 2,
-                    ...ellipsisOverflowCss(1),
-                }}>{item.title}</h3>
+                <div css={{
+                    display: "flex",
+                    gap: 6,
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                }}>
+                    <h3 css={{
+                        color: COLORS.primary1,
+                        fontSize: 15,
+                        lineHeight: 1.1,
+                        paddingBottom: 2,
+                        ...ellipsisOverflowCss(1),
+                    }}>{item.title}</h3>
+                </div>
 
                 {/* Description */}
                 <div css={{ marginBottom: 4 }}>
@@ -759,11 +765,16 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                                 hasFailed={deletionFailed}
                                 actionDate={deletionDate}
                             />
-                            : <SmallDescription lines={1} text={item.description} css={{
-                                paddingLeft: 2,
-                                fontSize: 12,
-                                lineHeight: 1.4,
-                            }} />
+                            : <SmallDescription
+                                withoutPlaceholder
+                                lines={1}
+                                text={item.description}
+                                css={{
+                                    paddingLeft: 2,
+                                    fontSize: 12,
+                                    lineHeight: 1.4,
+                                }}
+                            />
                         )
                     }
                 </div>
@@ -772,16 +783,26 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     marginTop: "auto",
                     gap: "4px 24px",
                     flexWrap: "wrap",
-                    fontSize: 11,
+                    // fontSize: 11,
                     "&& svg": { fontSize: 13 },
                     div: { gap: 6 },
                     backgroundColor: COLORS.neutral10,
                     borderRadius: 8,
                     padding: "2px 6px",
                     width: "fit-content",
-                    // ...isDark && { color: COLORS.neutral90 },
+                    ...isDark && { color: COLORS.neutral90 },
                 }}>{props.metadata}</Metadata>
             </div>
+        </div>
+
+        {/* Space on the right for misc buttons, indicators etc */}
+        <div css={{
+            button: { opacity: 0 },
+            display: "flex",
+            flexDirection: "column",
+        }}>
+            {props.shareButton}
+            {props.linkButton}
         </div>
     </li>;
 };

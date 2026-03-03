@@ -27,7 +27,7 @@ import { InitialLoading, RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { RealmNav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { getPlayerAspectRatio, InlinePlayer, PlayerPlaceholder } from "../ui/player";
+import { getPlayerAspectRatio, InlinePlayer, PlayerPlaceholder, Track } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -1038,15 +1038,26 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 };
 
 type VideoShareButtonProps = {
-    event: Pick<SyncedEvent, "series" | "isLive" | "id" | "authorizedData">;
+    event: {
+        readonly id: string;
+        readonly isLive: boolean;
+        readonly series?: { readonly id: string } | null;
+        readonly authorizedData?: {
+            readonly tracks: readonly Track[];
+        } | null;
+    };
     videoLink: string;
     onOpen?: (setTimestamp: (seconds: number) => void) => void;
+    className?: string;
+    hideLabel?: boolean;
 }
 
 export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
     event,
     videoLink,
     onOpen,
+    className,
+    hideLabel = false,
 }) => {
     const { t } = useTranslation();
     const [timestamp, setTimestamp] = useState(0);
@@ -1142,7 +1153,7 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
 
     return <ShareButton
         kind="video"
-        {...{ tabs }}
+        {...{ tabs, className, hideLabel }}
         onOpen={() => onOpen?.(setTimestamp)}
         height={250}
     />;

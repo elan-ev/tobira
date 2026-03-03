@@ -8,14 +8,17 @@ import {
 } from "react";
 import { i18n, TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { bug, match, useColorScheme } from "@opencast/appkit";
+import { bug, match, useColorScheme, WithTooltip } from "@opencast/appkit";
 import { css } from "@emotion/react";
+import { LuBanana, LuLock, LuSmilePlus } from "react-icons/lu";
+import { LucideHatGlasses } from "lucide-react";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import { COLORS } from "../color";
 import { Caption } from "../ui/player";
+import { isRealUser, useUser } from "../User";
 
 
 /**
@@ -381,3 +384,65 @@ export function ConditionalWrapper({
 }: ConditionalWrapperProps): ReactElement {
     return condition ? wrapper(children) : children;
 }
+
+
+export type AccessProps = {
+    item: {
+        readRoles: readonly string[];
+        writeRoles: readonly string[];
+        previewRoles?: readonly string[];
+    }
+}
+export const AccessIcon: React.FC<AccessProps> = ({ item }) => {
+    const user = useUser();
+    if (!isRealUser(user)) {
+        return null;
+    }
+
+    const PUBLIC_ROLE = "ROLE_ANONYMOUS";
+    type AccessLevel = "public" | "private" | "protected" | "shared"
+    let accessLevel: AccessLevel = "private";
+
+    if (item.previewRoles?.includes(PUBLIC_ROLE)) {
+        accessLevel = "protected";
+    }
+
+    if (item.readRoles.length > 1) {
+        accessLevel = "shared";
+    }
+
+    if (item.readRoles.includes(PUBLIC_ROLE)) {
+        accessLevel = "public";
+    }
+
+
+    const { Icon, label, tooltip } = match(accessLevel, {
+        "public": () => ({
+            Icon: LuBanana,
+            label: "Public",
+            tooltip: "Can be seen by anyone",
+        }),
+        "private": () => ({
+            Icon: LucideHatGlasses,
+            label: "Private",
+            tooltip: "Can only be seen by you",
+        }),
+        "protected": () => ({
+            Icon: LuLock,
+            label: "Protected",
+            tooltip: "Is password protected",
+        }),
+        "shared": () => ({
+            Icon: LuSmilePlus,
+            label: "Shared",
+            tooltip: "Can be seen by a select group",
+        }),
+    });
+
+    return <WithTooltip placement="top" tooltip={<>{label}</>}>
+        <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <LucideHatGlasses size={13} css={{ color: COLORS.neutral60 }} />
+            {label}
+        </div>
+    </WithTooltip>;
+};
