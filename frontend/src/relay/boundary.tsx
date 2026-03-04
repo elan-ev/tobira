@@ -5,10 +5,9 @@ import { APIError, NotJson, ServerError } from ".";
 import { Root } from "../layout/Root";
 import { useRouter } from "../router";
 import { Card } from "@opencast/appkit";
-import { ErrorDisplay, NetworkError } from "../util/err";
+import { ErrorDetails, ErrorDisplay, NetworkError } from "../util/err";
 import { RouterControl } from "../rauta";
 import { UserProvider, Props as UserProviderProps } from "../User";
-import { COLORS } from "../color";
 
 
 type Props = {
@@ -110,28 +109,10 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                             <div css={{ display: "flex", justifyContent: "center" }}>
                                 <Card kind="error"><ErrorDisplay error={error} /></Card>
                             </div>
-                            <details css={{
-                                border: `1px solid ${COLORS.neutral40}`,
-                                borderRadius: 4,
-                                padding: "6px 8px",
-                                marginTop: "min(150px, 12vh)",
-                                marginBottom: 16,
-                            }}>
-                                <summary css={{ cursor: "pointer" }}>
-                                    {t("errors.detailed-error-info")}
-                                </summary>
-                                <pre css={{
-                                    backgroundColor: COLORS.neutral10,
-                                    borderRadius: 4,
-                                    padding: "12px 16px",
-                                    fontSize: 14,
-                                    marginTop: 10,
-                                }}>
-                                    <code css={{ whiteSpace: "pre-wrap" }}>
-                                        {errorMsg}
-                                    </code>
-                                </pre>
-                            </details>
+                            <ErrorDetails
+                                summary={t("errors.detailed-error-info")}
+                                body={errorMsg}
+                            />
                         </div>
                     )}</Translation>
                 </Root>
