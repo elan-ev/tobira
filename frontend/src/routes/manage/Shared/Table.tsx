@@ -1,20 +1,16 @@
 import {
-    Button,
     Card,
     currentRef,
     Floating,
-    FloatingContainer,
     FloatingHandle,
-    FloatingTrigger,
     match,
     ProtoButton,
     screenWidthAbove,
     screenWidthAtMost,
     useColorScheme,
     useFloatingItemProps,
-    WithTooltip,
 } from "@opencast/appkit";
-import { useRef, ReactNode, ComponentType, useId, PropsWithChildren } from "react";
+import { useRef, ReactNode, ComponentType, useId } from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -24,18 +20,17 @@ import {
     LuChevronRight,
     LuCalendarRange,
     LuShieldCheck,
-    LuBanana,
     LuX,
     LuTypeOutline,
 } from "react-icons/lu";
 import { IconType } from "react-icons";
 import { css } from "@emotion/react";
-
+import { LucideHatGlasses } from "lucide-react";
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
 import { prettyDate } from "../../../ui/time";
-import { ellipsisOverflowCss, IconWithTooltip } from "../../../ui";
+import { ellipsisOverflowCss, focusStyle, IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
 import { Metadata, SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
@@ -45,7 +40,7 @@ import { Link, useRouter } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
-import { AccessIcon, AccessProps, floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
+import { floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
 import { isSynced } from "../../../util";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
@@ -91,11 +86,10 @@ type ManageItemProps<T> = SharedTableProps<T> & {
     titleKey: ParseKeys;
     additionalSortOptions: SortingProps<SortColumn>[];
     createButton: ReactNode;
+    withCreatorFilter?: boolean;
 }
 
 const LIMIT = 15;
-
-const HEADER_BREAKPOINT = 389;
 
 
 export const ManageItems = <T extends Item>({
@@ -105,15 +99,12 @@ export const ManageItems = <T extends Item>({
     RenderItem,
     additionalSortOptions,
     createButton,
+    withCreatorFilter = false,
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
     const { Notification } = useNotification();
     const isDark = useColorScheme().scheme === "dark";
-
-    const sortOptions: SortingProps<SortColumn>[] = [
-        { key: "TITLE", label: "general.title" },
-        ...additionalSortOptions,
-    ];
+    const textField = parseTextField();
 
     let inner;
     if (connection.items.length === 0) {
@@ -168,7 +159,7 @@ export const ManageItems = <T extends Item>({
             <div css={{
                 display: "flex",
                 justifyContent: "space-between",
-                backgroundColor: COLORS.neutral10,
+                // backgroundColor: COLORS.neutral10,
                 gap: "12px 8px",
                 flexWrap: "wrap",
                 marginTop: 16,
@@ -178,70 +169,35 @@ export const ManageItems = <T extends Item>({
             }}>
                 <div css={{
                     flex: "auto",
-                    "&& > div": { minWidth: 280,
+                    "&& > div": {
+                        minWidth: 280,
                         "> div": { maxWidth: "100%" },
                     },
-                    input: {
-                        ...isDark && { backgroundColor: COLORS.neutral10 },
-                    },
+                    input: { ...isDark && { backgroundColor: COLORS.neutral10 } },
                 }}>
-                    <SearchField {...{ vars }} />
+                    <SearchField {...{ vars, textField }} />
                 </div>
 
                 <div css={{ display: "flex", gap: 12, marginLeft: "auto", flexWrap: "wrap" }}>
-                    {/* Text filter attribute (i.e. title, description, series etc) */}
-                    <MockupMenu
-                        Icon={LuTypeOutline}
-                        tooltip="Text"
-                        menuItems={["Title", "Description", "Series"]}
-                        criterion="Search by text"
-                        label={"Text"}
-                    />
+                    {/* Text field filter (title, description) */}
+                    <TextFieldFilter {...{ vars, textField, withCreatorFilter }} />
 
-                    {/* Datepicker */}
-                    <MockupMenu Icon={LuCalendarRange} tooltip="Date" label="Date" />
+                    {/* Date range filter */}
+                    <ManageDatePicker {...{ vars }} />
 
-                    {/* Visibility */}
-                    <MockupMenu Icon={LuBanana} tooltip="Visibility" label="Visibility" />
+                    {/* Visibility filter */}
+                    <VisibilityFilter {...{ vars }} />
 
-                    {/* Access (read/write) */}
-                    <MockupMenu Icon={LuShieldCheck} tooltip="Access" label="Access" />
+                    {/* Write access filter */}
+                    <AccessFilter {...{ vars }} />
 
                     {/* Sorting & order */}
                     <SortAndOrder {...{ additionalSortOptions, vars }} />
                 </div>
             </div>
 
-            {/* Applied filters (dummy -> todo) */}
-            <div css={{
-                display: "flex",
-                flexDirection: "row",
-                gap: 6,
-                flexWrap: "wrap",
-                margin: "8px 10px",
-            }}>
-                {["public", "read only", "20.07.1969 - 26.06.92", "title:Opencast"].map(filter => (
-                    <div key={filter} css={{
-                        backgroundColor: COLORS.neutral15,
-                        borderRadius: 8,
-                        padding: "2px 8px",
-                        display: "flex",
-                        alignItems: "center",
-                        fontSize: 14,
-                        gap: 8,
-                    }}>
-                        {filter}
-                        <ProtoButton css={{
-                            padding: 0,
-                            border: 0,
-                            display: "flex",
-                            borderRadius: 4,
-                        }}>
-                            <LuX />
-                        </ProtoButton>
-                    </div>
-                ))}
-            </div>
+            {/* Applied filters */}
+            <AppliedFilters {...{ vars }} />
 
             {/* Actual table */}
             {inner}
@@ -263,25 +219,14 @@ const SortAndOrder: React.FC<SortAndOrderProps> = ({ additionalSortOptions, vars
         ...additionalSortOptions,
     ];
 
-    const labelKey: ParseKeys = sortOptions
-        .find(o => o.key === vars.order.column)?.label ?? "manage.table.sorting.unknown";
+    const labelKey: ParseKeys = sortOptions.find(o => o.key === vars.order.column)?.label
+        ?? "manage.table.sorting.unknown";
 
-    return <div css={{
-        display: "flex",
-        alignItems: "center",
-    }}>
+    return <div css={{ display: "flex", alignItems: "center" }}>
         <FloatingBaseMenu
             ref={listRef}
             triggerContent={<>{t(labelKey)}</>}
-            triggerStyles={{
-                height: 30,
-                marginLeft: "auto",
-                padding: "4px 8px",
-                gap: 12,
-                border: 0,
-                backgroundColor: "transparent",
-                fontSize: 14,
-            }}
+            triggerStyles={{ ...filterTriggerStyles }}
             tooltip="Sort & Order"
             list={<SortingMenu
                 {...{ vars, sortOptions }}
@@ -296,112 +241,406 @@ const SortAndOrder: React.FC<SortAndOrderProps> = ({ additionalSortOptions, vars
     </div>;
 };
 
-type MockupMenuProps = {
-    Icon: IconType;
-    tooltip: string;
-    criterion?: string;
-    // menu?: ReactNode;
-    menuItems?: string[];
-    label: string;
-}
 
-const MockupMenu: React.FC<MockupMenuProps> = ({ Icon, tooltip, menuItems, criterion, label }) => {
+const ManageDatePicker: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+    const { t } = useTranslation();
+    const router = useRouter();
+    const isDark = useColorScheme().scheme === "dark";
+
+    const startDate = vars.filters.start ?? "";
+    const endDate = vars.filters.end ?? "";
+    const isActive = startDate || endDate;
+
+    const handleChange = (date: string, type: "start" | "end") => {
+        const newFilters = { ...vars.filters };
+        if (date) {
+            newFilters[type] = date;
+        } else {
+            delete newFilters[type];
+        }
+        router.goto(varsToLink({ ...vars, page: 1, filters: newFilters }));
+    };
+
+    const clearDates = () => {
+        const { start, end, ...restFilters } = vars.filters;
+        router.goto(varsToLink({ ...vars, page: 1, filters: restFilters }));
+    };
+
+    const inputStyle = {
+        borderRadius: 4,
+        border: `1px solid ${COLORS.neutral40}`,
+        ...focusStyle({ width: 2, inset: true }),
+    };
+
+    return <FloatingBaseMenu
+        triggerContent={<>{t("manage.table.filter.date")}</>}
+        triggerStyles={filterTriggerStyles}
+        tooltip={t("manage.table.filter.select-date")}
+        label={t("manage.table.filter.select-date")}
+        icon={<LuCalendarRange />}
+        list={<Floating
+            {...floatingMenuProps(isDark)}
+            hideArrowTip
+            css={{ padding: 8 }}
+        >
+            {/* <p css={{ fontSize: 14, padding: "4px 2px" }}>
+                {t("manage.table.filter.select-date")}
+            </p> */}
+            <div css={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                {isActive && <ProtoButton
+                    aria-label={t("manage.table.filter.clear-date")}
+                    css={{ display: "flex", alignItems: "center" }}
+                    onClick={clearDates}
+                ><LuX /></ProtoButton>}
+                <input
+                    value={startDate}
+                    css={inputStyle}
+                    type="date"
+                    onChange={e => handleChange(e.target.value, "start")}
+                />
+                <span>{"-"}</span>
+                <input
+                    value={endDate}
+                    css={inputStyle}
+                    type="date"
+                    min={startDate}
+                    onChange={e => handleChange(e.target.value, "end")}
+                />
+            </div>
+        </Floating>}
+    />;
+};
+
+
+// Shared trigger styles for all filter dropdowns
+const filterTriggerStyles = {
+    height: 30,
+    marginLeft: "auto",
+    padding: "4px 8px",
+    gap: 8,
+    border: 0,
+    backgroundColor: "transparent",
+    fontSize: 14,
+} as const;
+
+// Lets the user choose which text field (title / description) the search input targets.
+type TextFieldFilterProps = {
+    vars: ItemVars;
+    textField: string;
+    withCreatorFilter: boolean;
+};
+
+const TextFieldFilter: React.FC<TextFieldFilterProps> = ({ textField, withCreatorFilter }) => {
+    const { t } = useTranslation();
+    const listRef = useRef<FloatingHandle>(null);
+    const router = useRouter();
+
+    const options = [
+        { key: "title", label: t("general.title") },
+        { key: "description", label: t("general.description") },
+        ...withCreatorFilter
+            ? [{ key: "creators", label: t("manage.table.filter.creator") }]
+            : [],
+    ];
+
+    const activeLabel = options.find(o => o.key === textField)?.label
+        ?? t("general.title");
+
+    const handleSelect = (key: string) => {
+        const url = new URL(document.location.href);
+        if (key === "title") {
+            url.searchParams.delete("tf");
+        } else {
+            url.searchParams.set("tf", key);
+        }
+        router.goto(url.href);
+    };
+
+    return <FloatingBaseMenu
+        ref={listRef}
+        triggerContent={<>{activeLabel}</>}
+        triggerStyles={filterTriggerStyles}
+        tooltip={t("manage.table.filter.text-field")}
+        label={t("manage.table.filter.text-field")}
+        icon={<LuTypeOutline />}
+        list={<SimpleFilterMenu
+            vars={{ order: { column: "CREATED", direction: "DESCENDING" }, page: 1, filters: {} }}
+            options={options}
+            filterKey="textField"
+            current={textField}
+            label="Choose text filter"
+            onSelect={key => handleSelect(key)}
+            close={() => listRef.current?.close()}
+        />}
+    />;
+};
+
+type FilterMenuOption = { key: string; label: string };
+
+/** Filter by visibility: public / private. */
+const VisibilityFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     const { t } = useTranslation();
     const listRef = useRef<FloatingHandle>(null);
 
-    return <div css={{
-        display: "flex",
-        alignItems: "center",
-    }}>
-        <FloatingBaseMenu
-            ref={listRef}
-            triggerStyles={{
-                height: 30,
-                marginLeft: "auto",
-                padding: "4px 8px",
-                gap: 12,
-                border: 0,
-                backgroundColor: "transparent",
-            }}
-            tooltip={criterion}
-            list={<MockupList
-                close={() => listRef.current?.close()}
-                {...{ criterion, menuItems }}
-            />}
-            triggerContent={<span css={{ fontSize: 14, marginRight: -2 }}>{label}</span>}
-            icon={<Icon />}
-        />
-    </div>;
+    const current = vars.filters.visibility ?? null;
+    const options = [
+        {
+            key: "public",
+            label: t("manage.table.filter.visibility-public"),
+        },
+        {
+            key: "private",
+            label: t("manage.table.filter.visibility-private"),
+        },
+        {
+            key: "protected",
+            label: t("manage.table.filter.visibility-protected"),
+        },
+        {
+            key: "shared",
+            label: t("manage.table.filter.visibility-shared"),
+        },
+    ];
+
+    const triggerLabel = current
+        ? options.find(o => o.key === current)?.label
+        : t("manage.table.filter.visibility");
+
+    return <FloatingBaseMenu
+        ref={listRef}
+        triggerContent={<>{triggerLabel}</>}
+        triggerStyles={filterTriggerStyles}
+        tooltip={t("manage.table.filter.visibility")}
+        label={t("manage.table.filter.visibility")}
+        icon={<LucideHatGlasses size={14} />}
+        list={<SimpleFilterMenu
+            {...{ vars, options }}
+            filterKey="visibility"
+            current={current}
+            label="Filter by visibility"
+            close={() => listRef.current?.close()}
+        />}
+    />;
 };
 
-type MockupListProps = {
-    close: () => void;
-    criterion?: string;
-    menuItems?: string[];
-}
 
-const MockupList: React.FC<MockupListProps> = ({ close, criterion, menuItems }) => {
+const AccessFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+    const { t } = useTranslation();
+    const listRef = useRef<FloatingHandle>(null);
+
+    const current = vars.filters.writable ?? null;
+    const options = [
+        {
+            key: "write",
+            label: t("manage.table.filter.write"),
+        },
+        {
+            key: "read",
+            label: t("manage.table.filter.read"),
+        },
+    ];
+
+    const triggerLabel = current
+        ? options.find(o => o.key === current)?.label
+        : t("manage.table.filter.writable");
+
+    return <FloatingBaseMenu
+        ref={listRef}
+        triggerContent={<>{triggerLabel}</>}
+        triggerStyles={filterTriggerStyles}
+        tooltip={t("manage.table.filter.writable")}
+        label={t("manage.table.filter.writable")}
+        icon={<LuShieldCheck />}
+        list={<SimpleFilterMenu
+            {...{ vars, options }}
+            filterKey="access"
+            current={current}
+            label="Filter by access"
+            close={() => listRef.current?.close()}
+        />}
+    />;
+};
+
+
+type FilterMenuProps = {
+    vars: ItemVars;
+    options: FilterMenuOption[];
+    filterKey: string;
+    current: string | null;
+    onSelect?: (key: string) => void;
+    close: () => void;
+    label: string;
+};
+
+const SimpleFilterMenu: React.FC<FilterMenuProps> = ({
+    vars, options, filterKey, current, onSelect, close, label,
+}) => {
     const isDark = useColorScheme().scheme === "dark";
-    const itemId = useId();
+    const router = useRouter();
     const itemProps = useFloatingItemProps();
 
-    const listStyle = {
-        minWidth: 125,
-        div: {
-            cursor: "default",
-            fontSize: 12,
-            padding: "8px 14px 4px 14px",
-            color: COLORS.neutral60,
-        },
-        ul: {
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-        },
+    const handleSelect = (key: string) => {
+        if (onSelect) {
+            onSelect(key);
+        } else {
+            const newFilters = { ...vars.filters };
+            // Toggle off if already selected
+            if (newFilters[filterKey] === key) {
+                delete newFilters[filterKey];
+            } else {
+                newFilters[filterKey] = key;
+            }
+            router.goto(varsToLink({
+                ...vars, page: 1, filters: newFilters,
+            }));
+        }
+        close();
     };
 
-    const handleBlur = (event: React.FocusEvent<HTMLUListElement, Element>) => {
-        if (!event.currentTarget.contains(event.relatedTarget as HTMLUListElement)) {
-            close();
+    return (
+        <Floating {...floatingMenuProps(isDark)} hideArrowTip css={{
+            div: {
+                cursor: "default",
+                fontSize: 12,
+                padding: "8px 14px 4px 14px",
+                color: COLORS.neutral60,
+            },
+            ul: {
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+            },
+        }}>
+            <ul role="menu" css={{ listStyle: "none", margin: 0, padding: 0 }}>
+                <div css={{ paddingTop: 6 }}>{label}</div>
+                {options.map((opt, i) => <MenuItem
+                    key={opt.key}
+                    label={opt.label}
+                    disabled={opt.key === current}
+                    {...itemProps(i)}
+                    onClick={() => handleSelect(opt.key)}
+                    css={{
+                        "&&": { borderBottom: 0 },
+                        "&& button": { padding: "4px 14px 7px" },
+                    }}
+                />)}
+            </ul>
+        </Floating>
+    );
+};
+
+
+const AppliedFilters: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+    const { t } = useTranslation();
+    const router = useRouter();
+
+    type Filter = { key: string; value: string; creatorName?: string };
+    const filters: Filter[] = [];
+    for (const [key, value] of Object.entries(vars.filters)) {
+        if (!value) {
+            continue;
+        }
+        if (key === "creators") {
+            for (const name of value.split(",").filter(Boolean)) {
+                filters.push({ key, value: name, creatorName: name });
+            }
+        } else {
+            filters.push({ key, value });
+        }
+    }
+
+    if (filters.length === 0) {
+        return null;
+    }
+
+    const removeFilter = (key: string) => {
+        const newFilters = { ...vars.filters };
+        delete newFilters[key];
+        router.goto(varsToLink({ ...vars, page: 1, filters: newFilters }));
+    };
+
+    const removeCreator = (name: string) => {
+        const remaining = (vars.filters.creators ?? "")
+            .split(",")
+            .filter(c => c && c !== name);
+        const newFilters = { ...vars.filters };
+        if (remaining.length > 0) {
+            newFilters.creators = remaining.join(",");
+        } else {
+            delete newFilters.creators;
+        }
+        router.goto(varsToLink({ ...vars, page: 1, filters: newFilters }));
+    };
+
+    const formatLabel = (key: string, value: string): string => {
+        switch (key) {
+            case "title":
+                return `${t("general.title")}: ${value}`;
+            case "description":
+                return `${t("general.description")}: ${value}`;
+            case "creators":
+                return `${t("manage.table.filter.creator")}: ${value}`;
+            case "start":
+                return `${t("manage.table.filter.from")}: ${value}`;
+            case "end":
+                return `${t("manage.table.filter.to")}: ${value}`;
+            case "visibility": {
+                const visibilityLabel: string = match(value, {
+                    "public": () => t("manage.table.filter.visibility-public"),
+                    "private": () => t("manage.table.filter.visibility-private"),
+                    "protected": () => t("manage.table.filter.visibility-protected"),
+                    "shared": () => t("manage.table.filter.visibility-shared"),
+                }) ?? value;
+                return `${t("manage.table.filter.visibility")}: ${visibilityLabel}`;
+            }
+            case "writable":
+                return `${t("manage.table.filter.writable")}: ${
+                    value === "true"
+                        ? t("manage.table.filter.write")
+                        : t("manage.table.filter.read")
+                }`;
+            default: return `${key}: ${value}`;
         }
     };
 
-    const extraStyles = css({
-        "&&": {
-            borderBottom: 0,
-        },
-        "&& button": {
-            padding: "4px 14px 7px",
-        },
-    });
-
-    const list = <ul role="menu" onBlur={handleBlur}>
-        <div css={{ paddingTop: 6 }}>{criterion}</div>
-        {menuItems?.map((item, index) =>
-            <MenuItem
-                key={`${itemId}-${item}`}
-                label={item}
-                // aria-label={
-                //     t("manage.table.sorting.description", {
-                //         title: option,
-                //         direction: t(`manage.table.sorting.${directionTransKey}`),
-                //     })
-                // }
-                disabled={item === "Title"}
-                {...itemProps(index)}
-                onClick={() => {}}
-                css={extraStyles}
-            />)
-        }
-    </ul>;
-
-    return <Floating
-        {...floatingMenuProps(isDark)}
-        hideArrowTip
-        css={listStyle}
-    >
-        {list}
-    </Floating>;
+    return <div css={{
+        display: "flex",
+        flexDirection: "row",
+        gap: 6,
+        flexWrap: "wrap",
+        marginTop: 12,
+        marginInline: 12,
+    }}>
+        {filters.map(chip => (
+            <div key={chip.creatorName ? `creators:${chip.creatorName}` : chip.key} css={{
+                backgroundColor: COLORS.neutral15,
+                borderRadius: 8,
+                padding: "2px 8px",
+                display: "flex",
+                alignItems: "center",
+                fontSize: 14,
+                gap: 8,
+            }}>
+                {formatLabel(chip.key, chip.value)}
+                <ProtoButton
+                    aria-label={t("manage.table.filter.remove")}
+                    onClick={() => chip.creatorName
+                        ? removeCreator(chip.creatorName)
+                        : removeFilter(chip.key)
+                    }
+                    css={{
+                        padding: 0,
+                        border: 0,
+                        display: "flex",
+                        borderRadius: 4,
+                        ":hover": { backgroundColor: COLORS.neutral25 },
+                    }}
+                >
+                    <LuX />
+                </ProtoButton>
+            </div>
+        ))}
+    </div>;
 };
 
 
@@ -445,7 +684,6 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
     const directionTransKey = vars.order.direction === "ASCENDING" ? "ascending" : "descending";
 
     const listStyle = {
-        minWidth: 125,
         div: {
             cursor: "default",
             fontSize: 12,
@@ -481,59 +719,55 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
 
     const list = <ul role="menu" onBlur={handleBlur}>
         <div css={{ paddingTop: 6 }}>{t("manage.table.sorting.sort-by")}</div>
-        {sortOptions.map((option, index) =>
-            <MenuItem
-                key={`${itemId}-${option.key}`}
-                label={t(option.label)}
-                aria-label={
-                    t("manage.table.sorting.description", {
-                        title: option,
-                        direction: t(`manage.table.sorting.${directionTransKey}`),
-                    })
-                }
-                disabled={option.key === vars.order.column}
-                {...itemProps(index)}
-                onClick={() => router.goto(varsToLink({
-                    ...vars,
-                    order: {
-                        column: option.key,
-                        direction: vars.order.direction,
-                    },
-                }))}
-                css={extraStyles}
-            />)
-        }
+        {sortOptions.map((option, index) => <MenuItem
+            key={`${itemId}-${option.key}`}
+            label={t(option.label)}
+            aria-label={
+                t("manage.table.sorting.description", {
+                    title: option,
+                    direction: t(`manage.table.sorting.${directionTransKey}`),
+                })
+            }
+            disabled={option.key === vars.order.column}
+            {...itemProps(index)}
+            onClick={() => router.goto(varsToLink({
+                ...vars,
+                order: {
+                    column: option.key,
+                    direction: vars.order.direction,
+                },
+            }))}
+            css={extraStyles}
+        />)}
         <div css={{
             borderTop: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}`,
             "&&": { paddingTop: 6 },
         }}>
             {t("manage.table.sorting.order")}
         </div>
-        {sortDirections.map((direction, index) =>
-            <MenuItem
-                key={`${itemId}-${direction.key}`}
-                label={t(`manage.table.sorting.${direction.key === "ASCENDING"
-                    ? "ascending"
-                    : "descending"
-                }-cap`)}
-                aria-label={
-                    t("manage.table.sorting.description", {
-                        column: vars.order.column,
-                        direction: direction.label,
-                    })
-                }
-                disabled={direction.key === vars.order.direction}
-                {...itemProps(sortOptions.length + index)}
-                onClick={() => router.goto(varsToLink({
-                    ...vars,
-                    order: {
-                        column: vars.order.column,
-                        direction: direction.key,
-                    },
-                }))}
-                css={extraStyles}
-            />)
-        }
+        {sortDirections.map((direction, index) => <MenuItem
+            key={`${itemId}-${direction.key}`}
+            label={t(`manage.table.sorting.${direction.key === "ASCENDING"
+                ? "ascending"
+                : "descending"
+            }-cap`)}
+            aria-label={
+                t("manage.table.sorting.description", {
+                    column: vars.order.column,
+                    direction: direction.label,
+                })
+            }
+            disabled={direction.key === vars.order.direction}
+            {...itemProps(sortOptions.length + index)}
+            onClick={() => router.goto(varsToLink({
+                ...vars,
+                order: {
+                    column: vars.order.column,
+                    direction: direction.key,
+                },
+            }))}
+            css={extraStyles}
+        />)}
     </ul>;
 
     return <Floating
@@ -545,59 +779,86 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
     </Floating>;
 };
 
-const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+const SearchField: React.FC<{ vars: ItemVars; textField: string }> = ({ vars, textField }) => {
     const { t } = useTranslation();
     const inputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
+    const isCreators = textField === "creators";
 
-    const search = (q: string) => {
+    // Parse comma-separated creator values
+    const creatorChips = isCreators
+        ? (vars.filters.creators ?? "").split(",").filter(Boolean)
+        : [];
+
+    const navigate = (newFilters: Record<string, string>) => {
         router.goto(varsToLink({
             order: {
                 column: vars.order.column,
                 direction: vars.order.direction,
             },
             page: 1,
-            filters: { title: q },
+            filters: newFilters,
         }));
+    };
 
+    const search = (q: string) => {
+        const newFilters = { ...vars.filters };
+        if (isCreators) {
+            // Append to existing list.
+            const trimmed = q.trim();
+            if (trimmed) {
+                const existing = creatorChips;
+                if (!existing.includes(trimmed)) {
+                    existing.push(trimmed);
+                }
+                newFilters.creators = existing.join(",");
+            }
+            // Clear the input after adding.
+            const input = currentRef(inputRef);
+            input.value = "";
+        } else if (q) {
+            newFilters[textField] = q;
+        } else {
+            delete newFilters[textField];
+        }
+        navigate(newFilters);
     };
 
     const clear = () => {
-        const { title, ...restFilters } = vars.filters;
-        if (Object.keys(vars.filters).length) {
-            router.goto(varsToLink({
-                order: {
-                    column: vars.order.column,
-                    direction: vars.order.direction,
-                },
-                page: 1,
-                filters: restFilters,
-            }));
+        const newFilters = { ...vars.filters };
+        delete newFilters[textField];
+        if (Object.keys(newFilters).length) {
+            navigate(newFilters);
         } else {
             const input = currentRef(inputRef);
             input.value = "";
         }
     };
 
+    const placeholderKey = textField === "description"
+        ? "manage.table.filter.by-description" as const
+        : textField === "creators"
+            ? "manage.table.filter.by-creator" as const
+            : "manage.table.filter.by-title" as const;
+
     return <div css={{
-        // backgroundColor: COLORS.neutral10,
         svg: {
             left: 6,
             fontSize: 18,
         },
         input: {
-            // height: 30,
             border: 0,
             paddingLeft: 34,
-            backgroundColor: COLORS.neutral10,
+            // backgroundColor: COLORS.neutral10,
         },
     }}>
         <SearchInput
+            key={textField}
             {...{ search, inputRef, clear }}
             height={30}
             spinnerSize={20}
-            defaultValue={vars.filters.title}
-            inputProps={{ placeholder: t("manage.table.filter.by-title") }}
+            defaultValue={isCreators ? "" : vars.filters[textField]}
+            inputProps={{ placeholder: t(placeholderKey) }}
         />
     </div>;
 };
@@ -783,13 +1044,12 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     marginTop: "auto",
                     gap: "4px 24px",
                     flexWrap: "wrap",
-                    // fontSize: 11,
                     "&& svg": { fontSize: 13 },
                     div: { gap: 6 },
                     backgroundColor: COLORS.neutral10,
                     borderRadius: 8,
                     padding: "2px 6px",
-                    width: "fit-content",
+                    maxWidth: "fit-content",
                     ...isDark && { color: COLORS.neutral90 },
                 }}>{props.metadata}</Metadata>
             </div>
@@ -801,7 +1061,9 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             display: "flex",
             flexDirection: "column",
         }}>
-            {props.shareButton}
+            <div css={shareButtonStyle}>
+                {props.shareButton}
+            </div>
             {props.linkButton}
         </div>
     </li>;
@@ -983,7 +1245,15 @@ export const parsePaginationAndDirection = (
 };
 
 
-const FILTERS = ["title"];
+const FILTERS = [
+    "title",
+    "description",
+    "creators",
+    "start",
+    "end",
+    "visibility",
+    "writable",
+];
 
 const parseFilters = (queryParams: URLSearchParams): Record<string, string> => {
     const filters: Record<string, string> = {};
@@ -1045,8 +1315,107 @@ const varsToQueryParams = (vars: ItemVars): URLSearchParams => {
     return searchParams;
 };
 
+/** Reads the active text field selector from the URL. */
+const parseTextField = (): "title" | "description" | "creators" => {
+    const tf = new URLSearchParams(document.location.search).get("tf");
+    return tf === "description"
+        ? "description"
+        : tf === "creators"
+            ? "creators"
+            : "title";
+};
+
 const varsToLink = (vars: ItemVars): string => {
     const url = new URL(document.location.href);
+    // Preserve the 'tf' param
+    const tf = url.searchParams.get("tf");
     url.search = decodeURIComponent(varsToQueryParams(vars).toString());
+    if (tf) {
+        url.searchParams.set("tf", tf);
+    }
     return url.href;
 };
+
+const VISIBILITY_MAP = {
+    "public": "PUBLIC",
+    "private": "PRIVATE",
+    "protected": "PROTECTED",
+    "shared": "SHARED",
+} as const;
+
+/**
+ * Builds a GraphQL SearchFilter input from the parsed filter vars.
+ * Converts date strings (YYYY-MM-DD) to ISO DateTime values.
+ * For `end`, adds a full day so that filtering is inclusive of the end date.
+ */
+export const buildSearchFilter = (filters: Record<string, string>) => {
+    const title = filters.title ?? null;
+    const description = filters.description ?? null;
+
+    const start = filters.start ?? null;
+    const end = filters.end ?? null;
+    const visibilityKey = filters.visibility;
+    const visibility = visibilityKey && visibilityKey in VISIBILITY_MAP
+        ? VISIBILITY_MAP[visibilityKey as keyof typeof VISIBILITY_MAP]
+        : null;
+    const writable = filters.writable ?? null;
+
+    const createdStart = start ? `${start}T00:00:00Z` : null;
+    // Make end date inclusive: set to end of day
+    const createdEnd = end
+        ? new Date(
+            new Date(`${end}T00:00:00Z`).getTime() + 86400000 - 1,
+        ).toISOString()
+        : null;
+
+    const creators = filters.creators
+        ? filters.creators.split(",").filter(Boolean)
+        : null;
+
+    const hasFilter = title || description || (creators && creators.length > 0)
+        || createdStart || createdEnd
+        || visibility || writable;
+    return hasFilter
+        ? {
+            title,
+            description,
+            creators,
+            createdStart,
+            createdEnd,
+            visibility,
+            writable: writable === "true" ? true
+                : writable === "false" ? false : null,
+        }
+        : null;
+};
+
+const shareButtonStyle = css({
+    "&& > div > button": {
+        background: "transparent",
+        padding: 4,
+        fontSize: 14,
+        border: 0,
+    },
+    "&& > div > button:hover": {
+        backgroundColor: COLORS.neutral20,
+        border: 0,
+    },
+    "> div > button + div": {
+        fontSize: 14,
+        borderRadius: 12,
+        "> div": {
+            button: { opacity: 1 },
+            height: 165,
+            width: 300,
+            borderRadius: 12,
+            "> div + div": {
+                gap: 8,
+                padding: 11,
+                "input, button": {
+                    fontSize: 14,
+                },
+            },
+        },
+    },
+});
+

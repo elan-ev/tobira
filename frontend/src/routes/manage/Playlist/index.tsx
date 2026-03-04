@@ -7,7 +7,11 @@ import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
-import { CreateButton, createQueryParamsParser, ListItem, ManageItems } from "../Shared/Table";
+import { Creators } from "../../../ui/Video";
+import {
+    CreateButton, createQueryParamsParser, ListItem,
+    ManageItems, buildSearchFilter,
+} from "../Shared/Table";
 import { keyOfId } from "../../../util";
 import {
     PlaylistsManageQuery,
@@ -19,7 +23,6 @@ import { CreatePlaylistRoute } from "./Create";
 import { EntryCount, Timestamp } from "../../../ui/metadata";
 import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
 import { DirectPlaylistRoute } from "../../Playlist";
-import { COLORS } from "../../../color";
 import { ActualLinkButton } from "../Video";
 
 
@@ -33,11 +36,9 @@ export const ManagePlaylistsRoute = makeRoute({
         }
 
         const vars = queryParamsToPlaylistsVars(url.searchParams);
-        const titleFilter = vars.filters?.title ?? null;
         const queryVars = {
             ...vars,
-            // Todo: Adjust when more filter options are added
-            filter: titleFilter ? { title: titleFilter } : null,
+            filter: buildSearchFilter(vars.filters),
         };
         const queryRef = loadQuery<PlaylistsManageQuery>(query, queryVars);
 
@@ -49,6 +50,7 @@ export const ManagePlaylistsRoute = makeRoute({
                 render={data => !data.currentUser
                     ? <NotAuthorized />
                     : <ManageItems
+                        withCreatorFilter
                         vars={vars}
                         connection={data.currentUser.myPlaylists}
                         titleKey="manage.playlist.table.title"
@@ -82,6 +84,7 @@ const query = graphql`
                 items {
                     id
                     title
+                    creator
                     updated
                     description
                     numEntries
@@ -113,6 +116,10 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
     link={`${PATH}/${keyOfId(item.id)}`}
     thumbnail={_ => <PlaylistThumbnail playlist={item} />}
     metadata={[
+        <Creators key="creator" creators={[item.creator]} css={{
+            fontSize: 12,
+            svg: { fontSize: 15 },
+        }} />,
         <EntryCount key={"entry count"} count={item.numEntries} />,
         <Timestamp
             key="timestamp"
@@ -124,30 +131,6 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
         shareUrl={new URL(DirectPlaylistRoute.url({ playlistId: item.id }), document.baseURI).href}
         rssUrl={`/~rss/series/${keyOfId(item.id)}`}
         hideLabel
-        css={{
-            background: "transparent",
-            padding: 4,
-            "&&, &&:hover, &&:focus-visible": { border: 0 },
-            "&&:hover": {
-                backgroundColor: COLORS.neutral20,
-            },
-            fontSize: 14,
-            "+ div": {
-                borderRadius: 12,
-                "> div": {
-                    button: { opacity: 1 },
-                    height: 165,
-                    width: 300,
-                    "> div + div": {
-                        gap: 8,
-                        padding: 12,
-                        "input, button": {
-                            fontSize: 14,
-                        },
-                    },
-                },
-            },
-        }}
     />}
     linkButton={<ActualLinkButton
         to={new URL(DirectPlaylistRoute.url({ playlistId: item.id }), document.baseURI).href}

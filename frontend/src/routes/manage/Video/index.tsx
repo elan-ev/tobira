@@ -14,7 +14,10 @@ import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import { Creators, Thumbnail } from "../../../ui/Video";
 import { AccessIcon, keyOfId } from "../../../util";
-import { createQueryParamsParser, ManageItems, ListItem, CreateButton } from "../Shared/Table";
+import {
+    createQueryParamsParser, ManageItems, ListItem,
+    CreateButton, buildSearchFilter,
+} from "../Shared/Table";
 import { PartOfSeriesLink } from "../../../ui/Blocks/VideoList";
 import { Timestamp } from "../../../ui/metadata";
 import { UploadRoute } from "../../Upload";
@@ -34,11 +37,9 @@ export const ManageVideosRoute = makeRoute({
         }
 
         const vars = queryParamsToVideosVars(url.searchParams);
-        const titleFilter = vars.filters?.title ?? null;
         const queryVars = {
             ...vars,
-            // Todo: Adjust when more filter options are added
-            filter: titleFilter ? { title: titleFilter } : null,
+            filter: buildSearchFilter(vars.filters),
         };
         const queryRef = loadQuery<VideoManageQuery>(query, queryVars);
 
@@ -51,6 +52,7 @@ export const ManageVideosRoute = makeRoute({
                     ? <NotAuthorized />
                     : <ManageItems
                         vars={vars}
+                        withCreatorFilter
                         connection={data.currentUser.myVideos}
                         titleKey="manage.video.table"
                         additionalSortOptions={[
@@ -133,18 +135,15 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
         <Creators key="creators" creators={[...item.creators]} css={{
             minWidth: 0,
             fontSize: 12,
-            svg: {
-                fontSize: 15,
-            },
+            maxWidth: "100%",
+            svg: { fontSize: 15 },
             ul: {
                 display: "inline-block",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
             },
-            li: {
-                display: "inline",
-            },
+            li: { display: "inline" },
         }} />,
         <AccessIcon key="access-indicator" {...{ item }} />,
         <Timestamp
@@ -168,30 +167,6 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
         event={item}
         videoLink={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
         hideLabel
-        css={{
-            background: "transparent",
-            padding: 4,
-            "&&, &&:hover, &&:focus-visible": { border: 0 },
-            "&&:hover": {
-                backgroundColor: COLORS.neutral20,
-            },
-            fontSize: 14,
-            "+ div": {
-                borderRadius: 12,
-                "> div": {
-                    button: { opacity: 1 },
-                    height: 165,
-                    width: 300,
-                    "> div + div": {
-                        gap: 8,
-                        padding: 12,
-                        "input, button": {
-                            fontSize: 14,
-                        },
-                    },
-                },
-            },
-        }}
     />}
     linkButton={<ActualLinkButton
         to={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
