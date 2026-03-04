@@ -40,6 +40,7 @@ general:
   date-at: '{{date}} alle {{time}}'
   none: Nessuno
   title: Titolo
+  description: Descrizione
 
 welcome:
   title: Benvenuti su Tobira!
@@ -603,6 +604,24 @@ manage:
       last: Ultima pagina
     filter:
       by-title: Filtrare per titolo
+      by-description: Filtrare per descrizione # verify
+      by-creator: Filtrare per creatore # verify
+      creator: Creatore # verify
+      text-field: Campo di testo # verify
+      date: Data # verify
+      select-date: Selezionare il periodo di tempo # verify
+      clear-date: Cancella il periodo di tempo # verify
+      from: Da # verify
+      to: A # verify
+      remove: Rimuovere il filtro # verify
+      visibility: Visibilità # verify
+      visibility-public: Pubblico # verify
+      visibility-private: Privato # verify
+      visibility-protected: Protetto # verify
+      visibility-shared: Condiviso # verify
+      writable: Accesso # verify
+      write: Scrittura # verify
+      read: Lettura # verify
     sorting:
       label: Ordinare le voci # check
       sort-by: Ordinare per # check

@@ -7,7 +7,10 @@ import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
-import { CreateButton, createQueryParamsParser, ListItem, ManageItems } from "../Shared/Table";
+import {
+    CreateButton, createQueryParamsParser, ListItem,
+    ManageItems, buildSearchFilter,
+} from "../Shared/Table";
 import {
     SeriesManageQuery, SeriesManageQuery$data, SeriesSortColumn,
 } from "./__generated__/SeriesManageQuery.graphql";
@@ -18,7 +21,6 @@ import { EntryCount, Timestamp } from "../../../ui/metadata";
 import { ActualLinkButton } from "../Video";
 import { DirectSeriesRoute } from "../../Series";
 import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
-import { COLORS } from "../../../color";
 
 
 export const PATH = "/~manage/series" as const;
@@ -31,11 +33,9 @@ export const ManageSeriesRoute = makeRoute({
         }
 
         const vars = queryParamsToSeriesVars(url.searchParams);
-        const titleFilter = vars.filters?.title ?? null;
         const queryVars = {
             ...vars,
-            // Todo: Adjust when more filter options are added
-            filter: titleFilter ? { title: titleFilter } : null,
+            filter: buildSearchFilter(vars.filters),
         };
         const queryRef = loadQuery<SeriesManageQuery>(query, queryVars);
 
@@ -48,6 +48,7 @@ export const ManageSeriesRoute = makeRoute({
                     ? <NotAuthorized />
                     : <ManageItems
                         vars={vars}
+                        withCreatorFilter
                         connection={data.currentUser.mySeries}
                         titleKey="manage.series.table.title"
                         additionalSortOptions={[
@@ -116,40 +117,13 @@ const SeriesItem: React.FC<{ item: SingleSeries }> = ({ item }) => <ListItem
     created={item.created ?? undefined}
     metadata={[
         <EntryCount key={"entry count"} count={item.numVideos} />,
-        <Timestamp
-            key="timestamp"
-            timestamp={item.created ?? undefined}
-        />,
+        <Timestamp key="timestamp" timestamp={item.created ?? undefined}/>,
     ]}
     shareButton={<VideoListShareButton
         kind="series"
         shareUrl={new URL(DirectSeriesRoute.url({ seriesId: item.id }), document.baseURI).href}
         rssUrl={`/~rss/series/${keyOfId(item.id)}`}
         hideLabel
-        css={{
-            background: "transparent",
-            padding: 4,
-            "&&, &&:hover, &&:focus-visible": { border: 0 },
-            "&&:hover": {
-                backgroundColor: COLORS.neutral20,
-            },
-            fontSize: 14,
-            "+ div": {
-                borderRadius: 12,
-                "> div": {
-                    button: { opacity: 1 },
-                    height: 165,
-                    width: 300,
-                    "> div + div": {
-                        gap: 8,
-                        padding: 12,
-                        "input, button": {
-                            fontSize: 14,
-                        },
-                    },
-                },
-            },
-        }}
     />}
     linkButton={<ActualLinkButton
         to={new URL(DirectSeriesRoute.url({ seriesId: item.id }), document.baseURI).href}

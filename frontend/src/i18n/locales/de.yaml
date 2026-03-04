@@ -41,6 +41,7 @@ general:
   date-at: '{{date}} um {{time}}'
   none: Keine
   title: Titel
+  description: Beschreibung
 
 welcome:
   title: Willkommen zu Tobira!
@@ -582,6 +583,24 @@ manage:
       last: Letzte Seite
     filter:
       by-title: Nach Titel filtern
+      by-description: Nach Beschreibung filtern
+      by-creator: Nach Ersteller filtern
+      creator: Ersteller
+      text-field: Textfeld
+      date: Datum
+      select-date: Zeitraum auswählen
+      clear-date: Zeitraum zurücksetzen
+      from: Von
+      to: Bis
+      remove: Filter entfernen
+      visibility: Sichtbarkeit
+      visibility-public: Öffentlich
+      visibility-private: Privat
+      visibility-protected: Geschützt
+      visibility-shared: Geteilt
+      writable: Zugriff
+      write: Schreiben
+      read: Lesen
     sorting:
       label: Einträge sortieren
       sort-by: Sortieren nach

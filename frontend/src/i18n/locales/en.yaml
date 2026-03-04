@@ -40,6 +40,7 @@ general:
   date-at: '{{date}} at {{time}}'
   none: None
   title: Title
+  description: Description
 
 welcome:
   title: Welcome to Tobira!
@@ -555,6 +556,24 @@ manage:
       last: Last page
     filter:
       by-title: Filter by title
+      by-description: Filter by description
+      by-creator: Filter by creator
+      creator: Creator
+      text-field: Text field
+      date: Date
+      select-date: Select date range
+      clear-date: Clear date range
+      from: From
+      to: To
+      remove: Remove filter
+      visibility: Visibility
+      visibility-public: Public
+      visibility-private: Private
+      visibility-protected: Protected
+      visibility-shared: Shared
+      writable: Access
+      write: Write
+      read: Read
     sorting:
       label: Sort entries
       sort-by: Sort by

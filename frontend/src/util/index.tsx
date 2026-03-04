@@ -439,7 +439,7 @@ export const AccessIcon: React.FC<AccessProps> = ({ item }) => {
         }),
     });
 
-    return <WithTooltip placement="top" tooltip={<>{label}</>}>
+    return <WithTooltip placement="top" tooltip={<>{tooltip}</>}>
         <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
             <LucideHatGlasses size={13} css={{ color: COLORS.neutral60 }} />
             {label}

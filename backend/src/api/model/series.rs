@@ -50,6 +50,7 @@ use super::{
         AclForDB,
         Connection,
         ConnectionQueryParts,
+        CreatorColumn,
         PageInfo,
         SortOrder,
     },
@@ -387,6 +388,8 @@ impl Series {
             table: "all_series",
             alias: Some("series"),
             join_clause: "",
+            date_column: "series.created",
+            creator_column: CreatorColumn::None,
         };
         let (selection, mapping) = select!(
             series: Series,
