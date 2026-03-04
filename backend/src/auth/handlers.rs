@@ -258,21 +258,12 @@ async fn check_opencast_login(
 }
 
 /// Creates a session for the given user and persists it in the DB.
-async fn create_session(mut user: User, ctx: &Context) -> Result<Response, Response> {
-    user.add_default_roles();
-
-    // TODO: check if a user is already logged in? And remove that session then?
-
-    let db = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
-    let session_id = user.persist_new_session(&db).await.map_err(|e| {
-        error!("DB query failed when adding new user session: {}", e);
-        http::response::internal_server_error()
-    })?;
-    debug!("Persisted new session for '{}'", user.username);
+async fn create_session(user: User, ctx: &Context) -> Result<Response, Response> {
+    let cookie = super::create_session_with_cookies(user, ctx).await?;
 
     Response::builder()
         .status(StatusCode::NO_CONTENT)
-        .header("set-cookie", session_id.set_cookie(ctx.config.auth.session.duration).to_string())
+        .header("set-cookie", cookie.to_string())
         .body(ByteBody::empty())
         .unwrap()
         .pipe(Ok)
