@@ -48,7 +48,7 @@ import { isSynced } from "../../../util";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
 import { PlaylistsSortColumn } from "../Playlist/__generated__/PlaylistsManageQuery.graphql";
-import { BREAKPOINT_MEDIUM } from "../../../GlobalStyle";
+import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../../GlobalStyle";
 import { FloatingBaseMenu } from "../../../ui/FloatingBaseMenu";
 import { MenuItem } from "../../../ui/Blocks/VideoList";
 import { LinkButton } from "../../../ui/LinkButton";
@@ -933,6 +933,9 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
 
     const hasDescription = Boolean(item.description || deletionIsPending || !isSynced(item));
 
+    // Videos use the medium breakpoint; series and playlists use the small one.
+    const bp = props.itemType === "video" ? BREAKPOINT_MEDIUM : BREAKPOINT_SMALL;
+
     return <li css={{
         position: "relative",
         display: "flex",
@@ -948,7 +951,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             outlineColor: COLORS.neutral20,
             transition: "background 50ms, outline-color 50ms",
         },
-        [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+        [screenWidthAtMost(bp)]: {
             flexWrap: "wrap",
             marginBottom: 8,
             gap: "4px 12px",
@@ -978,7 +981,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
         {/* Mobile specific */}
         <div css={{
             display: "none",
-            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+            [screenWidthAtMost(bp)]: {
                 display: "flex",
                 flex: 1,
                 minWidth: 0,
@@ -1045,7 +1048,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             justifyContent: "space-between",
             flex: "1",
             gap: 6,
-            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+            [screenWidthAtMost(bp)]: {
                 flexBasis: "100%",
             },
         }}>
@@ -1065,7 +1068,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     gap: 6,
                     alignItems: "center",
                     justifyContent: "space-between",
-                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                    [screenWidthAtMost(bp)]: {
                         display: "none",
                     },
                 }}>
@@ -1081,7 +1084,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                 {/* Description (desktop) */}
                 <div css={{
                     marginBottom: 4,
-                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                    [screenWidthAtMost(bp)]: {
                         display: "none",
                     },
                 }}>
@@ -1135,7 +1138,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             button: { opacity: 0 },
             display: "flex",
             flexDirection: "column",
-            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+            [screenWidthAtMost(bp)]: {
                 display: "none",
             },
         }}>
