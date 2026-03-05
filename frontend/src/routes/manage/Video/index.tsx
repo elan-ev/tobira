@@ -135,7 +135,6 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
         <Creators key="creators" creators={[...item.creators]} css={{
             minWidth: 0,
             fontSize: 12,
-            maxWidth: "100%",
             svg: { fontSize: 15 },
             ul: {
                 display: "inline-block",
@@ -144,24 +143,31 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
                 whiteSpace: "nowrap",
             },
             li: { display: "inline" },
+            gap: 6,
         }} />,
-        <AccessIcon key="access-indicator" {...{ item }} />,
-        <Timestamp
-            key="timestamp"
-            timestamp={item.syncedData?.startTime ?? item.created}
-            isLive={item.isLive}
-        />,
-        item.series && <PartOfSeriesLink
-            key="series"
-            css={{
-                fontSize: 11,
-                gap: 6,
-                svg: { fontSize: 15 },
-                paddingTop: "unset",
-            }}
-            seriesTitle={item.series.title}
-            seriesId={item.series.id}
-        />,
+        <div key="second-line" css={{
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+            gap: 24,
+        }}>
+            <AccessIcon {...{ item }} />
+            <Timestamp
+                timestamp={item.syncedData?.startTime ?? item.created}
+                isLive={item.isLive}
+            />
+            {item.series && <PartOfSeriesLink
+                css={{
+                    fontSize: 11,
+                    gap: 6,
+                    svg: { fontSize: 15 },
+                    paddingTop: "unset",
+                    minWidth: 0,
+                }}
+                seriesTitle={item.series.title}
+                seriesId={item.series.id}
+            />}
+        </div>,
     ]}
     shareButton={<VideoShareButton
         event={item}

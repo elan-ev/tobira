@@ -10,7 +10,10 @@ import {
     useColorScheme,
     useFloatingItemProps,
 } from "@opencast/appkit";
-import { useRef, ReactNode, ComponentType, useId } from "react";
+import {
+    useRef, useEffect, useLayoutEffect, useCallback,
+    ReactNode, ComponentType, useId, PropsWithChildren,
+} from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -32,7 +35,7 @@ import LastPage from "../../../icons/last-page.svg";
 import { prettyDate } from "../../../ui/time";
 import { ellipsisOverflowCss, focusStyle, IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
-import { Metadata, SmallDescription } from "../../../ui/metadata";
+import { SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
@@ -163,7 +166,7 @@ export const ManageItems = <T extends Item>({
                 gap: "12px 8px",
                 flexWrap: "wrap",
                 marginTop: 16,
-                ...isDark && { backgroundColor: COLORS.neutral10 },
+                // ...isDark && { backgroundColor: COLORS.neutral10 },
                 borderRadius: 8,
                 padding: 4,
             }}>
@@ -173,17 +176,18 @@ export const ManageItems = <T extends Item>({
                         minWidth: 280,
                         "> div": { maxWidth: "100%" },
                     },
-                    input: { ...isDark && { backgroundColor: COLORS.neutral10 } },
+                    // input: { ...isDark && { backgroundColor: COLORS.neutral10 } },
                 }}>
+                    {/* Text field filter (title, description, creator) */}
                     <SearchField {...{ vars, textField }} />
                 </div>
 
                 <div css={{ display: "flex", gap: 12, marginLeft: "auto", flexWrap: "wrap" }}>
-                    {/* Text field filter (title, description) */}
-                    <TextFieldFilter {...{ vars, textField, withCreatorFilter }} />
+                    {/* Selector for search field filter property */}
+                    <TextFieldSelector {...{ vars, textField, withCreatorFilter }} />
 
                     {/* Date range filter */}
-                    <ManageDatePicker {...{ vars }} />
+                    <DateFilter {...{ vars }} />
 
                     {/* Visibility filter */}
                     <VisibilityFilter {...{ vars }} />
@@ -205,6 +209,8 @@ export const ManageItems = <T extends Item>({
     );
 };
 
+
+/** Sort and filter components */
 
 type SortAndOrderProps = {
     additionalSortOptions: SortingProps<SortColumn>[];
@@ -242,7 +248,68 @@ const SortAndOrder: React.FC<SortAndOrderProps> = ({ additionalSortOptions, vars
 };
 
 
-const ManageDatePicker: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+const filterTriggerStyles = {
+    height: 30,
+    marginLeft: "auto",
+    padding: "4px 8px",
+    gap: 8,
+    border: 0,
+    backgroundColor: "transparent",
+    fontSize: 14,
+} as const;
+
+type TextFieldFilterProps = {
+    vars: ItemVars;
+    textField: string;
+    withCreatorFilter: boolean;
+};
+
+const TextFieldSelector: React.FC<TextFieldFilterProps> = ({ textField, withCreatorFilter }) => {
+    const { t } = useTranslation();
+    const listRef = useRef<FloatingHandle>(null);
+    const router = useRouter();
+
+    const options = [
+        { key: "title", label: t("general.title") },
+        { key: "description", label: t("general.description") },
+        ...withCreatorFilter
+            ? [{ key: "creators", label: t("manage.table.filter.creator") }]
+            : [],
+    ];
+
+    const activeLabel = options.find(o => o.key === textField)?.label
+        ?? t("general.title");
+
+    const handleSelect = (key: string) => {
+        const url = new URL(document.location.href);
+        if (key === "title") {
+            url.searchParams.delete("tf");
+        } else {
+            url.searchParams.set("tf", key);
+        }
+        router.goto(url.href);
+    };
+
+    return <FloatingBaseMenu
+        ref={listRef}
+        triggerContent={<>{activeLabel}</>}
+        triggerStyles={filterTriggerStyles}
+        tooltip={t("manage.table.filter.text-field")}
+        label={t("manage.table.filter.text-field")}
+        icon={<LuTypeOutline />}
+        list={<FilterMenu
+            vars={{ order: { column: "CREATED", direction: "DESCENDING" }, page: 1, filters: {} }}
+            options={options}
+            filterKey="textField"
+            current={textField}
+            label="Choose text filter"
+            onSelect={key => handleSelect(key)}
+            close={() => listRef.current?.close()}
+        />}
+    />;
+};
+
+const DateFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     const { t } = useTranslation();
     const router = useRouter();
     const isDark = useColorScheme().scheme === "dark";
@@ -278,106 +345,51 @@ const ManageDatePicker: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         tooltip={t("manage.table.filter.select-date")}
         label={t("manage.table.filter.select-date")}
         icon={<LuCalendarRange />}
-        list={<Floating
-            {...floatingMenuProps(isDark)}
-            hideArrowTip
-            css={{ padding: 8 }}
-        >
-            {/* <p css={{ fontSize: 14, padding: "4px 2px" }}>
-                {t("manage.table.filter.select-date")}
-            </p> */}
-            <div css={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                {isActive && <ProtoButton
-                    aria-label={t("manage.table.filter.clear-date")}
-                    css={{ display: "flex", alignItems: "center" }}
-                    onClick={clearDates}
-                ><LuX /></ProtoButton>}
-                <input
-                    value={startDate}
-                    css={inputStyle}
-                    type="date"
-                    onChange={e => handleChange(e.target.value, "start")}
-                />
-                <span>{"-"}</span>
-                <input
-                    value={endDate}
-                    css={inputStyle}
-                    type="date"
-                    min={startDate}
-                    onChange={e => handleChange(e.target.value, "end")}
-                />
-            </div>
-        </Floating>}
-    />;
-};
-
-
-// Shared trigger styles for all filter dropdowns
-const filterTriggerStyles = {
-    height: 30,
-    marginLeft: "auto",
-    padding: "4px 8px",
-    gap: 8,
-    border: 0,
-    backgroundColor: "transparent",
-    fontSize: 14,
-} as const;
-
-// Lets the user choose which text field (title / description) the search input targets.
-type TextFieldFilterProps = {
-    vars: ItemVars;
-    textField: string;
-    withCreatorFilter: boolean;
-};
-
-const TextFieldFilter: React.FC<TextFieldFilterProps> = ({ textField, withCreatorFilter }) => {
-    const { t } = useTranslation();
-    const listRef = useRef<FloatingHandle>(null);
-    const router = useRouter();
-
-    const options = [
-        { key: "title", label: t("general.title") },
-        { key: "description", label: t("general.description") },
-        ...withCreatorFilter
-            ? [{ key: "creators", label: t("manage.table.filter.creator") }]
-            : [],
-    ];
-
-    const activeLabel = options.find(o => o.key === textField)?.label
-        ?? t("general.title");
-
-    const handleSelect = (key: string) => {
-        const url = new URL(document.location.href);
-        if (key === "title") {
-            url.searchParams.delete("tf");
-        } else {
-            url.searchParams.set("tf", key);
+        list={
+            <Floating
+                {...floatingMenuProps(isDark)}
+                hideArrowTip
+            >
+                <div css={{
+                    cursor: "default",
+                    fontSize: 12,
+                    padding: "6px 14px 4px 14px",
+                    color: COLORS.neutral60,
+                }}>
+                    {t("manage.table.filter.select-date")}
+                </div>
+                <div css={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    alignItems: "center",
+                    padding: "4px 8px 8px",
+                }}>
+                    {isActive && <ProtoButton
+                        aria-label={t("manage.table.filter.clear-date")}
+                        css={{ display: "flex", alignItems: "center" }}
+                        onClick={clearDates}
+                    ><LuX /></ProtoButton>}
+                    <input
+                        value={startDate}
+                        css={inputStyle}
+                        type="date"
+                        onChange={e => handleChange(e.target.value, "start")}
+                    />
+                    <span>{"-"}</span>
+                    <input
+                        value={endDate}
+                        css={inputStyle}
+                        type="date"
+                        min={startDate}
+                        onChange={e => handleChange(e.target.value, "end")}
+                    />
+                </div>
+            </Floating>
         }
-        router.goto(url.href);
-    };
-
-    return <FloatingBaseMenu
-        ref={listRef}
-        triggerContent={<>{activeLabel}</>}
-        triggerStyles={filterTriggerStyles}
-        tooltip={t("manage.table.filter.text-field")}
-        label={t("manage.table.filter.text-field")}
-        icon={<LuTypeOutline />}
-        list={<SimpleFilterMenu
-            vars={{ order: { column: "CREATED", direction: "DESCENDING" }, page: 1, filters: {} }}
-            options={options}
-            filterKey="textField"
-            current={textField}
-            label="Choose text filter"
-            onSelect={key => handleSelect(key)}
-            close={() => listRef.current?.close()}
-        />}
     />;
 };
 
-type FilterMenuOption = { key: string; label: string };
-
-/** Filter by visibility: public / private. */
 const VisibilityFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     const { t } = useTranslation();
     const listRef = useRef<FloatingHandle>(null);
@@ -413,7 +425,7 @@ const VisibilityFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         tooltip={t("manage.table.filter.visibility")}
         label={t("manage.table.filter.visibility")}
         icon={<LucideHatGlasses size={14} />}
-        list={<SimpleFilterMenu
+        list={<FilterMenu
             {...{ vars, options }}
             filterKey="visibility"
             current={current}
@@ -422,7 +434,6 @@ const VisibilityFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         />}
     />;
 };
-
 
 const AccessFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     const { t } = useTranslation();
@@ -451,7 +462,7 @@ const AccessFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         tooltip={t("manage.table.filter.writable")}
         label={t("manage.table.filter.writable")}
         icon={<LuShieldCheck />}
-        list={<SimpleFilterMenu
+        list={<FilterMenu
             {...{ vars, options }}
             filterKey="access"
             current={current}
@@ -464,7 +475,7 @@ const AccessFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
 
 type FilterMenuProps = {
     vars: ItemVars;
-    options: FilterMenuOption[];
+    options: { key: string; label: string }[];
     filterKey: string;
     current: string | null;
     onSelect?: (key: string) => void;
@@ -472,7 +483,7 @@ type FilterMenuProps = {
     label: string;
 };
 
-const SimpleFilterMenu: React.FC<FilterMenuProps> = ({
+const FilterMenu: React.FC<FilterMenuProps> = ({
     vars, options, filterKey, current, onSelect, close, label,
 }) => {
     const isDark = useColorScheme().scheme === "dark";
@@ -644,30 +655,6 @@ const AppliedFilters: React.FC<{ vars: ItemVars }> = ({ vars }) => {
 };
 
 
-type CreateButtonProps = {
-    condition: "canUpload" | "canCreateSeries" | "canCreatePlaylists";
-    path: string;
-    text: ParseKeys;
-    Icon: IconType;
-}
-export const CreateButton: React.FC<CreateButtonProps> = ({
-    condition, path, text, Icon,
-}) => {
-    const { t } = useTranslation();
-    const user = useUser();
-
-    return (!isRealUser(user) || !user[condition])
-        ? null
-        : <LinkButton to={path} css={{ width: "fit-content", height: 40 }}>
-            <p css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                display: "none",
-            } }}>
-                {t(text)}
-            </p>
-            <Icon />
-        </LinkButton>;
-};
-
 type SortingMenuProps = {
     close: () => void;
     vars: ItemVars;
@@ -709,12 +696,8 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
     ];
 
     const extraStyles = css({
-        "&&": {
-            borderBottom: 0,
-        },
-        "&& button": {
-            padding: "4px 14px 7px",
-        },
+        "&&": { borderBottom: 0 },
+        "&& button": { padding: "4px 14px 7px" },
     });
 
     const list = <ul role="menu" onBlur={handleBlur}>
@@ -864,6 +847,9 @@ const SearchField: React.FC<{ vars: ItemVars; textField: string }> = ({ vars, te
 };
 
 
+
+// ======== Main components ========
+
 type SortColumn = VideosSortColumn | SeriesSortColumn | PlaylistsSortColumn;
 type SortDirection = "ASCENDING" | "DESCENDING" | "%future added value";
 
@@ -924,8 +910,9 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
     const syncFailed = Boolean(!isSynced(item) && createdTimestamp
         && Date.parse(createdTimestamp) + 150 * 60000 < Date.now());
 
+    const hasDescription = Boolean(item.description || deletionIsPending || !isSynced(item));
+
     return <li css={{
-        // overflow: "hidden",
         position: "relative",
         display: "flex",
         flexDirection: "row",
@@ -960,7 +947,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
 
         {/* Thumbnail */}
         <div css={{
-            width: 136,
+            width: 163,
             [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                 width: "100%",
             },
@@ -1040,18 +1027,20 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     }
                 </div>
 
-                <Metadata css={{
-                    marginTop: "auto",
+                <ShrinkWrapContainer css={{
+                    ...hasDescription && { marginTop: 4 },
                     gap: "4px 24px",
-                    flexWrap: "wrap",
                     "&& svg": { fontSize: 13 },
-                    div: { gap: 6 },
+                    color: COLORS.neutral80,
+                    fontSize: 12,
+                    whiteSpace: "nowrap",
                     backgroundColor: COLORS.neutral10,
                     borderRadius: 8,
-                    padding: "2px 6px",
-                    maxWidth: "fit-content",
+                    padding: "2px 12px 2px 6px",
                     ...isDark && { color: COLORS.neutral90 },
-                }}>{props.metadata}</Metadata>
+                }}>
+                    {props.metadata}
+                </ShrinkWrapContainer>
             </div>
         </div>
 
@@ -1122,6 +1111,33 @@ const StatusPendingDescription: React.FC<PendingDescriptionProps> = ({
     );
 };
 
+
+
+// ======== Other components ========
+
+type CreateButtonProps = {
+    condition: "canUpload" | "canCreateSeries" | "canCreatePlaylists";
+    path: string;
+    text: ParseKeys;
+    Icon: IconType;
+}
+export const CreateButton: React.FC<CreateButtonProps> = ({
+    condition, path, text, Icon,
+}) => {
+    const { t } = useTranslation();
+    const user = useUser();
+
+    return (!isRealUser(user) || !user[condition])
+        ? null
+        : <LinkButton to={path} css={{ width: "fit-content", height: 40 }}>
+            <p css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                display: "none",
+            } }}>
+                {t(text)}
+            </p>
+            <Icon />
+        </LinkButton>;
+};
 
 const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
     const { t } = useTranslation();
@@ -1209,6 +1225,10 @@ const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled, label }) 
         }}
     >{children}</Link>
 );
+
+
+// ======== Filtering/sorting related functions ========
+
 
 // TODO: add default sort column of playlists
 const DEFAULT_SORT_COLUMN = "CREATED";
@@ -1418,4 +1438,67 @@ const shareButtonStyle = css({
         },
     },
 });
+
+
+/**
+ * Wraps around children to always apply `width: fit-content`-like logic, even
+ * when the parent (i.e. this wrapper) itself is wrapping. That's a lot of wraps.
+ * Basically this just makes sure this works for components that can either span one or two lines.
+ */
+const ShrinkWrapContainer: React.FC<PropsWithChildren<{ className?: string }>> = ({
+    className, children,
+}) => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    const measure = useCallback(() => {
+        const el = ref.current;
+        if (!el) {
+            return;
+        }
+
+        // Clear any previously set width so the browser lays out with the
+        // natural inline-flex width (capped by max-width: 100%).
+        el.style.width = "";
+
+        // Find the rightmost edge of all direct children.
+        const containerLeft = el.getBoundingClientRect().left;
+        let maxRight = 0;
+        for (const child of el.children) {
+            const right = child.getBoundingClientRect().right - containerLeft;
+            if (right > maxRight) {
+                maxRight = right;
+            }
+        }
+
+        // Set width to tighten the box around the actual content.
+        const paddingRight = parseFloat(getComputedStyle(el).paddingRight) || 0;
+        el.style.width = `${Math.ceil(maxRight + paddingRight)}px`;
+    }, []);
+
+    // Re-measure after every render (e.g. when children change).
+    useLayoutEffect(() => measure());
+
+    // Re-measure when the parent's size changes (e.g. window resize).
+    // Only observes the parent to avoid a feedback loop.
+    useEffect(() => {
+        const parent = ref.current?.parentElement;
+        if (!parent) {
+            return;
+        }
+        const observer = new ResizeObserver(() => measure());
+        observer.observe(parent);
+        return () => observer.disconnect();
+    }, [measure]);
+
+    return <div
+        ref={ref}
+        className={className}
+        css={{
+            display: "inline-flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            maxWidth: "100%",
+        }}
+    >{children}</div>;
+};
 
