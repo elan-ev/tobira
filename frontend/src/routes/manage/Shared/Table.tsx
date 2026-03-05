@@ -182,7 +182,23 @@ export const ManageItems = <T extends Item>({
                     <SearchField {...{ vars, textField }} />
                 </div>
 
-                <div css={{ display: "flex", gap: 12, marginLeft: "auto", flexWrap: "wrap" }}>
+                <div css={{
+                    display: "flex",
+                    gap: 12,
+                    marginLeft: "auto",
+                    flexWrap: "wrap",
+                    // marginLeft: 26,
+                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                        // width: "100%",
+                        svg: {
+                            fontSize: 20,
+                            // Lucide icons don't do font size or sth...
+                            // they need these width/height props.
+                            width: 20,
+                            height: 20,
+                        }
+                    },
+                }}>
                     {/* Selector for search field filter property */}
                     <TextFieldSelector {...{ vars, textField, withCreatorFilter }} />
 
@@ -292,7 +308,7 @@ const TextFieldSelector: React.FC<TextFieldFilterProps> = ({ textField, withCrea
 
     return <FloatingBaseMenu
         ref={listRef}
-        triggerContent={<>{activeLabel}</>}
+        triggerContent={<TriggerLabel triggerLabel={activeLabel} />}
         triggerStyles={filterTriggerStyles}
         tooltip={t("manage.table.filter.text-field")}
         label={t("manage.table.filter.text-field")}
@@ -340,16 +356,13 @@ const DateFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     };
 
     return <FloatingBaseMenu
-        triggerContent={<>{t("manage.table.filter.date")}</>}
+        triggerContent={<TriggerLabel triggerLabel={t("manage.table.filter.date")} />}
         triggerStyles={filterTriggerStyles}
         tooltip={t("manage.table.filter.select-date")}
         label={t("manage.table.filter.select-date")}
         icon={<LuCalendarRange />}
         list={
-            <Floating
-                {...floatingMenuProps(isDark)}
-                hideArrowTip
-            >
+            <Floating {...floatingMenuProps(isDark)} hideArrowTip>
                 <div css={{
                     cursor: "default",
                     fontSize: 12,
@@ -390,6 +403,14 @@ const DateFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     />;
 };
 
+const TriggerLabel: React.FC<{ triggerLabel?: string }> = ({ triggerLabel }) => (
+    triggerLabel ? <span css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+        display: "none",
+    } }}>
+        {triggerLabel}
+    </span> : null
+);
+
 const VisibilityFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     const { t } = useTranslation();
     const listRef = useRef<FloatingHandle>(null);
@@ -420,7 +441,7 @@ const VisibilityFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
 
     return <FloatingBaseMenu
         ref={listRef}
-        triggerContent={<>{triggerLabel}</>}
+        triggerContent={<TriggerLabel triggerLabel={triggerLabel} />}
         triggerStyles={filterTriggerStyles}
         tooltip={t("manage.table.filter.visibility")}
         label={t("manage.table.filter.visibility")}
@@ -457,7 +478,7 @@ const AccessFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
 
     return <FloatingBaseMenu
         ref={listRef}
-        triggerContent={<>{triggerLabel}</>}
+        triggerContent={<TriggerLabel triggerLabel={triggerLabel} />}
         triggerStyles={filterTriggerStyles}
         tooltip={t("manage.table.filter.writable")}
         label={t("manage.table.filter.writable")}
@@ -928,11 +949,10 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             transition: "background 50ms, outline-color 50ms",
         },
         [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-            flexDirection: "column",
-            gap: 10,
-            margin: "8px auto",
-            height: "unset",
-            maxWidth: 330,
+            flexWrap: "wrap",
+            marginBottom: 8,
+            gap: "4px 12px",
+            border: `1px solid ${COLORS.neutral10}`,
         },
 
         "&:hover > div:last-of-type, &:focus-within > div:last-of-type": {
@@ -946,18 +966,76 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
         />}
 
         {/* Thumbnail */}
-        <div css={{
-            width: 163,
-            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                width: "100%",
-            },
-        }}>
+        <div css={{ width: 163 }}>
             {deletionIsPending
                 ? props.thumbnail(thumbnailState)
                 : <Link to={props.link}>
                     {props.thumbnail(thumbnailState)}
                 </Link>
             }
+        </div>
+
+        {/* Mobile specific */}
+        <div css={{
+            display: "none",
+            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                display: "flex",
+                flex: 1,
+                minWidth: 0,
+                gap: 4,
+            },
+        }}>
+            <div css={{ flex: 1, minWidth: 0 }}>
+                <h3 css={{
+                    color: COLORS.primary1,
+                    fontSize: 15,
+                    lineHeight: 1.3,
+                    paddingBottom: 2,
+                    ...ellipsisOverflowCss(2),
+                }}>{item.title}</h3>
+                {/* Description (mobile) */}
+                <div css={{ marginTop: 2 }}>
+                    {!isSynced(item) && props.itemType !== "playlist"
+                        ? <StatusPendingDescription
+                            action={"sync"}
+                            itemType={props.itemType}
+                            hasFailed={syncFailed}
+                            actionDate={creationDate}
+                        />
+                        : (deletionIsPending && props.itemType !== "playlist"
+                            ? <StatusPendingDescription
+                                action={"deletion"}
+                                itemType={props.itemType}
+                                hasFailed={deletionFailed}
+                                actionDate={deletionDate}
+                            />
+                            : <SmallDescription
+                                withoutPlaceholder
+                                lines={2}
+                                text={item.description}
+                                css={{
+                                    paddingLeft: 2,
+                                    fontSize: 12,
+                                    lineHeight: 1.4,
+                                }}
+                            />
+                        )
+                    }
+                </div>
+            </div>
+            {/* Action buttons (mobile) */}
+            <div css={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                flexShrink: 0,
+                button: { opacity: 1 },
+            }}>
+                <div css={shareButtonStyle}>
+                    {props.shareButton}
+                </div>
+                {props.linkButton}
+            </div>
         </div>
 
         {/* Main body  */}
@@ -967,6 +1045,9 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             justifyContent: "space-between",
             flex: "1",
             gap: 6,
+            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                flexBasis: "100%",
+            },
         }}>
             <div css={{
                 color: COLORS.neutral90,
@@ -975,18 +1056,18 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                 height: "100%",
                 flex: 1,
                 minWidth: 0,
-                maxWidth: 330,
-                [screenWidthAbove(BREAKPOINT_MEDIUM)]: {
-                    marginRight: 12,
-                    maxWidth: 700,
-                },
+                marginRight: 12,
+                maxWidth: 700,
             }}>
-                {/* Title */}
+                {/* Title (desktop) */}
                 <div css={{
                     display: "flex",
                     gap: 6,
                     alignItems: "center",
                     justifyContent: "space-between",
+                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                        display: "none",
+                    },
                 }}>
                     <h3 css={{
                         color: COLORS.primary1,
@@ -997,8 +1078,13 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     }}>{item.title}</h3>
                 </div>
 
-                {/* Description */}
-                <div css={{ marginBottom: 4 }}>
+                {/* Description (desktop) */}
+                <div css={{
+                    marginBottom: 4,
+                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                        display: "none",
+                    },
+                }}>
                     {!isSynced(item) && props.itemType !== "playlist"
                         ? <StatusPendingDescription
                             action={"sync"}
@@ -1044,11 +1130,14 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             </div>
         </div>
 
-        {/* Space on the right for misc buttons, indicators etc */}
+        {/* Space on the right for misc buttons, indicators etc (desktop only) */}
         <div css={{
             button: { opacity: 0 },
             display: "flex",
             flexDirection: "column",
+            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                display: "none",
+            },
         }}>
             <div css={shareButtonStyle}>
                 {props.shareButton}
