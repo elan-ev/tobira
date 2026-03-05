@@ -101,7 +101,7 @@ type TimestampProps = {
 }
 export const Timestamp: React.FC<TimestampProps> = ({
     timestamp, isLive,
-}) => !timestamp ? null : <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
+}) => !timestamp ? null : <div css={{ display: "flex", alignItems: "center", gap: 6 }}>
     <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
     <PrettyDate date={new Date(timestamp)} isLive={isLive} />
 </div>;
