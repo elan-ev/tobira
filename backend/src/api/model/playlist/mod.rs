@@ -14,6 +14,7 @@ use crate::{
                 load_writable_for_user,
                 Connection,
                 ConnectionQueryParts,
+                CreatorColumn,
                 PageInfo,
                 SearchFilter,
                 SortDirection,
@@ -160,6 +161,8 @@ impl Playlist {
             table: "playlists",
             alias: None,
             join_clause: "",
+            date_column: "playlists.updated",
+            creator_column: CreatorColumn::Scalar,
         };
         let (selection, mapping) = select!(
             playlist: AuthorizedPlaylist,

@@ -46,6 +46,7 @@ use super::{
         BasicMetadata,
         Connection,
         ConnectionQueryParts,
+        CreatorColumn,
         PageInfo,
         SortOrder,
     },
@@ -782,6 +783,8 @@ impl AuthorizedEvent {
             table: "all_events",
             alias: Some("events"),
             join_clause: "left join series on series.id = events.series",
+            date_column: "events.created",
+            creator_column: CreatorColumn::Array,
         };
 
         load_writable_for_user(

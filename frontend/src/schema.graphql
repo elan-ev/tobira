@@ -83,6 +83,13 @@ enum VideosSortColumn {
   SERIES
 }
 
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  PROTECTED
+  SHARED
+}
+
 enum WorkflowStatus {
   BUSY
   IDLE
@@ -181,6 +188,12 @@ input RealmSpecifier {
 
 input SearchFilter {
   title: String
+  description: String
+  createdStart: DateTime
+  createdEnd: DateTime
+  creators: [String!]
+  visibility: Visibility
+  writable: Boolean
 }
 
 input SeriesSortOrder {

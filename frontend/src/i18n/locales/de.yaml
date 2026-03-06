@@ -41,6 +41,7 @@ general:
   date-at: '{{date}} um {{time}}'
   none: Keine
   title: Titel
+  description: Beschreibung
 
 welcome:
   title: Willkommen zu Tobira!
@@ -543,6 +544,7 @@ manage:
     no-content: Keine Videos
     no-of-videos_one: '{{count}} Videos'
     no-of-videos_other: '{{count}} Videos'
+    entries: Einträge
     removing-disabled: Entfernen von Videos ist deaktiviert.
     details:
       unknown_one: >
@@ -580,12 +582,36 @@ manage:
       last: Letzte Seite
     filter:
       by-title: Nach Titel filtern
-    columns:
+      by-description: Nach Beschreibung filtern
+      by-creator: Nach Ersteller filtern
+      creator: Ersteller
+      text-field: Textfeld
+      date: Datum
+      select-date: Zeitraum auswählen
+      clear-date: Zeitraum zurücksetzen
+      from: Von
+      to: Bis
+      remove: Filter entfernen
+      visibility: Sichtbarkeit
+      visibility-public: Öffentlich
+      visibility-private: Privat
+      visibility-protected: Geschützt
+      visibility-shared: Geteilt
+      writable: Zugriff
+      write: Schreiben
+      read: Lesen
+    sorting:
+      label: Einträge sortieren
+      sort-by: Sortieren nach
+      order: Anordnung
       description: 'Sortieren nach {{title}}, {{direction}}'
       ascending: aufsteigend
       descending: absteigend
+      ascending-cap: Aufsteigend
+      descending-cap: Absteigend
       created: Erstellt
       updated: Aktualisiert
+      unknown: Unbekannte Sortierung
     no-series-title: Fehlender Titel
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt

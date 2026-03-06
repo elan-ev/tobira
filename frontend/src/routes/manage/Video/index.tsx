@@ -1,6 +1,6 @@
 import { graphql } from "react-relay";
-import { useTranslation } from "react-i18next";
-import { match } from "@opencast/appkit";
+import { match, ProtoButton } from "@opencast/appkit";
+import { LuCornerUpRight, LuUpload } from "react-icons/lu";
 
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
@@ -12,19 +12,19 @@ import {
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
-import { Thumbnail } from "../../../ui/Video";
-import { keyOfId } from "../../../util";
+import { Creators, Thumbnail } from "../../../ui/Video";
+import { AccessIcon, keyOfId } from "../../../util";
 import {
-    ColumnProps,
-    createQueryParamsParser,
-    DateColumn,
-    ManageItems,
-    TableRow,
+    createQueryParamsParser, ManageItems, ListItem,
+    CreateButton, buildSearchFilter,
 } from "../Shared/Table";
-import { ellipsisOverflowCss } from "../../../ui";
-import { Link } from "../../../router";
-import { DirectSeriesRoute } from "../../Series";
+import { PartOfSeriesLink } from "../../../ui/Blocks/VideoList";
+import { Timestamp } from "../../../ui/metadata";
+import { UploadRoute } from "../../Upload";
+import { DirectVideoRoute, VideoShareButton } from "../../Video";
+import { useRouter } from "../../../router";
 import { COLORS } from "../../../color";
+import { focusStyle } from "../../../ui";
 
 
 const PATH = "/~manage/videos" as const;
@@ -37,11 +37,9 @@ export const ManageVideosRoute = makeRoute({
         }
 
         const vars = queryParamsToVideosVars(url.searchParams);
-        const titleFilter = vars.filters?.title ?? null;
         const queryVars = {
             ...vars,
-            // Todo: Adjust when more filter options are added
-            filter: titleFilter ? { title: titleFilter } : null,
+            filter: buildSearchFilter(vars.filters),
         };
         const queryRef = loadQuery<VideoManageQuery>(query, queryVars);
 
@@ -54,10 +52,16 @@ export const ManageVideosRoute = makeRoute({
                     ? <NotAuthorized />
                     : <ManageItems
                         vars={vars}
+                        withCreatorFilter
                         connection={data.currentUser.myVideos}
                         titleKey="manage.video.table"
-                        additionalColumns={videoColumns}
-                        RenderRow={EventRow}
+                        additionalSortOptions={[
+                            { key: "SERIES", label: "series.singular" },
+                            { key: "CREATED", label: "manage.table.sorting.created" },
+                            { key: "UPDATED", label: "manage.table.sorting.updated" },
+                        ]}
+                        RenderItem={VideoItem}
+                        createButton={<UploadLink />}
                     />
                 }
             />,
@@ -83,10 +87,14 @@ const query = graphql`
                     id
                     title
                     created
+                    creators
                     description
                     isLive
                     tobiraDeletionTimestamp
-                    series { id title }
+                    series { id opencastId title }
+                    readRoles
+                    writeRoles
+                    previewRoles
                     syncedData {
                         duration
                         thumbnail
@@ -96,7 +104,7 @@ const query = graphql`
                         audioOnly
                     }
                     authorizedData {
-                        tracks { resolution }
+                        tracks { uri flavor resolution }
                     }
                 }
             }
@@ -104,67 +112,92 @@ const query = graphql`
     }
 `;
 
+const UploadLink: React.FC = () => <CreateButton
+    condition="canUpload"
+    path={UploadRoute.url()}
+    text="upload.title"
+    Icon={LuUpload}
+/>;
+
+
 export type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
 export type Events = EventConnection["items"];
 export type Event = Events[number];
 
-// Todo: add series column
-const videoColumns: ColumnProps<Event>[] = [
-    {
-        key: "SERIES",
-        label: "series.singular",
-        headerWidth: 175,
-        column: ({ item }) => <SeriesColumn
-            title={item.series?.title}
-            seriesId={item.series?.id}
-        />,
-    },
-    {
-        key: "UPDATED",
-        label: "manage.table.columns.updated",
-        column: ({ item }) => <DateColumn date={item.syncedData?.updated} />,
-    },
-    {
-        key: "CREATED",
-        label: "manage.table.columns.created",
-        column: ({ item }) => <DateColumn date={item.created} />,
-    },
-];
 
-type SeriesColumnProps = {
-    seriesId?: string;
-    title?: string;
-};
-
-const SeriesColumn: React.FC<SeriesColumnProps> = ({ title, seriesId }) => {
-    const { t } = useTranslation();
-
-    const titleLink = seriesId
-        ? <Link to={DirectSeriesRoute.url({ seriesId })} css={{ textDecoration: "none" }}>
-            {title && title.trim().length > 0 ? title : <i>
-                {t("manage.table.no-series-title")}
-            </i>}
-        </Link>
-        : <i css={{ color: COLORS.neutral60 }}>{t("general.none")}</i>;
-
-    return (
-        <td css={{
-            "&&": { display: "block" },
-            fontSize: 14,
-            ...ellipsisOverflowCss(3),
-        }}>{titleLink}</td>
-    );
-};
-
-
-const EventRow: React.FC<{ item: Event }> = ({ item }) => <TableRow
+const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
     itemType="video"
     item={item}
     link={`${PATH}/${keyOfId(item.id)}`}
     thumbnail={state => <Thumbnail event={item} {...{ state }} />}
-    customColumns={videoColumns.map(col => <col.column key={col.key} item={item} />)}
     created={item.created}
+    metadata={[
+        <Creators key="creators" creators={[...item.creators]} css={{
+            minWidth: 0,
+            fontSize: 12,
+            svg: { fontSize: 15 },
+            ul: {
+                display: "inline-block",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+            },
+            li: { display: "inline" },
+            gap: 6,
+        }} />,
+        <div key="second-line" css={{
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+            gap: 24,
+        }}>
+            <AccessIcon {...{ item }} />
+            <Timestamp
+                timestamp={item.syncedData?.startTime ?? item.created}
+                isLive={item.isLive}
+            />
+            {item.series && <PartOfSeriesLink
+                css={{
+                    fontSize: 11,
+                    gap: 6,
+                    svg: { fontSize: 15 },
+                    paddingTop: "unset",
+                    minWidth: 0,
+                }}
+                seriesTitle={item.series.title}
+                seriesId={item.series.id}
+            />}
+        </div>,
+    ]}
+    shareButton={<VideoShareButton
+        event={item}
+        videoLink={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
+        hideLabel
+    />}
+    linkButton={<ActualLinkButton
+        to={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
+    />}
 />;
+
+export const ActualLinkButton: React.FC<{ to: string }> = ({ to }) => {
+    const router = useRouter();
+
+    return (
+        <ProtoButton
+            onClick={() => router.goto(to)}
+            css={{
+                position: "relative",
+                zIndex: 5,
+                ":hover": { backgroundColor: COLORS.neutral20 },
+                borderRadius: 8,
+                ...focusStyle({ offset: -1 }),
+            }}
+        >
+            <LuCornerUpRight />
+        </ProtoButton>
+    );
+
+};
 
 
 const parseVideosColumn = (sortBy: string | null): VideosSortColumn =>

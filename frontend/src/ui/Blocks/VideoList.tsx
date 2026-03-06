@@ -676,17 +676,19 @@ type MenuItemProps = {
     Icon?: IconType;
     label: string;
     onClick?: () => void;
-    close: () => void;
+    close?: () => void;
     disabled: boolean;
+    className?: string;
 };
 
-const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
-    Icon, label, onClick, close, disabled,
+export const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
+    Icon, label, onClick, close, disabled, className,
 }, ref) => {
     const isDark = useColorScheme().scheme === "dark";
 
     return (
-        <li css={{
+        <li {...{ className }} css={{
+
             ":not(:last-child)": {
                 borderBottom: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}`,
             },
@@ -701,7 +703,7 @@ const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
                     if (onClick) {
                         onClick();
                     }
-                    close();
+                    close?.();
                 }}
                 css={{
                     display: "flex",
@@ -716,7 +718,6 @@ const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
                     ...focusStyle({ inset: true }),
                     "&[disabled]": {
                         fontWeight: "bold",
-                        color: COLORS.neutral80,
                         pointerEvents: "none",
                         ...isDark && { backgroundColor: COLORS.neutral10 },
                     },
