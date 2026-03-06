@@ -205,6 +205,7 @@ type DeleteButtonProps<TMutation extends DeleteMutationParams> = PropsWithChildr
     kind: OcEntity;
     commit: (config: UseMutationConfig<TMutation>) => Disposable;
     returnPath: string;
+    disabled?: boolean;
 }>;
 
 export const DeleteButton = <TMutation extends DeleteMutationParams>({
@@ -213,6 +214,7 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
     commit,
     returnPath,
     children,
+    disabled,
 }: DeleteButtonProps<TMutation>) => {
     const { t } = useTranslation();
     const { setNotification } = useNotification();
@@ -246,7 +248,15 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
     };
 
     return <Inertable isInert={kind !== "video" && !isSynced(item)}>
-        <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
+        <Button {...{ disabled }} kind="danger" onClick={() => currentRef(modalRef).open()} css={{
+            // Apply these styles manually so we can still use tooltips here.
+            // Using `inert` would prevent that.
+            ":disabled": {
+                borderColor: COLORS.danger0,
+                color: COLORS.danger0,
+                opacity: 0.7,
+            },
+        }}>
             <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
                 {buttonText}
             </span>

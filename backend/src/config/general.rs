@@ -137,8 +137,10 @@ pub(crate) struct GeneralConfig {
     pub explicit_rss_content: bool,
 
     /// Whether users can remove events from a series they have write access for.
-    /// Should to be disabled when the connected Opencast requires events to always
-    /// be part of a series, as removing wouldn't work in that case.
+    /// Should to be disabled (i.e. set to `false`) when the connected Opencast requires
+    /// events to always be part of a series, as removing wouldn't work in that case.
+    ///
+    /// Disabling this will also prevent series from being deleted as long as they contain any event.
     #[config(default = true)]
     pub allow_series_event_removal: bool,
 

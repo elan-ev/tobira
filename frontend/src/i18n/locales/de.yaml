@@ -513,6 +513,7 @@ manage:
       title: Seriendetails
       delete: Serie löschen
       confirm-delete: Serie löschen?
+      deleting-disabled: Die Serie kann nicht gelöscht werden, während sie noch Videos enthält.
       referencing-pages-explanation: 'Diese Serie wird von den folgenden Seiten referenziert:'
       no-referencing-pages: Diese Serie wird von keiner Seite referenziert.
       delete-note: >
