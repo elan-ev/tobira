@@ -292,8 +292,8 @@ where
 
     let creators_clause = match parts.creator_column {
         CreatorColumn::None => {
-            // No creator column for series. Ignore.
-            String::new()
+            // No creator column for series.
+            "and ($6::text[] is null or true)".to_string()
         }
         CreatorColumn::Scalar => {
             // Playlists: must match single value.
