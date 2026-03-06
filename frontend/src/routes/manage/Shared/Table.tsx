@@ -5,7 +5,6 @@ import {
     FloatingHandle,
     match,
     ProtoButton,
-    screenWidthAbove,
     screenWidthAtMost,
     useColorScheme,
     useFloatingItemProps,
@@ -106,7 +105,6 @@ export const ManageItems = <T extends Item>({
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
     const { Notification } = useNotification();
-    const isDark = useColorScheme().scheme === "dark";
     const textField = parseTextField();
 
     let inner;
@@ -162,11 +160,9 @@ export const ManageItems = <T extends Item>({
             <div css={{
                 display: "flex",
                 justifyContent: "space-between",
-                // backgroundColor: COLORS.neutral10,
                 gap: "12px 8px",
                 flexWrap: "wrap",
                 marginTop: 16,
-                // ...isDark && { backgroundColor: COLORS.neutral10 },
                 borderRadius: 8,
                 padding: 4,
             }}>
@@ -176,7 +172,6 @@ export const ManageItems = <T extends Item>({
                         minWidth: 280,
                         "> div": { maxWidth: "100%" },
                     },
-                    // input: { ...isDark && { backgroundColor: COLORS.neutral10 } },
                 }}>
                     {/* Text field filter (title, description, creator) */}
                     <SearchField {...{ vars, textField }} />
@@ -187,16 +182,14 @@ export const ManageItems = <T extends Item>({
                     gap: 12,
                     marginLeft: "auto",
                     flexWrap: "wrap",
-                    // marginLeft: 26,
                     [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                        // width: "100%",
                         svg: {
                             fontSize: 20,
                             // Lucide icons don't do font size or sth...
                             // they need these width/height props.
                             width: 20,
                             height: 20,
-                        }
+                        },
                     },
                 }}>
                     {/* Selector for search field filter property */}
@@ -853,7 +846,6 @@ const SearchField: React.FC<{ vars: ItemVars; textField: string }> = ({ vars, te
         input: {
             border: 0,
             paddingLeft: 34,
-            // backgroundColor: COLORS.neutral10,
         },
     }}>
         <SearchInput
