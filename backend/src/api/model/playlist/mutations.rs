@@ -175,12 +175,17 @@ impl AuthorizedPlaylist {
 
         if response.status() == StatusCode::OK {
             // 200: OK, Playlist removed.
-            info!(playlist_id = %id, "Deleted playlist");
+            info!(
+                playlist_id = %id,
+                opencast_id = %playlist.opencast_id,
+                "Deleted playlist",
+            );
             context.db.execute("delete from playlists where id = $1", &[&playlist.key]).await?;
             Ok(RemovedPlaylist { id: playlist.id() })
         } else {
             warn!(
                 playlist_id = %id,
+                opencast_id = %playlist.opencast_id,
                 "Failed to delete playlist, OC returned status: {}",
                 response.status()
             );
