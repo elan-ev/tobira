@@ -1213,13 +1213,28 @@ export const CreateButton: React.FC<CreateButtonProps> = ({
 
     return (!isRealUser(user) || !user[condition])
         ? null
-        : <LinkButton to={path} css={{ width: "fit-content", height: 40 }}>
+        : <LinkButton to={path} css={{
+            backgroundColor: "unset",
+            padding: "4px 10px",
+            gap: 7,
+            height: 38,
+            fontSize: 14,
+            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                "&&, &&:hover": {
+                    border: 0,
+                    backgroundColor: COLORS.neutral10,
+                },
+                height: "unset",
+                padding: 8,
+                marginTop: -4,
+            },
+        }}>
             <p css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                 display: "none",
             } }}>
                 {t(text)}
             </p>
-            <Icon />
+            <Icon size={17} />
         </LinkButton>;
 };
 
