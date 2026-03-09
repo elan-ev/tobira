@@ -52,7 +52,7 @@ export const ManageSeriesRoute = makeRoute({
                         connection={data.currentUser.mySeries}
                         titleKey="manage.series.table.title"
                         additionalSortOptions={[
-                            { key: "EVENT_COUNT", label: "video.plural" },
+                            { key: "EVENT_COUNT", label: "video.count" },
                             { key: "CREATED", label: "manage.table.sorting.created" },
                             { key: "UPDATED", label: "manage.table.sorting.updated" },
                         ]}

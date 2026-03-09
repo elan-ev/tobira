@@ -55,7 +55,7 @@ export const ManagePlaylistsRoute = makeRoute({
                         connection={data.currentUser.myPlaylists}
                         titleKey="manage.playlist.table.title"
                         additionalSortOptions={[
-                            { key: "ENTRY_COUNT", label: "manage.video-list.entries" },
+                            { key: "ENTRY_COUNT", label: "playlist.entry-count" },
                             { key: "UPDATED", label: "manage.table.sorting.updated" },
                         ]}
                         RenderItem={PlaylistItem}
@@ -118,9 +118,10 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
     metadata={[
         <Creators key="creator" creators={[item.creator]} css={{
             fontSize: 12,
+            gap: 6,
             svg: { fontSize: 15 },
         }} />,
-        <EntryCount key={"entry count"} count={item.numEntries} />,
+        <EntryCount forPlaylist key={"entry count"} count={item.numEntries} />,
         <Timestamp
             key="timestamp"
             timestamp={item.updated ?? undefined}

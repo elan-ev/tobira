@@ -134,6 +134,7 @@ login-page:
 video:
   singular: Video
   plural: Video
+  count: Conteggio dei video # verify
   video-page: 'Pagina video: “{{video}}”'
   video-player: Videolettore
   duration: Durata
@@ -207,6 +208,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Numero di voci # verify
+  no-of-entries_one: '{{count}} voce' # verify
+  no-of-entries_other: '{{count}} voci' # verify
   playlist-page: 'Pagina playlist: “{{playlist}}”' # needs verification
   deleted-block: La playlist a cui si fa riferimento è stata cancellata.
   not-allowed: Non è autorizzato a visualizzare questa playlist.
@@ -605,8 +609,8 @@ manage:
     filter:
       by-title: Filtrare per titolo
       by-description: Filtrare per descrizione # verify
-      by-creator: Filtrare per creatore # verify
-      creator: Creatore # verify
+      by-creator: Filtrare per persone # verify
+      creator: Persone # verify
       text-field: Campo di testo # verify
       date: Data # verify
       select-date: Selezionare il periodo di tempo # verify

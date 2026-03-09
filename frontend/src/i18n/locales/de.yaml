@@ -135,6 +135,7 @@ login-page:
 video:
   singular: Video
   plural: Videos
+  count: Videoanzahl
   video-page: 'Video Seite: „{{video}}“'
   video-player: Videoplayer
   duration: Abspielzeit
@@ -210,6 +211,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Anzahl der Einträge
+  no-of-entries_one: '{{count}} Eintrag'
+  no-of-entries_other: '{{count}} Einträge'
   playlist-page: 'Playlistseite: “{{playlist}}”'
   deleted-block: Die hier referenzierte Playlist wurde gelöscht.
   not-allowed: Sie sind nicht autorisiert, diese Playlist zu sehen.
@@ -584,8 +588,8 @@ manage:
     filter:
       by-title: Nach Titel filtern
       by-description: Nach Beschreibung filtern
-      by-creator: Nach Ersteller filtern
-      creator: Ersteller
+      by-creator: Nach Personen filtern
+      creator: Personen
       text-field: Textfeld
       date: Datum
       select-date: Zeitraum auswählen

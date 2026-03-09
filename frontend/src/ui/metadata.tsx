@@ -106,17 +106,24 @@ export const Timestamp: React.FC<TimestampProps> = ({
     <PrettyDate date={new Date(timestamp)} isLive={isLive} />
 </div>;
 
-export const EntryCount: React.FC<{count: number}> = ({ count }) => {
+type EntryCountProps = {
+    count: number;
+    forPlaylist?: boolean;
+}
+export const EntryCount: React.FC<EntryCountProps> = ({ count, forPlaylist = false }) => {
     const { t } = useTranslation();
 
     return <div css={{
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
+        gap: 6,
     }}>
         <LuFilm css={{ fontSize: 15, color: COLORS.neutral60, flexShrink: 0 }} />
-        {t("manage.video-list.no-of-videos", { count })}
+        {forPlaylist
+            ? t("playlist.no-of-entries", { count })
+            : t("manage.video-list.no-of-videos", { count })
+        }
     </div>;
 };
 

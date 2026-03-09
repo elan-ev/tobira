@@ -20,7 +20,7 @@ import {
     LuArrowUpWideNarrow,
     LuChevronLeft,
     LuChevronRight,
-    LuCalendarRange,
+    LuCalendar,
     LuShieldCheck,
     LuX,
     LuTypeOutline,
@@ -182,15 +182,6 @@ export const ManageItems = <T extends Item>({
                     gap: 12,
                     marginLeft: "auto",
                     flexWrap: "wrap",
-                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                        svg: {
-                            fontSize: 20,
-                            // Lucide icons don't do font size or sth...
-                            // they need these width/height props.
-                            width: 20,
-                            height: 20,
-                        },
-                    },
                 }}>
                     {/* Selector for search field filter property */}
                     <TextFieldSelector {...{ vars, textField, withCreatorFilter }} />
@@ -242,7 +233,6 @@ const SortAndOrder: React.FC<SortAndOrderProps> = ({ additionalSortOptions, vars
             ref={listRef}
             triggerContent={<>{t(labelKey)}</>}
             triggerStyles={{ ...filterTriggerStyles }}
-            tooltip="Sort & Order"
             list={<SortingMenu
                 {...{ vars, sortOptions }}
                 close={() => listRef.current?.close()}
@@ -265,7 +255,7 @@ const filterTriggerStyles = {
     border: 0,
     backgroundColor: "transparent",
     fontSize: 14,
-} as const;
+};
 
 type TextFieldFilterProps = {
     vars: ItemVars;
@@ -303,7 +293,6 @@ const TextFieldSelector: React.FC<TextFieldFilterProps> = ({ textField, withCrea
         ref={listRef}
         triggerContent={<TriggerLabel triggerLabel={activeLabel} />}
         triggerStyles={filterTriggerStyles}
-        tooltip={t("manage.table.filter.text-field")}
         label={t("manage.table.filter.text-field")}
         icon={<LuTypeOutline />}
         list={<FilterMenu
@@ -311,7 +300,7 @@ const TextFieldSelector: React.FC<TextFieldFilterProps> = ({ textField, withCrea
             options={options}
             filterKey="textField"
             current={textField}
-            label="Choose text filter"
+            label="Choose text filter" // Todo
             onSelect={key => handleSelect(key)}
             close={() => listRef.current?.close()}
         />}
@@ -345,21 +334,21 @@ const DateFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     const inputStyle = {
         borderRadius: 4,
         border: `1px solid ${COLORS.neutral40}`,
+        fontSize: 14,
         ...focusStyle({ width: 2, inset: true }),
     };
 
     return <FloatingBaseMenu
         triggerContent={<TriggerLabel triggerLabel={t("manage.table.filter.date")} />}
         triggerStyles={filterTriggerStyles}
-        tooltip={t("manage.table.filter.select-date")}
         label={t("manage.table.filter.select-date")}
-        icon={<LuCalendarRange />}
+        icon={<LuCalendar />}
         list={
             <Floating {...floatingMenuProps(isDark)} hideArrowTip>
                 <div css={{
                     cursor: "default",
-                    fontSize: 12,
-                    padding: "6px 14px 4px 14px",
+                    fontSize: 11,
+                    padding: "6px 12px 2px 12px",
                     color: COLORS.neutral60,
                 }}>
                     {t("manage.table.filter.select-date")}
@@ -436,14 +425,13 @@ const VisibilityFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         ref={listRef}
         triggerContent={<TriggerLabel triggerLabel={triggerLabel} />}
         triggerStyles={filterTriggerStyles}
-        tooltip={t("manage.table.filter.visibility")}
         label={t("manage.table.filter.visibility")}
         icon={<LucideHatGlasses size={14} />}
         list={<FilterMenu
             {...{ vars, options }}
             filterKey="visibility"
             current={current}
-            label="Filter by visibility"
+            label="Filter by visibility" // Todo
             close={() => listRef.current?.close()}
         />}
     />;
@@ -473,14 +461,13 @@ const AccessFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         ref={listRef}
         triggerContent={<TriggerLabel triggerLabel={triggerLabel} />}
         triggerStyles={filterTriggerStyles}
-        tooltip={t("manage.table.filter.writable")}
         label={t("manage.table.filter.writable")}
         icon={<LuShieldCheck />}
         list={<FilterMenu
             {...{ vars, options }}
             filterKey="access"
             current={current}
-            label="Filter by access"
+            label="Filter by access" // Todo
             close={() => listRef.current?.close()}
         />}
     />;
@@ -526,14 +513,15 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
         <Floating {...floatingMenuProps(isDark)} hideArrowTip css={{
             div: {
                 cursor: "default",
-                fontSize: 12,
-                padding: "8px 14px 4px 14px",
+                fontSize: 11,
+                padding: "6px 12px 2px 12px",
                 color: COLORS.neutral60,
             },
             ul: {
                 listStyle: "none",
                 margin: 0,
                 padding: 0,
+                "li button": { fontSize: 14 },
             },
         }}>
             <ul role="menu" css={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -687,14 +675,15 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
     const listStyle = {
         div: {
             cursor: "default",
-            fontSize: 12,
-            padding: "8px 14px 4px 14px",
+            fontSize: 11,
+            padding: "6px 12px 2px 12px",
             color: COLORS.neutral60,
         },
         ul: {
             listStyle: "none",
             margin: 0,
             padding: 0,
+            "li button": { fontSize: 14 },
         },
     };
 
@@ -833,10 +822,10 @@ const SearchField: React.FC<{ vars: ItemVars; textField: string }> = ({ vars, te
     };
 
     const placeholderKey = textField === "description"
-        ? "manage.table.filter.by-description" as const
+        ? "manage.table.filter.by-description"
         : textField === "creators"
-            ? "manage.table.filter.by-creator" as const
-            : "manage.table.filter.by-title" as const;
+            ? "manage.table.filter.by-creator"
+            : "manage.table.filter.by-title";
 
     return <div css={{
         svg: {
@@ -846,6 +835,7 @@ const SearchField: React.FC<{ vars: ItemVars; textField: string }> = ({ vars, te
         input: {
             border: 0,
             paddingLeft: 34,
+            fontSize: 14,
         },
     }}>
         <SearchInput
@@ -970,6 +960,9 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             }
         </div>
 
+
+        {/* ======= Main body =======  */}
+
         {/* Mobile specific */}
         <div css={{
             display: "none",
@@ -981,6 +974,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             },
         }}>
             <div css={{ flex: 1, minWidth: 0 }}>
+                {/* Title  */}
                 <h3 css={{
                     color: COLORS.primary1,
                     fontSize: 15,
@@ -988,7 +982,8 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     paddingBottom: 2,
                     ...ellipsisOverflowCss(2),
                 }}>{item.title}</h3>
-                {/* Description (mobile) */}
+
+                {/* Description */}
                 <div css={{ marginTop: 2 }}>
                     {!isSynced(item) && props.itemType !== "playlist"
                         ? <StatusPendingDescription
@@ -1018,7 +1013,8 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     }
                 </div>
             </div>
-            {/* Action buttons (mobile) */}
+
+            {/* Action buttons */}
             <div css={{
                 display: "flex",
                 flexDirection: "column",
@@ -1033,7 +1029,6 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             </div>
         </div>
 
-        {/* Main body  */}
         <div css={{
             minWidth: 0,
             display: "flex",
@@ -1054,7 +1049,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                 marginRight: 12,
                 maxWidth: 700,
             }}>
-                {/* Title (desktop) */}
+                {/* Title desktop */}
                 <div css={{
                     display: "flex",
                     gap: 6,
@@ -1073,7 +1068,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     }}>{item.title}</h3>
                 </div>
 
-                {/* Description (desktop) */}
+                {/* Description desktop */}
                 <div css={{
                     marginBottom: 4,
                     [screenWidthAtMost(bp)]: {
@@ -1125,7 +1120,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             </div>
         </div>
 
-        {/* Space on the right for misc buttons, indicators etc (desktop only) */}
+        {/* Action buttons (desktop) */}
         <div css={{
             button: { opacity: 0 },
             display: "flex",
@@ -1151,7 +1146,7 @@ export const thumbnailLinkStyle = {
         outline: `2.5px solid ${COLORS.focus}`,
         outlineOffset: 1,
     },
-} as const;
+};
 
 type PendingDescriptionProps = {
     action: "sync" | "deletion";
@@ -1222,7 +1217,6 @@ export const CreateButton: React.FC<CreateButtonProps> = ({
             [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
                 "&&, &&:hover": {
                     border: 0,
-                    backgroundColor: COLORS.neutral10,
                 },
                 height: "unset",
                 padding: 8,
@@ -1514,6 +1508,8 @@ const shareButtonStyle = css({
         padding: 4,
         fontSize: 14,
         border: 0,
+        borderRadius: 8,
+        height: "unset",
     },
     "&& > div > button:hover": {
         backgroundColor: COLORS.neutral20,

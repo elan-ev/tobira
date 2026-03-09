@@ -133,6 +133,7 @@ login-page:
 video:
   singular: Video
   plural: Videos
+  count: Video count
   video-page: 'Video page: “{{video}}”'
   video-player: Video player
   duration: Duration
@@ -207,6 +208,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Number of entries
+  no-of-entries_one: '{{count}} entry'
+  no-of-entries_other: '{{count}} entries'
   playlist-page: 'Playlist page: “{{playlist}}”'
   deleted-block: The playlist referenced here was deleted.
   not-allowed: You are not authorized to view this playlist.
