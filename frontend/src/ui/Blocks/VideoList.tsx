@@ -159,7 +159,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     const renderEvents = (events: readonly VideoListItem[]) => (
         <Items
             basePath={basePath}
-            showSeries={shareInfo.kind === "series"}
+            showSeries={shareInfo.kind === "playlist"}
             {...{ listId }}
             items={events.map(item => ({
                 item,
