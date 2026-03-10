@@ -414,8 +414,13 @@ impl Series {
             return Err(err::not_authorized!("editing ACLs is not allowed"));
         }
 
-        info!(series_id = %id, "Requesting ACL update of series");
         let series = Self::load_for_mutation(id, context).await?;
+
+        info!(
+            series_id = %id,
+            opencast_id = %series.opencast_id,
+            "Requesting ACL update of series",
+        );
 
         let response = context
             .oc_client
@@ -440,6 +445,7 @@ impl Series {
         } else {
             warn!(
                 series_id = %id,
+                opencast_id = %series.opencast_id,
                 "Failed to update series ACL, OC returned status: {}",
                 response.status(),
             );
@@ -454,7 +460,11 @@ impl Series {
     ) -> ApiResult<Series> {
         let series = Self::load_for_mutation(id, context).await?;
 
-        info!(series_id = %id, "Requesting metadata update of series");
+        info!(
+            series_id = %id,
+            opencast_id = %series.opencast_id,
+            "Requesting metadata update of series",
+        );
 
         let metadata_json = serde_json::json!([
             {
@@ -488,6 +498,7 @@ impl Series {
         } else {
             warn!(
                 series_id = %id,
+                opencast_id = %series.opencast_id,
                 "Failed to update series metadata, OC returned status: {}",
                 response.status(),
             );
@@ -503,7 +514,11 @@ impl Series {
     ) -> ApiResult<Series> {
         let series = Self::load_for_mutation(id, context).await?;
 
-        info!(series_id = %id, "Starting content update of series");
+        info!(
+            series_id = %id,
+            opencast_id = %series.opencast_id,
+            "Starting content update of series",
+        );
 
         let added_events = added_events.iter().map(|e| (*e, true));
         let removed_events = removed_events.iter().map(|e| (*e, false));
@@ -597,7 +612,11 @@ impl Series {
     pub(crate) async fn delete(id: Id, context: &Context) -> ApiResult<Series> {
         let series = Self::load_for_mutation(id, context).await?;
 
-        info!(series_id = %id, "Attempting to send request to delete series in Opencast");
+        info!(
+            series_id = %id,
+            opencast_id = %series.opencast_id,
+            "Attempting to send request to delete series in Opencast",
+        );
 
         context.db.execute("\
             update all_series \
@@ -623,13 +642,22 @@ impl Series {
             let response = match oc_client.delete(&series_clone).await {
                 Ok(response) => response,
                 Err(e) => {
-                    error!("Failed to send delete request: {}", e);
+                    error!(
+                        series_id = %id,
+                        opencast_id = %series_clone.opencast_id,
+                        "Failed to send delete request: {}",
+                        e,
+                    );
                     return;
                 }
             };
 
             if response.status() == StatusCode::NO_CONTENT {
-                info!(series_id = %id, "Series successfully deleted");
+                info!(
+                    series_id = %id,
+                    opencast_id = %series_clone.opencast_id,
+                    "Series successfully deleted",
+                );
             } else {
                 // This is kinda pointless. Depending on the number of videos, the request takes
                 // super long to respond and will potentially return with `504 Gateway Timeout`.
@@ -637,6 +665,7 @@ impl Series {
                 // in progress.
                 warn!(
                     series_id = %id,
+                    opencast_id = %series_clone.opencast_id,
                     "Failed to delete series, Opencast returned status: {}",
                     response.status()
                 );
