@@ -916,7 +916,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
     const hasDescription = Boolean(item.description || deletionIsPending || !isSynced(item));
 
     // Videos use the medium breakpoint; series and playlists use the small one.
-    const bp = props.itemType === "video" ? BREAKPOINT_MEDIUM : BREAKPOINT_SMALL;
+    const variableBreakpoint = props.itemType === "video" ? BREAKPOINT_MEDIUM : BREAKPOINT_SMALL;
 
     return <li css={{
         position: "relative",
@@ -933,7 +933,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             outlineColor: COLORS.neutral20,
             transition: "background 50ms, outline-color 50ms",
         },
-        [screenWidthAtMost(bp)]: {
+        [screenWidthAtMost(variableBreakpoint)]: {
             flexWrap: "wrap",
             marginBottom: 8,
             gap: "4px 12px",
@@ -966,7 +966,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
         {/* Mobile specific */}
         <div css={{
             display: "none",
-            [screenWidthAtMost(bp)]: {
+            [screenWidthAtMost(variableBreakpoint)]: {
                 display: "flex",
                 flex: 1,
                 minWidth: 0,
@@ -1035,7 +1035,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             justifyContent: "space-between",
             flex: "1",
             gap: 6,
-            [screenWidthAtMost(bp)]: {
+            [screenWidthAtMost(variableBreakpoint)]: {
                 flexBasis: "100%",
             },
         }}>
@@ -1055,7 +1055,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     gap: 6,
                     alignItems: "center",
                     justifyContent: "space-between",
-                    [screenWidthAtMost(bp)]: {
+                    [screenWidthAtMost(variableBreakpoint)]: {
                         display: "none",
                     },
                 }}>
@@ -1071,7 +1071,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                 {/* Description desktop */}
                 <div css={{
                     marginBottom: 4,
-                    [screenWidthAtMost(bp)]: {
+                    [screenWidthAtMost(variableBreakpoint)]: {
                         display: "none",
                     },
                 }}>
@@ -1105,7 +1105,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
 
                 <ShrinkWrapContainer css={{
                     ...hasDescription && { marginTop: 4 },
-                    gap: "4px 24px",
+                    gap: "4px 18px",
                     "&& svg": { fontSize: 13 },
                     color: COLORS.neutral80,
                     fontSize: 12,
@@ -1114,6 +1114,9 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     borderRadius: 8,
                     padding: "2px 12px 2px 6px",
                     ...isDark && { color: COLORS.neutral90 },
+                    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                        gap: "2px 12px",
+                    },
                 }}>
                     {props.metadata}
                 </ShrinkWrapContainer>
@@ -1125,7 +1128,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             button: { opacity: 0 },
             display: "flex",
             flexDirection: "column",
-            [screenWidthAtMost(bp)]: {
+            [screenWidthAtMost(variableBreakpoint)]: {
                 display: "none",
             },
         }}>

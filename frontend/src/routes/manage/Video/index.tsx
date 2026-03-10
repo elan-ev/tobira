@@ -1,5 +1,5 @@
 import { graphql } from "react-relay";
-import { match, ProtoButton } from "@opencast/appkit";
+import { match, ProtoButton, screenWidthAtMost } from "@opencast/appkit";
 import { LuCornerUpRight, LuUpload } from "react-icons/lu";
 
 import { ManageNav } from "..";
@@ -25,6 +25,7 @@ import { DirectVideoRoute, VideoShareButton } from "../../Video";
 import { useRouter } from "../../../router";
 import { COLORS } from "../../../color";
 import { focusStyle } from "../../../ui";
+import { BREAKPOINT_SMALL } from "../../../GlobalStyle";
 
 
 const PATH = "/~manage/videos" as const;
@@ -132,6 +133,32 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
     thumbnail={state => <Thumbnail event={item} {...{ state }} />}
     created={item.created}
     metadata={[
+        <div key="access-date-series" css={{
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+            gap: 18,
+            [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                columnGap: 12,
+            },
+        }}>
+            <AccessIcon {...{ item }} />
+            <Timestamp
+                timestamp={item.syncedData?.startTime ?? item.created}
+                isLive={item.isLive}
+            />
+            {item.series && <PartOfSeriesLink
+                css={{
+                    fontSize: 12,
+                    gap: 6,
+                    svg: { fontSize: 15 },
+                    paddingTop: "unset",
+                    minWidth: 0,
+                }}
+                seriesTitle={item.series.title}
+                seriesId={item.series.id}
+            />}
+        </div>,
         <Creators key="creators" creators={[...item.creators]} css={{
             minWidth: 0,
             fontSize: 12,
@@ -145,29 +172,6 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
             li: { display: "inline" },
             gap: 6,
         }} />,
-        <div key="second-line" css={{
-            display: "flex",
-            alignItems: "center",
-            minWidth: 0,
-            gap: 24,
-        }}>
-            <AccessIcon {...{ item }} />
-            <Timestamp
-                timestamp={item.syncedData?.startTime ?? item.created}
-                isLive={item.isLive}
-            />
-            {item.series && <PartOfSeriesLink
-                css={{
-                    fontSize: 11,
-                    gap: 6,
-                    svg: { fontSize: 15 },
-                    paddingTop: "unset",
-                    minWidth: 0,
-                }}
-                seriesTitle={item.series.title}
-                seriesId={item.series.id}
-            />}
-        </div>,
     ]}
     shareButton={<VideoShareButton
         event={item}
