@@ -248,15 +248,7 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
     };
 
     return <Inertable isInert={kind !== "video" && !isSynced(item)}>
-        <Button {...{ disabled }} kind="danger" onClick={() => currentRef(modalRef).open()} css={{
-            // Apply these styles manually so we can still use tooltips here.
-            // Using `inert` would prevent that.
-            ":disabled": {
-                borderColor: COLORS.danger0,
-                color: COLORS.danger0,
-                opacity: 0.7,
-            },
-        }}>
+        <Button {...{ disabled }} kind="danger" onClick={() => currentRef(modalRef).open()}>
             <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
                 {buttonText}
             </span>
