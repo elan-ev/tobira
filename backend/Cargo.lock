@@ -1390,6 +1390,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "jwtea"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a80bd391477c696bb8a324e24b2176ed8efd21aabfbe9d4ec7b09c2b4da50d04"
+dependencies = [
+ "aws-lc-rs",
+ "base64",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2921,6 +2933,7 @@ dependencies = [
  "hyperlocal",
  "iso8601",
  "juniper",
+ "jwtea",
  "meilisearch-sdk",
  "mime_guess",
  "nu-ansi-term",

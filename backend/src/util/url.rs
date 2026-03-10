@@ -30,6 +30,10 @@ impl HttpUrl {
         self
     }
 
+    pub fn query_pairs_mut(&mut self) -> form_urlencoded::Serializer<'_, url::UrlQuery<'_>> {
+        self.0.query_pairs_mut()
+    }
+
     /// Returns `true` if this URL has a non-empty, non `/` path.
     pub fn has_real_path(&self) -> bool {
         !self.path().is_empty() && self.path() != "/"

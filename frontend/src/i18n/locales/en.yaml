@@ -66,6 +66,19 @@ errors:
   unknown: Unknown error.
   detailed-error-info: Detailed error information for developers
   embedded: An error occurred in the embedded application.
+  oidc-error:
+    title: Login failed (OIDC)
+    # TODO: can we add more useful details to this?
+    access-denied: >
+      <strong>Login failed</strong>: external authentication was denied.
+    internal-error: >
+      <strong>Login failed</strong>: an internal OIDC error occured.  This is
+      very likely not your fault. You can try again later or contact a system
+      administrator.
+    temporarily-unavailable: >
+      <strong>Login failed</strong>: the authentication service is temporarily
+      unavailable. Try again later.
+
 
 not-found:
   page-not-found: Page not found

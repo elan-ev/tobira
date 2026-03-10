@@ -141,6 +141,15 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
                 .unwrap()
         },
 
+        "/~oidc/login" => {
+            register_req!(HttpReqCategory::Other);
+            auth::oidc::handle_login(req, &ctx).await
+        }
+        "/~oidc/callback" => {
+            register_req!(HttpReqCategory::Other);
+            auth::oidc::handle_callback(req, &ctx).await
+        }
+
         // Currently we just reply with our `index.html` to everything else.
         // That's of course not optimal because for many paths, our frontend
         // will show 404. It would be nice to reply 404 from the server

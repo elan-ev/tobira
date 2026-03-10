@@ -23,6 +23,7 @@ use crate::{
 mod cache;
 mod config;
 mod handlers;
+pub mod oidc;
 mod session_id;
 mod jwt;
 

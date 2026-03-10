@@ -69,6 +69,9 @@ pub(crate) struct AuthConfig {
 
     #[config(nested)]
     pub(crate) roles: RoleConfig,
+
+    #[config(nested)]
+    pub(crate) oidc: OidcConfig,
 }
 
 impl AuthConfig {
@@ -442,5 +445,38 @@ impl CallbackUri {
             CallbackUri::Tcp(uri) => uri,
             CallbackUri::Uds(uri) => uri,
         }
+    }
+}
+
+#[derive(Debug, Clone, confique::Config)]
+#[config(validate = Self::validate)]
+pub(crate) struct OidcConfig {
+    #[config(default = false)]
+    pub(crate) enabled: bool,
+
+    /// Base URL to the issuer/IdP, e.g. `https://foo.com/realms/bar`. Note
+    /// that these URLs basically never have a trailing `/`.
+    #[config(validate = HttpUrl::ensure_secure_no_fragment)]
+    pub(crate) issuer_url: Option<HttpUrl>,
+
+    /// The client identifier registered with the identity provider.
+    pub(crate) client_id: Option<String>,
+
+    /// The secret to authenticate against the identity provider.
+    pub(crate) client_secret: Option<SecretString>,
+}
+
+impl OidcConfig {
+    fn validate(&self) -> Result<()> {
+        if self.enabled {
+            anyhow::ensure!(self.issuer_url.is_some(),
+                "oidc.enabled = true, but 'issuer_url' is not set");
+            anyhow::ensure!(self.client_id.is_some(),
+                "oidc.enabled = true, but 'client_id' is not set");
+            anyhow::ensure!(self.client_secret.is_some(),
+                "oidc.enabled = true, but 'client_secret' is not set");
+        }
+
+        Ok(())
     }
 }
