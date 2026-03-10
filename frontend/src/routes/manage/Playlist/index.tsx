@@ -23,7 +23,7 @@ import { CreatePlaylistRoute } from "./Create";
 import { EntryCount, Timestamp } from "../../../ui/metadata";
 import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
 import { DirectPlaylistRoute } from "../../Playlist";
-import { ActualLinkButton } from "../Video";
+import { ItemLinkButton } from "../Video";
 
 
 export const PATH = "/~manage/playlists" as const;
@@ -133,7 +133,7 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
         rssUrl={`/~rss/series/${keyOfId(item.id)}`}
         hideLabel
     />}
-    linkButton={<ActualLinkButton
+    linkButton={<ItemLinkButton
         to={new URL(DirectPlaylistRoute.url({ playlistId: item.id }), document.baseURI).href}
     />}
 />;

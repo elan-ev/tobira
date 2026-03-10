@@ -18,7 +18,7 @@ import { keyOfId } from "../../../util";
 import { SeriesThumbnail } from "./Shared";
 import { CreateSeriesRoute } from "./Create";
 import { EntryCount, Timestamp } from "../../../ui/metadata";
-import { ActualLinkButton } from "../Video";
+import { ItemLinkButton } from "../Video";
 import { DirectSeriesRoute } from "../../Series";
 import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
 
@@ -125,7 +125,7 @@ const SeriesItem: React.FC<{ item: SingleSeries }> = ({ item }) => <ListItem
         rssUrl={`/~rss/series/${keyOfId(item.id)}`}
         hideLabel
     />}
-    linkButton={<ActualLinkButton
+    linkButton={<ItemLinkButton
         to={new URL(DirectSeriesRoute.url({ seriesId: item.id }), document.baseURI).href}
     />}
 />;

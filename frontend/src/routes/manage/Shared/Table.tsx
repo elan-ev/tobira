@@ -8,6 +8,7 @@ import {
     screenWidthAtMost,
     useColorScheme,
     useFloatingItemProps,
+    WithTooltip,
 } from "@opencast/appkit";
 import {
     useRef, useEffect, useLayoutEffect, useCallback,
@@ -941,7 +942,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
         },
 
         "&:hover > div:last-of-type, &:focus-within > div:last-of-type": {
-            button: { opacity: 1 },
+            "button, a": { opacity: 1 },
         },
     }}>
         {/* Link overlay (invisible, covers item completely) */}
@@ -974,7 +975,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             },
         }}>
             <div css={{ flex: 1, minWidth: 0 }}>
-                {/* Title  */}
+                {/* Title mobile  */}
                 <h3 css={{
                     color: COLORS.primary1,
                     fontSize: 15,
@@ -983,7 +984,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     ...ellipsisOverflowCss(2),
                 }}>{item.title}</h3>
 
-                {/* Description */}
+                {/* Description mobile */}
                 <div css={{ marginTop: 2 }}>
                     {!isSynced(item) && props.itemType !== "playlist"
                         ? <StatusPendingDescription
@@ -1012,20 +1013,6 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                         )
                     }
                 </div>
-            </div>
-
-            {/* Action buttons */}
-            <div css={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-                flexShrink: 0,
-                button: { opacity: 1 },
-            }}>
-                <div css={shareButtonStyle}>
-                    {props.shareButton}
-                </div>
-                {props.linkButton}
             </div>
         </div>
 
@@ -1123,20 +1110,24 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             </div>
         </div>
 
-        {/* Action buttons (desktop) */}
-        <div css={{
-            button: { opacity: 0 },
+        {/* Action buttons desktop */}
+        {!item.tobiraDeletionTimestamp && <div css={{
+            "button, a": { opacity: 0, transition: "opacity 200ms" },
             display: "flex",
             flexDirection: "column",
             [screenWidthAtMost(variableBreakpoint)]: {
                 display: "none",
             },
         }}>
-            <div css={shareButtonStyle}>
-                {props.shareButton}
-            </div>
-            {props.linkButton}
-        </div>
+            <WithTooltip placement="left" tooltip="Share">
+                <div css={shareButtonStyle}>
+                    {props.shareButton}
+                </div>
+            </WithTooltip>
+            <WithTooltip placement="left" tooltip="Link">
+                <div>{props.linkButton}</div>
+            </WithTooltip>
+        </div>}
     </li>;
 };
 
@@ -1509,10 +1500,13 @@ const shareButtonStyle = css({
     "&& > div > button": {
         background: "transparent",
         padding: 4,
-        fontSize: 14,
         border: 0,
         borderRadius: 8,
         height: "unset",
+        "> svg": {
+            width: "18px",
+            height: "18px",
+        },
     },
     "&& > div > button:hover": {
         backgroundColor: COLORS.neutral20,

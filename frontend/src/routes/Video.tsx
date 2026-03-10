@@ -1050,6 +1050,7 @@ type VideoShareButtonProps = {
     onOpen?: (setTimestamp: (seconds: number) => void) => void;
     className?: string;
     hideLabel?: boolean;
+    noTimestamp?: boolean;
 }
 
 export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
@@ -1058,6 +1059,7 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
     onOpen,
     className,
     hideLabel = false,
+    noTimestamp = false,
 }) => {
     const { t } = useTranslation();
     const [timestamp, setTimestamp] = useState(0);
@@ -1083,7 +1085,7 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
                             label={t("share.copy-direct-link-to-clipboard")}
                             value={url}
                         />
-                        {!event.isLive && <TimeInputWithCheckbox
+                        {!event.isLive && !noTimestamp && <TimeInputWithCheckbox
                             checkboxChecked={addLinkTimestamp}
                             setCheckboxChecked={setAddLinkTimestamp}
                             {...{ timestamp, setTimestamp }}
@@ -1127,7 +1129,7 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
                         />
                         <CopyableInput label={t("share.copy-embed-code")} value={embedCode} />
                     </div>
-                    {!event.isLive && <TimeInputWithCheckbox
+                    {!event.isLive && !noTimestamp && <TimeInputWithCheckbox
                         checkboxChecked={addEmbedTimestamp}
                         setCheckboxChecked={setAddEmbedTimestamp}
                         {...{ timestamp, setTimestamp }}

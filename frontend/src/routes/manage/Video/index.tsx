@@ -1,5 +1,5 @@
 import { graphql } from "react-relay";
-import { match, ProtoButton, screenWidthAtMost } from "@opencast/appkit";
+import { match, screenWidthAtMost } from "@opencast/appkit";
 import { LuCornerUpRight, LuUpload } from "react-icons/lu";
 
 import { ManageNav } from "..";
@@ -22,10 +22,9 @@ import { PartOfSeriesLink } from "../../../ui/Blocks/VideoList";
 import { Timestamp } from "../../../ui/metadata";
 import { UploadRoute } from "../../Upload";
 import { DirectVideoRoute, VideoShareButton } from "../../Video";
-import { useRouter } from "../../../router";
 import { COLORS } from "../../../color";
-import { focusStyle } from "../../../ui";
 import { BREAKPOINT_SMALL } from "../../../GlobalStyle";
+import { LinkButton } from "../../../ui/LinkButton";
 
 
 const PATH = "/~manage/videos" as const;
@@ -173,35 +172,39 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
             gap: 6,
         }} />,
     ]}
-    shareButton={<VideoShareButton
-        event={item}
-        videoLink={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
-        hideLabel
-    />}
-    linkButton={<ActualLinkButton
-        to={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
-    />}
+    shareButton={
+        <VideoShareButton
+            event={item}
+            videoLink={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
+            hideLabel
+            noTimestamp
+        />}
+    linkButton={<ItemLinkButton to={
+        new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href
+    }/>}
 />;
 
-export const ActualLinkButton: React.FC<{ to: string }> = ({ to }) => {
-    const router = useRouter();
-
-    return (
-        <ProtoButton
-            onClick={() => router.goto(to)}
-            css={{
+export const ItemLinkButton: React.FC<{ to: string }> = ({ to }) => (
+    <LinkButton
+        to={to}
+        extraCss={{
+            "&&": {
+                border: 0,
+                background: "transparent",
+                padding: 4,
+                height: "unset",
                 position: "relative",
-                zIndex: 5,
-                ":hover": { backgroundColor: COLORS.neutral20 },
                 borderRadius: 8,
-                ...focusStyle({ offset: -1 }),
-            }}
-        >
-            <LuCornerUpRight />
-        </ProtoButton>
-    );
-
-};
+                ":hover": {
+                    backgroundColor: COLORS.neutral20,
+                    border: 0,
+                },
+            },
+        }}
+    >
+        <LuCornerUpRight size={18} />
+    </LinkButton>
+);
 
 
 const parseVideosColumn = (sortBy: string | null): VideosSortColumn =>
