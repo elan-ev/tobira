@@ -118,7 +118,12 @@ export const ManageItems = <T extends Item>({
     } else {
         inner = <>
             <div css={{ flex: "1 0 0", margin: "16px 0", marginTop: 4 }}>
-                <ul css={{ padding: 0 }}>
+                <ul css={{
+                    padding: 0,
+                    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                        margin: -8,
+                    },
+                }}>
                     {connection.items.map(item => <RenderItem key={item.id} {... { item }} />)}
                 </ul>
             </div>
@@ -897,7 +902,6 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
             flexWrap: "wrap",
             marginBottom: 8,
             gap: "4px 12px",
-            border: `1px solid ${COLORS.neutral10}`,
         },
 
         "&:hover > div:last-of-type, &:focus-within > div:last-of-type": {
@@ -911,7 +915,12 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
         />}
 
         {/* Thumbnail */}
-        <div css={{ width: 163 }}>
+        <div css={{
+            width: 163,
+            [screenWidthAtMost(variableBreakpoint)]: {
+                width: 150,
+            },
+        }}>
             {deletionIsPending
                 ? props.thumbnail(thumbnailState)
                 : <Link to={props.link}>
@@ -1049,7 +1058,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     }
                 </div>
 
-                <ShrinkWrapContainer css={{
+                <ShrinkWrapContainer breakpoint={variableBreakpoint} css={{
                     ...hasDescription && { marginTop: 4 },
                     gap: "4px 18px",
                     "&& svg": { fontSize: 13 },
@@ -1060,6 +1069,9 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     borderRadius: 8,
                     padding: "2px 12px 2px 6px",
                     ...isDark && { color: COLORS.neutral90 },
+                    [screenWidthAtMost(variableBreakpoint)]: {
+                        width: "100%",
+                    },
                     [screenWidthAtMost(BREAKPOINT_SMALL)]: {
                         gap: "2px 12px",
                     },
@@ -1487,13 +1499,18 @@ const shareButtonStyle = css({
 });
 
 
+type ShrinkWrapContainerProps = PropsWithChildren<{
+    className?: string;
+    breakpoint: number;
+}>
 /**
  * Wraps around children to always apply `width: fit-content`-like logic, even
  * when the parent (i.e. this wrapper) itself is wrapping. That's a lot of wraps.
  * Basically this just makes sure this works for components that can either span one or two lines.
+ * Below `breakpoint` however, the measurement is skipped so the element just uses 100% width.
  */
-const ShrinkWrapContainer: React.FC<PropsWithChildren<{ className?: string }>> = ({
-    className, children,
+const ShrinkWrapContainer: React.FC<ShrinkWrapContainerProps> = ({
+    className, breakpoint, children,
 }) => {
     const ref = useRef<HTMLDivElement>(null);
 
@@ -1503,11 +1520,14 @@ const ShrinkWrapContainer: React.FC<PropsWithChildren<{ className?: string }>> =
             return;
         }
 
-        // Clear any previously set width so the browser lays out with the
-        // natural inline-flex width (capped by max-width: 100%).
+        // Reset before measure.
         el.style.width = "";
 
-        // Find the rightmost edge of all direct children.
+        if (window.innerWidth <= breakpoint) {
+            return;
+        }
+
+        // Find rightmost edge of all children, then set width to  fit content.
         const containerLeft = el.getBoundingClientRect().left;
         let maxRight = 0;
         for (const child of el.children) {
@@ -1516,17 +1536,13 @@ const ShrinkWrapContainer: React.FC<PropsWithChildren<{ className?: string }>> =
                 maxRight = right;
             }
         }
-
-        // Set width to tighten the box around the actual content.
         const paddingRight = parseFloat(getComputedStyle(el).paddingRight) || 0;
         el.style.width = `${Math.ceil(maxRight + paddingRight)}px`;
-    }, []);
+    }, [breakpoint]);
 
-    // Re-measure after every render (e.g. when children change).
     useLayoutEffect(() => measure());
 
-    // Re-measure when the parent's size changes (e.g. window resize).
-    // Only observes the parent to avoid a feedback loop.
+    // Observe parent's size to re-measure on resize.
     useEffect(() => {
         const parent = ref.current?.parentElement;
         if (!parent) {
