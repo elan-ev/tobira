@@ -186,12 +186,9 @@ pub(crate) struct ConnectionQueryParts {
 }
 
 pub(crate) enum CreatorColumn {
-    // Series have no creator column
-    None,
-    // Playlists can have a single creator
-    Scalar,
-    // Events can have multiple creators
-    Array,
+    Event,
+    Playlist,
+    Series,
 }
 
 
@@ -283,22 +280,31 @@ where
     };
 
     let creators_clause = match parts.creator_column {
-        CreatorColumn::None => {
-            // No creator column for series.
-            "and ($6::text[] is null or true)".to_string()
-        }
-        CreatorColumn::Scalar => {
-            // Playlists: must match single value.
+        CreatorColumn::Playlist => {
+            // Single `creator` column.
             format!("and ($6::text[] is null or not exists (\
                 select 1 from unnest($6::text[]) as p \
                 where not ({table}.creator ilike p)))")
         }
-        CreatorColumn::Array => {
-            // Events: must match at least one element.
+        CreatorColumn::Event => {
+            // Array `creators` column.
             format!("and ($6::text[] is null or not exists (\
                 select 1 from unnest($6::text[]) as p \
                 where not exists (\
                     select 1 from unnest({table}.creators) as c where c ilike p)))")
+        }
+        CreatorColumn::Series => {
+            // Creators from JSONB `metadata` (dcterms.creator or dcterms.createdBy).
+            format!("and ($6::text[] is null or not exists (\
+                select 1 from unnest($6::text[]) as p \
+                where not exists (\
+                    select 1 from jsonb_array_elements_text(\
+                        coalesce(\
+                            {table}.metadata->'dcterms'->'creator', \
+                            {table}.metadata->'dcterms'->'createdBy', \
+                            '[]'::jsonb\
+                        )\
+                    ) as c where c ilike p)))")
         }
     };
 

@@ -162,7 +162,7 @@ impl Playlist {
             alias: None,
             join_clause: "",
             date_column: "playlists.updated",
-            creator_column: CreatorColumn::Scalar,
+            creator_column: CreatorColumn::Playlist,
         };
         let (selection, mapping) = select!(
             playlist: AuthorizedPlaylist,
@@ -335,6 +335,16 @@ impl AuthorizedPlaylist {
             .pipe(Ok)
     }
 
+
+    /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
+    fn read_roles(&self) -> &[String] {
+        &self.read_roles
+    }
+
+    /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
+    fn write_roles(&self) -> &[String] {
+        &self.write_roles
+    }
 
     /// Whether the current user has write access to this playlist.
     fn can_write(&self, context: &Context) -> bool {

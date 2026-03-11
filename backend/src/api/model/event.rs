@@ -800,7 +800,7 @@ impl AuthorizedEvent {
             alias: Some("events"),
             join_clause: "left join series on series.id = events.series",
             date_column: "events.created",
-            creator_column: CreatorColumn::Array,
+            creator_column: CreatorColumn::Event,
         };
 
         load_writable_for_user(

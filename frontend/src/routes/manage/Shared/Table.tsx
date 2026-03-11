@@ -53,6 +53,7 @@ import { FloatingBaseMenu } from "../../../ui/FloatingBaseMenu";
 import { MenuItem } from "../../../ui/Blocks/VideoList";
 import { LinkButton } from "../../../ui/LinkButton";
 import { isRealUser, useUser } from "../../../User";
+import { Creators } from "../../../ui/Video";
 
 
 type ItemVars = {
@@ -1112,6 +1113,25 @@ export const thumbnailLinkStyle = {
         outlineOffset: 1,
     },
 };
+
+/** Creators display used in manage list items. */
+export const ListCreators: React.FC<{
+    creators: readonly string[];
+}> = ({ creators }) => creators.length === 0 ? null : (
+    <Creators creators={[...creators]} css={{
+        minWidth: 0,
+        fontSize: 12,
+        svg: { fontSize: 15 },
+        ul: {
+            display: "inline-block",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+        },
+        li: { display: "inline" },
+        gap: 6,
+    }} />
+);
 
 type PendingDescriptionProps = {
     action: "sync" | "deletion";

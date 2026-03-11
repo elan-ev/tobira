@@ -12,11 +12,11 @@ import {
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
-import { Creators, Thumbnail } from "../../../ui/Video";
+import { Thumbnail } from "../../../ui/Video";
 import { AccessIcon, keyOfId } from "../../../util";
 import {
     createQueryParamsParser, ManageItems, ListItem,
-    CreateButton, buildSearchFilter,
+    CreateButton, buildSearchFilter, ListCreators,
 } from "../Shared/Table";
 import { PartOfSeriesLink } from "../../../ui/Blocks/VideoList";
 import { Timestamp } from "../../../ui/metadata";
@@ -158,19 +158,7 @@ const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
                 seriesId={item.series.id}
             />}
         </div>,
-        <Creators key="creators" creators={[...item.creators]} css={{
-            minWidth: 0,
-            fontSize: 12,
-            svg: { fontSize: 15 },
-            ul: {
-                display: "inline-block",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-            },
-            li: { display: "inline" },
-            gap: 6,
-        }} />,
+        <ListCreators key="creators" creators={[...item.creators]} />,
     ]}
     shareButton={
         <VideoShareButton

@@ -7,12 +7,11 @@ import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
-import { Creators } from "../../../ui/Video";
 import {
     CreateButton, createQueryParamsParser, ListItem,
-    ManageItems, buildSearchFilter,
+    ManageItems, buildSearchFilter, ListCreators,
 } from "../Shared/Table";
-import { keyOfId } from "../../../util";
+import { AccessIcon, keyOfId } from "../../../util";
 import {
     PlaylistsManageQuery,
     PlaylistsManageQuery$data,
@@ -88,6 +87,8 @@ const query = graphql`
                     updated
                     description
                     numEntries
+                    readRoles
+                    writeRoles
                     thumbnailStack { thumbnails { url live audioOnly state }}
                     hostRealms { id }
                 }
@@ -116,15 +117,19 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
     link={`${PATH}/${keyOfId(item.id)}`}
     thumbnail={_ => <PlaylistThumbnail playlist={item} />}
     metadata={[
-        <Creators key="creator" creators={[item.creator]} css={{
-            fontSize: 12,
-            gap: 6,
-            svg: { fontSize: 15 },
-        }} />,
-        <EntryCount forPlaylist key={"entry count"} count={item.numEntries} />,
-        <Timestamp
-            key="timestamp"
-            timestamp={item.updated ?? undefined}
+        <div key="access-timestamp-count" css={{
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+            gap: 18,
+        }}>
+            <AccessIcon item={item} />
+            <Timestamp timestamp={item.updated ?? undefined} />
+            <EntryCount forPlaylist count={item.numEntries} />
+        </div>,
+        <ListCreators
+            key="creators"
+            creators={[item.creator]}
         />,
     ]}
     shareButton={<VideoListShareButton

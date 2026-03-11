@@ -9,7 +9,7 @@ import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import {
     CreateButton, createQueryParamsParser, ListItem,
-    ManageItems, buildSearchFilter,
+    ManageItems, buildSearchFilter, ListCreators,
 } from "../Shared/Table";
 import {
     SeriesManageQuery, SeriesManageQuery$data, SeriesSortColumn,
@@ -88,6 +88,7 @@ const query = graphql`
                     description
                     state
                     numVideos
+                    creators
                     thumbnailStack { thumbnails { url live audioOnly state }}
                     hostRealms { id }
                 }
@@ -116,8 +117,19 @@ const SeriesItem: React.FC<{ item: SingleSeries }> = ({ item }) => <ListItem
     thumbnail={state => <SeriesThumbnail series={item} seriesState={state} />}
     created={item.created ?? undefined}
     metadata={[
-        <EntryCount key={"entry count"} count={item.numVideos} />,
-        <Timestamp key="timestamp" timestamp={item.created ?? undefined}/>,
+        <div key="timestamp-count" css={{
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+            gap: 18,
+        }}>
+            <Timestamp timestamp={item.created ?? undefined} />
+            <EntryCount count={item.numVideos} />
+        </div>,
+        <ListCreators
+            key="creators"
+            creators={[...item.creators]}
+        />,
     ]}
     shareButton={<VideoListShareButton
         kind="series"
