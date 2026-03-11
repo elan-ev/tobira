@@ -205,6 +205,7 @@ type DeleteButtonProps<TMutation extends DeleteMutationParams> = PropsWithChildr
     kind: OcEntity;
     commit: (config: UseMutationConfig<TMutation>) => Disposable;
     returnPath: string;
+    disabled?: boolean;
 }>;
 
 export const DeleteButton = <TMutation extends DeleteMutationParams>({
@@ -213,6 +214,7 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
     commit,
     returnPath,
     children,
+    disabled,
 }: DeleteButtonProps<TMutation>) => {
     const { t } = useTranslation();
     const { setNotification } = useNotification();
@@ -220,6 +222,7 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
     const router = useRouter();
 
     const buttonText = t(`manage.${kind}.details.delete`);
+    const inert = kind !== "video" && !isSynced(item);
 
     const onSubmit = () => {
         commit({
@@ -245,8 +248,13 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
         });
     };
 
-    return <Inertable isInert={kind !== "video" && !isSynced(item)}>
-        <Button kind="danger" onClick={() => currentRef(modalRef).open()}>
+
+    return <>
+        <Button
+            disabled={disabled || inert}
+            kind="danger"
+            onClick={() => currentRef(modalRef).open()}
+        >
             <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
                 {buttonText}
             </span>
@@ -263,7 +271,7 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
             <p><Trans i18nKey="general.action.cannot-be-undone" /></p>
             {children}
         </ConfirmationModal>
-    </Inertable>;
+    </>;
 };
 
 type HostRealmsProps = {

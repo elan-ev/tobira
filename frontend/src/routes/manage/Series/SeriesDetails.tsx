@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
+import { WithTooltip } from "@opencast/appkit";
 
 import i18n from "../../../i18n";
 import { makeManageSeriesRoute, Series } from "./Shared";
@@ -20,9 +21,10 @@ import {
 import { useNotification } from "../../../ui/NotificationContext";
 import { ManageVideoListContent } from "../Shared/EditVideoList";
 import { SeriesDetailsContentMutation } from "./__generated__/SeriesDetailsContentMutation.graphql";
-import { Inertable, isSynced, keyOfId } from "../../../util";
+import { ConditionalWrapper, Inertable, isSynced, keyOfId } from "../../../util";
 import { NotReadyNote } from "../../util";
 import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
+import CONFIG from "../../../config";
 
 
 const updateSeriesMetadata = graphql`
@@ -104,17 +106,26 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
         rssUrl: `/~rss/series/${seriesKey}`,
     };
 
+    const disableDelete = !CONFIG.allowSeriesEventRemoval && series.entries.length > 0;
+
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <VideoListShareButton {...shareInfo} css={{ height: 40, borderRadius: 8 }} />
-        <DeleteButton
-            item={series}
-            kind="series"
-            returnPath="/~manage/series"
-            commit={commit}
-        >
-            <br />
-            <p>{t("manage.series.details.delete-note")}</p>
-        </DeleteButton>
+        <ConditionalWrapper condition={disableDelete} wrapper={children =>
+            <WithTooltip tooltip={t("manage.series.details.deleting-disabled")}>
+                <div>{children}</div>
+            </WithTooltip>
+        }>
+            <DeleteButton
+                item={series}
+                kind="series"
+                returnPath="/~manage/series"
+                commit={commit}
+                disabled={disableDelete}
+            >
+                <br />
+                <p>{t("manage.series.details.delete-note")}</p>
+            </DeleteButton>
+        </ConditionalWrapper>
     </div>;
 };
 

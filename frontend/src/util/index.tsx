@@ -1,5 +1,12 @@
 import { i18n, TFunction } from "i18next";
-import { MutableRefObject, PropsWithChildren, useEffect, useRef, useState } from "react";
+import {
+    MutableRefObject,
+    PropsWithChildren,
+    ReactElement,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { bug, match, useColorScheme } from "@opencast/appkit";
 import { css } from "@emotion/react";
@@ -355,3 +362,23 @@ export const captionsWithLabels = (
         return { label, caption };
     });
 };
+
+
+/**
+ * Can be used to conditionally wrap something in another component.
+ * Especially useful for conditional tooltips.
+ */
+type ConditionalWrapperProps = {
+    condition: boolean;
+    wrapper: (children: ReactElement) => ReactElement;
+    children: ReactElement;
+};
+
+export function ConditionalWrapper({
+    condition,
+    wrapper,
+    children,
+}: ConditionalWrapperProps): ReactElement {
+    return condition ? wrapper(children) : children;
+}
+
