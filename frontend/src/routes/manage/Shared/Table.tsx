@@ -5,6 +5,7 @@ import {
     FloatingHandle,
     match,
     ProtoButton,
+    screenWidthAbove,
     screenWidthAtMost,
     useColorScheme,
     useFloatingItemProps,
@@ -22,7 +23,6 @@ import {
     LuChevronLeft,
     LuChevronRight,
     LuCalendar,
-    LuShieldCheck,
     LuX,
     LuTypeOutline,
 } from "react-icons/lu";
@@ -784,6 +784,9 @@ const SearchField: React.FC<{ vars: ItemVars; textField: string }> = ({ vars, te
             : "manage.table.filter.by-title";
 
     return <div css={{
+        [screenWidthAbove(1080)]: {
+            maxWidth: 450,
+        },
         svg: {
             left: 6,
             fontSize: 18,
@@ -792,6 +795,7 @@ const SearchField: React.FC<{ vars: ItemVars; textField: string }> = ({ vars, te
             border: 0,
             paddingLeft: 34,
             fontSize: 14,
+            outline: `1px solid ${COLORS.neutral30}`,
         },
     }}>
         <SearchInput
