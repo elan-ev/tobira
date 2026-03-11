@@ -222,6 +222,7 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
     const router = useRouter();
 
     const buttonText = t(`manage.${kind}.details.delete`);
+    const inert = kind !== "video" && !isSynced(item);
 
     const onSubmit = () => {
         commit({
@@ -247,8 +248,13 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
         });
     };
 
-    return <Inertable isInert={kind !== "video" && !isSynced(item)}>
-        <Button {...{ disabled }} kind="danger" onClick={() => currentRef(modalRef).open()}>
+
+    return <>
+        <Button
+            disabled={disabled || inert}
+            kind="danger"
+            onClick={() => currentRef(modalRef).open()}
+        >
             <span css={{ whiteSpace: "normal", textWrap: "balance" }}>
                 {buttonText}
             </span>
@@ -265,7 +271,7 @@ export const DeleteButton = <TMutation extends DeleteMutationParams>({
             <p><Trans i18nKey="general.action.cannot-be-undone" /></p>
             {children}
         </ConfirmationModal>
-    </Inertable>;
+    </>;
 };
 
 type HostRealmsProps = {

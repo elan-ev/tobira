@@ -25,7 +25,6 @@ import { ConditionalWrapper, Inertable, isSynced, keyOfId } from "../../../util"
 import { NotReadyNote } from "../../util";
 import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
 import CONFIG from "../../../config";
-import { COLORS } from "../../../color";
 
 
 const updateSeriesMetadata = graphql`
@@ -113,29 +112,19 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
         <VideoListShareButton {...shareInfo} css={{ height: 40, borderRadius: 8 }} />
         <ConditionalWrapper condition={disableDelete} wrapper={children =>
             <WithTooltip tooltip={t("manage.series.details.deleting-disabled")}>
-                {children}
+                <div>{children}</div>
             </WithTooltip>
         }>
-            <div css={{
-                "> div button": {
-                    ":disabled": {
-                        borderColor: COLORS.danger0,
-                        color: COLORS.danger0,
-                        opacity: 0.7,
-
-                    },
-                } }}>
-                <DeleteButton
-                    item={series}
-                    kind="series"
-                    returnPath="/~manage/series"
-                    commit={commit}
-                    disabled={disableDelete}
-                >
-                    <br />
-                    <p>{t("manage.series.details.delete-note")}</p>
-                </DeleteButton>
-            </div>
+            <DeleteButton
+                item={series}
+                kind="series"
+                returnPath="/~manage/series"
+                commit={commit}
+                disabled={disableDelete}
+            >
+                <br />
+                <p>{t("manage.series.details.delete-note")}</p>
+            </DeleteButton>
         </ConditionalWrapper>
     </div>;
 };
