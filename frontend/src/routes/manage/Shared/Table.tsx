@@ -122,7 +122,7 @@ export const ManageItems = <T extends Item>({
                 <ul css={{
                     padding: 0,
                     [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                        margin: -8,
+                        marginInline: -8,
                     },
                 }}>
                     {connection.items.map(item => <RenderItem key={item.id} {... { item }} />)}
@@ -258,7 +258,7 @@ const filterTriggerStyles = {
     gap: 8,
     border: 0,
     backgroundColor: "transparent",
-    fontSize: 14,
+    fontSize: 15,
 };
 
 type TextFieldFilterProps = {
@@ -637,7 +637,7 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
     const listStyle = {
         div: {
             cursor: "default",
-            fontSize: 11,
+            fontSize: 12,
             padding: "6px 12px 2px 12px",
             color: COLORS.neutral60,
         },
@@ -645,7 +645,7 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
             listStyle: "none",
             margin: 0,
             padding: 0,
-            "li button": { fontSize: 14 },
+            "li button": { fontSize: 15 },
         },
     };
 
@@ -800,7 +800,7 @@ const SearchField: React.FC<{ vars: ItemVars; textField: string }> = ({ vars, te
         input: {
             border: 0,
             paddingLeft: 34,
-            fontSize: 14,
+            fontSize: 16,
             outline: `1px solid ${COLORS.neutral30}`,
         },
     }}>
@@ -917,6 +917,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
 
         {/* Thumbnail */}
         <div css={{
+            marginBottom: 4,
             width: 163,
             [screenWidthAtMost(variableBreakpoint)]: {
                 width: 150,
@@ -947,7 +948,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                 {/* Title mobile  */}
                 <h3 css={{
                     color: COLORS.primary1,
-                    fontSize: 15,
+                    fontSize: 16,
                     lineHeight: 1.3,
                     paddingBottom: 2,
                     ...ellipsisOverflowCss(2),
@@ -1017,7 +1018,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                 }}>
                     <h3 css={{
                         color: COLORS.primary1,
-                        fontSize: 15,
+                        fontSize: 16,
                         lineHeight: 1.1,
                         paddingBottom: 2,
                         ...ellipsisOverflowCss(1),
@@ -1106,6 +1107,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
 
 // Some styles are used by more than one row component.
 // Declaring these here helps with keeping them in sync.
+// Todo: move to `EditList` thingy, it's not used here anymore.
 export const thumbnailLinkStyle = {
     ":focus-visible": { outline: "none" },
     ":focus-within div:first-child": {
