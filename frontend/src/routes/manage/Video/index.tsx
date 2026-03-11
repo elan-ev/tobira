@@ -1,6 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 import { match, screenWidthAtMost } from "@opencast/appkit";
-import { LuCornerUpRight, LuUpload } from "react-icons/lu";
+import { LuCornerUpRight, LuUpload, LuVideo } from "react-icons/lu";
 
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
@@ -13,7 +14,7 @@ import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import { Thumbnail } from "../../../ui/Video";
-import { AccessIcon, keyOfId } from "../../../util";
+import { AccessIcon, keyOfId, translatedConfig } from "../../../util";
 import {
     createQueryParamsParser, ManageItems, ListItem,
     CreateButton, buildSearchFilter, ListCreators,
@@ -23,8 +24,11 @@ import { Timestamp } from "../../../ui/metadata";
 import { UploadRoute } from "../../Upload";
 import { DirectVideoRoute, VideoShareButton } from "../../Video";
 import { COLORS } from "../../../color";
-import { BREAKPOINT_SMALL } from "../../../GlobalStyle";
+import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../../GlobalStyle";
 import { LinkButton } from "../../../ui/LinkButton";
+import { ExternalLink } from "../../../relay/auth";
+import { isRealUser, useUser } from "../../../User";
+import CONFIG from "../../../config";
 
 
 const PATH = "/~manage/videos" as const;
@@ -61,7 +65,19 @@ export const ManageVideosRoute = makeRoute({
                             { key: "UPDATED", label: "manage.table.sorting.updated" },
                         ]}
                         RenderItem={VideoItem}
-                        createButton={<UploadLink />}
+                        createButton={(
+                            <div css={{
+                                display: "flex",
+                                "&&": { gap: 12 },
+                                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                                    flexDirection: "column-reverse",
+                                    "&&": { gap: 4 },
+                                },
+                            }}>
+                                <StudioLink />
+                                <UploadLink />
+                            </div>
+                        )}
                     />
                 }
             />,
@@ -118,6 +134,61 @@ const UploadLink: React.FC = () => <CreateButton
     text="upload.title"
     Icon={LuUpload}
 />;
+
+const StudioLink: React.FC = () => {
+    const { t, i18n } = useTranslation();
+    const user = useUser();
+
+    if (!isRealUser(user) || !user.canUseStudio) {
+        return null;
+    }
+
+    return (
+        <ExternalLink
+            service="STUDIO"
+            params={{
+                "return.target": document.location.href,
+                "return.label": translatedConfig(CONFIG.siteTitle, i18n),
+            }}
+            fallback="button"
+            css={{
+                "&&, && button": {
+                    backgroundColor: "unset",
+                    padding: "4px 10px",
+                    gap: 7,
+                    height: 38,
+                    fontSize: 14,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    borderRadius: 8,
+                    border: `1px solid ${COLORS.neutral40}`,
+                    cursor: "pointer",
+                    textDecoration: "none",
+                    color: COLORS.neutral90,
+                    "&:hover, &:focus-visible": {
+                        border: `1px solid ${COLORS.neutral60}`,
+                        backgroundColor: COLORS.neutral15,
+                    },
+                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                        "&&, &&:hover": {
+                            border: 0,
+                        },
+                        height: "unset",
+                        padding: 8,
+                        marginTop: -4,
+                    },
+                },
+            }}
+        >
+            <p css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                display: "none",
+            } }}>
+                {t("manage.dashboard.studio-title")}
+            </p>
+            <LuVideo size={17} />
+        </ExternalLink>
+    );
+};
 
 
 export type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
