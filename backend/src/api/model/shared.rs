@@ -243,8 +243,8 @@ where
     };
     let (
         title_filter, desc_filter,
-        creators_filter, created_start, created_end,
-        visibility, writable,
+        creators_filter, created_start,
+        created_end, visibility,
     ) = match filter {
         Some(f) => (
             f.title.map(|s| escape_like(&s)),
@@ -256,12 +256,10 @@ where
             f.created_start,
             f.created_end,
             f.visibility,
-            f.writable,
         ),
         None => Default::default(),
     };
 
-    // Build visibility SQL clause.
     let visibility_clause = match visibility {
         Some(Visibility::Public) => format!(
             "and 'ROLE_ANONYMOUS' = any({table}.read_roles)"
@@ -281,12 +279,6 @@ where
             "and not ('ROLE_ANONYMOUS' = any({table}.read_roles)) \
              and array_length({table}.read_roles, 1) > 1"
         ),
-        None => String::new(),
-    };
-
-    let writable_clause = match writable {
-        Some(true) => format!("and {table}.write_roles && $1"),
-        Some(false) => format!("and not ({table}.write_roles && $1)"),
         None => String::new(),
     };
 
@@ -312,14 +304,13 @@ where
 
     let date_column = parts.date_column;
 
-    let filter_clauses = format!(
-        "and ($2::text is null or {table}.title ilike $2::text) \
-         and ($3::text is null or {table}.description ilike $3::text) \
-         and ($4::timestamptz is null or {date_column} >= $4::timestamptz) \
-         and ($5::timestamptz is null or {date_column} <= $5::timestamptz) \
-         {creators_clause} \
-         {visibility_clause} {writable_clause}"
-    );
+    let filter_clauses = format!("\
+        and ($2::text is null or {table}.title ilike $2::text) \
+        and ($3::text is null or {table}.description ilike $3::text) \
+        and ($4::timestamptz is null or {date_column} >= $4::timestamptz) \
+        and ($5::timestamptz is null or {date_column} <= $5::timestamptz) \
+        {creators_clause} {visibility_clause}\
+    ");
 
     let total_count = context.db.query_one(
         &format!(
@@ -430,5 +421,4 @@ pub(crate) struct SearchFilter {
     pub(crate) created_end: Option<DateTime<Utc>>,
     pub(crate) creators: Option<Vec<String>>,
     pub(crate) visibility: Option<Visibility>,
-    pub(crate) writable: Option<bool>,
 }

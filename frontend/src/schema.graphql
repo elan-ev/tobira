@@ -193,7 +193,6 @@ input SearchFilter {
   createdEnd: DateTime
   creators: [String!]
   visibility: Visibility
-  writable: Boolean
 }
 
 input SeriesSortOrder {

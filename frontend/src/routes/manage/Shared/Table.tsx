@@ -193,9 +193,6 @@ export const ManageItems = <T extends Item>({
                     {/* Visibility filter */}
                     <VisibilityFilter {...{ vars }} />
 
-                    {/* Write access filter */}
-                    <AccessFilter {...{ vars }} />
-
                     {/* Sorting & order */}
                     <SortAndOrder {...{ additionalSortOptions, vars }} />
                 </div>
@@ -438,42 +435,6 @@ const VisibilityFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
     />;
 };
 
-const AccessFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
-    const { t } = useTranslation();
-    const listRef = useRef<FloatingHandle>(null);
-
-    const current = vars.filters.writable ?? null;
-    const options = [
-        {
-            key: "write",
-            label: t("manage.table.filter.write"),
-        },
-        {
-            key: "read",
-            label: t("manage.table.filter.read"),
-        },
-    ];
-
-    const triggerLabel = current
-        ? options.find(o => o.key === current)?.label
-        : t("manage.table.filter.writable");
-
-    return <FloatingBaseMenu
-        ref={listRef}
-        triggerContent={<TriggerLabel triggerLabel={triggerLabel} />}
-        triggerStyles={filterTriggerStyles}
-        label={t("manage.table.filter.writable")}
-        icon={<LuShieldCheck />}
-        list={<FilterMenu
-            {...{ vars, options }}
-            filterKey="access"
-            current={current}
-            label="Filter by access" // Todo
-            close={() => listRef.current?.close()}
-        />}
-    />;
-};
-
 
 type FilterMenuProps = {
     vars: ItemVars;
@@ -607,12 +568,6 @@ const AppliedFilters: React.FC<{ vars: ItemVars }> = ({ vars }) => {
                 }) ?? value;
                 return `${t("manage.table.filter.visibility")}: ${visibilityLabel}`;
             }
-            case "writable":
-                return `${t("manage.table.filter.writable")}: ${
-                    value === "true"
-                        ? t("manage.table.filter.write")
-                        : t("manage.table.filter.read")
-                }`;
             default: return `${key}: ${value}`;
         }
     };
@@ -1359,7 +1314,6 @@ const FILTERS = [
     "start",
     "end",
     "visibility",
-    "writable",
 ];
 
 const parseFilters = (queryParams: URLSearchParams): Record<string, string> => {
@@ -1465,7 +1419,6 @@ export const buildSearchFilter = (filters: Record<string, string>) => {
     const visibility = visibilityKey && visibilityKey in VISIBILITY_MAP
         ? VISIBILITY_MAP[visibilityKey as keyof typeof VISIBILITY_MAP]
         : null;
-    const writable = filters.writable ?? null;
 
     const createdStart = start ? `${start}T00:00:00Z` : null;
     // Make end date inclusive: set to end of day
@@ -1481,7 +1434,7 @@ export const buildSearchFilter = (filters: Record<string, string>) => {
 
     const hasFilter = title || description || (creators && creators.length > 0)
         || createdStart || createdEnd
-        || visibility || writable;
+        || visibility;
     return hasFilter
         ? {
             title,
@@ -1490,8 +1443,6 @@ export const buildSearchFilter = (filters: Record<string, string>) => {
             createdStart,
             createdEnd,
             visibility,
-            writable: writable === "true" ? true
-                : writable === "false" ? false : null,
         }
         : null;
 };
