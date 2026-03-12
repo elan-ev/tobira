@@ -1,6 +1,5 @@
 import * as path from "path";
 import YAML from "yaml";
-import { CleanWebpackPlugin } from "clean-webpack-plugin";
 import ForkTsCheckerWebpackPlugin from "fork-ts-checker-webpack-plugin";
 import ESLintPlugin from "eslint-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
@@ -29,6 +28,7 @@ const config = (_env: unknown, argv: { mode: string }): Configuration => ({
         filename: "bundle.[name].[contenthash].js",
         path: OUT_PATH,
         publicPath: "/~assets/",
+        clean: true,
     },
     optimization: {
         // This disables the automatic chunk splitting by webpack. This is only
@@ -82,7 +82,6 @@ const config = (_env: unknown, argv: { mode: string }): Configuration => ({
     },
 
     plugins: [
-        new CleanWebpackPlugin(),
         // Unfortunately, Typescript cannot natively load YAML files. But we
         // want out translations to be well-typed, so we convert it to JSON
         // here so that `typings/i18next.d.ts` works. We can't use `CopyPlugin`
