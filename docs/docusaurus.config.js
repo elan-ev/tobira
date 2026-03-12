@@ -1,5 +1,7 @@
 // @ts-check
 
+const { themes: prismThemes } = require("prism-react-renderer");
+
 /** @type {import("@docusaurus/types").Config} */
 const config = {
     title: "Tobira documentation",
@@ -60,8 +62,8 @@ const config = {
                 ],
             },
             prism: {
-                theme: require("prism-react-renderer/themes/nightOwlLight"),
-                darkTheme: require("prism-react-renderer/themes/palenight"),
+                theme: prismThemes.nightOwlLight,
+                darkTheme: prismThemes.palenight,
                 additionalLanguages: ["toml", "nginx", "systemd"],
             },
         }),
