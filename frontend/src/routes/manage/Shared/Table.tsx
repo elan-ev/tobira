@@ -1,5 +1,20 @@
-import { Card, currentRef, match, screenWidthAtMost, useColorScheme } from "@opencast/appkit";
-import { useRef, ReactNode, ComponentType, useEffect, PropsWithChildren, useState } from "react";
+import {
+    Card,
+    currentRef,
+    Floating,
+    FloatingHandle,
+    match,
+    ProtoButton,
+    screenWidthAbove,
+    screenWidthAtMost,
+    useColorScheme,
+    useFloatingItemProps,
+    WithTooltip,
+} from "@opencast/appkit";
+import {
+    useRef, useEffect, useLayoutEffect, useCallback,
+    ReactNode, ComponentType, useId, PropsWithChildren,
+} from "react";
 import { ParseKeys } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -7,28 +22,38 @@ import {
     LuArrowUpWideNarrow,
     LuChevronLeft,
     LuChevronRight,
+    LuCalendar,
+    LuX,
+    LuTypeOutline,
 } from "react-icons/lu";
-import { LucideFunnel } from "lucide-react";
+import { IconType } from "react-icons";
+import { css } from "@emotion/react";
+import { LucideHatGlasses } from "lucide-react";
 
 import FirstPage from "../../../icons/first-page.svg";
 import LastPage from "../../../icons/last-page.svg";
-import { PrettyDate, prettyDate } from "../../../ui/time";
-import { IconWithTooltip } from "../../../ui";
+import { prettyDate } from "../../../ui/time";
+import { ellipsisOverflowCss, focusStyle, IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
 import { SmallDescription } from "../../../ui/metadata";
 import { ManageRoute } from "..";
 import { COLORS } from "../../../color";
-import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { Link, useRouter } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
-import { OcEntity } from "../../../util";
+import { floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
 import { isSynced } from "../../../util";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
 import { PlaylistsSortColumn } from "../Playlist/__generated__/PlaylistsManageQuery.graphql";
+import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../../GlobalStyle";
+import { FloatingBaseMenu } from "../../../ui/FloatingBaseMenu";
+import { MenuItem } from "../../../ui/Blocks/VideoList";
+import { LinkButton } from "../../../ui/LinkButton";
+import { isRealUser, useUser } from "../../../User";
+import { Creators } from "../../../ui/Video";
 
 
 type ItemVars = {
@@ -53,52 +78,55 @@ export type SharedManageProps<T> = {
 };
 
 type SharedTableProps<T> = SharedManageProps<T> & {
-    RenderRow: ComponentType<{ item: T }>;
-    additionalColumns?: ColumnProps<T>[];
+    RenderItem: ComponentType<{ item: T }>;
 }
 
-type ManageItemProps<T> = PropsWithChildren & SharedTableProps<T> & {
+type SortingProps<T> = {
+    key: T;
+    label: ParseKeys;
+}
+
+type ManageItemProps<T> = SharedTableProps<T> & {
     titleKey: ParseKeys;
+    additionalSortOptions: SortingProps<SortColumn>[];
+    createButton: ReactNode;
+    withCreatorFilter?: boolean;
 }
 
 const LIMIT = 15;
+
 
 export const ManageItems = <T extends Item>({
     connection,
     vars,
     titleKey,
-    additionalColumns,
-    children,
-    RenderRow,
+    RenderItem,
+    additionalSortOptions,
+    createButton,
+    withCreatorFilter = false,
 }: ManageItemProps<T>) => {
     const { t } = useTranslation();
     const { Notification } = useNotification();
+    const textField = parseTextField();
 
     let inner;
     if (connection.items.length === 0) {
         inner = <div css={{ display: "flex", flexDirection: "column" }}>
-            <Notification />
-            <SearchField {...{ vars }} />
             <Card kind="info" css={{ width: "fit-content", marginTop: 32 }}>
                 {t("manage.table.no-entries-found")}
             </Card>
         </div>;
     } else {
         inner = <>
-            <Notification />
-            <div css={{
-                display: "flex",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 16,
-            }}>
-                <SearchField {...{ vars }} />
-                <div css={{ marginLeft: "auto" }}>
-                    <PageNavigation {...{ vars, connection }} />
-                </div>
-            </div>
-            <div css={{ flex: "1 0 0", margin: "16px 0" }}>
-                <ItemTable {...{ vars, connection, additionalColumns, RenderRow }} />
+            <div css={{ flex: "1 0 0", margin: "16px 0", marginTop: 4 }}>
+                <ul css={{
+                    padding: 0,
+                    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                        marginInline: -8,
+                    },
+                }}>
+                    {connection.items.map(item => <RenderItem key={item.id} {... { item }} />)}
+                </ul>
             </div>
             <PageNavigation {...{ vars, connection }} />
         </>;
@@ -111,62 +139,697 @@ export const ManageItems = <T extends Item>({
             display: "flex",
             flexDirection: "column",
             height: "100%",
+            maxWidth: 1000,
         }}>
-            <Breadcrumbs tail={title} path={[{
-                label: t("user.manage"),
-                link: ManageRoute.url,
-            }]} />
-            <PageTitle title={title} css={{ marginBottom: 32 }} />
-            {children && <div css={{ marginBottom: 24 }}>
-                {children}
-            </div>}
+            <div css={{
+                marginBottom: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+            }}>
+                <Breadcrumbs tail={title} path={[{
+                    label: t("user.manage"),
+                    link: ManageRoute.url,
+                }]} />
+                <div css={{
+                    marginLeft: "auto",
+                    "> div": { gap: "min(5vw, 48px)" },
+                }}>
+                    {createButton}
+                </div>
+            </div>
+
+            <h1 css={visuallyHiddenStyle}>{title}</h1>
+
+            <Notification />
+
+            {/* Header */}
+            <div css={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "12px 8px",
+                flexWrap: "wrap",
+                marginTop: 16,
+                borderRadius: 8,
+                padding: 4,
+            }}>
+                <div css={{
+                    flex: "auto",
+                    "&& > div": {
+                        minWidth: 280,
+                        "> div": { maxWidth: "100%" },
+                    },
+                }}>
+                    {/* Text field filter (title, description, creator) */}
+                    <SearchField {...{ vars, textField }} />
+                </div>
+
+                <div css={{
+                    display: "flex",
+                    gap: 12,
+                    marginLeft: "auto",
+                    flexWrap: "wrap",
+                }}>
+                    {/* Selector for search field filter property */}
+                    <TextFieldSelector {...{ vars, textField, withCreatorFilter }} />
+
+                    {/* Date range filter */}
+                    <DateFilter {...{ vars }} />
+
+                    {/* Visibility filter */}
+                    <VisibilityFilter {...{ vars }} />
+
+                    {/* Sorting & order */}
+                    <SortAndOrder {...{ additionalSortOptions, vars }} />
+                </div>
+            </div>
+
+            {/* Applied filters */}
+            <AppliedFilters {...{ vars }} />
+
+            {/* Actual table */}
             {inner}
         </div>
     );
 };
 
-const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+
+/** Sort and filter components */
+
+type SortAndOrderProps = {
+    additionalSortOptions: SortingProps<SortColumn>[];
+    vars: ItemVars;
+}
+const SortAndOrder: React.FC<SortAndOrderProps> = ({ additionalSortOptions, vars }) => {
+    const { t } = useTranslation();
+    const listRef = useRef<FloatingHandle>(null);
+
+    const sortOptions: SortingProps<SortColumn>[] = [
+        { key: "TITLE", label: "general.title" },
+        ...additionalSortOptions,
+    ];
+
+    const labelKey: ParseKeys = sortOptions.find(o => o.key === vars.order.column)?.label
+        ?? "manage.table.sorting.unknown";
+
+    return <div css={{ display: "flex", alignItems: "center" }}>
+        <FloatingBaseMenu
+            ref={listRef}
+            triggerContent={<>{t(labelKey)}</>}
+            triggerStyles={{ ...filterTriggerStyles }}
+            list={<SortingMenu
+                {...{ vars, sortOptions }}
+                close={() => listRef.current?.close()}
+            />}
+            label={t("manage.table.sorting.label")}
+            icon={vars.order.direction === "ASCENDING"
+                ? <LuArrowDownNarrowWide />
+                : <LuArrowUpWideNarrow />
+            }
+        />
+    </div>;
+};
+
+
+/** Blur handler that closes a floating menu when focus moves outside its container. */
+const handleMenuBlur = (close: () => void) =>
+    (event: React.FocusEvent<HTMLElement, Element>) => {
+        if (!event.currentTarget.contains(event.relatedTarget as HTMLElement)) {
+            close();
+        }
+    };
+
+const filterTriggerStyles = {
+    height: 30,
+    marginLeft: "auto",
+    padding: "4px 8px",
+    gap: 8,
+    border: 0,
+    backgroundColor: "transparent",
+    fontSize: 15,
+};
+
+type TextFieldFilterProps = {
+    vars: ItemVars;
+    textField: string;
+    withCreatorFilter: boolean;
+};
+
+const TextFieldSelector: React.FC<TextFieldFilterProps> = ({ textField, withCreatorFilter }) => {
+    const { t } = useTranslation();
+    const listRef = useRef<FloatingHandle>(null);
+    const router = useRouter();
+
+    const options = [
+        { key: "title", label: t("general.title") },
+        { key: "description", label: t("general.description") },
+        ...withCreatorFilter
+            ? [{ key: "creators", label: t("manage.table.filter.creator") }]
+            : [],
+    ];
+
+    const activeLabel = options.find(o => o.key === textField)?.label
+        ?? t("general.title");
+
+    const handleSelect = (key: string) => {
+        const url = new URL(document.location.href);
+        if (key === "title") {
+            url.searchParams.delete("tf");
+        } else {
+            url.searchParams.set("tf", key);
+        }
+        router.goto(url.href);
+    };
+
+    return <FloatingBaseMenu
+        ref={listRef}
+        triggerContent={<TriggerLabel triggerLabel={activeLabel} />}
+        triggerStyles={filterTriggerStyles}
+        label={t("manage.table.filter.text-field")}
+        icon={<LuTypeOutline />}
+        list={<FilterMenu
+            vars={{ order: { column: "CREATED", direction: "DESCENDING" }, page: 1, filters: {} }}
+            options={options}
+            filterKey="textField"
+            current={textField}
+            label="Choose text filter" // Todo
+            onSelect={key => handleSelect(key)}
+            close={() => listRef.current?.close()}
+        />}
+    />;
+};
+
+const DateFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+    const { t } = useTranslation();
+    const router = useRouter();
+    const isDark = useColorScheme().scheme === "dark";
+
+    const startDate = vars.filters.start ?? "";
+    const endDate = vars.filters.end ?? "";
+    const isActive = startDate || endDate;
+
+    const handleChange = (date: string, type: "start" | "end") => {
+        const newFilters = { ...vars.filters };
+        if (date) {
+            newFilters[type] = date;
+        } else {
+            delete newFilters[type];
+        }
+        router.goto(varsToLink({ ...vars, page: 1, filters: newFilters }));
+    };
+
+    const clearDates = () => {
+        const { start, end, ...restFilters } = vars.filters;
+        router.goto(varsToLink({ ...vars, page: 1, filters: restFilters }));
+    };
+
+    const inputStyle = {
+        borderRadius: 4,
+        border: `1px solid ${COLORS.neutral40}`,
+        fontSize: 14,
+        ...focusStyle({ width: 2, inset: true }),
+    };
+
+    const listRef = useRef<FloatingHandle>(null);
+    const close = () => listRef.current?.close();
+
+    return <FloatingBaseMenu
+        ref={listRef}
+        triggerContent={<TriggerLabel triggerLabel={t("manage.table.filter.date")} />}
+        triggerStyles={filterTriggerStyles}
+        label={t("manage.table.filter.select-date")}
+        icon={<LuCalendar />}
+        list={
+            <Floating {...floatingMenuProps(isDark)} hideArrowTip>
+                <div onBlur={handleMenuBlur(close)}>
+                    <div css={{
+                        cursor: "default",
+                        fontSize: 11,
+                        padding: "6px 12px 2px 12px",
+                        color: COLORS.neutral60,
+                    }}>
+                        {t("manage.table.filter.select-date")}
+                    </div>
+                    <div css={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        alignItems: "center",
+                        padding: "4px 8px 8px",
+                    }}>
+                        {isActive && <ProtoButton
+                            aria-label={t("manage.table.filter.clear-date")}
+                            css={{ display: "flex", alignItems: "center" }}
+                            onClick={clearDates}
+                        ><LuX /></ProtoButton>}
+                        <input
+                            value={startDate}
+                            css={inputStyle}
+                            type="date"
+                            onChange={e => handleChange(e.target.value, "start")}
+                        />
+                        <span>{"-"}</span>
+                        <input
+                            value={endDate}
+                            css={inputStyle}
+                            type="date"
+                            min={startDate}
+                            onChange={e => handleChange(e.target.value, "end")}
+                        />
+                    </div>
+                </div>
+            </Floating>
+        }
+    />;
+};
+
+const TriggerLabel: React.FC<{ triggerLabel?: string }> = ({ triggerLabel }) => (
+    triggerLabel ? <span css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+        display: "none",
+    } }}>
+        {triggerLabel}
+    </span> : null
+);
+
+const VisibilityFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+    const { t } = useTranslation();
+    const listRef = useRef<FloatingHandle>(null);
+
+    const current = vars.filters.visibility ?? null;
+    const options = [
+        {
+            key: "public",
+            label: t("manage.table.filter.visibility-public"),
+        },
+        {
+            key: "private",
+            label: t("manage.table.filter.visibility-private"),
+        },
+        {
+            key: "protected",
+            label: t("manage.table.filter.visibility-protected"),
+        },
+        {
+            key: "shared",
+            label: t("manage.table.filter.visibility-shared"),
+        },
+    ];
+
+    const triggerLabel = current
+        ? options.find(o => o.key === current)?.label
+        : t("manage.table.filter.visibility");
+
+    return <FloatingBaseMenu
+        ref={listRef}
+        triggerContent={<TriggerLabel triggerLabel={triggerLabel} />}
+        triggerStyles={filterTriggerStyles}
+        label={t("manage.table.filter.visibility")}
+        icon={<LucideHatGlasses size={14} />}
+        list={<FilterMenu
+            {...{ vars, options }}
+            filterKey="visibility"
+            current={current}
+            label="Filter by visibility" // Todo
+            close={() => listRef.current?.close()}
+        />}
+    />;
+};
+
+
+type FilterMenuProps = {
+    vars: ItemVars;
+    options: { key: string; label: string }[];
+    filterKey: string;
+    current: string | null;
+    onSelect?: (key: string) => void;
+    close: () => void;
+    label: string;
+};
+
+const FilterMenu: React.FC<FilterMenuProps> = ({
+    vars, options, filterKey, current, onSelect, close, label,
+}) => {
+    const isDark = useColorScheme().scheme === "dark";
+    const router = useRouter();
+    const itemProps = useFloatingItemProps();
+
+    const handleSelect = (key: string) => {
+        if (onSelect) {
+            onSelect(key);
+        } else {
+            const newFilters = { ...vars.filters };
+            // Toggle off if already selected
+            if (newFilters[filterKey] === key) {
+                delete newFilters[filterKey];
+            } else {
+                newFilters[filterKey] = key;
+            }
+            router.goto(varsToLink({
+                ...vars, page: 1, filters: newFilters,
+            }));
+        }
+        close();
+    };
+
+    return (
+        <Floating {...floatingMenuProps(isDark)} hideArrowTip css={{
+            div: {
+                cursor: "default",
+                fontSize: 11,
+                padding: "6px 12px 2px 12px",
+                color: COLORS.neutral60,
+            },
+            ul: {
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+                "li button": { fontSize: 14 },
+            },
+        }}>
+            <ul
+                role="menu"
+                onBlur={handleMenuBlur(close)}
+                css={{ listStyle: "none", margin: 0, padding: 0 }}
+            >
+                <div css={{ paddingTop: 6 }}>{label}</div>
+                {options.map((opt, i) => <MenuItem
+                    key={opt.key}
+                    label={opt.label}
+                    disabled={opt.key === current}
+                    {...itemProps(i)}
+                    onClick={() => handleSelect(opt.key)}
+                    css={{
+                        "&&": { borderBottom: 0 },
+                        "&& button": { padding: "4px 14px 7px" },
+                    }}
+                />)}
+            </ul>
+        </Floating>
+    );
+};
+
+
+const AppliedFilters: React.FC<{ vars: ItemVars }> = ({ vars }) => {
+    const { t } = useTranslation();
+    const router = useRouter();
+
+    type Filter = { key: string; value: string; creatorName?: string };
+    const filters: Filter[] = [];
+    for (const [key, value] of Object.entries(vars.filters)) {
+        if (!value) {
+            continue;
+        }
+        if (key === "creators") {
+            for (const name of value.split(",").filter(Boolean)) {
+                filters.push({ key, value: name, creatorName: name });
+            }
+        } else {
+            filters.push({ key, value });
+        }
+    }
+
+    if (filters.length === 0) {
+        return null;
+    }
+
+    const removeFilter = (key: string) => {
+        const newFilters = { ...vars.filters };
+        delete newFilters[key];
+        router.goto(varsToLink({ ...vars, page: 1, filters: newFilters }));
+    };
+
+    const removeCreator = (name: string) => {
+        const remaining = (vars.filters.creators ?? "")
+            .split(",")
+            .filter(c => c && c !== name);
+        const newFilters = { ...vars.filters };
+        if (remaining.length > 0) {
+            newFilters.creators = remaining.join(",");
+        } else {
+            delete newFilters.creators;
+        }
+        router.goto(varsToLink({ ...vars, page: 1, filters: newFilters }));
+    };
+
+    const formatLabel = (key: string, value: string): string => {
+        switch (key) {
+            case "title":
+                return `${t("general.title")}: ${value}`;
+            case "description":
+                return `${t("general.description")}: ${value}`;
+            case "creators":
+                return `${t("manage.table.filter.creator")}: ${value}`;
+            case "start":
+                return `${t("manage.table.filter.from")}: ${value}`;
+            case "end":
+                return `${t("manage.table.filter.to")}: ${value}`;
+            case "visibility": {
+                const visibilityLabel: string = match(value, {
+                    "public": () => t("manage.table.filter.visibility-public"),
+                    "private": () => t("manage.table.filter.visibility-private"),
+                    "protected": () => t("manage.table.filter.visibility-protected"),
+                    "shared": () => t("manage.table.filter.visibility-shared"),
+                }) ?? value;
+                return `${t("manage.table.filter.visibility")}: ${visibilityLabel}`;
+            }
+            default: return `${key}: ${value}`;
+        }
+    };
+
+    return <div css={{
+        display: "flex",
+        flexDirection: "row",
+        gap: 6,
+        flexWrap: "wrap",
+        marginTop: 12,
+        marginInline: 12,
+    }}>
+        {filters.map(chip => (
+            <div key={chip.creatorName ? `creators:${chip.creatorName}` : chip.key} css={{
+                backgroundColor: COLORS.neutral15,
+                borderRadius: 8,
+                padding: "2px 8px",
+                display: "flex",
+                alignItems: "center",
+                fontSize: 14,
+                gap: 8,
+            }}>
+                {formatLabel(chip.key, chip.value)}
+                <ProtoButton
+                    aria-label={t("manage.table.filter.remove")}
+                    onClick={() => chip.creatorName
+                        ? removeCreator(chip.creatorName)
+                        : removeFilter(chip.key)
+                    }
+                    css={{
+                        padding: 0,
+                        border: 0,
+                        display: "flex",
+                        borderRadius: 4,
+                        ":hover": { backgroundColor: COLORS.neutral25 },
+                    }}
+                >
+                    <LuX />
+                </ProtoButton>
+            </div>
+        ))}
+    </div>;
+};
+
+
+type SortingMenuProps = {
+    close: () => void;
+    vars: ItemVars;
+    sortOptions: SortingProps<SortColumn>[];
+}
+
+const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) => {
+    const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
+    const itemId = useId();
+    const router = useRouter();
+    const itemProps = useFloatingItemProps();
+
+    const directionTransKey = vars.order.direction === "ASCENDING" ? "ascending" : "descending";
+
+    const listStyle = {
+        div: {
+            cursor: "default",
+            fontSize: 12,
+            padding: "6px 12px 2px 12px",
+            color: COLORS.neutral60,
+        },
+        ul: {
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            "li button": { fontSize: 15 },
+        },
+    };
+
+    const sortDirections: SortingProps<SortDirection>[] = [
+        { key: "ASCENDING", label: "manage.table.sorting.ascending" },
+        { key: "DESCENDING", label: "manage.table.sorting.descending" },
+    ];
+
+    const extraStyles = css({
+        "&&": { borderBottom: 0 },
+        "&& button": { padding: "4px 14px 7px" },
+    });
+
+    const list = <ul role="menu" onBlur={handleMenuBlur(close)}>
+        <div css={{ paddingTop: 6 }}>{t("manage.table.sorting.sort-by")}</div>
+        {sortOptions.map((option, index) => <MenuItem
+            key={`${itemId}-${option.key}`}
+            label={t(option.label)}
+            aria-label={
+                t("manage.table.sorting.description", {
+                    title: option,
+                    direction: t(`manage.table.sorting.${directionTransKey}`),
+                })
+            }
+            disabled={option.key === vars.order.column}
+            {...itemProps(index)}
+            onClick={() => router.goto(varsToLink({
+                ...vars,
+                order: {
+                    column: option.key,
+                    direction: vars.order.direction,
+                },
+            }))}
+            css={extraStyles}
+        />)}
+        <div css={{
+            borderTop: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}`,
+            "&&": { paddingTop: 6 },
+        }}>
+            {t("manage.table.sorting.order")}
+        </div>
+        {sortDirections.map((direction, index) => <MenuItem
+            key={`${itemId}-${direction.key}`}
+            label={t(`manage.table.sorting.${direction.key === "ASCENDING"
+                ? "ascending"
+                : "descending"
+            }-cap`)}
+            aria-label={
+                t("manage.table.sorting.description", {
+                    column: vars.order.column,
+                    direction: direction.label,
+                })
+            }
+            disabled={direction.key === vars.order.direction}
+            {...itemProps(sortOptions.length + index)}
+            onClick={() => router.goto(varsToLink({
+                ...vars,
+                order: {
+                    column: vars.order.column,
+                    direction: direction.key,
+                },
+            }))}
+            css={extraStyles}
+        />)}
+    </ul>;
+
+    return <Floating
+        {...floatingMenuProps(isDark)}
+        hideArrowTip
+        css={listStyle}
+    >
+        {list}
+    </Floating>;
+};
+
+const SearchField: React.FC<{ vars: ItemVars; textField: string }> = ({ vars, textField }) => {
     const { t } = useTranslation();
     const inputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
+    const isCreators = textField === "creators";
 
-    const search = (q: string) => {
+    // Parse comma-separated creator values
+    const creatorChips = isCreators
+        ? (vars.filters.creators ?? "").split(",").filter(Boolean)
+        : [];
+
+    const navigate = (newFilters: Record<string, string>) => {
         router.goto(varsToLink({
             order: {
                 column: vars.order.column,
                 direction: vars.order.direction,
             },
             page: 1,
-            filters: { title: q },
+            filters: newFilters,
         }));
+    };
 
+    const search = (q: string) => {
+        const newFilters = { ...vars.filters };
+        if (isCreators) {
+            // Append to existing list.
+            const trimmed = q.trim();
+            if (trimmed) {
+                const existing = creatorChips;
+                if (!existing.includes(trimmed)) {
+                    existing.push(trimmed);
+                }
+                newFilters.creators = existing.join(",");
+            }
+            // Clear the input after adding.
+            const input = currentRef(inputRef);
+            input.value = "";
+        } else if (q) {
+            newFilters[textField] = q;
+        } else {
+            delete newFilters[textField];
+        }
+        navigate(newFilters);
     };
 
     const clear = () => {
-        const { title, ...restFilters } = vars.filters;
-        if (Object.keys(vars.filters).length) {
-            router.goto(varsToLink({
-                order: {
-                    column: vars.order.column,
-                    direction: vars.order.direction,
-                },
-                page: 1,
-                filters: restFilters,
-            }));
+        const newFilters = { ...vars.filters };
+        delete newFilters[textField];
+        if (Object.keys(newFilters).length) {
+            navigate(newFilters);
         } else {
             const input = currentRef(inputRef);
             input.value = "";
         }
     };
 
-    return <SearchInput
-        {...{ search, inputRef, clear }}
-        defaultValue={vars.filters.title}
-        inputProps={{ placeholder: t("manage.table.filter.by-title") }}
-    />;
+    const placeholderKey = textField === "description"
+        ? "manage.table.filter.by-description"
+        : textField === "creators"
+            ? "manage.table.filter.by-creator"
+            : "manage.table.filter.by-title";
+
+    return <div css={{
+        [screenWidthAbove(1080)]: {
+            maxWidth: 450,
+        },
+        svg: {
+            left: 6,
+            fontSize: 18,
+        },
+        input: {
+            border: 0,
+            paddingLeft: 34,
+            fontSize: 16,
+            outline: `1px solid ${COLORS.neutral30}`,
+        },
+    }}>
+        <SearchInput
+            key={textField}
+            {...{ search, inputRef, clear }}
+            height={30}
+            spinnerSize={20}
+            defaultValue={isCreators ? "" : vars.filters[textField]}
+            inputProps={{ placeholder: t(placeholderKey) }}
+        />
+    </div>;
 };
 
-const THUMBNAIL_WIDTH = 16 * 8;
+
+
+// ======== Main components ========
 
 type SortColumn = VideosSortColumn | SeriesSortColumn | PlaylistsSortColumn;
 type SortDirection = "ASCENDING" | "DESCENDING" | "%future added value";
@@ -180,146 +843,7 @@ export type ColumnProps<T> = {
 
 type Item = { id: string }
 
-const ItemTable = <T extends Item>({
-    connection,
-    vars,
-    additionalColumns,
-    RenderRow,
-}: SharedTableProps<T>) => {
-    const { t } = useTranslation();
-
-    // We need to know whether the table header is in its "sticky" position to apply a box
-    // shadow to indicate that the user can still scroll up. This solution uses intersection
-    // observer. Compare: https://stackoverflow.com/a/57991537/2408867
-    const [headerSticks, setHeaderSticks] = useState(false);
-    const tableHeaderRef = useRef<HTMLTableSectionElement>(null);
-    useEffect(() => {
-        const tableHeader = tableHeaderRef.current;
-        if (tableHeader) {
-            const observer = new IntersectionObserver(
-                ([e]) => setHeaderSticks(!e.isIntersecting),
-                { threshold: [1], rootMargin: "-1px 0px 0px 0px" },
-            );
-
-            observer.observe(tableHeader);
-            return () => observer.unobserve(tableHeader);
-        }
-        return () => {};
-    });
-
-    return <div css={{ position: "relative", overflow: "auto" }}>
-        <table css={{
-            width: "100%",
-            borderSpacing: 0,
-            tableLayout: "fixed",
-            "& > thead": {
-                position: "sticky",
-                top: 0,
-                zIndex: 10,
-                backgroundColor: COLORS.neutral05,
-                "&  > tr > th": {
-                    borderBottom: `1px solid ${COLORS.neutral25}`,
-                    textAlign: "left",
-                    padding: "8px 12px",
-                },
-                ...headerSticks && {
-                    boxShadow: "0 0 20px rgba(0, 0, 0, 0.3)",
-                    clipPath: "inset(0px 0px -20px 0px)",
-                },
-            },
-            "& > tbody": {
-                "& > tr:hover, tr:focus-within": {
-                    backgroundColor: COLORS.neutral15,
-                },
-                "& > tr:not(:first-child) > td": {
-                    borderTop: `1px solid ${COLORS.neutral25}`,
-                },
-                "& td": {
-                    padding: 6,
-                    verticalAlign: "top",
-                    "&:not(:first-child)": {
-                        padding: "8px 12px 8px 8px",
-                    },
-                },
-            },
-        }}>
-            <colgroup>
-                {/* Each table has thumbnails, but their width might vary */}
-                <col span={1} css={{ width: THUMBNAIL_WIDTH + 2 * 6 }} />
-                {/* Each table has a column for title and description */}
-                <col span={1} css={{ [screenWidthAtMost(1000)]: { width: 135 } }} />
-                {/*
-                    Additional columns can be declared in the specific column array.
-                */}
-                {additionalColumns?.map(col =>
-                    <col key={col.key} span={1} css={{ width: col.headerWidth ?? 135 }} />)
-                }
-            </colgroup>
-
-            <thead ref={tableHeaderRef}>
-                <tr>
-                    {/* Thumbnail */}
-                    <th></th>
-                    {/* Title */}
-                    <ColumnHeader
-                        label={t("general.title")}
-                        sortKey="TITLE"
-                        {...{ vars }}
-                    />
-                    {/* Sort columns */}
-                    {additionalColumns?.map(col => (
-                        <ColumnHeader
-                            key={col.key}
-                            label={t(col.label)}
-                            sortKey={col.key}
-                            {...{ vars }}
-                        />
-                    ))}
-                </tr>
-            </thead>
-            <tbody>
-                {connection.items.map(item => <RenderRow key={item.id} item={item}/>)}
-            </tbody>
-        </table>
-    </div>;
-};
-
-// Some styles are used by more than one row component.
-// Declaring these here helps with keeping them in sync.
-export const thumbnailLinkStyle = {
-    ":focus-visible": { outline: "none" },
-    ":focus-within div:first-child": {
-        outline: `2.5px solid ${COLORS.focus}`,
-        outlineOffset: 1,
-    },
-} as const;
-
-export const titleLinkStyle = {
-    ":focus, :focus-visible": {
-        outline: "none",
-    },
-    textDecoration: "none",
-} as const;
-
-export const descriptionStyle = {
-    padding: "0 4px",
-} as const;
-
-// Used for both `EventRow` and `SeriesRow`.
-export const DateColumn: React.FC<{ date?: string | null }> = ({ date }) => {
-    const isDark = useColorScheme().scheme === "dark";
-    const parsedDate = date && new Date(date);
-    const greyColor = { color: isDark ? COLORS.neutral60 : COLORS.neutral50 };
-
-    return <td css={{ fontSize: 14 }}>
-        {parsedDate
-            ? <PrettyDate date={parsedDate} />
-            : <i css={greyColor}>{"—"}</i>
-        }
-    </td>;
-};
-
-type TableRowItem = {
+type ListItemProps = {
     tobiraDeletionTimestamp?: string | null;
     title: string;
     description?: string | null;
@@ -329,22 +853,20 @@ type TableRowItem = {
     state: "WAITING" | "READY" | "%future added value";
 });
 
-type TableRowProps<T extends TableRowItem> = {
+type GenericListItemProps<T extends ListItemProps> = {
     itemType: OcEntity;
-    thumbnail: (state: ThumbnailItemState) => ReactNode;
+    thumbnail: (status: ThumbnailItemState) => ReactNode;
     link: string;
     item: T;
     customColumns?: ReactNode[];
     created?: string;
+    metadata: ReactNode[];
+    shareButton: ReactNode;
+    linkButton: ReactNode;
 };
 
-/**
- * A row in the item table
- * This is assuming that each item (video, series, playlist) has a thumbnail, title,
- * and description. These can still be somewhat customized.
- * Additional columns can be declared in the respective item column arrays.
- */
-export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowProps<T>) => {
+export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericListItemProps<T>) => {
+    const isDark = useColorScheme().scheme === "dark";
     const deletionTimestamp = item.tobiraDeletionTimestamp;
     const createdTimestamp = props.created;
     const deletionIsPending = Boolean(deletionTimestamp);
@@ -363,70 +885,267 @@ export const TableRow = <T extends TableRowItem>({ item, ...props }: TableRowPro
         && Date.parse(deletionTimestamp) + pollPeriod * 2 + 60000 < Date.now());
 
     // Figuring out an appropriate time after which sync of a waiting event has possibly failed
-    // is a littler harder, since for videos, processing time is proportionally dependent on the
+    // is a little harder, since for videos, processing time is proportionally dependent on the
     // size of the uploaded file and length of the video. So this is rather arbitrarily set to 2.5
     // hours.
     const syncFailed = Boolean(!isSynced(item) && createdTimestamp
         && Date.parse(createdTimestamp) + 150 * 60000 < Date.now());
 
-    return <tr>
+    const hasDescription = Boolean(item.description || deletionIsPending || !isSynced(item));
+
+    // Videos use the medium breakpoint; series and playlists use the small one.
+    const variableBreakpoint = props.itemType === "video" ? BREAKPOINT_MEDIUM : BREAKPOINT_SMALL;
+
+    return <li css={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "row",
+        borderRadius: 12,
+        padding: 6,
+        gap: 12,
+        textDecoration: "none",
+        transition: "background 200ms, outline-color 200ms",
+        outline: "1px solid transparent",
+        "&:hover, &:focus-within": {
+            backgroundColor: COLORS.neutral15,
+            outlineColor: COLORS.neutral20,
+            transition: "background 50ms, outline-color 50ms",
+        },
+        [screenWidthAtMost(variableBreakpoint)]: {
+            flexWrap: "wrap",
+            marginBottom: 8,
+            gap: "4px 12px",
+        },
+
+        "&:hover > div:last-of-type, &:focus-within > div:last-of-type": {
+            "button, a": { opacity: 1 },
+        },
+    }}>
+        {/* Link overlay (invisible, covers item completely) */}
+        {!deletionIsPending && <Link
+            to={props.link}
+            css={{ position: "absolute", inset: 0, borderRadius: 12 }}
+        />}
+
         {/* Thumbnail */}
-        <td>
+        <div css={{
+            marginBottom: 4,
+            width: 163,
+            [screenWidthAtMost(variableBreakpoint)]: {
+                width: 150,
+            },
+        }}>
             {deletionIsPending
                 ? props.thumbnail(thumbnailState)
-                : <Link to={props.link} css={{ ...thumbnailLinkStyle }}>
+                : <Link to={props.link}>
                     {props.thumbnail(thumbnailState)}
                 </Link>
             }
-        </td>
-        <td>
-            <div css={{
+        </div>
+
+
+        {/* ======= Main body =======  */}
+
+        {/* Mobile specific */}
+        <div css={{
+            display: "none",
+            [screenWidthAtMost(variableBreakpoint)]: {
                 display: "flex",
-                alignItems: "baseline",
-                gap: 8,
-            }}>
-                <div css={{
-                    whiteSpace: "nowrap",
-                    textOverflow: "ellipsis",
-                    overflow: "hidden",
-                    padding: "0 4px",
-                    ":focus-within": {
-                        borderRadius: 4,
-                        outline: `2.5px solid ${COLORS.focus}`,
-                    },
-                }}>
-                    {/* Title */}
-                    {deletionIsPending
-                        ? <span css={{ color: COLORS.neutral60 }}>{item.title}</span>
-                        : <Link to={props.link} css={{ ...titleLinkStyle }}>{item.title}</Link>
+                flex: 1,
+                minWidth: 0,
+                gap: 4,
+            },
+        }}>
+            <div css={{ flex: 1, minWidth: 0 }}>
+                {/* Title mobile  */}
+                <h3 css={{
+                    color: COLORS.primary1,
+                    fontSize: 16,
+                    lineHeight: 1.3,
+                    paddingBottom: 2,
+                    ...ellipsisOverflowCss(2),
+                }}>{item.title}</h3>
+
+                {/* Description mobile */}
+                <div css={{ marginTop: 2 }}>
+                    {!isSynced(item) && props.itemType !== "playlist"
+                        ? <StatusPendingDescription
+                            action={"sync"}
+                            itemType={props.itemType}
+                            hasFailed={syncFailed}
+                            actionDate={creationDate}
+                        />
+                        : (deletionIsPending && props.itemType !== "playlist"
+                            ? <StatusPendingDescription
+                                action={"deletion"}
+                                itemType={props.itemType}
+                                hasFailed={deletionFailed}
+                                actionDate={deletionDate}
+                            />
+                            : <SmallDescription
+                                withoutPlaceholder
+                                lines={2}
+                                text={item.description}
+                                css={{
+                                    paddingLeft: 2,
+                                    fontSize: 12,
+                                    lineHeight: 1.4,
+                                }}
+                            />
+                        )
                     }
                 </div>
             </div>
-            {/* Description */}
-            {!isSynced(item) && props.itemType !== "playlist"
-                ? <StatusPendingDescription
-                    action={"sync"}
-                    itemType={props.itemType}
-                    hasFailed={syncFailed}
-                    actionDate={creationDate}
-                />
-                : (deletionIsPending && props.itemType !== "playlist"
-                    ? <StatusPendingDescription
-                        action={"deletion"}
-                        itemType={props.itemType}
-                        hasFailed={deletionFailed}
-                        actionDate={deletionDate}
-                    />
-                    : <SmallDescription
-                        css={{ ...descriptionStyle }}
-                        text={item.description}
-                    />
-                )
-            }
-        </td>
-        {props.customColumns}
-    </tr>;
+        </div>
+
+        <div css={{
+            minWidth: 0,
+            display: "flex",
+            justifyContent: "space-between",
+            flex: "1",
+            gap: 6,
+            [screenWidthAtMost(variableBreakpoint)]: {
+                flexBasis: "100%",
+            },
+        }}>
+            <div css={{
+                color: COLORS.neutral90,
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+                flex: 1,
+                minWidth: 0,
+                marginRight: 12,
+                maxWidth: 700,
+            }}>
+                {/* Title desktop */}
+                <div css={{
+                    display: "flex",
+                    gap: 6,
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    [screenWidthAtMost(variableBreakpoint)]: {
+                        display: "none",
+                    },
+                }}>
+                    <h3 css={{
+                        color: COLORS.primary1,
+                        fontSize: 16,
+                        lineHeight: 1.1,
+                        paddingBottom: 2,
+                        ...ellipsisOverflowCss(1),
+                    }}>{item.title}</h3>
+                </div>
+
+                {/* Description desktop */}
+                <div css={{
+                    marginBottom: 4,
+                    [screenWidthAtMost(variableBreakpoint)]: {
+                        display: "none",
+                    },
+                }}>
+                    {!isSynced(item) && props.itemType !== "playlist"
+                        ? <StatusPendingDescription
+                            action={"sync"}
+                            itemType={props.itemType}
+                            hasFailed={syncFailed}
+                            actionDate={creationDate}
+                        />
+                        : (deletionIsPending && props.itemType !== "playlist"
+                            ? <StatusPendingDescription
+                                action={"deletion"}
+                                itemType={props.itemType}
+                                hasFailed={deletionFailed}
+                                actionDate={deletionDate}
+                            />
+                            : <SmallDescription
+                                withoutPlaceholder
+                                lines={1}
+                                text={item.description}
+                                css={{
+                                    paddingLeft: 2,
+                                    fontSize: 12,
+                                    lineHeight: 1.4,
+                                }}
+                            />
+                        )
+                    }
+                </div>
+
+                <ShrinkWrapContainer breakpoint={variableBreakpoint} css={{
+                    ...hasDescription && { marginTop: 4 },
+                    gap: "4px 18px",
+                    "&& svg": { fontSize: 13 },
+                    color: COLORS.neutral80,
+                    fontSize: 12,
+                    whiteSpace: "nowrap",
+                    backgroundColor: COLORS.neutral10,
+                    borderRadius: 8,
+                    padding: "2px 12px 2px 6px",
+                    ...isDark && { color: COLORS.neutral90 },
+                    [screenWidthAtMost(variableBreakpoint)]: {
+                        width: "100%",
+                    },
+                    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                        gap: "2px 12px",
+                    },
+                }}>
+                    {props.metadata}
+                </ShrinkWrapContainer>
+            </div>
+        </div>
+
+        {/* Action buttons desktop */}
+        {!item.tobiraDeletionTimestamp && <div css={{
+            "button, a": { opacity: 0, transition: "opacity 200ms" },
+            display: "flex",
+            flexDirection: "column",
+            [screenWidthAtMost(variableBreakpoint)]: {
+                display: "none",
+            },
+        }}>
+            <WithTooltip placement="left" tooltip="Share">
+                <div css={shareButtonStyle}>
+                    {props.shareButton}
+                </div>
+            </WithTooltip>
+            <WithTooltip placement="left" tooltip="Link">
+                <div>{props.linkButton}</div>
+            </WithTooltip>
+        </div>}
+    </li>;
 };
+
+
+// Some styles are used by more than one row component.
+// Declaring these here helps with keeping them in sync.
+// Todo: move to `EditList` thingy, it's not used here anymore.
+export const thumbnailLinkStyle = {
+    ":focus-visible": { outline: "none" },
+    ":focus-within div:first-child": {
+        outline: `2.5px solid ${COLORS.focus}`,
+        outlineOffset: 1,
+    },
+};
+
+/** Creators display used in manage list items. */
+export const ListCreators: React.FC<{
+    creators: readonly string[];
+}> = ({ creators }) => creators.length === 0 ? null : (
+    <Creators creators={[...creators]} css={{
+        minWidth: 0,
+        fontSize: 12,
+        svg: { fontSize: 15 },
+        ul: {
+            display: "inline-block",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+        },
+        li: { display: "inline" },
+        gap: 6,
+    }} />
+);
 
 type PendingDescriptionProps = {
     action: "sync" | "deletion";
@@ -449,7 +1168,7 @@ const StatusPendingDescription: React.FC<PendingDescriptionProps> = ({
         ? t(`${itemType}.not-ready.title`)
         : t(`manage.table.${action}.${hasFailed ? "failed-maybe" : "pending"}`);
 
-    return <div css={{ display: "flex" }}>
+    return (
         <div css={{
             color: isDark ? COLORS.neutral60 : COLORS.neutral50,
             display: "flex",
@@ -467,63 +1186,49 @@ const StatusPendingDescription: React.FC<PendingDescriptionProps> = ({
                 mode={hasFailed ? "warning" : "info"}
             />
         </div>
-    </div>;
+    );
 };
 
 
-type ColumnHeaderProps = {
-    label: string;
-    sortKey: SortColumn;
-    vars: ItemVars;
-};
 
-const ColumnHeader: React.FC<ColumnHeaderProps> = ({ label, sortKey, vars }) => {
+// ======== Other components ========
+
+type CreateButtonProps = {
+    condition: "canUpload" | "canCreateSeries" | "canCreatePlaylists";
+    path: string;
+    text: ParseKeys;
+    Icon: IconType;
+}
+export const CreateButton: React.FC<CreateButtonProps> = ({
+    condition, path, text, Icon,
+}) => {
     const { t } = useTranslation();
+    const user = useUser();
 
-    const direction = vars.order.direction === "ASCENDING" ? "DESCENDING" : "ASCENDING";
-    const directionTransKey = direction === "ASCENDING" ? "ascending" : "descending";
-    const inFilters = sortKey.toLowerCase() in vars.filters;
-
-    return <th>
-        <Link
-            aria-label={
-                t("manage.table.columns.description", {
-                    title: label,
-                    direction: t(`manage.table.columns.${directionTransKey}`),
-                })
-            }
-            to={varsToLink({
-                order: {
-                    column: sortKey,
-                    direction,
+    return (!isRealUser(user) || !user[condition])
+        ? null
+        : <LinkButton to={path} css={{
+            backgroundColor: "unset",
+            padding: "4px 10px",
+            gap: 7,
+            height: 38,
+            fontSize: 14,
+            [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                "&&, &&:hover": {
+                    border: 0,
                 },
-                page: vars.page,
-                filters: vars.filters,
-            })}
-            css={{
-                display: "inline-flex",
-                alignItems: "center",
-                cursor: "pointer",
-                transition: "color 70ms",
-                textDecoration: "none",
-                borderRadius: 4,
-                outlineOffset: 1,
-                "& > svg": {
-                    marginLeft: 6,
-                    fontSize: 22,
-                },
-            }}
-        >
-            {label}
-            {vars.order.column === sortKey && match(vars.order.direction, {
-                // Seems like this is flipped right? But no, a short internal
-                // poll showed that this matches the intuition of almost everyone.
-                "ASCENDING": () => <LuArrowDownNarrowWide />,
-                "DESCENDING": () => <LuArrowUpWideNarrow />,
-            })}
-            {inFilters && <LucideFunnel size={18} />}
-        </Link>
-    </th>;
+                height: "unset",
+                padding: 8,
+                marginTop: -4,
+            },
+        }}>
+            <p css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                display: "none",
+            } }}>
+                {t(text)}
+            </p>
+            <Icon size={17} />
+        </LinkButton>;
 };
 
 const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
@@ -613,6 +1318,10 @@ const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled, label }) 
     >{children}</Link>
 );
 
+
+// ======== Filtering/sorting related functions ========
+
+
 // TODO: add default sort column of playlists
 const DEFAULT_SORT_COLUMN = "CREATED";
 const DEFAULT_SORT_DIRECTION = "DESCENDING";
@@ -623,6 +1332,7 @@ type QueryVars = {
     sortColumn: string;
     direction: SortDirection;
 }
+
 export const parsePaginationAndDirection = (
     queryParams: URLSearchParams,
     defaultDirection: SortDirection = DEFAULT_SORT_DIRECTION,
@@ -647,7 +1357,14 @@ export const parsePaginationAndDirection = (
 };
 
 
-const FILTERS = ["title"];
+const FILTERS = [
+    "title",
+    "description",
+    "creators",
+    "start",
+    "end",
+    "visibility",
+];
 
 const parseFilters = (queryParams: URLSearchParams): Record<string, string> => {
     const filters: Record<string, string> = {};
@@ -709,8 +1426,176 @@ const varsToQueryParams = (vars: ItemVars): URLSearchParams => {
     return searchParams;
 };
 
+/** Reads the active text field selector from the URL. */
+const parseTextField = (): "title" | "description" | "creators" => {
+    const tf = new URLSearchParams(document.location.search).get("tf");
+    return tf === "description"
+        ? "description"
+        : tf === "creators"
+            ? "creators"
+            : "title";
+};
+
 const varsToLink = (vars: ItemVars): string => {
     const url = new URL(document.location.href);
+    // Preserve the 'tf' param
+    const tf = url.searchParams.get("tf");
     url.search = decodeURIComponent(varsToQueryParams(vars).toString());
+    if (tf) {
+        url.searchParams.set("tf", tf);
+    }
     return url.href;
 };
+
+const VISIBILITY_MAP = {
+    "public": "PUBLIC",
+    "private": "PRIVATE",
+    "protected": "PROTECTED",
+    "shared": "SHARED",
+} as const;
+
+/**
+ * Builds a GraphQL SearchFilter input from the parsed filter vars.
+ * Converts date strings (YYYY-MM-DD) to ISO DateTime values.
+ * For `end`, adds a full day so that filtering is inclusive of the end date.
+ */
+export const buildSearchFilter = (filters: Record<string, string>) => {
+    const title = filters.title ?? null;
+    const description = filters.description ?? null;
+
+    const start = filters.start ?? null;
+    const end = filters.end ?? null;
+    const visibilityKey = filters.visibility;
+    const visibility = visibilityKey && visibilityKey in VISIBILITY_MAP
+        ? VISIBILITY_MAP[visibilityKey as keyof typeof VISIBILITY_MAP]
+        : null;
+
+    const createdStart = start ? `${start}T00:00:00Z` : null;
+    // Make end date inclusive: set to end of day
+    const createdEnd = end
+        ? new Date(
+            new Date(`${end}T00:00:00Z`).getTime() + 86400000 - 1,
+        ).toISOString()
+        : null;
+
+    const creators = filters.creators
+        ? filters.creators.split(",").filter(Boolean)
+        : null;
+
+    const hasFilter = title || description || (creators && creators.length > 0)
+        || createdStart || createdEnd
+        || visibility;
+    return hasFilter
+        ? {
+            title,
+            description,
+            creators,
+            createdStart,
+            createdEnd,
+            visibility,
+        }
+        : null;
+};
+
+const shareButtonStyle = css({
+    "&& > div > button": {
+        background: "transparent",
+        padding: 4,
+        border: 0,
+        borderRadius: 8,
+        height: "unset",
+        "> svg": {
+            width: "18px",
+            height: "18px",
+        },
+    },
+    "&& > div > button:hover": {
+        backgroundColor: COLORS.neutral20,
+        border: 0,
+    },
+    "> div > button + div": {
+        fontSize: 14,
+        borderRadius: 12,
+        "> div": {
+            button: { opacity: 1 },
+            height: 165,
+            width: 300,
+            borderRadius: 12,
+            "> div + div": {
+                gap: 8,
+                padding: 11,
+                "input, button": {
+                    fontSize: 14,
+                },
+            },
+        },
+    },
+});
+
+
+type ShrinkWrapContainerProps = PropsWithChildren<{
+    className?: string;
+    breakpoint: number;
+}>
+/**
+ * Wraps around children to always apply `width: fit-content`-like logic, even
+ * when the parent (i.e. this wrapper) itself is wrapping. That's a lot of wraps.
+ * Basically this just makes sure this works for components that can either span one or two lines.
+ * Below `breakpoint` however, the measurement is skipped so the element just uses 100% width.
+ */
+const ShrinkWrapContainer: React.FC<ShrinkWrapContainerProps> = ({
+    className, breakpoint, children,
+}) => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    const measure = useCallback(() => {
+        const el = ref.current;
+        if (!el) {
+            return;
+        }
+
+        // Reset before measure.
+        el.style.width = "";
+
+        if (window.innerWidth <= breakpoint) {
+            return;
+        }
+
+        // Find rightmost edge of all children, then set width to  fit content.
+        const containerLeft = el.getBoundingClientRect().left;
+        let maxRight = 0;
+        for (const child of el.children) {
+            const right = child.getBoundingClientRect().right - containerLeft;
+            if (right > maxRight) {
+                maxRight = right;
+            }
+        }
+        const paddingRight = parseFloat(getComputedStyle(el).paddingRight) || 0;
+        el.style.width = `${Math.ceil(maxRight + paddingRight)}px`;
+    }, [breakpoint]);
+
+    useLayoutEffect(() => measure());
+
+    // Observe parent's size to re-measure on resize.
+    useEffect(() => {
+        const parent = ref.current?.parentElement;
+        if (!parent) {
+            return;
+        }
+        const observer = new ResizeObserver(() => measure());
+        observer.observe(parent);
+        return () => observer.disconnect();
+    }, [measure]);
+
+    return <div
+        ref={ref}
+        className={className}
+        css={{
+            display: "inline-flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            maxWidth: "100%",
+        }}
+    >{children}</div>;
+};
+

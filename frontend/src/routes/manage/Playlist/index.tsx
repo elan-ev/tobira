@@ -1,32 +1,28 @@
 import { graphql } from "react-relay";
 import { match } from "@opencast/appkit";
+import { LuCirclePlus } from "react-icons/lu";
 
-import i18n from "../../../i18n";
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import {
-    ColumnProps,
-    createQueryParamsParser,
-    DateColumn,
-    ManageItems,
-    TableRow,
+    CreateButton, createQueryParamsParser, ListItem,
+    ManageItems, buildSearchFilter, ListCreators,
 } from "../Shared/Table";
-
-import { keyOfId } from "../../../util";
+import { AccessIcon, keyOfId } from "../../../util";
 import {
     PlaylistsManageQuery,
     PlaylistsManageQuery$data,
     PlaylistsSortColumn,
 } from "./__generated__/PlaylistsManageQuery.graphql";
 import { PlaylistThumbnail } from "./Shared";
-import { useTranslation } from "react-i18next";
-import { isRealUser, useUser } from "../../../User";
-import { LinkButton } from "../../../ui/LinkButton";
-import { LuCirclePlus } from "react-icons/lu";
-import { CREATE_PLAYLIST_PATH } from "./Create";
+import { CreatePlaylistRoute } from "./Create";
+import { EntryCount, Timestamp } from "../../../ui/metadata";
+import { VideoListShareButton } from "../../../ui/Blocks/VideoList";
+import { DirectPlaylistRoute } from "../../Playlist";
+import { ItemLinkButton } from "../Video";
 
 
 export const PATH = "/~manage/playlists" as const;
@@ -39,11 +35,9 @@ export const ManagePlaylistsRoute = makeRoute({
         }
 
         const vars = queryParamsToPlaylistsVars(url.searchParams);
-        const titleFilter = vars.filters?.title ?? null;
         const queryVars = {
             ...vars,
-            // Todo: Adjust when more filter options are added
-            filter: titleFilter ? { title: titleFilter } : null,
+            filter: buildSearchFilter(vars.filters),
         };
         const queryRef = loadQuery<PlaylistsManageQuery>(query, queryVars);
 
@@ -55,14 +49,17 @@ export const ManagePlaylistsRoute = makeRoute({
                 render={data => !data.currentUser
                     ? <NotAuthorized />
                     : <ManageItems
+                        withCreatorFilter
                         vars={vars}
                         connection={data.currentUser.myPlaylists}
                         titleKey="manage.playlist.table.title"
-                        additionalColumns={playlistColumns}
-                        RenderRow={PlaylistRow}
-                    >
-                        <CreatePlaylistLink />
-                    </ManageItems>
+                        additionalSortOptions={[
+                            { key: "ENTRY_COUNT", label: "playlist.entry-count" },
+                            { key: "UPDATED", label: "manage.table.sorting.updated" },
+                        ]}
+                        RenderItem={PlaylistItem}
+                        createButton={<CreateLink />}
+                    />
                 }
             />,
             dispose: () => queryRef.dispose(),
@@ -86,28 +83,26 @@ const query = graphql`
                 items {
                     id
                     title
+                    creator
                     updated
                     description
                     numEntries
+                    readRoles
+                    writeRoles
                     thumbnailStack { thumbnails { url live audioOnly state }}
+                    hostRealms { id }
                 }
             }
         }
     }
 `;
 
-const CreatePlaylistLink: React.FC = () => {
-    const { t } = useTranslation();
-    const user = useUser();
-
-    return (!isRealUser(user) || !user.canCreatePlaylists)
-        ? null
-        : <LinkButton to={CREATE_PLAYLIST_PATH} css={{ width: "fit-content" }}>
-            {t("manage.playlist.table.create")}
-            <LuCirclePlus />
-        </LinkButton>;
-};
-
+const CreateLink: React.FC = () => <CreateButton
+    condition="canCreatePlaylists"
+    path={CreatePlaylistRoute.url}
+    text="manage.playlist.table.create"
+    Icon={LuCirclePlus}
+/>;
 
 
 export type PlaylistConnection
@@ -115,29 +110,37 @@ export type PlaylistConnection
 export type Playlists = PlaylistConnection["items"];
 export type SinglePlaylist = Playlists[number];
 
-const playlistColumns: ColumnProps<SinglePlaylist>[] = [
-    {
-        key: "ENTRY_COUNT",
-        label: "video.plural",
-        headerWidth: 112,
-        column: ({ item }) => <td css={{ fontSize: 14 }}>
-            {i18n.t("manage.video-list.no-of-videos", { count: item.numEntries })}
-        </td>,
-    },
-    {
-        key: "UPDATED",
-        label: "manage.table.columns.updated",
-        column: ({ item }) => <DateColumn date={item.updated} />,
-    },
-];
 
-
-const PlaylistRow: React.FC<{ item: SinglePlaylist }> = ({ item }) => <TableRow
+const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
     itemType="playlist"
     item={{ ...item, state: "READY" }}
-    thumbnail={_ => <PlaylistThumbnail playlist={item} />}
     link={`${PATH}/${keyOfId(item.id)}`}
-    customColumns={playlistColumns.map(col => <col.column key={col.key} item={item} />)}
+    thumbnail={_ => <PlaylistThumbnail playlist={item} />}
+    metadata={[
+        <div key="access-timestamp-count" css={{
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+            gap: 18,
+        }}>
+            <AccessIcon item={item} />
+            <Timestamp timestamp={item.updated ?? undefined} />
+            <EntryCount forPlaylist count={item.numEntries} />
+        </div>,
+        <ListCreators
+            key="creators"
+            creators={[item.creator]}
+        />,
+    ]}
+    shareButton={<VideoListShareButton
+        kind="playlist"
+        shareUrl={new URL(DirectPlaylistRoute.url({ playlistId: item.id }), document.baseURI).href}
+        rssUrl={`/~rss/series/${keyOfId(item.id)}`}
+        hideLabel
+    />}
+    linkButton={<ItemLinkButton
+        to={new URL(DirectPlaylistRoute.url({ playlistId: item.id }), document.baseURI).href}
+    />}
 />;
 
 
