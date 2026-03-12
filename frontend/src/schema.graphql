@@ -179,6 +179,11 @@ input RealmSpecifier {
   pathSegment: String!
 }
 
+input RemovedEvent {
+  id: ID!
+  seriesId: ID
+}
+
 input SearchFilter {
   title: String
 }
@@ -593,7 +598,7 @@ type Mutation {
     and the series is preliminarily updated in Tobira's DB.
   """
   updateSeriesMetadata(id: ID!, metadata: BasicMetadata!): Series!
-  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [ID!]!): Series!
+  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [RemovedEvent!]!): Series!
   """
     Sends an http request to Opencast to create a new series,
     and stores the series in Tobira's DB.
