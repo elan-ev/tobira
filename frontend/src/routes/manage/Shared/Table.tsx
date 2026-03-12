@@ -251,6 +251,14 @@ const SortAndOrder: React.FC<SortAndOrderProps> = ({ additionalSortOptions, vars
 };
 
 
+/** Blur handler that closes a floating menu when focus moves outside its container. */
+const handleMenuBlur = (close: () => void) =>
+    (event: React.FocusEvent<HTMLElement, Element>) => {
+        if (!event.currentTarget.contains(event.relatedTarget as HTMLElement)) {
+            close();
+        }
+    };
+
 const filterTriggerStyles = {
     height: 30,
     marginLeft: "auto",
@@ -342,47 +350,53 @@ const DateFilter: React.FC<{ vars: ItemVars }> = ({ vars }) => {
         ...focusStyle({ width: 2, inset: true }),
     };
 
+    const listRef = useRef<FloatingHandle>(null);
+    const close = () => listRef.current?.close();
+
     return <FloatingBaseMenu
+        ref={listRef}
         triggerContent={<TriggerLabel triggerLabel={t("manage.table.filter.date")} />}
         triggerStyles={filterTriggerStyles}
         label={t("manage.table.filter.select-date")}
         icon={<LuCalendar />}
         list={
             <Floating {...floatingMenuProps(isDark)} hideArrowTip>
-                <div css={{
-                    cursor: "default",
-                    fontSize: 11,
-                    padding: "6px 12px 2px 12px",
-                    color: COLORS.neutral60,
-                }}>
-                    {t("manage.table.filter.select-date")}
-                </div>
-                <div css={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 8,
-                    alignItems: "center",
-                    padding: "4px 8px 8px",
-                }}>
-                    {isActive && <ProtoButton
-                        aria-label={t("manage.table.filter.clear-date")}
-                        css={{ display: "flex", alignItems: "center" }}
-                        onClick={clearDates}
-                    ><LuX /></ProtoButton>}
-                    <input
-                        value={startDate}
-                        css={inputStyle}
-                        type="date"
-                        onChange={e => handleChange(e.target.value, "start")}
-                    />
-                    <span>{"-"}</span>
-                    <input
-                        value={endDate}
-                        css={inputStyle}
-                        type="date"
-                        min={startDate}
-                        onChange={e => handleChange(e.target.value, "end")}
-                    />
+                <div onBlur={handleMenuBlur(close)}>
+                    <div css={{
+                        cursor: "default",
+                        fontSize: 11,
+                        padding: "6px 12px 2px 12px",
+                        color: COLORS.neutral60,
+                    }}>
+                        {t("manage.table.filter.select-date")}
+                    </div>
+                    <div css={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        alignItems: "center",
+                        padding: "4px 8px 8px",
+                    }}>
+                        {isActive && <ProtoButton
+                            aria-label={t("manage.table.filter.clear-date")}
+                            css={{ display: "flex", alignItems: "center" }}
+                            onClick={clearDates}
+                        ><LuX /></ProtoButton>}
+                        <input
+                            value={startDate}
+                            css={inputStyle}
+                            type="date"
+                            onChange={e => handleChange(e.target.value, "start")}
+                        />
+                        <span>{"-"}</span>
+                        <input
+                            value={endDate}
+                            css={inputStyle}
+                            type="date"
+                            min={startDate}
+                            onChange={e => handleChange(e.target.value, "end")}
+                        />
+                    </div>
                 </div>
             </Floating>
         }
@@ -492,7 +506,11 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
                 "li button": { fontSize: 14 },
             },
         }}>
-            <ul role="menu" css={{ listStyle: "none", margin: 0, padding: 0 }}>
+            <ul
+                role="menu"
+                onBlur={handleMenuBlur(close)}
+                css={{ listStyle: "none", margin: 0, padding: 0 }}
+            >
                 <div css={{ paddingTop: 6 }}>{label}</div>
                 {options.map((opt, i) => <MenuItem
                     key={opt.key}
@@ -649,12 +667,6 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
         },
     };
 
-    const handleBlur = (event: React.FocusEvent<HTMLUListElement, Element>) => {
-        if (!event.currentTarget.contains(event.relatedTarget as HTMLUListElement)) {
-            close();
-        }
-    };
-
     const sortDirections: SortingProps<SortDirection>[] = [
         { key: "ASCENDING", label: "manage.table.sorting.ascending" },
         { key: "DESCENDING", label: "manage.table.sorting.descending" },
@@ -665,7 +677,7 @@ const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) =
         "&& button": { padding: "4px 14px 7px" },
     });
 
-    const list = <ul role="menu" onBlur={handleBlur}>
+    const list = <ul role="menu" onBlur={handleMenuBlur(close)}>
         <div css={{ paddingTop: 6 }}>{t("manage.table.sorting.sort-by")}</div>
         {sortOptions.map((option, index) => <MenuItem
             key={`${itemId}-${option.key}`}
