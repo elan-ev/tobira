@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-goose = "^0.17"
+goose = "^0.18"
 tokio = "^1.38"
