@@ -21,7 +21,7 @@ If you are only interested in getting Tobira up and running with the officially 
 ./x.sh start
 ```
 
-And then open <http://localhost:8030/>.
+And then open [http://localhost:8030/](http://localhost:8030/).
 
 The first command starts a bunch of docker containers that Tobira needs.
 The second command downloads all dependencies, builds the backend and frontend, starts a development server, and rebuilds everything on file changes.
