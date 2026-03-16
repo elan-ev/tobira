@@ -47,6 +47,9 @@ while read -r version; do
     # Add versioned sidebar
     echo "$SIDEBAR_FILE" > "versioned_sidebars/version-$version-sidebars.json"
 
+    # Fix some syntax for docusaurus 3
+    sed -i 's|<http://localhost:8030/>|http://localhost:8030/|g' "versioned_docs/version-$version/dev/index.md"
+
     echo "Copied docs for $version"
 done <versions.txt
 
