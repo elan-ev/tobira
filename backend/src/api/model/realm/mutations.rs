@@ -353,7 +353,7 @@ impl Realm {
         realms: Vec<RealmLineageComponent>,
         context: &Context,
     ) -> ApiResult<CreateRealmLineageOutcome> {
-        context.auth.state.required_trusted_external()?;
+        context.require_trusted_external_auth()?;
 
         if realms.len() == 0 {
             return Ok(CreateRealmLineageOutcome { num_created: 0 });

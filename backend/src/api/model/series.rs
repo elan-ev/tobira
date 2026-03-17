@@ -232,7 +232,7 @@ impl Series {
     }
 
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
-        context.auth.state.required_trusted_external()?;
+        context.require_trusted_external_auth()?;
         Self::create(series, None, context, SeriesState::Waiting).await
     }
 
@@ -241,7 +241,7 @@ impl Series {
         target_path: String,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.auth.state.required_trusted_external()?;
+        context.require_trusted_external_auth()?;
 
         let series = Self::load_by_opencast_id(series_oc_id, context)
             .await?
@@ -286,7 +286,7 @@ impl Series {
         path: String,
         context: &Context,
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
-        context.auth.state.required_trusted_external()?;
+        context.require_trusted_external_auth()?;
 
         let series = Self::load_by_opencast_id(series_oc_id, context)
             .await?
@@ -335,7 +335,7 @@ impl Series {
         new_realms: Vec<RealmSpecifier>,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.auth.state.required_trusted_external()?;
+        context.require_trusted_external_auth()?;
 
         // Check parameters
         if new_realms.iter().rev().skip(1).any(|r| r.name.is_none()) {
