@@ -4,9 +4,20 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     api::Context,
-    db::types::EventState,
 };
 use super::ByteSpan;
+
+
+
+/// Represents the `event_state` type defined in `05-events.sql`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, Serialize, Deserialize, GraphQLEnum)]
+#[postgres(name = "event_state")]
+pub enum EventState {
+    #[postgres(name = "ready")]
+    Ready,
+    #[postgres(name = "waiting")]
+    Waiting,
+}
 
 
 /// Information necessary to render a thumbnail.

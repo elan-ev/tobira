@@ -25,7 +25,10 @@ mod translated_string;
 pub(crate) use self::{
     acl::AclItem,
     block::BlockType,
-    event::{TextMatch, TextAssetType, TimespanText, SearchThumbnailInfo, ThumbnailInfo},
+    event::{
+        TextMatch, TextAssetType, TimespanText, EventState,
+        SearchThumbnailInfo, ThumbnailInfo,
+    },
     extra_metadata::ExtraMetadata,
     key::Key,
     known_roles::{KnownGroup, KnownUser},
