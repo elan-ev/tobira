@@ -12,6 +12,7 @@ use juniper::{GraphQLObject, GraphQLScalar};
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
+mod acl;
 mod event;
 mod extra_metadata;
 mod key;
@@ -20,6 +21,7 @@ mod series;
 mod translated_string;
 
 pub(crate) use self::{
+    acl::AclItem,
     extra_metadata::ExtraMetadata,
     key::Key,
     event::{SearchThumbnailInfo, ThumbnailInfo},
