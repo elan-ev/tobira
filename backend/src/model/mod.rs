@@ -13,6 +13,7 @@ use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
 mod acl;
+mod block;
 mod event;
 mod extra_metadata;
 mod key;
@@ -22,6 +23,7 @@ mod translated_string;
 
 pub(crate) use self::{
     acl::AclItem,
+    block::BlockType,
     extra_metadata::ExtraMetadata,
     key::Key,
     event::{SearchThumbnailInfo, ThumbnailInfo},

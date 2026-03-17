@@ -1,9 +1,7 @@
 //! Blocks that make up the content of realm pages.
 
-use std::fmt;
 use juniper::{graphql_interface, graphql_object, GraphQLEnum};
 use postgres_types::{FromSql, ToSql};
-use serde::Serialize;
 
 use crate::{
     api::{
@@ -17,7 +15,7 @@ use crate::{
         Context,
         Id,
     },
-    model::Key,
+    model::{BlockType, Key},
     db::util::impl_from_db,
     prelude::*,
 };
@@ -70,28 +68,6 @@ macro_rules! impl_block {
     };
 }
 
-
-#[derive(Debug, Clone, Copy, FromSql, Serialize)]
-#[postgres(name = "block_type")]
-#[serde(rename_all = "lowercase")]
-pub(crate) enum BlockType {
-    #[postgres(name = "title")]
-    Title,
-    #[postgres(name = "text")]
-    Text,
-    #[postgres(name = "series")]
-    Series,
-    #[postgres(name = "video")]
-    Video,
-    #[postgres(name = "playlist")]
-    Playlist,
-}
-
-impl fmt::Display for BlockType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.serialize(f)
-    }
-}
 
 #[derive(Debug, Clone, Copy, FromSql, ToSql, GraphQLEnum)]
 #[postgres(name = "video_list_order")]

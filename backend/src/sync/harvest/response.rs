@@ -2,9 +2,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::model::block::BlockType,
     db::types::{CustomActions, EventCaption, EventSegment, EventTrack},
-    model::ExtraMetadata,
+    model::{BlockType, ExtraMetadata},
     sync::DeletionMode,
     Config,
 };
