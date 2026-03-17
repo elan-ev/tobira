@@ -27,7 +27,7 @@ export const ManageSeriesAccessRoute = makeManageSeriesRoute(
 );
 
 const updateSeriesAcl = graphql`
-    mutation SeriesAccessAclMutation($id: ID!, $acl: [AclInputEntry!]!) {
+    mutation SeriesAccessAclMutation($id: ID!, $acl: [AclItem!]!) {
         updateSeriesAcl(id: $id, acl: $acl) {
             ...on Series {
                 acl { role actions info { label implies large } }
@@ -65,4 +65,3 @@ const SeriesAclEditor: React.FC<SeriesAclPageProps> = ({ series, data }) => {
         itemType="series"
     />;
 };
-

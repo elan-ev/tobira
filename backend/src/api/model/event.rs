@@ -31,12 +31,10 @@ use crate::{
         types::{Credentials, EventCaption, EventSegment, EventState, EventTrack},
         util::impl_from_db,
     },
-    model::{ExtraMetadata, Key, OpencastId, SeriesState},
+    model::{AclItem, ExtraMetadata, Key, OpencastId, SeriesState},
     prelude::*,
     sync::client::{AclInput, OpencastItem}
 };
-
-use self::acl::AclInputEntry;
 
 use super::{
     playlist::VideoListEntry,
@@ -574,7 +572,7 @@ impl AuthorizedEvent {
             ) returning id \
         ");
 
-        let acl = convert_acl_input(event.acl);
+        let acl = convert_acl_input(&event.acl);
 
         context.db.execute(&query, &[
             &event.opencast_id,
@@ -650,7 +648,7 @@ impl AuthorizedEvent {
         Ok(event)
     }
 
-    pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
+    pub(crate) async fn update_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<AuthorizedEvent> {
         if !context.config.general.allow_acl_edit {
             return Err(err::not_authorized!("editing ACLs is not allowed"));
         }
@@ -676,7 +674,7 @@ impl AuthorizedEvent {
         if response.status() == StatusCode::NO_CONTENT {
             // 204: The access control list for the specified event is updated.
             Self::start_workflow(&event.opencast_id, &context.config.opencast.republish_workflow_id, &context).await?;
-            let db_acl = convert_acl_input(acl);
+            let db_acl = convert_acl_input(&acl);
 
             // Todo: also update custom and preview roles once frontend sends these
             context.db.execute("\
@@ -906,7 +904,7 @@ pub(crate) struct NewEvent {
     description: Option<String>,
     series_id: Option<Id>,
     creators: Vec<String>,
-    acl: Vec<AclInputEntry>,
+    acl: Vec<AclItem>,
 }
 
 #[derive(GraphQLEnum, PartialEq)]

@@ -89,7 +89,8 @@ enum WorkflowStatus {
   UNOBTAINABLE
 }
 
-input AclInputEntry {
+"A role being granted permission to perform certain actions."
+input AclItem {
   role: String!
   actions: [String!]!
 }
@@ -122,7 +123,7 @@ input NewEvent {
   description: String
   seriesId: ID
   creators: [String!]!
-  acl: [AclInputEntry!]!
+  acl: [AclItem!]!
 }
 
 input NewPlaylistBlock {
@@ -279,8 +280,8 @@ scalar OpencastId
 "A string specified in different languages. Entry 'default' is required."
 scalar TranslatedString
 
-"A role being granted permission to perform certain actions."
-type AclItem {
+"An `AclItem` with extra about the role."
+type AclItemWithInfo {
   "Role. In arrays of AclItems, no two items have the same `role`."
   role: String!
   """
@@ -409,7 +410,7 @@ type AuthorizedEvent implements Node {
   hostRealms: [Realm!]!
   "Whether this event is password protected."
   hasPassword: Boolean!
-  acl: [AclItem!]!
+  acl: [AclItemWithInfo!]!
   """
     Returns `true` if the realm has a video block with this video
     OR if the realm has a series or playlist block including this video.
@@ -457,7 +458,7 @@ type AuthorizedPlaylist implements Node {
     In other contexts the thumbnails will be fetched from the database on demand.
   """
   thumbnailStack: ThumbnailStack!
-  acl: [AclItem!]!
+  acl: [AclItemWithInfo!]!
   """
     Returns `true` if the realm has a playlist block with this playlist.
     Otherwise, `false` is returned.
@@ -567,7 +568,7 @@ type Mutation {
     this means it might get overwritten again if the update in Opencast failed for some reason.
     This solution should be improved in the future.
   """
-  updateEventAcl(id: ID!, acl: [AclInputEntry!]!): AuthorizedEvent!
+  updateEventAcl(id: ID!, acl: [AclItem!]!): AuthorizedEvent!
   """
     Updates the title and description of an event. A request for this is sent to Opencast,
     and the event is optimistically updated in Tobira's DB.
@@ -587,7 +588,7 @@ type Mutation {
     If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
     this means it might get overwritten again if the update in Opencast failed for some reason.
   """
-  updateSeriesAcl(id: ID!, acl: [AclInputEntry!]!): Series!
+  updateSeriesAcl(id: ID!, acl: [AclItem!]!): Series!
   """
     Updates the title and description of a series. A request for this is sent to Opencast,
     and the series is preliminarily updated in Tobira's DB.
@@ -598,14 +599,14 @@ type Mutation {
     Sends an http request to Opencast to create a new series,
     and stores the series in Tobira's DB.
   """
-  createSeries(metadata: BasicMetadata!, acl: [AclInputEntry!]!): Series!
+  createSeries(metadata: BasicMetadata!, acl: [AclItem!]!): Series!
   "Creates a new playlist in Opencast and stores it in Tobira's DB."
-  createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [ID!]!, acl: [AclInputEntry!]!): AuthorizedPlaylist!
+  createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [ID!]!, acl: [AclItem!]!): AuthorizedPlaylist!
   """
     Updates a playlist's metadata, entries or acl by sending the changes to Opencast
     and updating the playlist in Tobira's DB.
   """
-  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [ID!], acl: [AclInputEntry!]): AuthorizedPlaylist!
+  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [ID!], acl: [AclItem!]): AuthorizedPlaylist!
   "Deletes the given playlist by sending a delete request to Opencast."
   deletePlaylist(id: ID!): RemovedPlaylist!
   """
@@ -879,7 +880,7 @@ type Realm implements Node {
     Returns the acl of this realm, combining moderator and admin roles and assigns
     the respective actions that are necessary for UI purposes.
   """
-  ownAcl: [AclItem!]!
+  ownAcl: [AclItemWithInfo!]!
   """
     Returns the combined acl of this realm's parent, which effectively contains
     the acl and inherited acl of each ancestor realm. This is used to display
@@ -887,7 +888,7 @@ type Realm implements Node {
     flattened acl since that also contains the realm's "regular", i.e. non-inherited
     acl.
   """
-  inheritedAcl: [AclItem!]!
+  inheritedAcl: [AclItemWithInfo!]!
   "Returns the immediate parent of this realm."
   parent: Realm
   """
@@ -1093,7 +1094,7 @@ type Series implements Node {
     In other contexts the thumbnails will be fetched from the database on demand.
   """
   thumbnailStack: ThumbnailStack!
-  acl: [AclItem!]!
+  acl: [AclItemWithInfo!]!
   "Whether the current user has write access to this series."
   canWrite: Boolean!
   tobiraDeletionTimestamp: DateTime
