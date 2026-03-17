@@ -76,25 +76,6 @@ pub struct PlaylistEntry {
     pub content_id: String,
 }
 
-/// Represents the `timespan_text` type.
-#[derive(Debug, FromSql, ToSql)]
-#[postgres(name = "timespan_text")]
-pub struct TimespanText {
-    pub span_start: i64,
-    pub span_end: i64,
-    pub t: String,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
-#[postgres(name = "text_asset_type")]
-pub enum TextAssetType {
-    #[postgres(name = "caption")]
-    Caption,
-    #[postgres(name = "slide-text")]
-    SlideText,
-}
-
-
 
 /// Represents the type for the `custom_action_roles` field from `32-custom-actions.sql`.
 /// This holds a mapping of actions to lists holding roles that are allowed
