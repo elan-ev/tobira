@@ -18,16 +18,18 @@ mod event;
 mod extra_metadata;
 mod key;
 mod known_roles;
+mod misc;
 mod series;
 mod translated_string;
 
 pub(crate) use self::{
     acl::AclItem,
     block::BlockType,
+    event::{TextMatch, TextAssetType, TimespanText, SearchThumbnailInfo, ThumbnailInfo},
     extra_metadata::ExtraMetadata,
     key::Key,
-    event::{SearchThumbnailInfo, ThumbnailInfo},
     known_roles::{KnownGroup, KnownUser},
+    misc::ByteSpan,
     series::SeriesState,
     translated_string::{LangKey, TranslatedString},
 };

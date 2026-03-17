@@ -6,10 +6,10 @@ use meilisearch_sdk::search::MatchRange;
 
 use crate::{
     api::{Context, Id, Node, NodeValue},
-    db::types::TextAssetType,
+    model::{ByteSpan, TextAssetType, TextMatch},
     search::{self, util::decode_acl},
 };
-use super::{field_matches_for, match_ranges_for, ByteSpan, SearchRealm};
+use super::{field_matches_for, match_ranges_for, SearchRealm};
 
 
 #[derive(Debug, GraphQLObject)]
@@ -49,26 +49,6 @@ pub struct ArrayMatch {
     span: ByteSpan,
 }
 
-/// A match inside an event's texts while searching.
-#[derive(Debug, GraphQLObject)]
-pub struct TextMatch {
-    /// Start of this timespan in number of milliseconds from the beginning of
-    /// the video.
-    pub start: f64,
-
-    /// Duration of this timespan in number of milliseconds.
-    pub duration: f64,
-
-    /// The text containing the match, with some context. Is `null` if the user
-    /// is not allowed to read the event, but only preview it.
-    pub text: Option<String>,
-
-    /// Source of this text.
-    pub ty: TextAssetType,
-
-    /// Parts of `text` that should be highlighted.
-    pub highlights: Vec<ByteSpan>,
-}
 
 impl Node for SearchEvent {
     fn id(&self) -> Id {

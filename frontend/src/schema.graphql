@@ -57,6 +57,7 @@ enum SortDirection {
   DESCENDING
 }
 
+"Different types of event assets containing searchable text."
 enum TextAssetType {
   CAPTION
   SLIDE_TEXT
