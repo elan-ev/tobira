@@ -1,8 +1,8 @@
 use hyper::{
     body::Incoming,
     header,
-    http::{uri::PathAndQuery, HeaderValue},
-    Method, Request, StatusCode, Uri,
+    http::HeaderValue,
+    Method, Request, StatusCode,
 };
 use juniper::{graphql_value, http::{GraphQLRequest, GraphQLResponse}};
 use std::{
@@ -426,11 +426,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
         let redirect_actions = if config.auth.pre_auth_external_links {
             [config.opencast.studio_url(), config.opencast.editor_url()]
                 .into_iter()
-                .map(|uri| {
-                    let mut parts = uri.0.into_parts();
-                    parts.path_and_query = Some(PathAndQuery::from_static("/redirect/get"));
-                    Uri::from_parts(parts).unwrap().to_string()
-                })
+                .map(|url| url.with_path("/redirect/get").to_string())
                 .collect::<HashSet<_>>()
                 .into_iter()
                 .collect::<Vec<_>>()

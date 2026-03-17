@@ -8,6 +8,10 @@ use secrecy::SecretBox;
 
 use crate::{http::Response, prelude::*};
 
+mod url;
+
+pub use self::url::{HttpHost, HttpUrl};
+
 
 /// The URL-safe base64 alphabet.
 pub(crate) const BASE64_DIGITS: &[u8; 64] =

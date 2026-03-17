@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     model::Key,
     prelude::*,
-    config::HttpHost,
+    util::HttpHost,
 };
 
 pub(crate) mod cmd;

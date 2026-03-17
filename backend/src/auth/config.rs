@@ -4,7 +4,7 @@ use hyper::{http::HeaderName, Uri};
 use secrecy::SecretString;
 use serde::{Deserialize, Deserializer, de::Error};
 
-use crate::{config::parse_normal_http_uri, model::TranslatedString, prelude::*};
+use crate::{model::TranslatedString, prelude::*, util::HttpUrl};
 
 use super::JwtConfig;
 
@@ -24,10 +24,10 @@ pub(crate) struct AuthConfig {
 
     /// Link of the login button. If not set, the login button internally
     /// (not via `<a>`, but through JavaScript) links to Tobira's own login page.
-    pub(crate) login_link: Option<String>,
+    pub(crate) login_link: Option<HttpUrl>,
 
     /// Link of the logout button.
-    pub(crate) logout_link: Option<String>,
+    pub(crate) logout_link: Option<HttpUrl>,
 
     /// A shared secret for **trusted** external applications. Send this value
     /// as the `x-tobira-trusted-external-key`-header to use certain APIs
@@ -420,7 +420,9 @@ pub(crate) enum CallbackUri {
 impl CallbackUri {
     fn parse(s: &str) -> Result<Self> {
         if s.starts_with("http://") || s.starts_with("https://") {
-            Ok(Self::Tcp(parse_normal_http_uri(s)?))
+            let url = HttpUrl::parse(s)?;
+            url.ensure_secure_no_fragment()?;
+            Ok(Self::Tcp(url.to_uri()))
         } else if let Some(s) = s.strip_prefix("http+unix://") {
             let msg = "UDS urls must use syntax 'http+unix://[/path/to/socket.sock]/foo/bar'";
             anyhow::ensure!(s.as_bytes()[0] == b'[', msg);

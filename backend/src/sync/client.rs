@@ -16,12 +16,12 @@ use tap::TapFallible;
 
 use crate::{
     api::{model::acl::AclInputEntry, Context},
-    config::{Config, HttpHost},
+    config::Config,
     db::types::PlaylistEntry,
     model::OpencastId,
     prelude::*,
     sync::harvest::HarvestResponse,
-    util::download_body,
+    util::{download_body, HttpHost},
 };
 
 use super::VersionResponse;
