@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 mod event;
 mod extra_metadata;
 mod key;
+mod known_roles;
 mod series;
 mod translated_string;
 
@@ -22,6 +23,7 @@ pub(crate) use self::{
     extra_metadata::ExtraMetadata,
     key::Key,
     event::{SearchThumbnailInfo, ThumbnailInfo},
+    known_roles::{KnownGroup, KnownUser},
     series::SeriesState,
     translated_string::{LangKey, TranslatedString},
 };
