@@ -1,68 +1,20 @@
 use meilisearch_sdk::search::{Selectors, MatchingStrategies};
-use serde::Deserialize;
 
 use crate::{
     api::{err::ApiResult, Context},
-    model::TranslatedString,
-    db::util::{impl_from_db, select},
+    model::KnownUser,
+    db::util::select,
     prelude::*,
 };
 use super::search::{handle_search_result, measure_search_duration, SearchResults, SearchUnavailable};
 
 
-// ===== Groups ===============================================================
-
-/// A group selectable in the ACL UI. Basically a mapping from role to a nice
-/// label and info about the relationship to other roles/groups.
-#[derive(juniper::GraphQLObject)]
-pub struct KnownGroup {
-    pub(crate) role: String,
-    pub(crate) label: TranslatedString,
-    pub(crate) implies: Vec<String>,
-    pub(crate) sort_key: Option<String>,
-    pub(crate) large: bool,
-}
-
-impl_from_db!(
-    KnownGroup,
-    select: {
-        known_groups.{ role, label, implies, sort_key, large },
-    },
-    |row| {
-        KnownGroup {
-            role: row.role(),
-            label: row.label(),
-            implies: row.implies(),
-            sort_key: row.sort_key(),
-            large: row.large(),
-        }
-    },
-);
-
-impl KnownGroup {
-    pub(crate) async fn load_all(context: &Context) -> ApiResult<Vec<Self>> {
-        let selection = Self::select();
-        let query = format!("select {selection} from known_groups");
-        context.db.query_mapped(&query, dbargs![], |row| Self::from_row_start(&row))
-            .await?
-            .pipe(Ok)
-    }
-}
-
-// ===== Users ===============================================================
 
 #[derive(juniper::GraphQLUnion)]
 #[graphql(Context = Context)]
 pub(crate) enum KnownUsersSearchOutcome {
     SearchUnavailable(SearchUnavailable),
     Results(SearchResults<KnownUser>),
-}
-
-#[derive(juniper::GraphQLObject, Deserialize)]
-#[graphql(Context = Context)]
-pub(crate) struct KnownUser {
-    display_name: String,
-    user_role: String,
 }
 
 #[juniper::graphql_object(Context = Context, name = "KnownUserSearchResults")]
