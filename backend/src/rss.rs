@@ -8,7 +8,7 @@ use tokio_postgres::{Client, Row, RowStream};
 
 use crate::{
     auth::{AuthState, HasRoles},
-    config::HttpHost,
+    util::HttpHost,
     db::{DbConnection, types::EventTrack, util::{FromDb, dbargs, impl_from_db, select}},
     http::{Context, Response, response::{self, bad_request, internal_server_error, not_found}},
     model::{ExtraMetadata, Key},

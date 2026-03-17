@@ -1,13 +1,10 @@
-use std::{fmt, str::FromStr};
 
-use hyper::Uri;
 use base64::Engine as _;
 use secrecy::{ExposeSecret as _, SecretString};
-use serde::Deserialize;
 
 use crate::{
     prelude::*,
-    config::HttpHost,
+    util::{HttpHost, HttpUrl},
 };
 
 
@@ -41,12 +38,14 @@ pub(crate) struct OpencastConfig {
     /// Explicitly set base-URL to Opencast Studio.
     ///
     /// Example: "https://admin.oc.my-uni.edu/studio".
-    pub(crate) studio_url: Option<ToolBaseUri>,
+    #[config(validate = HttpUrl::ensure_no_fragment, validate = HttpUrl::ensure_no_query)]
+    pub(crate) studio_url: Option<HttpUrl>,
 
     /// Explicitly set the base-URL to the Opencast editor.
     ///
     /// Example: "https://admin.oc.my-uni.edu/editor-ui/index.html".
-    pub(crate) editor_url: Option<ToolBaseUri>,
+    #[config(validate = HttpUrl::ensure_no_fragment, validate = HttpUrl::ensure_no_query)]
+    pub(crate) editor_url: Option<HttpUrl>,
 
     /// Extra Opencast hosts not listed in any other value above, that can also
     /// be trusted.
@@ -98,33 +97,15 @@ impl OpencastConfig {
         self.external_api_node.as_ref().unwrap_or_else(|| self.unwrap_host())
     }
 
-    pub(crate) fn studio_url(&self) -> ToolBaseUri {
+    pub(crate) fn studio_url(&self) -> HttpUrl {
         self.studio_url.clone().unwrap_or_else(|| {
-            let host = self.unwrap_host();
-            let uri = Uri::builder()
-                .scheme(host.scheme.clone())
-                .authority(host.authority.clone())
-                .path_and_query("/studio")
-                .build()
-                // This is fine since scheme and host come from a trusted source
-                // and the path is known to be fine statically.
-                .unwrap();
-            ToolBaseUri(uri)
+            self.unwrap_host().clone().url_with_path("/studio")
         })
     }
 
-    pub(crate) fn editor_url(&self) -> ToolBaseUri {
+    pub(crate) fn editor_url(&self) -> HttpUrl {
         self.editor_url.clone().unwrap_or_else(|| {
-            let host = self.unwrap_host();
-            let uri = Uri::builder()
-                .scheme(host.scheme.clone())
-                .authority(host.authority.clone())
-                .path_and_query("/editor-ui/index.html")
-                .build()
-                // This is fine since scheme and host come from a trusted source
-                // and the path is known to be fine statically.
-                .unwrap();
-            ToolBaseUri(uri)
+            self.unwrap_host().clone().url_with_path("/editor-ui/index.html")
         })
     }
 
@@ -146,53 +127,5 @@ impl OpencastConfig {
 
     fn unwrap_host(&self) -> &HttpHost {
         self.host.as_ref().expect("Neither 'opencast.host' nor override host set!")
-    }
-}
-
-/// A base URL for tools like Studio or the editor. A URI without query and
-/// fragment.
-#[derive(Clone, Deserialize)]
-#[serde(try_from = "String")]
-pub(crate) struct ToolBaseUri(pub(crate) Uri);
-
-
-impl fmt::Display for ToolBaseUri {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl fmt::Debug for ToolBaseUri {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(self, f)
-    }
-}
-
-impl TryFrom<String> for ToolBaseUri {
-    type Error = <Self as FromStr>::Err;
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        value.parse()
-    }
-}
-
-impl FromStr for ToolBaseUri {
-    type Err = anyhow::Error;
-    fn from_str(src: &str) -> Result<Self, Self::Err> {
-        let uri = src.parse::<hyper::http::uri::Uri>()?;
-        if uri.query().is_some() {
-            bail!("URL cannot have a query component!");
-        }
-
-        // Check for fragment component. `Uri` actually doesn't store the
-        // fragment component for some reason. We check it manually, but this
-        // should be correct:
-        // - query, path and even authority could be delimited by `#`, so they
-        //   cannot contain that symbol.
-        // - Scheme is defined as: `ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )`
-        if src.contains('#') {
-            bail!("URL cannot have a fragment component!");
-        }
-
-        Ok(Self(uri))
     }
 }

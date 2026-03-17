@@ -1,6 +1,4 @@
-use hyper::Uri;
-
-use crate::prelude::*;
+use crate::util::HttpUrl;
 
 
 #[derive(Debug, confique::Config)]
@@ -9,8 +7,8 @@ pub(crate) struct MatomoConfig {
     ///
     /// Note: Adding the filename of the Matomo script to the URL configured here should result in
     /// a URL to a publicly accessible JS file.
-    #[config(deserialize_with = deserialize_server)]
-    pub(crate) server: Option<Uri>,
+    #[config(validate = HttpUrl::ensure_no_fragment, validate = HttpUrl::ensure_no_query)]
+    pub(crate) server: Option<HttpUrl>,
 
     /// Matomo site ID, e.g. `side_id = "1"`
     pub(crate) site_id: Option<String>,
@@ -53,17 +51,4 @@ impl MatomoConfig {
         // Fix indentation, super duper important.
         Some(out.replace("\n            ", "\n      "))
     }
-}
-
-fn deserialize_server<'de, D>(deserializer: D) -> Result<Uri, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::{Deserialize, de::Error};
-
-    let uri: Uri = String::deserialize(deserializer)?
-        .parse()
-        .map_err(|e| D::Error::custom(format!("invalid URL: {e}")))?;
-
-    Ok(uri)
 }
