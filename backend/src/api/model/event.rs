@@ -28,10 +28,10 @@ use crate::{
         util::LazyLoad,
     },
     db::{
-        types::{Credentials, EventCaption, EventSegment, EventState, EventTrack},
+        types::{Credentials, EventCaption, EventSegment, EventTrack},
         util::impl_from_db,
     },
-    model::{AclItem, ExtraMetadata, Key, OpencastId, SeriesState},
+    model::{AclItem, ExtraMetadata, EventState, Key, OpencastId, SeriesState},
     prelude::*,
     sync::client::{AclInput, OpencastItem}
 };

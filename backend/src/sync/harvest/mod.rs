@@ -12,9 +12,9 @@ use crate::{
     config::Config,
     db::{
         self,
-        types::{Credentials, EventCaption, EventSegment, EventState, EventTrack},
+        types::{Credentials, EventCaption, EventSegment, EventTrack},
     },
-    model::SeriesState,
+    model::{EventState, SeriesState},
     prelude::*,
 };
 use super::{status::SyncStatus, OcClient};

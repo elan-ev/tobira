@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use bytes::BytesMut;
 use chrono::{DateTime, Utc};
-use juniper::GraphQLEnum;
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
@@ -41,16 +40,6 @@ pub struct EventTextsQueueRecord {
     pub event_id: Key,
     pub fetch_after: DateTime<Utc>,
     pub retry_count: i32,
-}
-
-/// Represents the `event_state` type defined in `05-events.sql`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, Serialize, Deserialize, GraphQLEnum)]
-#[postgres(name = "event_state")]
-pub enum EventState {
-    #[postgres(name = "ready")]
-    Ready,
-    #[postgres(name = "waiting")]
-    Waiting,
 }
 
 
