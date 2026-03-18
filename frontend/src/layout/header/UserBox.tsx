@@ -5,7 +5,6 @@ import {
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
     LuCirclePlus,
     LuGauge,
-    LuListVideo,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
@@ -31,6 +30,7 @@ import { LoginLink } from "../../routes/util";
 import { CREDENTIALS_STORAGE_KEY } from "../../routes/Video";
 import { ManageSeriesRoute } from "../../routes/manage/Series";
 import SeriesIcon from "../../icons/series.svg";
+import PlaylistIcon from "../../icons/playlist.svg";
 import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
 import { SHORTCUTS, ShortcutsOverview, useShortcut } from "../../ui/Shortcuts";
 import { ModalHandle } from "../../ui/Modal";
@@ -287,7 +287,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
             css: indent,
         }] : [],
         {
-            icon: <LuListVideo />,
+            icon: <PlaylistIcon />,
             wrapper: <Link to={ManagePlaylistsRoute.url} />,
             children: t("manage.playlist.table.title"),
             css: indent,
