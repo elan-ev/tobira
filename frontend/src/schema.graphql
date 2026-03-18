@@ -179,9 +179,12 @@ input RealmSpecifier {
   pathSegment: String!
 }
 
-input RemovedEvent {
+input RemovedEventFromSeries {
   id: ID!
-  seriesId: ID
+  """
+    When an event is moved from one series to another,
+    this field is used to specify the new series.
+  """ targetSeries: ID
 }
 
 input SearchFilter {
@@ -598,7 +601,7 @@ type Mutation {
     and the series is preliminarily updated in Tobira's DB.
   """
   updateSeriesMetadata(id: ID!, metadata: BasicMetadata!): Series!
-  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [RemovedEvent!]!): Series!
+  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [RemovedEventFromSeries!]!): Series!
   """
     Sends an http request to Opencast to create a new series,
     and stores the series in Tobira's DB.

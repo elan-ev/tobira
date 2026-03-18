@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
-use std::collections::{HashMap, hash_map::Entry};
-use futures:: StreamExt;
+use std::collections::HashMap;
 use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
 use postgres_types::ToSql;
@@ -9,10 +8,10 @@ use serde_json::json;
 use crate::{
     api::{
         Context, Id, Node, NodeValue,
-        err::{self, ApiError, ApiResult, invalid_input},
+        err::{self, ApiResult, invalid_input},
         model::{
             acl::{self, Acl},
-            event::{AuthorizedEvent, RemovedEvent},
+            event::{AuthorizedEvent},
             realm::Realm,
             shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input},
         },
@@ -510,7 +509,7 @@ impl Series {
     pub(crate) async fn update_content(
         id: Id,
         added_events: Vec<Id>,
-        removed_events: Vec<RemovedEvent>,
+        removed_events: Vec<RemovedEventFromSeries>,
         context: &Context,
     ) -> ApiResult<Series> {
         let series = Self::load_for_mutation(id, context).await?;
@@ -522,53 +521,49 @@ impl Series {
         );
 
         let added_events = added_events.iter().map(|e| (*e, true, None));
-        let removed_events = removed_events.iter().map(|e| (e.id, false, e.series_id));
+        let removed_events = removed_events.iter().map(|e| (e.id, false, e.target_series));
         let modified_events = added_events.chain(removed_events);
 
+        let series_key = series.key;
+        let mut all_series = HashMap::from([(series_key, series)]);
+
         // Load modified events to get their Opencast id and check input.
-        let changes = futures::stream::iter(modified_events)
-            .then(|(id, add, target_series)| async move {
-                let event = AuthorizedEvent::load_for_mutation(id, context).await
-                    .map_err(|_| err::not_authorized!(
-                        key = "series.not-allowed",
-                        "missing write access to event {id}",
-                    ))?;
-                if add && event.series.is_some() {
-                    return Err(err::invalid_input!("event {id} is already in another series"));
-                }
-                if !add && event.series.as_ref().map(|s| s.key) != Some(series.key) {
-                    return Err(err::invalid_input!("event {id} is not part of the series"));
-                }
-                Ok::<_, ApiError>((event, add, target_series))
-            })
-            .try_collect::<Vec<_>>()
-            .await?;
-
-        let mut events_to_update = Vec::new();
-        // Map target series key -> (target series opencast_id, list of event ids to move)
-        let mut events_to_move: HashMap<Key, (OpencastId, Vec<Key>)> = HashMap::new();
-
-        for (event, add, target_series) in &changes {
-            let mut target_key = None;
-
-            let is_part_of = if let Some(id) = target_series {
-                let key = id
-                    .key_for(Id::SERIES_KIND)
-                    .ok_or_else(|| err::invalid_input!("invalid target series id"))?;
-                target_key = Some(key);
-
-                let oc_ref = match events_to_move.entry(key) {
-                    Entry::Occupied(e) => e.get().0.clone(),
-                    Entry::Vacant(v) => {
-                        let oc_id = Series::load_for_mutation(*id, context).await?.opencast_id;
-                        v.insert((oc_id.clone(), Vec::new()));
-                        oc_id
+        let mut changes = Vec::new();
+        for (id, add, target_series) in modified_events {
+            let event = AuthorizedEvent::load_for_mutation(id, context).await
+                .map_err(|_| err::not_authorized!(
+                    key = "series.not-allowed",
+                    "missing write access to event {id}",
+                ))?;
+            if add && event.series.is_some() {
+                return Err(err::invalid_input!("event {id} is already in another series"));
+            }
+            if !add && event.series.as_ref().map(|s| s.key) != Some(series_key) {
+                return Err(err::invalid_input!("event {id} is not part of the series"));
+            }
+            let target_key = match target_series {
+                Some(target_id) => {
+                    let key = target_id.key_for(Id::SERIES_KIND)
+                        .ok_or_else(|| err::invalid_input!("invalid target series id"))?;
+                    if !all_series.contains_key(&key) {
+                        all_series.insert(key, Series::load_for_mutation(target_id, context).await?);
                     }
-                };
-                Some(oc_ref)
-            } else {
-                add.then_some(series.opencast_id.clone())
+                    Some(key)
+                }
+                None => None,
             };
+            changes.push((event, add, target_key));
+        }
+
+        let mut events_to_update: HashMap<Option<Key>, Vec<Key>> = HashMap::new();
+
+        for (event, add, target_key) in &changes {
+            let target = if *add {
+                Some(series_key)
+            } else {
+                *target_key
+            };
+            let is_part_of = target.map(|k| all_series[&k].opencast_id.clone());
 
             let metadata = json!([{
                 "id": "isPartOf",
@@ -603,12 +598,7 @@ impl Series {
                     continue;
                 }
 
-                if let Some(k) = target_key {
-                    // Unwrap is safe, an entry for this key was inserted above.
-                    events_to_move.get_mut(&k).unwrap().1.push(event.key);
-                } else {
-                    events_to_update.push(event.key);
-                }
+                events_to_update.entry(target).or_insert(Vec::new()).push(event.key);
             } else {
                 warn!(
                     event_id,
@@ -619,36 +609,18 @@ impl Series {
         }
 
         // Update events in Tobira
-        if !events_to_update.is_empty() {
+        for (target_key, event_ids) in &events_to_update {
+            let oc_id = target_key.map(|k| &all_series[&k].opencast_id);
             let query = "\
                 update events \
-                set \
-                    series = nullif($2, series), \
-                    part_of = nullif($3, part_of) \
+                set series = $2, part_of = $3 \
                 where id = any($1) \
             ";
-
             context.db.execute(query, &[
-                &events_to_update,
-                &series.key,
-                &series.opencast_id,
+                event_ids,
+                target_key,
+                &oc_id,
             ]).await?;
-        }
-
-        if !events_to_move.is_empty() {
-            for (target_key, (oc_id, event_ids)) in events_to_move {
-                if event_ids.is_empty() { continue; }
-                let query = "\
-                    update events \
-                    set series = $2, part_of = $3 \
-                    where id = any($1) \
-                ";
-                context.db.execute(query, &[
-                    &event_ids,
-                    &target_key,
-                    &oc_id,
-                ]).await?;
-            }
         }
 
         Self::load_for_mutation(id, context).await
@@ -900,3 +872,11 @@ define_sort_column_and_order!(
     };
     pub struct SeriesSortOrder
 );
+
+#[derive(Debug, GraphQLInputObject)]
+pub(crate) struct RemovedEventFromSeries {
+    pub id: Id,
+    /// When an event is moved from one series to another,
+    /// this field is used to specify the new series.
+    pub target_series: Option<Id>,
+}

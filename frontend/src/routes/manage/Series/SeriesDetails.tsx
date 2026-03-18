@@ -43,7 +43,7 @@ const editSeriesContent = graphql`
     mutation SeriesDetailsContentMutation(
     $id: ID!,
     $addedEvents: [ID!]!,
-    $removedEvents: [RemovedEvent!]!,
+    $removedEvents: [RemovedEventFromSeries!]!,
 ) {
     updateSeriesContent(id: $id, addedEvents: $addedEvents, removedEvents: $removedEvents) {
         entries {

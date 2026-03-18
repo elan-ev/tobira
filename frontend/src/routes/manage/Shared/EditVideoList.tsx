@@ -133,7 +133,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
             .filter(e => e.action === "remove" || e.action === "move")
             .map(e => ({
                 id: e.id,
-                seriesId: e.targetSeries?.id,
+                targetSeries: e.targetSeries?.id,
             })),
     };
 
