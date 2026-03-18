@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { LuRadio } from "react-icons/lu";
-import { useColorScheme } from "@opencast/appkit";
+import { match, useColorScheme } from "@opencast/appkit";
 
 import {
     ThumbnailImg,
@@ -15,12 +15,14 @@ import { COLORS } from "../color";
 type ThumbnailStackProps = {
     title: string;
     thumbnails?: readonly ThumbnailInfo[];
+    kind: "series" | "playlist";
     className?: string;
 }
 
 export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
     thumbnails,
     title,
+    kind,
     className,
 }) => {
     const isDarkScheme = useColorScheme().scheme === "dark";
@@ -52,18 +54,33 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
             },
             "> div:nth-child(1)": {
                 zIndex: 3,
-                gridColumn: "1 / span 10",
+                gridColumn: match(kind, {
+                    series: () => "1 / span 10",
+                    playlist: () => "2 / span 10",
+                }),
                 gridRow: "3 / span 10",
             },
             "> div:nth-child(2)": {
                 zIndex: 2,
-                gridColumn: "2 / span 10",
-                gridRow: "2 / span 10",
+                gridColumn: match(kind, {
+                    series: () => "2 / span 10",
+                    playlist: () => "1 / span 9",
+                }),
+                gridRow: match(kind, {
+                    series: () => "2 / span 10",
+                    playlist: () => "2 / span 9",
+                }),
             },
             "> div:nth-child(3)": {
                 zIndex: 1,
-                gridColumn: "3 / span 10",
-                gridRow: "1 / span 10",
+                gridColumn: match(kind, {
+                    series: () => "3 / span 10",
+                    playlist: () => "3 / span 8",
+                }),
+                gridRow: match(kind, {
+                    series: () => "1 / span 10",
+                    playlist: () => "1 / span 8",
+                }),
             },
         }}>
             {thumbnails && thumbnails.slice(0, 3).map((info, idx) => <div key={idx}>

@@ -825,6 +825,7 @@ const SearchSeries: React.FC<SeriesItem> = ({
     return <Item key={id} breakpoint={550} link={link}>{{
         image: <Link to={link} tabIndex={-1}>
             <ThumbnailStack
+                kind="series"
                 thumbnails={thumbnailStack.thumbnails}
                 {...{ title }}
             />

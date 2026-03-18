@@ -169,6 +169,7 @@ type SeriesThumbnailProps = {
 export const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ series, seriesState }) => (
     <div css={{ position: "relative", "> div": { width: "100%" } }}>
         <ThumbnailStack
+            kind="series"
             thumbnails={series.thumbnailStack?.thumbnails}
             title={series.title}
             css={seriesState === "DELETED" && { filter: "blur(2px)" }}
