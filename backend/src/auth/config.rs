@@ -24,10 +24,10 @@ pub(crate) struct AuthConfig {
 
     /// Link of the login button. If not set, the login button internally
     /// (not via `<a>`, but through JavaScript) links to Tobira's own login page.
-    pub(crate) login_link: Option<HttpUrl>,
+    pub(crate) login_link: Option<String>,
 
     /// Link of the logout button.
-    pub(crate) logout_link: Option<HttpUrl>,
+    pub(crate) logout_link: Option<String>,
 
     /// A shared secret for **trusted** external applications. Send this value
     /// as the `x-tobira-trusted-external-key`-header to use certain APIs
