@@ -3,11 +3,7 @@ use std::unreachable;
 use hyper::{body::Incoming, StatusCode, Request, http::HeaderValue};
 
 use crate::{
-    auth::config::LoginCredentialsHandler,
-    db,
-    http::{self, response::bad_request, Context, Response},
-    prelude::*,
-    util::{download_body, ByteBody},
+    auth::config::LoginCredentialsHandler, db, http::{self, Context, Response, response::bad_request}, prelude::*, sync::client::AuthMode, util::{ByteBody, download_body}
 };
 use super::{config::SessionEndpointHandler, AuthSource, SessionId, User};
 
@@ -151,7 +147,9 @@ pub(crate) async fn handle_post_login(req: Request<Incoming>, ctx: &Context) -> 
     // Check the login data.
     let user = match &ctx.config.auth.session.from_login_credentials {
         LoginCredentialsHandler::Opencast => {
-            match super::opencast::try_login(&userid, &password, ctx).await {
+            trace!("Checking Opencast login...");
+            let mode = AuthMode::User { username: &userid, password: &password };
+            match super::opencast::user_from_info_me(mode, ctx).await {
                 Err(e) => {
                     error!("Error occured while checking Opencast login data: {e:#}");
                     return http::response::internal_server_error();

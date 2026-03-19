@@ -12,10 +12,7 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 
 use crate::{
-    auth::{User, all_cookies_of, config::OidcConfig},
-    http::{Context, Response},
-    prelude::*,
-    util::{ByteBody, FullBodyExt, HttpUrl, ResponseExt, download_body, gen_random_bytes_crypto},
+    auth::{User, all_cookies_of, config::OidcConfig}, http::{Context, Response}, prelude::*, sync::client::AuthMode, util::{ByteBody, FullBodyExt, HttpUrl, ResponseExt, download_body, gen_random_bytes_crypto}
 };
 
 
@@ -133,12 +130,43 @@ pub(crate) async fn handle_callback(
 
     // ----- Talk to IdP directly ---------------------------------------------------------------
     let discover_info = discover_info_or_redirect_to_error_page!(ctx);
-    let user = match fetch_token(code, &discover_info, ctx).await {
+    let id_token = match fetch_token(code, &discover_info, ctx).await {
         Ok(u) => u,
         Err(e) => {
             debug!("failed to do fetch OIDC token: {e:?}");
             return redirect_to_error_page_custom("tobira:token_exchange_failed");
         }
+    };
+    debug!("ID token: {id_token:#?}");
+
+    let Some(preferred_username) = id_token.preferred_username else {
+        return redirect_to_error_page_custom("tobira:preferred_username_missing");
+    };
+
+    // Request user info from Opencast. TODO: this will be configurable.
+    let oc_user = {
+        let auth_mode = AuthMode::Sudo { as_user: &preferred_username };
+        match super::opencast::user_from_info_me(auth_mode, ctx).await {
+            Ok(Some(u)) => u,
+            Ok(None) => {
+                return redirect_to_error_page_custom("tobira:user_not_in_oc");
+            }
+            Err(e) => {
+                warn!("failed to request OC user: {e}");
+                return redirect_to_error_page_custom("tobira:oc_request_failed");
+            }
+        }
+    };
+    debug!("OC user: {oc_user:#?}");
+
+    // TODO: add configurable mapping!
+    let user = User {
+        display_name: id_token.name.unwrap().into(),
+        email: id_token.email.map(Into::into),
+        username: preferred_username,
+        user_role: oc_user.user_role,
+        roles: oc_user.roles,
+        user_realm_handle: None,
     };
 
     // All worked -> create user session
@@ -157,7 +185,11 @@ pub(crate) async fn handle_callback(
 }
 
 /// Exchange the `code` for tokens.
-async fn fetch_token(code: &str, discover_info: &DiscoveryInfo, ctx: &Context) -> Result<User> {
+async fn fetch_token(
+    code: &str,
+    discover_info: &DiscoveryInfo,
+    ctx: &Context,
+) -> Result<IdTokenPayload> {
     let body = query_params([
         ("grant_type", "authorization_code"),
         ("code", code),
@@ -196,18 +228,7 @@ async fn fetch_token(code: &str, discover_info: &DiscoveryInfo, ctx: &Context) -
         |_header, payload| payload.extra_fields,
     ).await?;
 
-
-    // TODO: whole bunch of TODOs!
-    let user = User {
-        display_name: payload.name.unwrap().into(),
-        email: payload.email.map(Into::into),
-        username: payload.preferred_username.unwrap().into(),
-        user_role: "TODO".into(),
-        roles: Default::default(),
-        user_realm_handle: None,
-    };
-
-    Ok(user)
+    Ok(payload)
 }
 
 /// See OIDC spec section 2.
@@ -215,6 +236,7 @@ async fn fetch_token(code: &str, discover_info: &DiscoveryInfo, ctx: &Context) -
 #[derive(Debug, serde::Deserialize)]
 struct IdTokenPayload {
     iss: String,
+    #[allow(dead_code)] // TODO
     sub: String,
     aud: MaybeArray<String>,
     azp: Option<String>,
@@ -224,6 +246,7 @@ struct IdTokenPayload {
     preferred_username: Option<String>,
     email: Option<String>,
 
+    #[allow(dead_code)] // TODO
     #[serde(flatten)]
     rest: serde_json::Map<String, serde_json::Value>,
 }

@@ -4,9 +4,7 @@ use bytes::Bytes;
 use chrono::{DateTime, TimeZone, Utc};
 use form_urlencoded::Serializer;
 use hyper::{
-    Response, Request, StatusCode,
-    body::Incoming,
-    http::{self, request, uri::Uri},
+    Request, Response, StatusCode, body::Incoming, header, http::{self, request, uri::Uri}
 };
 use hyper_rustls::HttpsConnector;
 use hyper_util::client::legacy::{connect::HttpConnector, Client};
@@ -21,7 +19,7 @@ use crate::{
     model::{AclItem, OpencastId},
     prelude::*,
     sync::harvest::HarvestResponse,
-    util::{download_body, HttpHost},
+    util::{self, HttpHost, download_body},
 };
 
 use super::VersionResponse;
@@ -142,6 +140,37 @@ impl OcClient {
 
         let (out, _) = self.deserialize_response(response, &uri).await?;
         Ok(out)
+    }
+
+    /// Requests `/info/me.json`. Returns `Ok(None)` if the user login is
+    /// incorrect or the user does not exist.
+    pub async fn info_me(&self, mode: AuthMode<'_>) -> Result<Option<InfoMeResponse>> {
+        let uri = self.sync_node.clone().with_path_and_query("/info/me.json");
+        let req = self.set_auth_headers(mode, Request::get(uri));
+        let req = req.body(RequestBody::empty()).unwrap();
+        let response = self.http_client.request(req).await?;
+
+        let status = response.status();
+        if !status.is_success() {
+            if status == StatusCode::FORBIDDEN {
+                // Either login data is incorrect or user is not known.
+                return Ok(None);
+            } else {
+                bail!("non-2xx status code returned by '/info/me.json': {status}");
+            }
+        }
+
+        let body = download_body(response.into_body()).await?;
+        let info: InfoMeResponse = serde_json::from_slice(&body)
+            .context("could not deserialize `/info/me.json` response")?;
+
+        // If all roles are `ROLE_ANONYMOUS`, then we assume the login was
+        // invalid or user is not known.
+        if info.roles.iter().all(|role| role == crate::auth::ROLE_ANONYMOUS) {
+            return Ok(None);
+        }
+
+        Ok(Some(info))
     }
 
     pub async fn delete<T: OpencastItem>(&self, endpoint: &T) -> Result<Response<Incoming>> {
@@ -370,6 +399,22 @@ impl OcClient {
         (builder, uri)
     }
 
+    fn set_auth_headers(&self, mode: AuthMode<'_>, req: request::Builder) -> request::Builder {
+        match mode {
+            AuthMode::Admin => {
+                req.header(header::AUTHORIZATION, self.auth_header.expose_secret())
+            }
+            AuthMode::Sudo { as_user } => {
+                req.header(header::AUTHORIZATION, self.auth_header.expose_secret())
+                    .header("X-RUN-AS-USER", as_user)
+            }
+            AuthMode::User { username, password } => {
+                let auth_header = util::basic_auth_header(username, password);
+                req.header(header::AUTHORIZATION, auth_header.expose_secret())
+            }
+        }
+    }
+
     fn build_form_request(&self, path_and_query: &str, method: http::Method, params: &[(&str, &str)]) -> (Request<RequestBody>, Uri) {
         let mut serializer = Serializer::new(String::new());
         for (key, value) in params {
@@ -421,6 +466,40 @@ impl OcClient {
 pub struct ExternalApiVersions {
     pub default: String,
     pub versions: Vec<String>,
+}
+
+#[derive(Deserialize)]
+pub struct InfoMeResponse {
+    pub roles: Vec<String>,
+    pub user: InfoMeUserResponse,
+    #[serde(rename = "userRole")]
+    pub user_role: String,
+}
+
+#[derive(Deserialize)]
+pub struct InfoMeUserResponse {
+    pub name: String,
+    pub username: String,
+    pub email: Option<String>,
+}
+
+#[derive(Clone, Copy)]
+pub enum AuthMode<'a> {
+    /// Use the configured admin credentials.
+    #[allow(dead_code)]
+    Admin,
+
+    /// Use the configured admin credentials, but use `X-RUN-AS-USER` to pretend
+    /// to be a different user.
+    Sudo {
+        as_user: &'a str,
+    },
+
+    /// Use the specified credentials.
+    User {
+        username: &'a str,
+        password: &'a str,
+    },
 }
 
 /// ACL structure used in Opencast (different from the structure used in Tobira)
