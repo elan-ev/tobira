@@ -24,6 +24,7 @@ mod cache;
 mod config;
 mod handlers;
 pub mod oidc;
+mod opencast;
 mod session_id;
 mod jwt;
 
