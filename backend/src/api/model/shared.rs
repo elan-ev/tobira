@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use chrono::{DateTime, Utc};
 use juniper::{GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use tokio_postgres::Row;
 
@@ -149,6 +150,18 @@ impl SortDirection {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, GraphQLEnum)]
+pub(crate) enum Visibility {
+    // Accessible to anonymous users (`ROLE_ANONYMOUS` in `read_roles`).
+    Public,
+    // Not accessible to anonymous users.
+    Private,
+    // Password-protected (has credentials). Not applicable to playlists.
+    Protected,
+    // Not public but shared with multiple roles.
+    Shared,
+}
+
 #[derive(Debug)]
 pub struct Connection<T> {
     pub page_info: PageInfo,
@@ -166,6 +179,16 @@ pub(crate) struct ConnectionQueryParts {
     pub(crate) table: &'static str,
     pub(crate) alias: Option<&'static str>,
     pub(crate) join_clause: &'static str,
+    pub(crate) date_column: &'static str,
+    // This just helps to determine whether the table has that column
+    // and if that can have only one or multiple entries.
+    pub(crate) creator_column: CreatorColumn,
+}
+
+pub(crate) enum CreatorColumn {
+    Event,
+    Playlist,
+    Series,
 }
 
 
@@ -207,33 +230,113 @@ where
         user_roles = context.auth.roles_vec();
     };
 
-    // Retrieve total number of items, considering possible filters.
-    // Todo: consider stop words
-    let title_filter: Option<String> = filter.and_then(|f| f.title.map(|s| {
-        format!("%{}%", (|input: &str| input
+    // Extract filter values
+    let escape_like = |input: &str| -> String {
+        format!("%{}%", input
             .replace('\\', r"\\")
             .replace('%', r"\%")
             .replace('_', r"\_")
-        )(&s))
-    }));
+        )
+    };
+    let (
+        title_filter, desc_filter,
+        creators_filter, created_start,
+        created_end, visibility,
+    ) = match filter {
+        Some(f) => (
+            f.title.map(|s| escape_like(&s)),
+            f.description.map(|s| escape_like(&s)),
+            f.creators.and_then(|v| {
+                let escaped: Vec<String> = v.into_iter().map(|s| escape_like(&s)).collect();
+                (!escaped.is_empty()).then_some(escaped)
+            }),
+            f.created_start,
+            f.created_end,
+            f.visibility,
+        ),
+        None => Default::default(),
+    };
+
+    let visibility_clause = match visibility {
+        Some(Visibility::Public) => format!(
+            "and 'ROLE_ANONYMOUS' = any({table}.read_roles)"
+        ),
+        Some(Visibility::Private) => format!(
+            "and not ('ROLE_ANONYMOUS' = any({table}.read_roles))"
+        ),
+        Some(Visibility::Protected) => {
+            // Playlists can't be password protected
+            if parts.table != "playlists" {
+                format!("and {table}.credentials is not null")
+            } else {
+                String::new()
+            }
+        }
+        Some(Visibility::Shared) => format!(
+            "and not ('ROLE_ANONYMOUS' = any({table}.read_roles)) \
+             and array_length({table}.read_roles, 1) > 1"
+        ),
+        None => String::new(),
+    };
+
+    let creators_clause = match parts.creator_column {
+        CreatorColumn::Playlist => {
+            // Single `creator` column.
+            format!("and ($6::text[] is null or not exists (\
+                select 1 from unnest($6::text[]) as p \
+                where not ({table}.creator ilike p)))")
+        }
+        CreatorColumn::Event => {
+            // Array `creators` column.
+            format!("and ($6::text[] is null or not exists (\
+                select 1 from unnest($6::text[]) as p \
+                where not exists (\
+                    select 1 from unnest({table}.creators) as c where c ilike p)))")
+        }
+        CreatorColumn::Series => {
+            // Creators from JSONB `metadata` (dcterms.creator or dcterms.createdBy).
+            format!("and ($6::text[] is null or not exists (\
+                select 1 from unnest($6::text[]) as p \
+                where not exists (\
+                    select 1 from jsonb_array_elements_text(\
+                        coalesce(\
+                            {table}.metadata->'dcterms'->'creator', \
+                            {table}.metadata->'dcterms'->'createdBy', \
+                            '[]'::jsonb\
+                        )\
+                    ) as c where c ilike p)))")
+        }
+    };
+
+    let date_column = parts.date_column;
+
+    let filter_clauses = format!("\
+        and ($2::text is null or {table}.title ilike $2::text) \
+        and ($3::text is null or {table}.description ilike $3::text) \
+        and ($4::timestamptz is null or {date_column} >= $4::timestamptz) \
+        and ($5::timestamptz is null or {date_column} <= $5::timestamptz) \
+        {creators_clause} {visibility_clause}\
+    ");
 
     let total_count = context.db.query_one(
         &format!(
             "select count(*) \
                 from {table_alias} \
-                {acl_filter} and ($2::text is null or {table}.title ilike $2::text)",
+                {acl_filter} \
+                {filter_clauses}",
             ),
-        &[&user_roles, &title_filter],
+        &[&user_roles, &title_filter, &desc_filter, &created_start, &created_end, &creators_filter],
     ).await?.get::<_, i64>(0);
     let total_count = total_count.try_into().expect("more than 2^31 items?!");
 
     let query = format!(
-        "select {selection}, count(*) over() as total_count \
+        "select {selection} \
             from {table_alias} \
             {join_clause} \
-            {acl_filter} and ($2::text is null or {table}.title ilike $2::text) \
+            {acl_filter} \
+            {filter_clauses} \
             order by {sort_column} {sort_order}, {table}.id {sort_order} \
-            limit $3 offset $4 \
+            limit $7 offset $8 \
         ",
         join_clause = parts.join_clause,
         sort_order = order.direction.to_sql(),
@@ -243,7 +346,7 @@ where
     // Execute query
     let items = context.db.query_mapped(
         &query,
-        dbargs![&user_roles, &title_filter, &(limit as i64), &(offset as i64)],
+        dbargs![&user_roles, &title_filter, &desc_filter, &created_start, &created_end, &creators_filter, &(limit as i64), &(offset as i64)],
         |row| from_row(&row),
     ).await?;
 
@@ -319,4 +422,9 @@ pub(crate) struct BasicMetadata {
 #[derive(GraphQLInputObject)]
 pub(crate) struct SearchFilter {
     pub(crate) title: Option<String>,
+    pub(crate) description: Option<String>,
+    pub(crate) created_start: Option<DateTime<Utc>>,
+    pub(crate) created_end: Option<DateTime<Utc>>,
+    pub(crate) creators: Option<Vec<String>>,
+    pub(crate) visibility: Option<Visibility>,
 }

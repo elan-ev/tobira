@@ -281,10 +281,11 @@ const SearchPage: React.FC<Props> = ({ q, outcome }) => {
 };
 
 type DatePickerProps = {
-    router: RouterControl;
+    router?: RouterControl;
+    className?: string;
 }
 
-const DatePicker: React.FC<DatePickerProps> = ({ router }) => {
+export const DatePicker: React.FC<DatePickerProps> = ({ router, className }) => {
     const { t } = useTranslation();
     const ref = useRef(null);
     const handleChange = (
@@ -300,7 +301,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ router }) => {
         const end = type === "end"
             ? date
             : params.get("end") ?? "";
-        router.goto(SearchRoute.url({ query, itemType, start, end }), true);
+        router?.goto(SearchRoute.url({ query, itemType, start, end }), true);
     };
 
     const params = new URLSearchParams(window.location.search);
@@ -323,7 +324,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ router }) => {
         viewPortMargin={12}
     >
         <FloatingTrigger>
-            <Button aria-label={t("search.select-time-frame")} css={{
+            <Button aria-label={t("search.select-time-frame")} {...{ className }} css={{
                 height: 40,
                 ...isActive && {
                     backgroundColor: COLORS.neutral30,

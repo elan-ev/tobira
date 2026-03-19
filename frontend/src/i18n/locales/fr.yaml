@@ -42,6 +42,7 @@ general:
   date-at: '{{date}} à {{time}}'
   none: aucune
   title: Titre
+  description: Description
 
 welcome:
   title: Bienvenue sur Tobira!
@@ -137,6 +138,7 @@ login-page:
 video:
   singular: Vidéo
   plural: Vidéos
+  count: Nombre de vidéos # verify
   video-page: 'Page vidéo: « {{video}} »'
   video-player: Videoplayer
   duration: Durée de lecture
@@ -210,6 +212,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Nombre d'entrées # verify
+  no-of-entries_one: '{{count}} entrée' # verify
+  no-of-entries_other: '{{count}} entrées' # verify
   playlist-page: 'Page de la playlist : « {{playlist}} »' # needs verification
   deleted-block: La playlist référencée ici a été supprimée.
   not-allowed: Vous n'êtes pas autorisé(e) à voir cette playlist.
@@ -529,6 +534,7 @@ manage:
     no-content: pas de vidéos
     no-of-videos_one: '{{count}} Vidéos'
     no-of-videos_other: '{{count}} Vidéos'
+    entries: Entrées # verify
     removing-disabled: La suppression des vidéos est désactivée. # needs verification
     details:
       unknown_one: Vous n'avez pas les droits d'accès à une vidéo ou elle n'existe plus. # needs verification
@@ -565,12 +571,36 @@ manage:
       last: Dernière page
     filter:
       by-title: Filtrer par titre #todo: verify
-    columns:
+      by-description: Filtrer par description # verify
+      by-creator: Filtrer par personnes # verify
+      creator: Personnes # verify
+      text-field: Champ de texte # verify
+      date: Date # verify
+      select-date: Sélectionner une période # verify
+      clear-date: Réinitialiser la période # verify
+      from: De # verify
+      to: À # verify
+      remove: Supprimer le filtre # verify
+      visibility: Visibilité # verify
+      visibility-public: Public # verify
+      visibility-private: Privé # verify
+      visibility-protected: Protégé # verify
+      visibility-shared: Partagé # verify
+      writable: Accès # verify
+      write: Écriture # verify
+      read: Lecture # verify
+    sorting:
+      label: Trier les entrées # check
+      sort-by: Trier par # check
+      order: Organiser # check
       description: Trier par {{title}}, {{direction}}
       ascending: Croissant
       descending: Décroissant
+      ascending-cap: Croissant # check: does it need to be capitalized in context?
+      descending-cap: Décroissant # check: does it need to be capitalized in context?
       created: Créé
       updated: Actualisé
+      unknown: Tri inconnu # check
     no-series-title: Titre manquant
     no-entries-found: Aucune entrée trouvée.
     missing-date: Inconnu

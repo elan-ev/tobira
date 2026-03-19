@@ -5,12 +5,12 @@ import { QRCodeCanvas } from "qrcode.react";
 import {
     useColorScheme, Floating, FloatingContainer, FloatingTrigger, Button, ProtoButton,
 } from "@opencast/appkit";
+import { Interpolation, Theme } from "@emotion/react";
 
 import { currentRef } from "../util";
 import { focusStyle } from "../ui";
 import { COLORS } from "../color";
 import { Modal, ModalHandle } from "../ui/Modal";
-import { Interpolation, Theme } from "@emotion/react";
 
 
 export type ShareButtonProps = {

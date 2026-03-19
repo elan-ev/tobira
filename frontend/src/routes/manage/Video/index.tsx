@@ -1,6 +1,7 @@
-import { graphql } from "react-relay";
 import { useTranslation } from "react-i18next";
-import { match } from "@opencast/appkit";
+import { graphql } from "react-relay";
+import { match, screenWidthAtMost } from "@opencast/appkit";
+import { LuCornerUpRight, LuUpload, LuVideo } from "react-icons/lu";
 
 import { ManageNav } from "..";
 import { RootLoader } from "../../../layout/Root";
@@ -13,18 +14,21 @@ import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import { Thumbnail } from "../../../ui/Video";
-import { keyOfId } from "../../../util";
+import { AccessIcon, keyOfId, translatedConfig } from "../../../util";
 import {
-    ColumnProps,
-    createQueryParamsParser,
-    DateColumn,
-    ManageItems,
-    TableRow,
+    createQueryParamsParser, ManageItems, ListItem,
+    CreateButton, buildSearchFilter, ListCreators,
 } from "../Shared/Table";
-import { ellipsisOverflowCss } from "../../../ui";
-import { Link } from "../../../router";
-import { DirectSeriesRoute } from "../../Series";
+import { PartOfSeriesLink } from "../../../ui/Blocks/VideoList";
+import { Timestamp } from "../../../ui/metadata";
+import { UploadRoute } from "../../Upload";
+import { DirectVideoRoute, VideoShareButton } from "../../Video";
 import { COLORS } from "../../../color";
+import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../../GlobalStyle";
+import { LinkButton } from "../../../ui/LinkButton";
+import { ExternalLink } from "../../../relay/auth";
+import { isRealUser, useUser } from "../../../User";
+import CONFIG from "../../../config";
 
 
 const PATH = "/~manage/videos" as const;
@@ -37,11 +41,9 @@ export const ManageVideosRoute = makeRoute({
         }
 
         const vars = queryParamsToVideosVars(url.searchParams);
-        const titleFilter = vars.filters?.title ?? null;
         const queryVars = {
             ...vars,
-            // Todo: Adjust when more filter options are added
-            filter: titleFilter ? { title: titleFilter } : null,
+            filter: buildSearchFilter(vars.filters),
         };
         const queryRef = loadQuery<VideoManageQuery>(query, queryVars);
 
@@ -54,10 +56,28 @@ export const ManageVideosRoute = makeRoute({
                     ? <NotAuthorized />
                     : <ManageItems
                         vars={vars}
+                        withCreatorFilter
                         connection={data.currentUser.myVideos}
                         titleKey="manage.video.table"
-                        additionalColumns={videoColumns}
-                        RenderRow={EventRow}
+                        additionalSortOptions={[
+                            { key: "SERIES", label: "series.singular" },
+                            { key: "CREATED", label: "manage.table.sorting.created" },
+                            { key: "UPDATED", label: "manage.table.sorting.updated" },
+                        ]}
+                        RenderItem={VideoItem}
+                        createButton={(
+                            <div css={{
+                                display: "flex",
+                                "&&": { gap: 12 },
+                                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                                    flexDirection: "column-reverse",
+                                    "&&": { gap: 4 },
+                                },
+                            }}>
+                                <StudioLink />
+                                <UploadLink />
+                            </div>
+                        )}
                     />
                 }
             />,
@@ -83,10 +103,14 @@ const query = graphql`
                     id
                     title
                     created
+                    creators
                     description
                     isLive
                     tobiraDeletionTimestamp
-                    series { id title }
+                    series { id opencastId title }
+                    readRoles
+                    writeRoles
+                    previewRoles
                     syncedData {
                         duration
                         thumbnail
@@ -96,7 +120,7 @@ const query = graphql`
                         audioOnly
                     }
                     authorizedData {
-                        tracks { resolution }
+                        tracks { uri flavor resolution }
                     }
                 }
             }
@@ -104,67 +128,142 @@ const query = graphql`
     }
 `;
 
-export type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
-export type Events = EventConnection["items"];
-export type Event = Events[number];
+const UploadLink: React.FC = () => <CreateButton
+    condition="canUpload"
+    path={UploadRoute.url()}
+    text="upload.title"
+    Icon={LuUpload}
+/>;
 
-// Todo: add series column
-const videoColumns: ColumnProps<Event>[] = [
-    {
-        key: "SERIES",
-        label: "series.singular",
-        headerWidth: 175,
-        column: ({ item }) => <SeriesColumn
-            title={item.series?.title}
-            seriesId={item.series?.id}
-        />,
-    },
-    {
-        key: "UPDATED",
-        label: "manage.table.columns.updated",
-        column: ({ item }) => <DateColumn date={item.syncedData?.updated} />,
-    },
-    {
-        key: "CREATED",
-        label: "manage.table.columns.created",
-        column: ({ item }) => <DateColumn date={item.created} />,
-    },
-];
+const StudioLink: React.FC = () => {
+    const { t, i18n } = useTranslation();
+    const user = useUser();
 
-type SeriesColumnProps = {
-    seriesId?: string;
-    title?: string;
-};
-
-const SeriesColumn: React.FC<SeriesColumnProps> = ({ title, seriesId }) => {
-    const { t } = useTranslation();
-
-    const titleLink = seriesId
-        ? <Link to={DirectSeriesRoute.url({ seriesId })} css={{ textDecoration: "none" }}>
-            {title && title.trim().length > 0 ? title : <i>
-                {t("manage.table.no-series-title")}
-            </i>}
-        </Link>
-        : <i css={{ color: COLORS.neutral60 }}>{t("general.none")}</i>;
+    if (!isRealUser(user) || !user.canUseStudio) {
+        return null;
+    }
 
     return (
-        <td css={{
-            "&&": { display: "block" },
-            fontSize: 14,
-            ...ellipsisOverflowCss(3),
-        }}>{titleLink}</td>
+        <ExternalLink
+            service="STUDIO"
+            params={{
+                "return.target": document.location.href,
+                "return.label": translatedConfig(CONFIG.siteTitle, i18n),
+            }}
+            fallback="button"
+            css={{
+                "&&, && button": {
+                    backgroundColor: "unset",
+                    padding: "4px 10px",
+                    gap: 7,
+                    height: 38,
+                    fontSize: 14,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    borderRadius: 8,
+                    border: `1px solid ${COLORS.neutral40}`,
+                    cursor: "pointer",
+                    textDecoration: "none",
+                    color: COLORS.neutral90,
+                    "&:hover, &:focus-visible": {
+                        border: `1px solid ${COLORS.neutral60}`,
+                        backgroundColor: COLORS.neutral15,
+                    },
+                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                        "&&, &&:hover": {
+                            border: 0,
+                        },
+                        height: "unset",
+                        padding: 8,
+                        marginTop: -4,
+                    },
+                },
+            }}
+        >
+            <p css={{ [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                display: "none",
+            } }}>
+                {t("manage.dashboard.studio-title")}
+            </p>
+            <LuVideo size={17} />
+        </ExternalLink>
     );
 };
 
 
-const EventRow: React.FC<{ item: Event }> = ({ item }) => <TableRow
+export type EventConnection = NonNullable<VideoManageQuery$data["currentUser"]>["myVideos"];
+export type Events = EventConnection["items"];
+export type Event = Events[number];
+
+
+const VideoItem: React.FC<{ item: Event }> = ({ item }) => <ListItem
     itemType="video"
     item={item}
     link={`${PATH}/${keyOfId(item.id)}`}
     thumbnail={state => <Thumbnail event={item} {...{ state }} />}
-    customColumns={videoColumns.map(col => <col.column key={col.key} item={item} />)}
     created={item.created}
+    metadata={[
+        <div key="access-date-series" css={{
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+            gap: 18,
+            [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                columnGap: 12,
+            },
+        }}>
+            <AccessIcon {...{ item }} />
+            <Timestamp
+                timestamp={item.syncedData?.startTime ?? item.created}
+                isLive={item.isLive}
+            />
+            {item.series && <PartOfSeriesLink
+                css={{
+                    fontSize: 12,
+                    gap: 6,
+                    svg: { fontSize: 15 },
+                    paddingTop: "unset",
+                    minWidth: 0,
+                }}
+                seriesTitle={item.series.title}
+                seriesId={item.series.id}
+            />}
+        </div>,
+        <ListCreators key="creators" creators={[...item.creators]} />,
+    ]}
+    shareButton={
+        <VideoShareButton
+            event={item}
+            videoLink={new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href}
+            hideLabel
+            noTimestamp
+        />}
+    linkButton={<ItemLinkButton to={
+        new URL(DirectVideoRoute.url({ videoId: item.id }), document.baseURI).href
+    }/>}
 />;
+
+export const ItemLinkButton: React.FC<{ to: string }> = ({ to }) => (
+    <LinkButton
+        to={to}
+        extraCss={{
+            "&&": {
+                border: 0,
+                background: "transparent",
+                padding: 4,
+                height: "unset",
+                position: "relative",
+                borderRadius: 8,
+                ":hover": {
+                    backgroundColor: COLORS.neutral20,
+                    border: 0,
+                },
+            },
+        }}
+    >
+        <LuCornerUpRight size={18} />
+    </LinkButton>
+);
 
 
 const parseVideosColumn = (sortBy: string | null): VideosSortColumn =>
