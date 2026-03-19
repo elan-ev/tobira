@@ -181,6 +181,7 @@ export const PlaylistThumbnail: React.FC<{
     playlist: Pick<SinglePlaylist, "title" | "thumbnailStack">
 }> = ({ playlist }) => <div css={{ position: "relative", "> div": { width: "100%" } }}>
     <ThumbnailStack
+        kind="playlist"
         thumbnails={playlist.thumbnailStack?.thumbnails}
         title={playlist.title}
     />

@@ -2,7 +2,7 @@ import { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineFire } from "react-icons/hi";
 import {
-    LuFilm, LuLayoutTemplate, LuCirclePlus, LuUpload, LuVideo, LuListVideo,
+    LuFilm, LuLayoutTemplate, LuCirclePlus, LuUpload, LuVideo,
 } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
@@ -26,6 +26,7 @@ import { translatedConfig } from "../../util";
 import { PATH as UploadPath } from "../Upload";
 import { ManageVideosRoute } from "./Video";
 import SeriesIcon from "../../icons/series.svg";
+import PlaylistIcon from "../../icons/playlist.svg";
 import { ManageSeriesRoute } from "./Series";
 import { CreateSeriesRoute } from "./Series/Create";
 import { ManagePlaylistsRoute } from "./Playlist";
@@ -125,7 +126,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
         entries.push([CreateSeriesRoute.url, t("manage.series.table.create"), <LuCirclePlus />]);
     }
 
-    entries.push([ManagePlaylistsRoute.url, t("manage.playlist.table.title"), <LuListVideo />]);
+    entries.push([ManagePlaylistsRoute.url, t("manage.playlist.table.title"), <PlaylistIcon />]);
 
     if (isRealUser(user) && user.canCreatePlaylists) {
         entries.push(
