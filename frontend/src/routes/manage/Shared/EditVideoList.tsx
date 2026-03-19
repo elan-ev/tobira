@@ -4,6 +4,7 @@ import { UseMutationConfig } from "react-relay";
 import { MutationParameters, Disposable } from "relay-runtime";
 import {
     LuArrowDown,
+    LuArrowLeftRight,
     LuArrowUp,
     LuCalendar,
     LuCircleUser,
@@ -22,6 +23,7 @@ import {
     FloatingHandle,
     FloatingTrigger,
     match,
+    notNullish,
     screenWidthAbove,
     screenWidthAtMost,
     useColorScheme,
@@ -29,6 +31,7 @@ import {
     WithTooltip,
 } from "@opencast/appkit";
 import { css } from "@emotion/react";
+import { createPortal } from "react-dom";
 
 import { Series } from "../Series/Shared";
 import { COLORS } from "../../../color";
@@ -46,12 +49,16 @@ import { UploadRoute } from "../../Upload";
 import { LinkButton } from "../../../ui/LinkButton";
 import { isRealUser, useUser } from "../../../User";
 import CONFIG from "../../../config";
-import { BREAKPOINT_SMALL } from "../../../GlobalStyle";
+import { VideoListSelector } from "../../../ui/SearchableSelect";
+import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../../../GlobalStyle";
 
 
 type Entry = Series["entries"][number];
 type AuthEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
-export type ListEvent = AuthEvent & { action: "add" | "remove" | "none" };
+export type ListEvent = AuthEvent & (
+    | { action: "add" | "remove" | "none"; }
+    | { action: "move", targetSeries: { id: string; title: string } }
+);
 
 
 type VideoListMutationParams = MutationParameters & {
@@ -59,7 +66,10 @@ type VideoListMutationParams = MutationParameters & {
         id: string;
     } & {
         addedEvents: readonly string[];
-        removedEvents: readonly string[];
+        removedEvents: readonly {
+            id: string;
+            seriesId?: string | null;
+        }[];
     } | {
         entries: readonly string[];
     }
@@ -116,7 +126,12 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         entries: events.filter(e => e.action !== "remove").map(e => e.id),
     } : {
         addedEvents: events.filter(e => e.action === "add").map(e => e.id),
-        removedEvents: events.filter(e => e.action === "remove").map(e => e.id),
+        removedEvents: events
+            .filter(e => e.action === "remove" || e.action === "move")
+            .map(e => ({
+                id: e.id,
+                targetSeries: e.action === "move" ? e.targetSeries.id : undefined,
+            })),
     };
 
     const onSubmit = () => commit({
@@ -140,13 +155,16 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
 
     return <Inertable isInert={inFlight || !!commitError} css={{ marginBottom: 32, maxWidth: 750 }}>
-        <VideoListMenu {...{ listEntries, isPlaylist, events, setEvents }} seriesLink={
-            user.canUpload && !isPlaylist && <LinkButton
-                to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
-                <LuUpload />
-                {t("upload.title")}
-            </LinkButton>
-        }>
+        <VideoListMenu
+            {...{ listEntries, isPlaylist, events, setEvents, listId }}
+            seriesLink={
+                user.canUpload && !isPlaylist && <LinkButton
+                    to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
+                    <LuUpload />
+                    {t("upload.title")}
+                </LinkButton>
+            }
+        >
             {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
                 {description}
             </p>}
@@ -169,6 +187,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
 type VideoListMenuProps = PropsWithChildren<{
     isPlaylist: boolean;
+    listId?: string;
     events: ListEvent[];
     setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
     seriesLink?: React.ReactNode;
@@ -176,12 +195,22 @@ type VideoListMenuProps = PropsWithChildren<{
 
 export const VideoListMenu: React.FC<VideoListMenuProps> = ({
     isPlaylist,
+    listId,
     events,
     setEvents,
     children,
     seriesLink,
 }) => {
     const { t } = useTranslation();
+
+    const handleSeriesChange = (eventId: string, targetSeries: { id: string; title: string }) => {
+        setEvents(prev => prev.map(e => e.id !== eventId ? e : {
+            ...e,
+            action: "move",
+            targetSeries,
+        }));
+    };
+
     return <>
         <div css={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <h2 css={{ fontSize: 20 }}>
@@ -212,10 +241,10 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                 {events.map((event, index) => (
                     <EventEntry
                         key={event.id}
-                        event={event}
-                        index={index}
-                        totalEvents={events.length}
                         isPlaylistEntry={isPlaylist}
+                        {...{ index, event, listId }}
+                        onSeriesChange={handleSeriesChange}
+                        totalEvents={events.length}
                         onMove={isPlaylist
                             ? direction => setEvents(
                                 prev => moveItem(prev, index, index + direction),
@@ -228,6 +257,13 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                             // Undo "remove" -> set action to "none"
                             "remove": () => prev.map(e =>
                                 e.id === event.id ? { ...e, action: "none" } : e),
+                            // Undo "move" -> set action to "none" and target series to "undefined"
+                            "move": () => prev.map(e =>
+                                e.id !== event.id ? e : {
+                                    ...e,
+                                    action: "none",
+                                    targetSeries: undefined,
+                                }),
                             // Remove existing event
                             "none": () => prev.map(e =>
                                 e.id === event.id ? { ...e, action: "remove" } : e),
@@ -323,6 +359,8 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
 
 type EventEntryProps = {
     event: ListEvent;
+    listId?: string;
+    onSeriesChange?: (eventId: string, targetSeries: { id: string; title: string }) => void;
     index: number;
     totalEvents: number;
     onChange: () => void;
@@ -331,20 +369,10 @@ type EventEntryProps = {
 };
 
 const EventEntry: React.FC<EventEntryProps> = ({
-    event, index, totalEvents, onChange, onMove, isPlaylistEntry,
+    event, index, totalEvents, onChange, listId, onSeriesChange, onMove, isPlaylistEntry,
 }) => {
     const { t, i18n } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
-
-    const buttonStyle = css({
-        fontSize: 12,
-        padding: "4px 8px",
-        marginTop: "auto",
-        gap: 5,
-        [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-            span: { display: "none" },
-        },
-    });
 
     const moveButtonStyle = css({
         display: "flex",
@@ -374,6 +402,7 @@ const EventEntry: React.FC<EventEntryProps> = ({
     const actionColor = match(event.action, {
         "add": () => COLORS.happy0,
         "remove": () => COLORS.danger0,
+        "move": () => COLORS.danger0,
         "none": () => "transparent",
     });
 
@@ -437,6 +466,7 @@ const EventEntry: React.FC<EventEntryProps> = ({
                         }}>
                             {event.title}
                         </Link>
+
                         <div css={{
                             fontSize: 12,
                             color: COLORS.neutral60,
@@ -444,6 +474,7 @@ const EventEntry: React.FC<EventEntryProps> = ({
                         }}>
                             {event.description}
                         </div>
+
                         <div css={{
                             display: "flex",
                             alignItems: "center",
@@ -497,6 +528,7 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                 <span>{t("manage.video-list.edit.undo")}</span>
                             </Button>
                         </>}
+
                         {event.action === "add" && <>
                             <i css={{ color: COLORS.happy0 }}>
                                 ({t("manage.video-list.edit.to-be-added")})
@@ -506,23 +538,53 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                 <span>{t("manage.video-list.edit.undo")}</span>
                             </Button>
                         </>}
+
+                        {event.action === "move" && <>
+                            <i css={{ color: COLORS.danger0 }}>
+                                ({t(
+                                    "manage.video-list.edit.to-be-moved",
+                                    { series: event.targetSeries?.title },
+                                )})
+                            </i>
+                            <Button css={buttonStyle} onClick={onChange}>
+                                <LuUndo2 size={16} />
+                                <span>{t("manage.video-list.edit.undo")}</span>
+                            </Button>
+                        </>}
+
                         {event.action === "none" && <>
                             {!event.canWrite && !isPlaylistEntry
                                 && <i css={{ color: COLORS.neutral50 }}>
-                                ({t("manage.video-list.edit.cannot-be-removed")})
+                                    ({t("manage.video-list.edit.cannot-be-removed")})
                                 </i>
                             }
-                            <Button
-                                disabled={!isPlaylistEntry && (
-                                    !event.canWrite || !CONFIG.allowSeriesEventRemoval
-                                )}
-                                kind="danger"
-                                css={buttonStyle}
-                                onClick={onChange}
-                            >
-                                <LuListX />
-                                <span>{t("manage.video-list.edit.remove")}</span>
-                            </Button>
+                            <div css={{
+                                display: "flex",
+                                gap: 8,
+                                marginTop: "auto",
+                            }}>
+                                {/* `listId` is always set for series, so the `!` is fine here */}
+                                {!isPlaylistEntry && onSeriesChange
+                                    && <SwitchSeriesMenu
+                                        {...{ event, onSeriesChange }}
+                                        listId={notNullish(listId)}
+                                    />
+                                }
+
+                                <div>
+                                    <Button
+                                        disabled={!isPlaylistEntry && (
+                                            !event.canWrite || !CONFIG.allowSeriesEventRemoval
+                                        )}
+                                        kind="danger"
+                                        css={buttonStyle}
+                                        onClick={onChange}
+                                    >
+                                        <LuListX size={16} />
+                                        <span>{t("manage.video-list.edit.remove")}</span>
+                                    </Button>
+                                </div>
+                            </div>
                         </>}
                     </div>
                 </div>
@@ -563,6 +625,89 @@ const EventEntry: React.FC<EventEntryProps> = ({
 };
 
 
+type SwitchSeriesMenuProps = {
+    event: ListEvent;
+    listId: string;
+    onSeriesChange: NonNullable<EventEntryProps["onSeriesChange"]>
+}
+
+const SwitchSeriesMenu: React.FC<SwitchSeriesMenuProps> = ({ event, onSeriesChange, listId }) => {
+    const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
+    const floatingRef = useRef<FloatingHandle>(null);
+    const [buttonIsActive, setButtonIsActive] = useState(false);
+
+    useOnOutsideClick(floatingRef, () => setButtonIsActive(false));
+
+    return (
+        <FloatingContainer
+            ref={floatingRef}
+            trigger="click"
+            placement="bottom"
+            borderRadius={8}
+            ariaRole="menu"
+        >
+            <FloatingTrigger>
+                <Button
+                    disabled={!event.canWrite}
+                    onClick={() => setButtonIsActive(prev => !prev)}
+                    css={{
+                        ...buttonStyle,
+                        display: "flex",
+                        ...buttonIsActive && { "&&": {
+                            borderColor: COLORS.neutral60,
+                            backgroundColor: COLORS.neutral15,
+                        } },
+                    }}
+                >
+                    <LuArrowLeftRight size={16} />
+                    <span>{t("manage.video-list.edit.move")}</span>
+                </Button>
+            </FloatingTrigger>
+            {createPortal(
+                <Floating
+                    {...floatingMenuProps(isDark)}
+                    shadowBlur={12}
+                    shadowColor="rgba(0, 0, 0, 30%)"
+                    css={{
+                        width: "clamp(300px, 95vw, 500px)",
+                        height: 362,
+                        padding: 8,
+                        paddingBottom: 0,
+                    }}
+                    hideArrowTip
+                >
+                    <VideoListSelector
+                        writableOnly
+                        type="series"
+                        css={{ position: "relative" }}
+                        onChange={series => {
+                            if (!series) {
+                                return;
+                            }
+
+                            onSeriesChange(event.id, {
+                                id: series.id,
+                                title: series.title,
+                            });
+
+                            currentRef(floatingRef).close();
+                            setButtonIsActive(false);
+                        }}
+                        controlShouldRenderValue={false}
+                        backspaceRemovesValue={false}
+                        isClearable={false}
+                        menuIsOpen
+                        filterOption={option => option.data.id !== listId}
+                    />
+                </Floating>,
+                document.body,
+            )}
+        </FloatingContainer>
+    );
+};
+
+
 const isAuthorizedEvent = (e: Entry): e is AuthEvent => e.__typename === "AuthorizedEvent";
 
 /** Sorts series by date of creation but preserves manual order for playlists */
@@ -585,3 +730,14 @@ const moveItem = (arr: ListEvent[], from: number, to: number): ListEvent[] => {
     result[to] = arr[from];
     return result;
 };
+
+
+const buttonStyle = css({
+    fontSize: 12,
+    padding: "4px 8px",
+    marginTop: "auto",
+    gap: 5,
+    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+        span: { display: "none" },
+    },
+});

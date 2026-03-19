@@ -8,7 +8,7 @@ use super::{
     id::Id,
     model::{
         acl::AclInputEntry,
-        series::{Series, NewSeries},
+        series::{Series, NewSeries, RemovedEventFromSeries},
         playlist::{AuthorizedPlaylist, RemovedPlaylist},
         shared::BasicMetadata,
         realm::{
@@ -134,7 +134,7 @@ impl Mutation {
     async fn update_series_content(
         id: Id,
         added_events: Vec<Id>,
-        removed_events: Vec<Id>,
+        removed_events: Vec<RemovedEventFromSeries>,
         context: &Context,
     ) -> ApiResult<Series> {
         Series::update_content(id, added_events, removed_events, context).await
