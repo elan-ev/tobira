@@ -11,7 +11,6 @@ use serde::Deserialize;
 use tokio_postgres::Error as PgError;
 
 use crate::{
-    api::err::{not_authorized, ApiError},
     config::Config,
     db::util::select,
     http::{response, Context, Response},
@@ -127,13 +126,6 @@ impl AuthState {
             Self::TrustedExternal => "trusted external".into(),
             Self::User(user) => format!("'{}'", user.username).into(),
         }
-    }
-
-    pub fn required_trusted_external(&self) -> Result<(), ApiError> {
-        if *self != Self::TrustedExternal {
-            return Err(not_authorized!("only trusted external applications can use this mutation"));
-        }
-        Ok(())
     }
 }
 

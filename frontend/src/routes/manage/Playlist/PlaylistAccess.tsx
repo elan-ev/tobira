@@ -26,7 +26,7 @@ export const ManagePlaylistAccessRoute = makeManagePlaylistRoute(
 );
 
 const updatePlaylistAcl = graphql`
-    mutation PlaylistAccessAclMutation($id: ID!, $acl: [AclInputEntry!]!) {
+    mutation PlaylistAccessAclMutation($id: ID!, $acl: [AclItem!]!) {
         updatePlaylist(id: $id, acl: $acl) {
             ...on AuthorizedPlaylist {
                 acl { role actions info { label implies large } }
@@ -64,4 +64,3 @@ const PlaylistAclEditor: React.FC<PlaylistAclPageProps> = ({ playlist, data }) =
         itemType="playlist"
     />;
 };
-

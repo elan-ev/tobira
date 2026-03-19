@@ -8,16 +8,9 @@ use secrecy::ExposeSecret as _;
 use url::Url;
 
 use crate::{
-    config::Config,
-    db::{
-        self,
-        types::{EventCaption, EventTextsQueueRecord, TextAssetType, TimespanText},
-        util::{collect_rows_mapped, select},
-        DbConnection,
-    },
-    model::Key,
-    dbargs,
-    prelude::*,
+    config::Config, db::{
+        self, DbConnection, types::{EventCaption, EventTextsQueueRecord}, util::{collect_rows_mapped, select}
+    }, dbargs, model::{TextAssetType, TimespanText, Key}, prelude::*
 };
 
 mod mpeg7;

@@ -48,7 +48,7 @@ const query = graphql`
 const createPlaylistMutation = graphql`
     mutation CreatePlaylistMutation(
         $metadata: BasicMetadata!,
-        $acl: [AclInputEntry!]!,
+        $acl: [AclItem!]!,
         $creator: String!,
         $entries: [ID!]!,
     ) {

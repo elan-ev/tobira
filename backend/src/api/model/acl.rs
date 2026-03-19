@@ -1,18 +1,17 @@
-use juniper::{GraphQLInputObject, GraphQLObject};
+use juniper::GraphQLObject;
 use postgres_types::BorrowToSql;
-use serde::Serialize;
 
 use crate::{api::{err::ApiResult, Context}, model::TranslatedString, db::util::select};
 
 
 
 
-pub(crate) type Acl = Vec<AclItem>;
+pub(crate) type Acl = Vec<AclItemWithInfo>;
 
-/// A role being granted permission to perform certain actions.
+/// An `AclItem` with extra about the role.
 #[derive(Debug, GraphQLObject)]
 #[graphql(context = Context)]
-pub(crate) struct AclItem {
+pub(crate) struct AclItemWithInfo {
     /// Role. In arrays of AclItems, no two items have the same `role`.
     pub role: String,
 
@@ -94,7 +93,7 @@ where
     ");
 
     context.db.query_mapped(&sql, params, |row| {
-        AclItem {
+        AclItemWithInfo {
             role: mapping.role.of(&row),
             actions: mapping.actions.of(&row),
             info: mapping.label.of::<Option<_>>(&row).map(|label| RoleInfo {
@@ -104,10 +103,4 @@ where
             }),
         }
     }).await.map_err(Into::into)
-}
-
-#[derive(Debug, GraphQLInputObject, Serialize)]
-pub(crate) struct AclInputEntry {
-    pub role: String,
-    pub actions: Vec<String>,
 }

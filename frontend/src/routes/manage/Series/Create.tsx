@@ -43,7 +43,7 @@ const query = graphql`
 `;
 
 const createSeriesMutation = graphql`
-    mutation CreateSeriesMutation($metadata: BasicMetadata!, $acl: [AclInputEntry!]!) {
+    mutation CreateSeriesMutation($metadata: BasicMetadata!, $acl: [AclItem!]!) {
         createSeries(metadata: $metadata, acl: $acl) { id }
     }
 `;
@@ -65,5 +65,3 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
         }
     />;
 };
-
-

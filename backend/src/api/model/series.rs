@@ -19,6 +19,7 @@ use crate::{
     },
     db::util::{impl_from_db, select},
     model::{
+        AclItem,
         ExtraMetadata,
         Key,
         OpencastId,
@@ -31,7 +32,6 @@ use crate::{
     sync::client::{AclInput, OpencastItem},
 };
 
-use self::acl::AclInputEntry;
 
 use super::{
     block::{
@@ -197,7 +197,7 @@ impl Series {
 
     pub(crate) async fn create_in_oc(
         metadata: BasicMetadata,
-        acl: Vec<AclInputEntry>,
+        acl: Vec<AclItem>,
         context: &Context,
     ) -> ApiResult<Self> {
         if !context.auth.can_create_series(&context.config.auth) {
@@ -212,7 +212,7 @@ impl Series {
                 err::opencast_unavailable!("Failed to create series")
             })?;
 
-        let db_acl = Some(convert_acl_input(acl));
+        let db_acl = Some(convert_acl_input(&acl));
 
         // If the request returned an Opencast identifier, the series was created successfully.
         // The series is created in the database, so the user doesn't have to wait for sync to see
@@ -232,7 +232,7 @@ impl Series {
     }
 
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
-        context.auth.state.required_trusted_external()?;
+        context.require_trusted_external_auth()?;
         Self::create(series, None, context, SeriesState::Waiting).await
     }
 
@@ -241,7 +241,7 @@ impl Series {
         target_path: String,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.auth.state.required_trusted_external()?;
+        context.require_trusted_external_auth()?;
 
         let series = Self::load_by_opencast_id(series_oc_id, context)
             .await?
@@ -286,7 +286,7 @@ impl Series {
         path: String,
         context: &Context,
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
-        context.auth.state.required_trusted_external()?;
+        context.require_trusted_external_auth()?;
 
         let series = Self::load_by_opencast_id(series_oc_id, context)
             .await?
@@ -335,7 +335,7 @@ impl Series {
         new_realms: Vec<RealmSpecifier>,
         context: &Context,
     ) -> ApiResult<Realm> {
-        context.auth.state.required_trusted_external()?;
+        context.require_trusted_external_auth()?;
 
         // Check parameters
         if new_realms.iter().rev().skip(1).any(|r| r.name.is_none()) {
@@ -409,7 +409,7 @@ impl Series {
         }).await
     }
 
-    pub(crate) async fn update_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
+    pub(crate) async fn update_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<Series> {
         if !context.config.general.allow_acl_edit {
             return Err(err::not_authorized!("editing ACLs is not allowed"));
         }
@@ -433,7 +433,7 @@ impl Series {
 
         if response.status() == StatusCode::OK {
             // 200: The updated access control list is returned.
-            let db_acl = convert_acl_input(acl);
+            let db_acl = convert_acl_input(&acl);
 
             context.db.execute("\
                 update all_series \

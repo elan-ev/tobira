@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use bytes::BytesMut;
 use chrono::{DateTime, Utc};
-use juniper::GraphQLEnum;
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
@@ -43,16 +42,6 @@ pub struct EventTextsQueueRecord {
     pub retry_count: i32,
 }
 
-/// Represents the `event_state` type defined in `05-events.sql`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, Serialize, Deserialize, GraphQLEnum)]
-#[postgres(name = "event_state")]
-pub enum EventState {
-    #[postgres(name = "ready")]
-    Ready,
-    #[postgres(name = "waiting")]
-    Waiting,
-}
-
 
 /// Represents the `playlist_entry_type` type defined in `31-playlists.sql`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, Deserialize)]
@@ -75,25 +64,6 @@ pub struct PlaylistEntry {
     #[serde(rename = "contentId")]
     pub content_id: String,
 }
-
-/// Represents the `timespan_text` type.
-#[derive(Debug, FromSql, ToSql)]
-#[postgres(name = "timespan_text")]
-pub struct TimespanText {
-    pub span_start: i64,
-    pub span_end: i64,
-    pub t: String,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromSql, ToSql, GraphQLEnum)]
-#[postgres(name = "text_asset_type")]
-pub enum TextAssetType {
-    #[postgres(name = "caption")]
-    Caption,
-    #[postgres(name = "slide-text")]
-    SlideText,
-}
-
 
 
 /// Represents the type for the `custom_action_roles` field from `32-custom-actions.sql`.

@@ -3,15 +3,12 @@ use juniper::{GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use tokio_postgres::Row;
 
 use crate::{
-    api::{
+    HasRoles, api::{
         Context,
-        err::{invalid_input, ApiResult},
-    },
-    dbargs,
-    HasRoles,
+        err::{ApiResult, invalid_input},
+    }, dbargs, model::AclItem
 };
 
-use super::acl::AclInputEntry;
 
 
 /// Generates an enum for custom table sort columns and a sort order struct.
@@ -270,15 +267,15 @@ pub(crate) struct AclForDB {
     // custom_action_roles: Option<CustomActions>,
 }
 
-pub(crate) fn convert_acl_input(entries: Vec<AclInputEntry>) -> AclForDB {
+pub(crate) fn convert_acl_input(entries: &[AclItem]) -> AclForDB {
     let mut read_roles = HashSet::new();
     let mut write_roles = HashSet::new();
     // let mut preview_roles = HashSet::new();
     // let mut custom_action_roles = CustomActions::default();
 
     for entry in entries {
-        let role = entry.role;
-        for action in entry.actions {
+        let role = &entry.role;
+        for action in &entry.actions {
             match action.as_str() {
                 // "preview" => {
                 //     preview_roles.insert(role.clone());

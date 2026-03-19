@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::{
-    api::err::{ApiError, ApiErrorKind},
-    auth::{JwtContext, AuthContext, AuthState},
+    api::err::{ApiError, ApiErrorKind, not_authorized},
+    auth::{AuthContext, AuthState, JwtContext},
     config::Config,
     db::Transaction,
     search,
@@ -45,5 +45,12 @@ impl Context {
             kind: ApiErrorKind::NotAuthorized,
             key: Some("mutation.not-logged-in"),
         }
+    }
+
+    pub fn require_trusted_external_auth(&self) -> Result<(), ApiError> {
+        if self.auth.state != AuthState::TrustedExternal {
+            return Err(not_authorized!("only trusted external applications can use this mutation"));
+        }
+        Ok(())
     }
 }
