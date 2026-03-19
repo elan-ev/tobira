@@ -1284,6 +1284,7 @@ type VideoBlock implements Block {
   event: Event
   showTitle: Boolean!
   showLink: Boolean!
+  showMetadata: Boolean!
   id: ID!
   index: Int!
   realm: Realm!
