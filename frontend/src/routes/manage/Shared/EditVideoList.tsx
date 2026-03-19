@@ -23,6 +23,7 @@ import {
     FloatingHandle,
     FloatingTrigger,
     match,
+    notNullish,
     screenWidthAbove,
     screenWidthAtMost,
     useColorScheme,
@@ -54,14 +55,10 @@ import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../../../GlobalStyle";
 
 type Entry = Series["entries"][number];
 type AuthEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
-export type ListEvent = AuthEvent & {
-    action: "add" | "remove" | "move" | "none";
-} & {
-    targetSeries?: {
-        id: string;
-        title: string;
-    };
-};
+export type ListEvent = AuthEvent & (
+    | { action: "add" | "remove" | "none"; }
+    | { action: "move", targetSeries: { id: string; title: string } }
+);
 
 
 type VideoListMutationParams = MutationParameters & {
@@ -133,7 +130,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
             .filter(e => e.action === "remove" || e.action === "move")
             .map(e => ({
                 id: e.id,
-                targetSeries: e.targetSeries?.id,
+                targetSeries: e.action === "move" ? e.targetSeries.id : undefined,
             })),
     };
 
@@ -158,13 +155,16 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
 
     return <Inertable isInert={inFlight || !!commitError} css={{ marginBottom: 32, maxWidth: 750 }}>
-        <VideoListMenu {...{ listEntries, isPlaylist, events, setEvents, listId }} seriesLink={
-            user.canUpload && !isPlaylist && <LinkButton
-                to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
-                <LuUpload />
-                {t("upload.title")}
-            </LinkButton>
-        }>
+        <VideoListMenu
+            {...{ listEntries, isPlaylist, events, setEvents, listId }}
+            seriesLink={
+                user.canUpload && !isPlaylist && <LinkButton
+                    to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
+                    <LuUpload />
+                    {t("upload.title")}
+                </LinkButton>
+            }
+        >
             {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
                 {description}
             </p>}
@@ -187,7 +187,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
 type VideoListMenuProps = PropsWithChildren<{
     isPlaylist: boolean;
-    listId: string;
+    listId?: string;
     events: ListEvent[];
     setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
     seriesLink?: React.ReactNode;
@@ -202,6 +202,14 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
     seriesLink,
 }) => {
     const { t } = useTranslation();
+
+    const handleSeriesChange = (eventId: string, targetSeries: { id: string; title: string }) => {
+        setEvents(prev => prev.map(e => e.id !== eventId ? e : {
+            ...e,
+            action: "move",
+            targetSeries,
+        }));
+    };
 
     return <>
         <div css={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -234,7 +242,8 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                     <EventEntry
                         key={event.id}
                         isPlaylistEntry={isPlaylist}
-                        {...{ index, event, events, setEvents, listId }}
+                        {...{ index, event, listId }}
+                        onSeriesChange={handleSeriesChange}
                         totalEvents={events.length}
                         onMove={isPlaylist
                             ? direction => setEvents(
@@ -348,7 +357,10 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
 };
 
 
-type EventEntryProps = SwitchSeriesMenuProps & {
+type EventEntryProps = {
+    event: ListEvent;
+    listId?: string;
+    onSeriesChange?: (eventId: string, targetSeries: { id: string; title: string }) => void;
     index: number;
     totalEvents: number;
     onChange: () => void;
@@ -357,20 +369,10 @@ type EventEntryProps = SwitchSeriesMenuProps & {
 };
 
 const EventEntry: React.FC<EventEntryProps> = ({
-    event, index, totalEvents, onChange, setEvents, listId, onMove, isPlaylistEntry,
+    event, index, totalEvents, onChange, listId, onSeriesChange, onMove, isPlaylistEntry,
 }) => {
     const { t, i18n } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
-
-    const buttonStyle = css({
-        fontSize: 12,
-        padding: "4px 8px",
-        marginTop: "auto",
-        gap: 5,
-        [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-            span: { display: "none" },
-        },
-    });
 
     const moveButtonStyle = css({
         display: "flex",
@@ -560,27 +562,28 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                 display: "flex",
                                 gap: 8,
                                 marginTop: "auto",
-                                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                                    "button > span": {
-                                        display: "none",
-                                    },
-                                },
                             }}>
-                                {!isPlaylistEntry
-                                    && <SwitchSeriesMenu {...{ event, setEvents, listId }} />
+                                {/* `listId` is always set for series, so the `!` is fine here */}
+                                {!isPlaylistEntry && onSeriesChange
+                                    && <SwitchSeriesMenu
+                                        {...{ event, onSeriesChange }}
+                                        listId={notNullish(listId)}
+                                    />
                                 }
 
-                                <Button
-                                    disabled={!isPlaylistEntry && (
-                                        !event.canWrite || !CONFIG.allowSeriesEventRemoval
-                                    )}
-                                    kind="danger"
-                                    css={buttonStyle}
-                                    onClick={onChange}
-                                >
-                                    <LuListX size={16} />
-                                    <span>{t("manage.video-list.edit.remove")}</span>
-                                </Button>
+                                <div>
+                                    <Button
+                                        disabled={!isPlaylistEntry && (
+                                            !event.canWrite || !CONFIG.allowSeriesEventRemoval
+                                        )}
+                                        kind="danger"
+                                        css={buttonStyle}
+                                        onClick={onChange}
+                                    >
+                                        <LuListX size={16} />
+                                        <span>{t("manage.video-list.edit.remove")}</span>
+                                    </Button>
+                                </div>
                             </div>
                         </>}
                     </div>
@@ -625,10 +628,10 @@ const EventEntry: React.FC<EventEntryProps> = ({
 type SwitchSeriesMenuProps = {
     event: ListEvent;
     listId: string;
-    setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    onSeriesChange: NonNullable<EventEntryProps["onSeriesChange"]>
 }
 
-const SwitchSeriesMenu: React.FC<SwitchSeriesMenuProps> = ({ event, setEvents, listId }) => {
+const SwitchSeriesMenu: React.FC<SwitchSeriesMenuProps> = ({ event, onSeriesChange, listId }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const floatingRef = useRef<FloatingHandle>(null);
@@ -649,11 +652,7 @@ const SwitchSeriesMenu: React.FC<SwitchSeriesMenuProps> = ({ event, setEvents, l
                     disabled={!event.canWrite}
                     onClick={() => setButtonIsActive(prev => !prev)}
                     css={{
-                        fontSize: 12,
-                        padding: "4px 8px",
-                        marginTop: "auto",
-                        gap: 5,
-
+                        ...buttonStyle,
                         display: "flex",
                         ...buttonIsActive && { "&&": {
                             borderColor: COLORS.neutral60,
@@ -681,21 +680,16 @@ const SwitchSeriesMenu: React.FC<SwitchSeriesMenuProps> = ({ event, setEvents, l
                     <VideoListSelector
                         writableOnly
                         type="series"
-                        placeholder={t("manage.video-list.edit.move")}
                         css={{ position: "relative" }}
                         onChange={series => {
                             if (!series) {
                                 return;
                             }
 
-                            setEvents(prev => prev.map(e => e.id !== event.id ? e : {
-                                ...event,
-                                action: "move",
-                                targetSeries: {
-                                    id: series.id,
-                                    title: series.title,
-                                },
-                            }));
+                            onSeriesChange(event.id, {
+                                id: series.id,
+                                title: series.title,
+                            });
 
                             currentRef(floatingRef).close();
                             setButtonIsActive(false);
@@ -736,3 +730,14 @@ const moveItem = (arr: ListEvent[], from: number, to: number): ListEvent[] => {
     result[to] = arr[from];
     return result;
 };
+
+
+const buttonStyle = css({
+    fontSize: 12,
+    padding: "4px 8px",
+    marginTop: "auto",
+    gap: 5,
+    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+        span: { display: "none" },
+    },
+});
