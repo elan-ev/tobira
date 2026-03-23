@@ -12,16 +12,27 @@ use juniper::{GraphQLObject, GraphQLScalar};
 use postgres_types::{FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 
+mod acl;
+mod block;
 mod event;
 mod extra_metadata;
 mod key;
+mod known_roles;
+mod misc;
 mod series;
 mod translated_string;
 
 pub(crate) use self::{
+    acl::AclItem,
+    block::BlockType,
+    event::{
+        TextMatch, TextAssetType, TimespanText, EventState,
+        SearchThumbnailInfo, ThumbnailInfo,
+    },
     extra_metadata::ExtraMetadata,
     key::Key,
-    event::{SearchThumbnailInfo, ThumbnailInfo},
+    known_roles::{KnownGroup, KnownUser},
+    misc::ByteSpan,
     series::SeriesState,
     translated_string::{LangKey, TranslatedString},
 };

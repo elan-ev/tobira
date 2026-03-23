@@ -44,7 +44,7 @@ const UnlistedNote: React.FC = () => {
 
 
 const updateVideoAcl = graphql`
-    mutation VideoAccessAclMutation($id: ID!, $acl: [AclInputEntry!]!) {
+    mutation VideoAccessAclMutation($id: ID!, $acl: [AclItem!]!) {
         updateEventAcl(id: $id, acl: $acl) {
             ...on AuthorizedEvent {
                 acl { role actions info { label implies large } }
@@ -103,4 +103,3 @@ const EventAclEditor: React.FC<EventAclPageProps> = ({ event, data }) => {
         }} />
     </>;
 };
-

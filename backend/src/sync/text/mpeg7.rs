@@ -1,7 +1,8 @@
 use xmlparser::{ElementEnd, Token, Tokenizer};
 use anyhow::{anyhow, bail, Result};
 
-use crate::db::types::TimespanText;
+use crate::model::TimespanText;
+
 
 
 /// Helper iterator which just skips tokens we are never interested in.

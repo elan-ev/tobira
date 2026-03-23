@@ -1,13 +1,12 @@
 use juniper::graphql_object;
 
-use crate::model::OpencastId;
+use crate::model::{AclItem, OpencastId};
 
 use super::{
     Context,
     err::ApiResult,
     id::Id,
     model::{
-        acl::AclInputEntry,
         series::{Series, NewSeries, RemovedEventFromSeries},
         playlist::{AuthorizedPlaylist, RemovedPlaylist},
         shared::BasicMetadata,
@@ -88,7 +87,7 @@ impl Mutation {
     /// If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
     /// this means it might get overwritten again if the update in Opencast failed for some reason.
     /// This solution should be improved in the future.
-    async fn update_event_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<AuthorizedEvent> {
+    async fn update_event_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<AuthorizedEvent> {
         AuthorizedEvent::update_acl(id, acl, context).await
     }
 
@@ -115,7 +114,7 @@ impl Mutation {
     /// The `acl` parameter can include `read` and `write` roles.
     /// If successful, the updated ACL are stored in Tobira without waiting for an upcoming sync - however
     /// this means it might get overwritten again if the update in Opencast failed for some reason.
-    async fn update_series_acl(id: Id, acl: Vec<AclInputEntry>, context: &Context) -> ApiResult<Series> {
+    async fn update_series_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<Series> {
         Series::update_acl(id, acl, context).await
     }
 
@@ -144,7 +143,7 @@ impl Mutation {
     /// and stores the series in Tobira's DB.
     async fn create_series(
         metadata: BasicMetadata,
-        acl: Vec<AclInputEntry>,
+        acl: Vec<AclItem>,
         context: &Context,
     ) -> ApiResult<Series> {
         Series::create_in_oc(metadata, acl, context).await
@@ -155,7 +154,7 @@ impl Mutation {
         metadata: BasicMetadata,
         creator: String,
         entries: Vec<Id>,
-        acl: Vec<AclInputEntry>,
+        acl: Vec<AclItem>,
         context: &Context,
     ) -> ApiResult<AuthorizedPlaylist> {
         AuthorizedPlaylist::create(metadata, creator, entries, acl, context).await
@@ -167,7 +166,7 @@ impl Mutation {
         id: Id,
         metadata: Option<BasicMetadata>,
         entries: Option<Vec<Id>>,
-        acl: Option<Vec<AclInputEntry>>,
+        acl: Option<Vec<AclItem>>,
         context: &Context,
     ) -> ApiResult<AuthorizedPlaylist> {
         let (title, description) = match metadata {

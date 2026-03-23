@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use juniper::{GraphQLScalar, InputValue, ScalarValue};
 use meilisearch_sdk::search::{FederationOptions, MatchRange, QueryFederationOptions};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -7,14 +6,8 @@ use std::{borrow::Cow, collections::HashMap, fmt, time::Instant};
 
 use crate::{
     api::{
-        err::ApiResult,
-        util::impl_object_with_dummy_field,
-        Context,
-        NodeValue
-    },
-    auth::HasRoles,
-    prelude::*,
-    search,
+        Context, NodeValue, err::ApiResult, util::impl_object_with_dummy_field
+    }, auth::HasRoles, model::ByteSpan, prelude::*, search
 };
 
 
@@ -24,7 +17,7 @@ mod series;
 mod playlist;
 
 pub(crate) use self::{
-    event::{SearchEvent, TextMatch},
+    event::SearchEvent,
     realm::SearchRealm,
     series::SearchSeries,
 };
@@ -81,23 +74,7 @@ make_search_results_object!("EventSearchResults", SearchEvent);
 make_search_results_object!("SeriesSearchResults", SearchSeries);
 make_search_results_object!("PlaylistSearchResults", search::Playlist);
 
-/// A byte range, encoded as two hex numbers separated by `-`.
-#[derive(Debug, Clone, Copy, GraphQLScalar)]
-#[graphql(parse_token(String))]
-pub struct ByteSpan {
-    pub start: u32,
-    pub len: u32,
-}
 
-impl ByteSpan {
-    fn to_output<S: ScalarValue>(&self) -> juniper::Value<S> {
-        juniper::Value::scalar(format!("{:x}-{:x}", self.start, self.len))
-    }
-
-    fn from_input<S: ScalarValue>(_input: &InputValue<S>) -> Result<Self, String> {
-        unimplemented!("not used right now")
-    }
-}
 
 #[derive(Debug, Clone, Copy, juniper::GraphQLEnum)]
 enum ItemType {
@@ -604,7 +581,7 @@ fn field_matches_for(
     field: &str,
 ) -> Vec<ByteSpan> {
     match_ranges_for(match_positions, field).iter()
-        .map(|m| ByteSpan { start: m.start as u32, len: m.length as u32 })
+        .map(|m| ByteSpan::from(m))
         .take(8) // The frontend can only show a limited number anyway
         .collect()
 }

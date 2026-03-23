@@ -15,10 +15,10 @@ use serde::{Deserialize, Serialize};
 use tap::TapFallible;
 
 use crate::{
-    api::{model::acl::AclInputEntry, Context},
+    api::Context,
     config::Config,
     db::types::PlaylistEntry,
-    model::OpencastId,
+    model::{AclItem, OpencastId},
     prelude::*,
     sync::harvest::HarvestResponse,
     util::{download_body, HttpHost},
@@ -162,7 +162,7 @@ impl OcClient {
     pub async fn update_acl<T: OpencastItem>(
         &self,
         endpoint: &T,
-        acl: &[AclInputEntry],
+        acl: &[AclItem],
         context: &Context,
     ) -> Result<Response<Incoming>> {
         let oc_id = endpoint.id();
@@ -226,7 +226,7 @@ impl OcClient {
 
     pub async fn create_series(
         &self,
-        acl: &[AclInputEntry],
+        acl: &[AclItem],
         title: &str,
         description: Option<&str>,
     ) -> Result<CreateSeriesResponse> {
@@ -268,7 +268,7 @@ impl OcClient {
         description: Option<&str>,
         creator: &str,
         entries: &[OpencastId],
-        acl: &[AclInputEntry],
+        acl: &[AclItem],
     ) -> Result<CreatePlaylistResponse> {
         let access_policy = build_access_policy(acl);
 
@@ -299,7 +299,7 @@ impl OcClient {
         title: Option<&str>,
         description: Option<&str>,
         entries: Option<&[OpencastId]>,
-        acl: Option<&[AclInputEntry]>,
+        acl: Option<&[AclItem]>,
     ) -> Result<CreatePlaylistResponse> {
         let mut payload = serde_json::Map::new();
 
@@ -475,7 +475,7 @@ pub(crate) trait OpencastItem {
 
 
 /// Builds the Opencast ACL from the input structure used in Tobira.
-pub(crate) fn build_access_policy(acl: &[AclInputEntry]) -> Vec<AclInput> {
+pub(crate) fn build_access_policy(acl: &[AclItem]) -> Vec<AclInput> {
     acl
         .iter()
         .flat_map(|entry| {

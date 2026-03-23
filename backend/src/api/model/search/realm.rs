@@ -6,9 +6,10 @@ use meilisearch_sdk::search::MatchRange;
 use crate::{
     api::{Context, Node, Id, NodeValue},
     search,
+    model::ByteSpan,
 };
 
-use super::{field_matches_for, ByteSpan};
+use super::field_matches_for;
 
 #[derive(Debug, GraphQLObject)]
 #[graphql(Context = Context, impl = NodeValue)]

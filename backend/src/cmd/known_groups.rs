@@ -5,7 +5,7 @@ use postgres_types::ToSql;
 use serde_json::json;
 
 use crate::{
-    api::model::known_roles::KnownGroup,
+    model::KnownGroup,
     config::Config,
     model::TranslatedString,
     db,

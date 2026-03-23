@@ -4,13 +4,12 @@ use crate::{
     api::{
         err::{self, ApiResult, ApiError, ApiErrorKind},
         model::{
-            acl::AclInputEntry,
             shared::{convert_acl_input, BasicMetadata},
         },
         Context,
         Id,
     },
-    model::OpencastId,
+    model::{AclItem, OpencastId},
     prelude::*,
     sync::client::{AclInput, OpencastItem},
 };
@@ -24,7 +23,7 @@ impl AuthorizedPlaylist {
         metadata: BasicMetadata,
         creator: String,
         entries: Vec<Id>,
-        acl: Vec<AclInputEntry>,
+        acl: Vec<AclItem>,
         context: &Context,
     ) -> ApiResult<Self> {
         if !context.auth.can_create_playlists(&context.config.auth) {
@@ -47,7 +46,7 @@ impl AuthorizedPlaylist {
                 err::opencast_unavailable!("Failed to create playlist")
             })?;
 
-        let acl = convert_acl_input(acl);
+        let acl = convert_acl_input(&acl);
         let selection = Self::select();
 
         let query = format!(
@@ -78,7 +77,7 @@ impl AuthorizedPlaylist {
         title: Option<String>,
         description: Option<String>,
         entries: Option<Vec<Id>>,
-        acl: Option<Vec<AclInputEntry>>,
+        acl: Option<Vec<AclItem>>,
         context: &Context,
     ) -> ApiResult<Self> {
         // `load_for_mutation` handles authorization.
@@ -132,12 +131,12 @@ impl AuthorizedPlaylist {
         // We need to convert the response's ACL back to our DB format.
         // Filtering for `allow` is probably not necessary (I don't think that can be `false`)
         // but it doesn't hurt to stay on the safe side.
-        let acl_entries: Vec<AclInputEntry> = response.acl
+        let acl_entries: Vec<AclItem> = response.acl
             .into_iter()
             .filter(|a| a.allow)
-            .map(|a| AclInputEntry { role: a.role, actions: vec![a.action] })
+            .map(|a| AclItem { role: a.role, actions: vec![a.action] })
             .collect();
-        let response_acl = convert_acl_input(acl_entries);
+        let response_acl = convert_acl_input(&acl_entries);
 
         let selection = Self::select();
         let query = format!(
