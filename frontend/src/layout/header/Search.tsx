@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback, useState, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
@@ -97,6 +97,9 @@ type SearchInputProps = Partial<SearchFieldProps> & {
     clear: () => void;
     inputProps: React.InputHTMLAttributes<HTMLInputElement>;
     defaultValue?: string;
+    height?: number;
+    spinnerSize?: number;
+    icon?: ReactNode;
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({
@@ -106,6 +109,9 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     inputProps,
     defaultValue,
     variant,
+    height = 42,
+    spinnerSize = 24,
+    icon,
 }) => {
     const { t } = useTranslation();
     const [inputIsEmpty, setInputIsEmpty] = useState(!defaultValue);
@@ -115,8 +121,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         setInputIsEmpty(true);
     };
 
-    const height = 42;
-    const spinnerSize = 24;
     const paddingSpinner = (height - spinnerSize) / 2;
 
 
@@ -132,13 +136,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                 },
             },
         }}>
-            <HiOutlineSearch css={{
+            {icon ?? <HiOutlineSearch css={{
                 position: "absolute",
                 height: "100%",
                 left: 11,
                 fontSize: 23,
                 color: COLORS.neutral60,
-            }} />
+            }} />}
             <form onSubmit={event => {
                 event.preventDefault();
                 search(currentRef(inputRef).value);
