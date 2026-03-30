@@ -161,65 +161,56 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
             <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
         </Link>}
 
-        {showMetadata && <div><div css={{
-            display: "flex",
-            alignItems: "center",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            margin: "8px 0",
-            gap: 8,
-        }}>
-        </div>
-        <div css={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-            "> div": {
-                backgroundColor: COLORS.neutral10,
-                borderRadius: 8,
-                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                    overflowWrap: "anywhere",
+        {showMetadata && <div css={{ marginTop: 16 }}>
+            <div css={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 16,
+                "> div": {
+                    backgroundColor: COLORS.neutral10,
+                    borderRadius: 8,
+                    [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
+                        overflowWrap: "anywhere",
+                    },
                 },
-            },
-        }}>
-            { event.description && <CollapsibleDescription
-                type="video"
-                description={event.description}
-                creators={event.creators}
-                bottomPadding={40}
-            />}
-            { pairs.length > 0 && <div css={{
-                flex: "1 200px",
-                alignSelf: "flex-start",
-                padding: "20px 22px",
             }}>
-                <dl css={{
-                    display: "grid",
-                    gridTemplateColumns: "max-content 1fr",
-                    columnGap: 8,
-                    rowGap: 6,
-                    fontSize: 14,
-                    lineHeight: 1.3,
-                    "& > dt::after": {
-                        content: "':'",
-                    },
-                    "& > dd": {
-                        color: COLORS.neutral60,
-                    },
-                    "& > li:not(:last-child)::after": {
-                        content: "'•'",
-                        padding: "0 6px",
-                        color: COLORS.neutral40,
-                    },
+                {event.description && <CollapsibleDescription
+                    type="video"
+                    description={event.description}
+                    creators={event.creators}
+                    bottomPadding={40}
+                />}
+                {pairs.length > 0 && <div css={{
+                    flex: "1 200px",
+                    alignSelf: "flex-start",
+                    padding: "20px 22px",
                 }}>
-                    {pairs.map(([label, value], i) => <React.Fragment key={i}>
-                        <dt>{label}</dt>
-                        <dd>{value}</dd>
-                    </React.Fragment>)}
-                </dl>
-            </div>}
-        </div>
-        </div>
-        }
+                    <dl css={{
+                        display: "grid",
+                        gridTemplateColumns: "max-content 1fr",
+                        columnGap: 8,
+                        rowGap: 6,
+                        fontSize: 14,
+                        lineHeight: 1.3,
+                        "& > dt::after": {
+                            content: "':'",
+                        },
+                        "& > dd": {
+                            color: COLORS.neutral60,
+                        },
+                        "& > li:not(:last-child)::after": {
+                            content: "'•'",
+                            padding: "0 6px",
+                            color: COLORS.neutral40,
+                        },
+                    }}>
+                        {pairs.map(([label, value], i) => <React.Fragment key={i}>
+                            <dt>{label}</dt>
+                            <dd>{value}</dd>
+                        </React.Fragment>)}
+                    </dl>
+                </div>}
+            </div>
+        </div>}
     </div>;
 };
