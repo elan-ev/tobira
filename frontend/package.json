@@ -43,7 +43,7 @@
     "i18next": "^25.8.18",
     "i18next-browser-languagedetector": "^8.2.1",
     "linkify-it": "^5.0.0",
-    "lucide-react": "^0.510.0",
+    "lucide-react": "^0.528.0",
     "paella-basic-plugins": "1.44.10",
     "paella-core": "1.50.2",
     "paella-mp4multiquality-plugin": "1.47.1",
