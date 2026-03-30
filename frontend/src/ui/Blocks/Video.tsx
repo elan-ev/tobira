@@ -13,7 +13,7 @@ import { PreviewPlaceholder, useEventWithAuthData } from "../../routes/Video";
 
 import { screenWidthAtMost } from "@opencast/appkit";
 import { COLORS } from "../../color";
-import { CollapsibleDescription } from "../../ui/metadata";
+import { CollapsibleDescription, isValidLink, LICENSE_TRANSLATIONS } from "../../ui/metadata";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { ReactNode } from "react";
@@ -120,7 +120,19 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
                             color: COLORS.neutral40,
                         },
                     }}>
-                        {values.map((v, i) => <li key={i}>{v}</li>)}
+                        {values.map((v, i) => {
+                            const displayValue = (
+                                label === "builtin:license" && v in LICENSE_TRANSLATIONS
+                            ) ? LICENSE_TRANSLATIONS[v](t) : v;
+
+                            return <li key={i}>
+                                {isValidLink(displayValue)
+                                    ? <Link to={displayValue}>{displayValue}</Link>
+                                    : v
+                                }
+                            </li>;
+                        })
+                        }
                     </ul>
                     : values[0] ?? null;
 
@@ -128,7 +140,6 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
             }
         }
     }
-
 
     return <div css={{ maxWidth: 800 }}>
         {showTitle && <Title title={event.title} />}

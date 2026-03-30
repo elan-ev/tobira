@@ -21,6 +21,7 @@ import { Inertable, OcEntity } from "../util";
 import { PrettyDate } from "./time";
 import { autoLink as makeAutoLink } from "./text";
 import { Link } from "../router";
+import { TFunction } from "i18next";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -420,4 +421,31 @@ export const SubmitButtonWithStatus: React.FC<SubmitButtonWithStatusProps> = ({
             }} />
         </span>
     </div>;
+};
+
+
+
+export const LICENSE_TRANSLATIONS: Record<string, (t: TFunction) => string> = {
+    "ALLRIGHTS": (t: TFunction) => t("license.all-rights"),
+    "CC-BY": () => "CC BY",
+    "CC-BY-SA": () => "CC BY-SA",
+    "CC-BY-ND": () => "CC BY-ND",
+    "CC-BY-NC": () => "CC BY-NC",
+    "CC-BY-NC-SA": () => "CC BY-NC-SA",
+    "CC-BY-NC-ND": () => "CC BY-NC-ND",
+};
+
+export const isValidLink = (s: string): boolean => {
+    const trimmed = s.trim();
+    if (!(trimmed.startsWith("http://") || trimmed.startsWith("https://"))) {
+        return false;
+    }
+
+    try {
+        new URL(trimmed);
+    } catch (_) {
+        return false;
+    }
+
+    return true;
 };
