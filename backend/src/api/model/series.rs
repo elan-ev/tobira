@@ -387,6 +387,7 @@ impl Series {
             table: "all_series",
             alias: Some("series"),
             join_clause: "",
+            date_column: "series.created",
         };
         let (selection, mapping) = select!(
             series: Series,
@@ -719,6 +720,17 @@ impl Series {
 
     fn metadata(&self) -> &Option<ExtraMetadata> {
         &self.metadata
+    }
+
+    /// Returns creators extracted from the series metadata.
+    /// Looks for `creator` or `createdBy` in the dcterms namespace.
+    fn creators(&self) -> Vec<String> {
+        self.metadata.as_ref()
+            .and_then(|m| {
+                m.dcterms.get("creator").or_else(|| m.dcterms.get("createdBy"))
+            })
+            .cloned()
+            .unwrap_or_default()
     }
 
     fn description(&self) -> &Option<String> {
