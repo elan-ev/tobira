@@ -17,8 +17,9 @@ import { CollapsibleDescription, isValidLink, LICENSE_TRANSLATIONS } from "../..
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { ReactNode } from "react";
-import CONFIG from "../../config";
+import CONFIG, { MetadataLabel } from "../../config";
 import React from "react";
+import { TFunction } from "i18next";
 
 export type BlockEvent = VideoBlockData$data["event"];
 export type AuthorizedBlockEvent = Extract<BlockEvent, { __typename: "AuthorizedEvent" }>;
@@ -27,6 +28,18 @@ type Props = {
     fragRef: VideoBlockData$key;
     basePath: string;
     edit?: boolean;
+};
+
+const translateValue = (
+    label: MetadataLabel, t: TFunction<"translation", undefined>, value: string,
+):ReactNode => {
+    const displayValue = (
+        label === "builtin:license" && value in LICENSE_TRANSLATIONS
+    ) ? LICENSE_TRANSLATIONS[value](t) : value;
+
+    return isValidLink(displayValue)
+        ? <Link to={displayValue}>{displayValue}</Link>
+        : displayValue;
 };
 
 export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
@@ -120,21 +133,9 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
                             color: COLORS.neutral40,
                         },
                     }}>
-                        {values.map((v, i) => {
-                            const displayValue = (
-                                label === "builtin:license" && v in LICENSE_TRANSLATIONS
-                            ) ? LICENSE_TRANSLATIONS[v](t) : v;
-
-                            return <li key={i}>
-                                {isValidLink(displayValue)
-                                    ? <Link to={displayValue}>{displayValue}</Link>
-                                    : v
-                                }
-                            </li>;
-                        })
-                        }
+                        {values.map((v, i) => <li key={i}>{translateValue(label, t, v)}</li>)}
                     </ul>
-                    : values[0] ?? null;
+                    : translateValue(label, t, values[0]);
 
                 pairs.push([translatedLabel, node]);
             }
