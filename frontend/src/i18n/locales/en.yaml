@@ -132,6 +132,7 @@ login-page:
 video:
   singular: Video
   plural: Videos
+  count: Video count
   video-page: 'Video page: “{{video}}”'
   video-player: Video player
   duration: Duration
@@ -206,6 +207,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Number of entries
+  no-of-entries_one: '{{count}} entry'
+  no-of-entries_other: '{{count}} entries'
   playlist-page: 'Playlist page: “{{playlist}}”'
   deleted-block: The playlist referenced here was deleted.
   not-allowed: You are not authorized to view this playlist.
@@ -519,6 +523,9 @@ manage:
     no-content: No videos
     no-of-videos_one: '{{count}} video'
     no-of-videos_other: '{{count}} videos'
+    entries: Entries
+    no-of-entries_one: '{{count}} entry'
+    no-of-entries_other: '{{count}} entries'
     removing-disabled: Removing videos is disabled.
     details:
       unknown_one: One video is missing or requires additional permissions to view.
@@ -553,13 +560,38 @@ manage:
       next: Next page
       last: Last page
     filter:
-      by-title: Filter by title
-    columns:
+      date: Date
+      select-date: Select date range
+      from: From
+      to: To
+      date-last-3-months: Last 3 months
+      date-last-6-months: Last 6 months
+      date-last-12-months: Last 12 months
+      date-custom-range: Custom range
+      filter-by-visibility: Filter by visibility
+      remove: Remove filter
+      visibility: Visibility
+      visibility-public: Public
+      visibility-public-tooltip: Can be seen by anyone
+      visibility-private: Private
+      visibility-private-tooltip: Can only be seen by you
+      visibility-shared: Shared
+      visibility-shared-tooltip: Can be seen by a select group
+      writable: Access
+      write: Write
+      read: Read
+    sorting:
+      label: Sort entries
+      sort-by: Sort by
+      order: Order
       description: 'Sort by {{title}}, {{direction}}'
       ascending: ascending
       descending: descending
+      ascending-cap: Ascending
+      descending-cap: Descending
       created: Created
       updated: Updated
+      unknown: Unknown column
     no-series-title: Missing title
     no-entries-found: No entries found.
     missing-date: Unknown
