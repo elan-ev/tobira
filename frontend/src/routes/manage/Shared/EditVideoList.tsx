@@ -43,7 +43,6 @@ import { ellipsisOverflowCss, focusStyle } from "../../../ui";
 import { Thumbnail } from "../../../ui/Video";
 import { Link } from "../../../router";
 import { DirectVideoRoute } from "../../Video";
-import { thumbnailLinkStyle, titleLinkStyle } from "./Table";
 import { useNavBlocker } from "../../util";
 import { UploadRoute } from "../../Upload";
 import { LinkButton } from "../../../ui/LinkButton";
@@ -430,7 +429,11 @@ const EventEntry: React.FC<EventEntryProps> = ({
             <Link to={DirectVideoRoute.url({ videoId: event.id })} css={{
                 width: 100,
                 flexShrink: 0,
-                ...thumbnailLinkStyle,
+                ":focus-visible": { outline: "none" },
+                ":focus-within div:first-child": {
+                    outline: `2.5px solid ${COLORS.focus}`,
+                    outlineOffset: 1,
+                },
                 [screenWidthAtMost(420)]: {
                     width: "min(100px, 25%)",
                 },
@@ -460,8 +463,8 @@ const EventEntry: React.FC<EventEntryProps> = ({
                             fontSize: 14,
                             borderRadius: 4,
                             maxWidth: "fit-content",
+                            textDecoration: "none",
                             ...ellipsisOverflowCss(1),
-                            ...titleLinkStyle,
                             ...focusStyle({ offset: 1 }),
                         }}>
                             {event.title}

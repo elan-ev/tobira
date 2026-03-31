@@ -12,7 +12,7 @@ import { CreateVideoList } from "../Shared/Create";
 import type { User } from "../../../User";
 
 
-export const CREATE_SERIES_PATH = "/~manage/create-series" as const;
+const CREATE_SERIES_PATH = "/~manage/create-series" as const;
 
 export const CreateSeriesRoute = makeRoute({
     url: CREATE_SERIES_PATH,
