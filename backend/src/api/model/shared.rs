@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use chrono::{DateTime, Utc};
 use juniper::{GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use tokio_postgres::Row;
 
@@ -146,6 +147,16 @@ impl SortDirection {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, GraphQLEnum)]
+pub(crate) enum Visibility {
+    // Accessible to anonymous users (`ROLE_ANONYMOUS` in `read_roles`).
+    Public,
+    // Not public but read roles include at least one non-admin role.
+    Shared,
+    // Only readable for self and admin users.
+    Private,
+}
+
 #[derive(Debug)]
 pub struct Connection<T> {
     pub page_info: PageInfo,
@@ -163,6 +174,7 @@ pub(crate) struct ConnectionQueryParts {
     pub(crate) table: &'static str,
     pub(crate) alias: Option<&'static str>,
     pub(crate) join_clause: &'static str,
+    pub(crate) date_column: &'static str,
 }
 
 
@@ -206,31 +218,71 @@ where
 
     // Retrieve total number of items, considering possible filters.
     // Todo: consider stop words
-    let title_filter: Option<String> = filter.and_then(|f| f.title.map(|s| {
-        format!("%{}%", (|input: &str| input
+    let text_filter = |input: &str| -> String {
+        format!("%{}%", input
             .replace('\\', r"\\")
             .replace('%', r"\%")
             .replace('_', r"\_")
-        )(&s))
-    }));
+        )
+    };
+    let (
+        created_start,
+        created_end,
+        visibility,
+        text_query_filter,
+    ) = match filter {
+        Some(f) => (
+            f.created_start,
+            f.created_end,
+            f.visibility,
+            f.text_query.map(|s| text_filter(&s)),
+        ),
+        None => Default::default(),
+    };
+
+    let visibility_clause = match visibility {
+        Some(Visibility::Public) => format!(
+            "and 'ROLE_ANONYMOUS' = any({table}.read_roles)"
+        ),
+        Some(Visibility::Shared) => format!("\
+            and not ('ROLE_ANONYMOUS' = any({table}.read_roles)) \
+            and array_length({table}.read_roles, 1) > 1\
+        "),
+        Some(Visibility::Private) => format!("\
+            and not ('ROLE_ANONYMOUS' = any({table}.read_roles)) \
+            and coalesce(array_length({table}.read_roles, 1), 0) <= 1\
+        "),
+        None => String::new(),
+    };
+
+    let date_column = parts.date_column;
+
+    let filter_clauses = format!("\
+        and ($2::timestamptz is null or {date_column} >= $2::timestamptz) \
+        and ($3::timestamptz is null or {date_column} <= $3::timestamptz) \
+        {visibility_clause} \
+        and ($4::text is null or {table}.title ilike $4::text or {table}.description ilike $4::text)\
+    ");
 
     let total_count = context.db.query_one(
         &format!(
             "select count(*) \
                 from {table_alias} \
-                {acl_filter} and ($2::text is null or {table}.title ilike $2::text)",
+                {acl_filter} \
+                {filter_clauses}",
             ),
-        &[&user_roles, &title_filter],
+        &[&user_roles, &created_start, &created_end, &text_query_filter],
     ).await?.get::<_, i64>(0);
     let total_count = total_count.try_into().expect("more than 2^31 items?!");
 
     let query = format!(
-        "select {selection}, count(*) over() as total_count \
+        "select {selection} \
             from {table_alias} \
             {join_clause} \
-            {acl_filter} and ($2::text is null or {table}.title ilike $2::text) \
+            {acl_filter} \
+            {filter_clauses} \
             order by {sort_column} {sort_order}, {table}.id {sort_order} \
-            limit $3 offset $4 \
+            limit $5 offset $6 \
         ",
         join_clause = parts.join_clause,
         sort_order = order.direction.to_sql(),
@@ -240,7 +292,14 @@ where
     // Execute query
     let items = context.db.query_mapped(
         &query,
-        dbargs![&user_roles, &title_filter, &(limit as i64), &(offset as i64)],
+        dbargs![
+            &user_roles,
+            &created_start,
+            &created_end,
+            &text_query_filter,
+            &(limit as i64),
+            &(offset as i64),
+        ],
         |row| from_row(&row),
     ).await?;
 
@@ -315,5 +374,8 @@ pub(crate) struct BasicMetadata {
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct SearchFilter {
-    pub(crate) title: Option<String>,
+    pub(crate) created_start: Option<DateTime<Utc>>,
+    pub(crate) created_end: Option<DateTime<Utc>>,
+    pub(crate) visibility: Option<Visibility>,
+    pub(crate) text_query: Option<String>,
 }
