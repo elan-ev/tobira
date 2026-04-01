@@ -129,7 +129,10 @@ type ManageVideoNavProps = {
 const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
     const { t } = useTranslation();
 
-    if (event?.__typename !== "AuthorizedEvent" || !event.canWrite) {
+    if (event == null) {
+        return null;
+    }
+    if (event.__typename !== "AuthorizedEvent" || !event.canWrite) {
         return null;
     }
 

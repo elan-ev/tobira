@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { LuEye, LuPenLine, LuShieldCheck } from "react-icons/lu";
 import { graphql } from "react-relay";
+import { unreachable } from "@opencast/appkit";
 
 import { ManagePlaylistsRoute, SinglePlaylist } from ".";
 import { ThumbnailStack } from "../../../ui/ThumbnailStack";
@@ -124,8 +125,12 @@ type ManagePlaylistNavProps = SharedManageNavProps & {
 const ManagePlaylistNav: React.FC<ManagePlaylistNavProps> = ({ playlist, active }) => {
     const { t } = useTranslation();
 
-    if (playlist?.__typename !== "AuthorizedPlaylist" || !playlist.canWrite) {
+    if (playlist == null) {
         return null;
+    }
+
+    if (playlist.__typename !== "AuthorizedPlaylist") {
+        return unreachable();
     }
 
     const id = keyOfId(playlist.id);
