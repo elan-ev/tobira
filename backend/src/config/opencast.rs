@@ -1,10 +1,9 @@
 
-use base64::Engine as _;
 use secrecy::{ExposeSecret as _, SecretString};
 
 use crate::{
     prelude::*,
-    util::{HttpHost, HttpUrl},
+    util::{self, HttpHost, HttpUrl},
 };
 
 
@@ -110,10 +109,7 @@ impl OpencastConfig {
     }
 
     pub(crate) fn basic_auth_header(&self) -> SecretString {
-        let credentials = format!("{}:{}", self.user, self.password.expose_secret());
-        let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
-        let auth_header = format!("Basic {}", encoded_credentials);
-        SecretString::new(auth_header.into())
+        util::basic_auth_header(&self.user, self.password.expose_secret())
     }
 
     pub(crate) fn trusted_hosts(&self) -> Vec<HttpHost> {

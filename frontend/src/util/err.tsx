@@ -5,6 +5,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { match } from "@opencast/appkit";
 
 import { APIError, NotJson, ServerError } from "../relay";
+import { COLORS } from "../color";
 
 
 /** A network error while fetching the response. */
@@ -279,3 +280,33 @@ export class GlobalErrorBoundary
         }
     }
 }
+
+export type ErrorDetailsProps = {
+    summary: string;
+    body: string;
+};
+
+export const ErrorDetails: React.FC<ErrorDetailsProps> = ({ summary, body }) => (
+    <details css={{
+        border: `1px solid ${COLORS.neutral40}`,
+        borderRadius: 4,
+        padding: "6px 8px",
+        marginTop: "min(150px, 12vh)",
+        marginBottom: 16,
+    }}>
+        <summary css={{ cursor: "pointer" }}>
+            {summary}
+        </summary>
+        <pre css={{
+            backgroundColor: COLORS.neutral10,
+            borderRadius: 4,
+            padding: "12px 16px",
+            fontSize: 14,
+            marginTop: 10,
+        }}>
+            <code css={{ whiteSpace: "pre-wrap" }}>
+                {body}
+            </code>
+        </pre>
+    </details>
+);

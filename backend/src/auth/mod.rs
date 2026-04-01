@@ -11,17 +11,20 @@ use serde::Deserialize;
 use tokio_postgres::Error as PgError;
 
 use crate::{
+    Never,
     config::Config,
-    db::util::select,
-    http::{response, Context, Response},
+    db::{self, util::select},
+    http::{self, Context, Response, response},
     prelude::*,
-    util::{download_body, ByteBody}, Never,
+    util::{ByteBody, download_body},
 };
 
 
 mod cache;
 mod config;
 mod handlers;
+pub mod oidc;
+mod opencast;
 mod session_id;
 mod jwt;
 
@@ -277,11 +280,7 @@ impl User {
         }
 
         if let Some(relevant_cookies) = &ctx.config.auth.callback.relevant_cookies {
-            headers.get_all(hyper::header::COOKIE)
-                .into_iter()
-                .filter_map(|value| value.to_str().ok()) // Ignore non-UTF8 cookies
-                .flat_map(|value| Cookie::split_parse(value))
-                .filter_map(|r| r.ok()) // Ignore unparsable cookies
+            all_cookies_of(headers)
                 .filter(|cookie| relevant_cookies.iter().any(|rc| cookie.name() == rc))
                 .for_each(|cookie| {
                     // Unwrap is fine: this value was a `HeaderValue` before.
@@ -587,4 +586,30 @@ pub(crate) fn callback_bad_gateway() -> Response {
         .status(StatusCode::BAD_GATEWAY)
         .body("Bad gateway: broken auth callback".into())
         .unwrap()
+}
+
+fn all_cookies_of(headers: &HeaderMap) -> impl Iterator<Item = Cookie<'_>> {
+    headers.get_all(hyper::header::COOKIE)
+        .into_iter()
+        .filter_map(|value| value.to_str().ok()) // Ignore non-UTF8 cookies
+        .flat_map(|value| Cookie::split_parse(value))
+        .filter_map(|r| r.ok()) // Ignore unparsable cookies
+}
+
+async fn create_session_with_cookies(
+    mut user: User,
+    ctx: &Context,
+) -> Result<Cookie<'static>, Response> {
+    user.add_default_roles();
+
+    // TODO: check if a user is already logged in? And remove that session then?
+
+    let db = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
+    let session_id = user.persist_new_session(&db).await.map_err(|e| {
+        error!("DB query failed when adding new user session: {}", e);
+        http::response::internal_server_error()
+    })?;
+    debug!("Persisted new session for '{}'", user.username);
+
+    Ok(session_id.set_cookie(ctx.config.auth.session.duration).into_owned())
 }
