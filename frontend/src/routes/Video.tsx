@@ -20,7 +20,6 @@ import {
     ProtoButton,
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
-import { TFunction } from "i18next";
 
 import { fetchQuery, loadQuery } from "../relay";
 import { InitialLoading, RootLoader } from "../layout/Root";
@@ -97,6 +96,7 @@ import { isSpaceOnInteractiveElement } from "../ui/player/PlayerShortcuts";
 import { VideoListLayout } from "../ui/Blocks/__generated__/SeriesBlockData.graphql";
 import { LIST_ORDERS, Order } from "../ui/Blocks/VideoList";
 
+import { LICENSE_TRANSLATIONS, isValidLink } from "../ui/metadata";
 
 // ===========================================================================================
 // ===== Route definitions
@@ -1315,28 +1315,3 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({
         </dl>
     );
 });
-
-const LICENSE_TRANSLATIONS: Record<string, (t: TFunction) => string> = {
-    "ALLRIGHTS": (t: TFunction) => t("license.all-rights"),
-    "CC-BY": () => "CC BY",
-    "CC-BY-SA": () => "CC BY-SA",
-    "CC-BY-ND": () => "CC BY-ND",
-    "CC-BY-NC": () => "CC BY-NC",
-    "CC-BY-NC-SA": () => "CC BY-NC-SA",
-    "CC-BY-NC-ND": () => "CC BY-NC-ND",
-};
-
-const isValidLink = (s: string): boolean => {
-    const trimmed = s.trim();
-    if (!(trimmed.startsWith("http://") || trimmed.startsWith("https://"))) {
-        return false;
-    }
-
-    try {
-        new URL(trimmed);
-    } catch (_) {
-        return false;
-    }
-
-    return true;
-};
