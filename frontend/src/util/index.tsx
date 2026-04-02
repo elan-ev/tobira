@@ -1,4 +1,3 @@
-import { i18n, TFunction } from "i18next";
 import {
     MutableRefObject,
     PropsWithChildren,
@@ -7,15 +6,19 @@ import {
     useRef,
     useState,
 } from "react";
+import { i18n, TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { bug, match, useColorScheme } from "@opencast/appkit";
+import { bug, match, useColorScheme, WithTooltip } from "@opencast/appkit";
 import { css } from "@emotion/react";
+import { ParseKeys } from "i18next";
+import { LuGlobe, LuLock, LuUsers } from "react-icons/lu";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import { COLORS } from "../color";
 import { Caption } from "../ui/player";
+import { isRealUser, useUser } from "../User";
 
 
 /**
@@ -382,3 +385,62 @@ export function ConditionalWrapper({
     return condition ? wrapper(children) : children;
 }
 
+
+export type AccessProps = {
+    item: {
+        readRoles: readonly string[];
+        writeRoles: readonly string[];
+    }
+    isPlaylist: boolean;
+}
+export const AccessIcon: React.FC<AccessProps> = ({ item, isPlaylist }) => {
+    const { t } = useTranslation();
+    const user = useUser();
+    if (!isRealUser(user)) {
+        return null;
+    }
+
+    const PUBLIC_ROLE = "ROLE_ANONYMOUS";
+    type AccessLevel = "public" | "shared" | "private";
+    let accessLevel: AccessLevel = "private";
+
+    if (item.readRoles.length > 1) {
+        accessLevel = "shared";
+    }
+
+    if (item.readRoles.includes(PUBLIC_ROLE)) {
+        accessLevel = "public";
+    }
+
+    const icon = match(accessLevel, {
+        "public": () => <LuGlobe />,
+        "shared": () => <LuUsers />,
+        "private": () => <LuLock />,
+    });
+
+    const tooltipKey: ParseKeys = `manage.table.filter.visibility-${accessLevel}-tooltip`;
+
+    return (
+        <div css={{
+            position: "absolute",
+            top: isPlaylist ? 18 : 2,
+            right: 2,
+            fontSize: 16,
+            padding: 2,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+        }}>
+            <WithTooltip placement="bottom" tooltip={<>{t(tooltipKey)}</>}>
+                <div css={{
+                    color: "#ddd",
+                    filter: [
+                        "drop-shadow(0 0 1px rgba(0, 0, 0, 0.8))",
+                        "drop-shadow(0 0 1px rgba(0, 0, 0, 0.8))",
+                        "drop-shadow(0 0 3px rgba(0, 0, 0, 0.5))",
+                    ].join(" "),
+                }}>{icon}</div>
+            </WithTooltip>
+        </div>
+    );
+};

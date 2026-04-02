@@ -84,6 +84,12 @@ enum VideosSortColumn {
   SERIES
 }
 
+enum Visibility {
+  PUBLIC
+  SHARED
+  PRIVATE
+}
+
 enum WorkflowStatus {
   BUSY
   IDLE
@@ -190,7 +196,10 @@ input RemovedEventFromSeries {
 }
 
 input SearchFilter {
-  title: String
+  createdStart: DateTime
+  createdEnd: DateTime
+  visibility: Visibility
+  textQuery: String
 }
 
 input SeriesSortOrder {
@@ -475,6 +484,10 @@ type AuthorizedPlaylist implements Node {
   isReferencedByRealm(path: String!): Boolean!
   entries: [VideoListEntry!]!
   hostRealms: [Realm!]!
+  "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
+  readRoles: [String!]!
+  "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
+  writeRoles: [String!]!
   "Whether the current user has write access to this playlist."
   canWrite: Boolean!
 }
@@ -1090,6 +1103,11 @@ type Series implements Node {
   created: DateTime
   updated: DateTime
   metadata: ExtraMetadata
+  """
+    Returns creators extracted from the series metadata.
+    Looks for `creator` or `createdBy` in the dcterms namespace.
+  """
+  creators: [String!]!
   description: String
   state: SeriesState!
   """

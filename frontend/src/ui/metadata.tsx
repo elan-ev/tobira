@@ -91,10 +91,27 @@ export const DateAndCreators: React.FC<DateAndCreatorsProps> = ({
     </div>
 );
 
+type EntryCountProps = {
+    count: number;
+}
+export const EntryCount: React.FC<EntryCountProps> = ({ count }) => {
+    const { t } = useTranslation();
+
+    return <div css={{
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    }}>
+        {t("manage.video-list.no-of-videos", { count })}
+    </div>;
+};
+
 type SmallDescriptionProps = {
     text?: ReactNode | null;
     lines?: number;
     className?: string;
+    withoutPlaceholder?: boolean;
 };
 
 /**
@@ -105,6 +122,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
     text,
     className,
     lines = 2,
+    withoutPlaceholder = false,
 }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
@@ -114,7 +132,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
         color: COLORS.neutral60,
     };
 
-    if (text === null) {
+    if (text === null && !withoutPlaceholder) {
         return <div {...{ className }} css={{
             ...sharedStyle,
             fontStyle: "italic",
