@@ -57,6 +57,7 @@ impl SessionId {
     /// ID in the client's cookie jar.
     pub(crate) fn set_cookie(&self, session_duration: Duration) -> Cookie<'_> {
         Cookie::build((SESSION_COOKIE, base64encode(self.0.expose_secret())))
+            .path("/")
 
             // Only send via HTTPS as it contains sensitive information.
             .secure(true)
@@ -88,6 +89,7 @@ impl SessionId {
     /// from the client's cookie jar.
     pub(crate) fn unset_cookie() -> Cookie<'static> {
         Cookie::build((SESSION_COOKIE, ""))
+            .path("/")
             .max_age(time::Duration::ZERO)
             .secure(true)
             .http_only(true)

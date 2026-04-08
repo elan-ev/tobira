@@ -1,15 +1,9 @@
 use std::unreachable;
 
-use base64::Engine;
 use hyper::{body::Incoming, StatusCode, Request, http::HeaderValue};
-use serde::Deserialize;
 
 use crate::{
-    auth::config::LoginCredentialsHandler,
-    db,
-    http::{self, response::bad_request, Context, Response},
-    prelude::*,
-    util::{download_body, ByteBody},
+    auth::config::LoginCredentialsHandler, db, http::{self, Context, Response, response::bad_request}, prelude::*, sync::client::AuthMode, util::{ByteBody, download_body}
 };
 use super::{config::SessionEndpointHandler, AuthSource, SessionId, User};
 
@@ -153,7 +147,9 @@ pub(crate) async fn handle_post_login(req: Request<Incoming>, ctx: &Context) -> 
     // Check the login data.
     let user = match &ctx.config.auth.session.from_login_credentials {
         LoginCredentialsHandler::Opencast => {
-            match check_opencast_login(&userid, &password, ctx).await {
+            trace!("Checking Opencast login...");
+            let mode = AuthMode::User { username: &userid, password: &password };
+            match super::opencast::user_from_info_me(mode, ctx).await {
                 Err(e) => {
                     error!("Error occured while checking Opencast login data: {e:#}");
                     return http::response::internal_server_error();
@@ -188,91 +184,13 @@ pub(crate) async fn handle_post_login(req: Request<Incoming>, ctx: &Context) -> 
     }
 }
 
-async fn check_opencast_login(
-    userid: &str,
-    password: &str,
-    ctx: &Context,
-) -> Result<Option<User>> {
-    trace!("Checking Opencast login...");
-
-    // Send request. We use basic auth here: our configuration checks already
-    // assert that we use HTTPS or Opencast is running on the same machine
-    // (or the admin has explicitly opted out of this check).
-    let credentials = base64::engine::general_purpose::STANDARD
-        .encode(&format!("{userid}:{password}"));
-    let auth_header = format!("Basic {}", credentials);
-    let req = Request::builder()
-        .uri(ctx.config.opencast.sync_node().clone().with_path_and_query("/info/me.json"))
-        .header(hyper::header::AUTHORIZATION, auth_header)
-        .body(ByteBody::empty())
-        .unwrap();
-    let response = ctx.http_client.request(req).await?;
-
-
-    // We treat all non-OK response as invalid login data.
-    if response.status() != StatusCode::OK {
-        return Ok(None);
-    }
-
-
-    // Deserialize JSON body.
-    #[derive(Deserialize)]
-    struct InfoMeResponse {
-        roles: Vec<String>,
-        user: InfoMeUserResponse,
-        #[serde(rename = "userRole")]
-        user_role: String,
-    }
-
-    #[derive(Deserialize)]
-    struct InfoMeUserResponse {
-        name: String,
-        username: String,
-        email: Option<String>,
-    }
-
-    let body = download_body(response.into_body()).await?;
-    let mut info: InfoMeResponse = serde_json::from_slice(&body)
-        .context("Could not deserialize `/info/me.json` response")?;
-
-    // If all roles are `ROLE_ANONYMOUS`, then we assume the login was invalid.
-    if info.roles.iter().all(|role| role == super::ROLE_ANONYMOUS) {
-        return Ok(None);
-    }
-
-    // Make sure the roles list always contains the user role. This is very
-    // likely always the case, but better be sure.
-    if !info.roles.contains(&info.user_role) {
-        info.roles.push(info.user_role.clone());
-    }
-
-    // Otherwise the login was correct!
-    Ok(Some(User {
-        username: info.user.username,
-        display_name: info.user.name,
-        email: info.user.email,
-        roles: info.roles.into_iter().collect(),
-        user_role: info.user_role,
-        user_realm_handle: None,
-    }))
-}
-
 /// Creates a session for the given user and persists it in the DB.
-async fn create_session(mut user: User, ctx: &Context) -> Result<Response, Response> {
-    user.add_default_roles();
-
-    // TODO: check if a user is already logged in? And remove that session then?
-
-    let db = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
-    let session_id = user.persist_new_session(&db).await.map_err(|e| {
-        error!("DB query failed when adding new user session: {}", e);
-        http::response::internal_server_error()
-    })?;
-    debug!("Persisted new session for '{}'", user.username);
+async fn create_session(user: User, ctx: &Context) -> Result<Response, Response> {
+    let cookie = super::create_session_with_cookies(user, ctx).await?;
 
     Response::builder()
         .status(StatusCode::NO_CONTENT)
-        .header("set-cookie", session_id.set_cookie(ctx.config.auth.session.duration).to_string())
+        .header("set-cookie", cookie.to_string())
         .body(ByteBody::empty())
         .unwrap()
         .pipe(Ok)

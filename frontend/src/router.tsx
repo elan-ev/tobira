@@ -45,6 +45,7 @@ import { ManagePlaylistAccessRoute } from "./routes/manage/Playlist/PlaylistAcce
 import { CreatePlaylistRoute } from "./routes/manage/Playlist/Create";
 import { AdminDashboardUserRealmsRoute } from "./routes/manage/admin/UserRealm";
 import { AdminDashboardUserSessionsRoute } from "./routes/manage/admin/UserSessions";
+import { OidcErrorRoute } from "./routes/OidcError";
 
 
 
@@ -63,6 +64,7 @@ const {
         InvalidUrlRoute,
         AboutRoute,
         LoginRoute,
+        OidcErrorRoute,
         RealmRoute,
         SearchRoute,
         OpencastVideoRoute,

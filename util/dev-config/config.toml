@@ -27,6 +27,7 @@ source = "tobira-session"
 session.from_login_credentials = "login-callback:http://localhost:3091"
 trusted_external_key = "tobira"
 pre_auth_external_links = true
+login_link = "/~oidc/login"
 
 [auth.roles]
 editor = "ROLE_USER"
@@ -34,6 +35,12 @@ editor = "ROLE_USER"
 [auth.jwt]
 signing_algorithm = "ES256"
 secret_key = "jwt-key.pem"
+
+[auth.oidc]
+enabled = true
+issuer_url = "http://localhost:8070/realms/main"
+client_id = "tobira-test"
+client_secret = "Z6ol4bSwWlUq6QHuHdSt3HWTS4rKphUy"
 
 [opencast]
 host = "http://localhost:8081"

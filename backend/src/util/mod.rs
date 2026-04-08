@@ -1,10 +1,11 @@
+use base64::Engine as _;
 use bytes::Bytes;
 use http_body_util::BodyExt;
 use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use hyper_util::client::legacy::{connect::HttpConnector, Client};
 use hyperlocal::UnixConnector;
 use rand::{RngCore, CryptoRng};
-use secrecy::SecretBox;
+use secrecy::{SecretBox, SecretString};
 
 use crate::{http::Response, prelude::*};
 
@@ -147,4 +148,10 @@ where
         .context("failed to download HTTP body")?
         .to_bytes()
         .pipe(Ok)
+}
+
+pub fn basic_auth_header(user: &str, password: &str) -> SecretString {
+    let credentials = format!("{user}:{password}");
+    let encoded_credentials = base64::engine::general_purpose::STANDARD.encode(credentials);
+    SecretString::new(format!("Basic {encoded_credentials}").into())
 }
