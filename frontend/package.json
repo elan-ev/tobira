@@ -43,7 +43,7 @@
     "i18next": "^25.10.10",
     "i18next-browser-languagedetector": "^8.2.1",
     "linkify-it": "^5.0.0",
-    "lucide-react": "^0.510.0",
+    "lucide-react": "^1.7.0",
     "paella-basic-plugins": "1.44.10",
     "paella-core": "1.50.2",
     "paella-mp4multiquality-plugin": "1.47.1",
@@ -91,7 +91,7 @@
     "fork-ts-checker-webpack-plugin": "^9.1.0",
     "html-webpack-plugin": "^5.6.6",
     "postgres": "^3.4.9",
-    "schema-dts": "^1.1.5",
+    "schema-dts": "^2.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "wait-port": "^1.1.0"
