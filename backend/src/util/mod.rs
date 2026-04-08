@@ -3,7 +3,7 @@ use http_body_util::BodyExt;
 use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use hyper_util::client::legacy::{connect::HttpConnector, Client};
 use hyperlocal::UnixConnector;
-use rand::{RngCore, CryptoRng};
+use rand::CryptoRng;
 use secrecy::SecretBox;
 
 use crate::{http::Response, prelude::*};
@@ -62,7 +62,7 @@ pub(crate) fn gen_random_bytes_crypto<const N: usize>() -> SecretBox<[u8; N]> {
     // library does not check the changelog, then we would have a problem.
     // This explicit `CryptoRng` bound makes sure that such a change would
     // not silently compile.
-    fn imp<const N: usize>(mut rng: impl RngCore + CryptoRng) -> [u8; N] {
+    fn imp<const N: usize>(mut rng: impl CryptoRng) -> [u8; N] {
         let mut bytes = [0; N];
         rng.fill_bytes(&mut bytes);
         bytes
