@@ -18,6 +18,7 @@ import { ThumbnailStack } from "../../../ui/ThumbnailStack";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { MovingTruck } from "../../../ui/Waiting";
 import { ManageRoute } from "../Shared/Details";
+import { NotAuthorized } from "../../../ui/error";
 
 
 export type QueryResponse = SharedSeriesManageQuery["response"];
@@ -61,6 +62,11 @@ export const makeManageSeriesRoute = (
                         if (data.series == null) {
                             return <NotFound kind="series" />;
                         }
+
+                        if (!data.series.canWrite) {
+                            return <NotAuthorized />;
+                        }
+
                         return render(data.series, data);
                     }}
                 />,
@@ -81,6 +87,7 @@ const query = graphql`
             created
             updated
             acl { role actions info { label implies large } }
+            canWrite
             description
             state
             tobiraDeletionTimestamp
@@ -111,7 +118,7 @@ type ManageSeriesNavProps = SharedManageNavProps & {
 const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => {
     const { t } = useTranslation();
 
-    if (series == null) {
+    if (series == null || !series.canWrite) {
         return null;
     }
 
