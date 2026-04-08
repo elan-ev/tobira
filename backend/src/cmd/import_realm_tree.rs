@@ -5,7 +5,7 @@ use serde::Deserialize;
 use tokio_postgres::IsolationLevel;
 use deadpool_postgres::GenericClient;
 use std::{fs::File, future::Future, path::PathBuf, pin::Pin, collections::HashMap};
-use rand::{rng, Rng, distr::weighted::WeightedIndex, prelude::*};
+use rand::{rng, distr::weighted::WeightedIndex, prelude::*};
 
 use crate::{
     config::Config,
