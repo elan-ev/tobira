@@ -133,6 +133,7 @@ login-page:
 video:
   singular: Video
   plural: Video
+  count: Conteggio dei video # verify
   video-page: 'Pagina video: “{{video}}”'
   video-player: Videolettore
   duration: Durata
@@ -206,6 +207,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Numero di voci # verify
+  no-of-entries_one: '{{count}} voce' # verify
+  no-of-entries_other: '{{count}} voci' # verify
   playlist-page: 'Pagina playlist: “{{playlist}}”' # needs verification
   deleted-block: La playlist a cui si fa riferimento è stata cancellata.
   not-allowed: Non è autorizzato a visualizzare questa playlist.
@@ -568,6 +572,7 @@ manage:
     no-content: Nessun video
     no-of-videos_one: '{{count}} video'
     no-of-videos_other: '{{count}} video'
+    entries: Voci # verify
     removing-disabled: La rimozione dei video è disabilitata.
     details:
       unknown_one: Un video è mancante o richiede ulteriori autorizzazioni per essere visualizzato. # needs verification
@@ -604,13 +609,38 @@ manage:
       next: Pagina successiva
       last: Ultima pagina
     filter:
-      by-title: Filtrare per titolo
-    columns:
+      date: Data # verify
+      select-date: Selezionare il periodo di tempo # verify
+      from: Da # verify
+      to: A # verify
+      date-last-3-months: Ultimi 3 mesi # verify
+      date-last-6-months: Ultimi 6 mesi # verify
+      date-last-12-months: Ultimi 12 mesi # verify
+      date-custom-range: Intervallo personalizzato # verify
+      filter-by-visibility: Filtrare per visibilità # verify
+      remove: Rimuovere il filtro # verify
+      visibility: Visibilità # verify
+      visibility-public: Pubblico # verify
+      visibility-public-tooltip: Può essere visto da chiunque # verify
+      visibility-private: Privato # verify
+      visibility-private-tooltip: Può essere visto solo da te # verify
+      visibility-shared: Condiviso # verify
+      visibility-shared-tooltip: Può essere visto da un gruppo selezionato # verify
+      writable: Accesso # verify
+      write: Scrittura # verify
+      read: Lettura # verify
+    sorting:
+      label: Ordinare le voci # check
+      sort-by: Ordinare per # check
+      order: Organizzare # check
       description: Ordina per {{title}}, {{direction}}
       ascending: crescente
       descending: decrescente
+      ascending-cap: Crescente # check: does it need to be capitalized in context?
+      descending-cap: Decrescente # check: does it need to be capitalized in context?
       created: Creato
       updated: Aggiornato
+      unknown: Ordinamento sconosciuto # check
     # sync: Todo.
     #  failed: Synchronization failed
     #  failed-maybe: Sync possibly failed
