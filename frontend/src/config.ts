@@ -113,7 +113,7 @@ type SyncConfig = {
     pollPeriod: number;
 };
 
-type MetadataLabel = "builtin:license" | "builtin:source" | TranslatedString;
+export type MetadataLabel = "builtin:license" | "builtin:source" | TranslatedString;
 
 export type TranslatedString = { default: string } & Record<"en" | "de", string | undefined>;
 

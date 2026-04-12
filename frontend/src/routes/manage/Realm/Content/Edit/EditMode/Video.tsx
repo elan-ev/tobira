@@ -22,7 +22,8 @@ type VideoFormData = {
     displayOptions: {
         showTitle: boolean;
         showLink: boolean;
-    }
+        showMetadata: boolean;
+    };
 };
 
 type EditVideoBlockProps = {
@@ -34,7 +35,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
     const user = useUser();
 
 
-    const { event, showTitle, showLink } = useFragment(graphql`
+    const { event, showTitle, showLink, showMetadata } = useFragment(graphql`
         fragment VideoEditModeBlockData on VideoBlock {
             event {
                 __typename,
@@ -52,6 +53,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
             }
             showTitle
             showLink
+            showMetadata
         }
     `, blockRef);
 
@@ -91,6 +93,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         displayOptions: {
             showTitle,
             showLink,
+            showMetadata,
         },
     };
 
@@ -128,6 +131,11 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
                 value: "showLink",
                 title: t("manage.block.options.show-link"),
                 defaultChecked: showLink,
+            },
+            {
+                value: "showMetadata",
+                title: t("manage.block.options.show-description"),
+                defaultChecked: showMetadata,
             },
         ]} />
     </EditModeForm>;

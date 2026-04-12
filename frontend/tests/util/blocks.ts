@@ -15,6 +15,7 @@ export type Block =
         query: string;
         showTitle?: boolean;
         showLink?: boolean;
+        showMetadata?: boolean;
     }
     | {
         type: "series";
