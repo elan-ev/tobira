@@ -1,25 +1,29 @@
 import { graphql, useFragment } from "react-relay";
-import { Card, match, unreachable } from "@opencast/appkit";
+import { Card, unreachable } from "@opencast/appkit";
 
 import { InlinePlayer } from "../player";
 import { VideoBlockData$data, VideoBlockData$key } from "./__generated__/VideoBlockData.graphql";
 import { Title } from "..";
 import { useTranslation } from "react-i18next";
-import { isSynced, keyOfId, translatedConfig } from "../../util";
+import { isSynced, keyOfId } from "../../util";
 import { Link } from "../../router";
 import { LuCircleArrowRight } from "react-icons/lu";
-import { PlayerContextProvider } from "../player/PlayerContext";
+import { PlayerContextProvider, usePlayerContext } from "../player/PlayerContext";
 import { PreviewPlaceholder, useEventWithAuthData } from "../../routes/Video";
 
 import { screenWidthAtMost } from "@opencast/appkit";
 import { COLORS } from "../../color";
-import { CollapsibleDescription, isValidLink, LICENSE_TRANSLATIONS } from "../../ui/metadata";
+import {
+    CollapsibleDescription,
+    createAutoTimestampProcessor,
+    getMetadataPairs,
+} from "../../ui/metadata";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import { ReactNode } from "react";
-import CONFIG, { MetadataLabel } from "../../config";
 import React from "react";
-import { TFunction } from "i18next";
+
+import { formatDuration } from "../Video";
 
 export type BlockEvent = VideoBlockData$data["event"];
 export type AuthorizedBlockEvent = Extract<BlockEvent, { __typename: "AuthorizedEvent" }>;
@@ -28,18 +32,6 @@ type Props = {
     fragRef: VideoBlockData$key;
     basePath: string;
     edit?: boolean;
-};
-
-const translateValue = (
-    label: MetadataLabel, t: TFunction<"translation", undefined>, value: string,
-):ReactNode => {
-    const displayValue = (
-        label === "builtin:license" && value in LICENSE_TRANSLATIONS
-    ) ? LICENSE_TRANSLATIONS[value](t) : value;
-
-    return isValidLink(displayValue)
-        ? <Link to={displayValue}>{displayValue}</Link>
-        : displayValue;
 };
 
 export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
@@ -93,87 +85,25 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
         return unreachable();
     }
 
-    const pairs: [string, ReactNode][] = [];
+    const pairs: [string, ReactNode][] = getMetadataPairs(event, t, i18n, "inline-bullets");
 
-    if (event.metadata.dcterms.language) {
-        const languageNames = new Intl.DisplayNames(i18n.resolvedLanguage, { type: "language" });
-        const languages = event.metadata.dcterms.language.map(lng => languageNames.of(lng) ?? lng);
-
+    if (event.syncedData?.duration && !event.isLive) {
         pairs.push([
-            t("general.language.language", { count: languages.length }),
-            languages.join(", "),
+            t("video.duration"),
+            formatDuration(event.syncedData.duration),
         ]);
     }
 
-    for (const [namespace, fields] of Object.entries(CONFIG.metadataLabels)) {
-        const metadataNs = event.metadata[namespace];
-        if (metadataNs === undefined) {
-            continue;
-        }
+    const MetadataPanel: React.FC = () => {
+        const { paella } = usePlayerContext();
+        const autoTimestampProcessor = createAutoTimestampProcessor({
+            duration: event.syncedData?.duration,
+            onTimestampClick: timestamp => {
+                paella.current?.player.videoContainer.setCurrentTime(timestamp);
+            },
+        });
 
-        for (const [field, label] of Object.entries(fields)) {
-            if (field in metadataNs) {
-                const translatedLabel = typeof label === "object"
-                    ? translatedConfig(label, i18n)
-                    : match(label, {
-                        "builtin:license": () => t("video.license"),
-                        "builtin:source": () => t("video.source"),
-                    });
-                const values = metadataNs[field];
-                const node = values.length > 1
-                    ? <ul css={{
-                        listStyle: "none",
-                        display: "inline-flex",
-                        flexWrap: "wrap",
-                        margin: 0,
-                        padding: 0,
-                        "& > li:not(:last-child)::after": {
-                            content: "'•'",
-                            padding: "0 6px",
-                            color: COLORS.neutral40,
-                        },
-                    }}>
-                        {values.map((v, i) => <li key={i}>{translateValue(label, t, v)}</li>)}
-                    </ul>
-                    : translateValue(label, t, values[0]);
-
-                pairs.push([translatedLabel, node]);
-            }
-        }
-    }
-
-    return <div css={{ maxWidth: 800 }}>
-        {showTitle && <Title title={event.title} />}
-        <PlayerContextProvider>
-            <section aria-label={t("video.video-player")}>
-                {event.authorizedData && isSynced(event)
-                    ? <InlinePlayer
-                        event={{ ...event, authorizedData: event.authorizedData }}
-                        css={{ margin: "-4px auto 0" }}
-                    />
-                    : <PreviewPlaceholder {...{ event, refetch }} />
-                }
-            </section>
-        </PlayerContextProvider>
-
-        {showLink && <Link
-            to={`${basePath}/${keyOfId(event.id)}`}
-            css={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginTop: 8,
-                marginLeft: "auto",
-                width: "fit-content",
-                borderRadius: 4,
-                outlineOffset: 1,
-            }}
-        >
-            {t("video.details")}
-            <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
-        </Link>}
-
-        {showMetadata && <div css={{ marginTop: 16 }}>
+        return <div css={{ marginTop: 16 }}>
             <div css={{
                 display: "flex",
                 flexWrap: "wrap",
@@ -186,13 +116,14 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
                     },
                 },
             }}>
-                {event.description && <CollapsibleDescription
+                <CollapsibleDescription
                     type="video"
                     description={event.description}
                     creators={event.creators}
                     bottomPadding={40}
-                />}
-                {pairs.length > 0 && <div css={{
+                    textProcessor={autoTimestampProcessor}
+                />
+                <div css={{
                     flex: "1 200px",
                     alignSelf: "flex-start",
                     padding: "20px 22px",
@@ -221,8 +152,42 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
                             <dd>{value}</dd>
                         </React.Fragment>)}
                     </dl>
-                </div>}
+                </div>
             </div>
-        </div>}
-    </div>;
+        </div>;
+    };
+
+    return <PlayerContextProvider>
+        <div css={{ maxWidth: 800 }}>
+            {showTitle && <Title title={event.title} />}
+            <section aria-label={t("video.video-player")}>
+                {event.authorizedData && isSynced(event)
+                    ? <InlinePlayer
+                        event={{ ...event, authorizedData: event.authorizedData }}
+                        css={{ margin: "-4px auto 0" }}
+                    />
+                    : <PreviewPlaceholder {...{ event, refetch }} />
+                }
+            </section>
+
+            {showLink && <Link
+                to={`${basePath}/${keyOfId(event.id)}`}
+                css={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginTop: 8,
+                    marginLeft: "auto",
+                    width: "fit-content",
+                    borderRadius: 4,
+                    outlineOffset: 1,
+                }}
+            >
+                {t("video.details")}
+                <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
+            </Link>}
+
+            {showMetadata && <MetadataPanel />}
+        </div>
+    </PlayerContextProvider>;
 };

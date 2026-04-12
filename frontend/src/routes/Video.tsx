@@ -14,10 +14,9 @@ import {
     LuCode, LuDownload, LuInfo, LuLink, LuRss, LuSettings, LuLockOpen,
 } from "react-icons/lu";
 import {
-    match, unreachable, screenWidthAtMost, screenWidthAbove, useColorScheme,
+    unreachable, screenWidthAtMost, screenWidthAbove, useColorScheme,
     Floating, FloatingContainer, FloatingTrigger, WithTooltip, Card, Button,
     notNullish,
-    ProtoButton,
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
 
@@ -36,7 +35,6 @@ import {
     isSynced,
     toIsoDuration,
     useForceRerender,
-    translatedConfig,
     secondsToTimeString,
     eventId,
     keyOfId,
@@ -96,7 +94,7 @@ import { isSpaceOnInteractiveElement } from "../ui/player/PlayerShortcuts";
 import { VideoListLayout } from "../ui/Blocks/__generated__/SeriesBlockData.graphql";
 import { LIST_ORDERS, Order } from "../ui/Blocks/VideoList";
 
-import { LICENSE_TRANSLATIONS, isValidLink } from "../ui/metadata";
+import { createAutoTimestampProcessor, getMetadataPairs } from "../ui/metadata";
 
 // ===========================================================================================
 // ===== Route definitions
@@ -898,31 +896,12 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
     const user = useUser();
     const { paella, playerIsLoaded } = usePlayerContext();
 
-    const autoTimestampProcessor = (text: string) => {
-        const timestampRegex = /((?<!\S)(?:\d?\d:)?\d?\d:\d{2}(?!\S))/g;
-        return <>{text.split(timestampRegex).map((part, index) => {
-            if (!part.match(timestampRegex)) {
-                return part;
-            }
-            const parts = part.split(":").map(Number);
-            const [hours, minutes, seconds] = parts.length === 2 ? [0, ...parts] : parts;
-            const timestamp = ((hours * 60) + minutes) * 60 + seconds;
-            if (timestamp * 1000 > event.syncedData.duration) {
-                return part;
-            }
-
-            return <ProtoButton
-                key={index}
-                onClick={() => paella.current?.player.videoContainer.setCurrentTime(timestamp)}
-                css={{
-                    color: COLORS.primary0,
-                    ":hover": {
-                        color: COLORS.primary1,
-                    },
-                }}
-            >{part}</ProtoButton>;
-        })}</>;
-    };
+    const autoTimestampProcessor = createAutoTimestampProcessor({
+        duration: event.syncedData.duration,
+        onTimestampClick: timestamp => {
+            paella.current?.player.videoContainer.setCurrentTime(timestamp);
+        },
+    });
 
     const shrinkOnMobile = {
         [screenWidthAtMost(BREAKPOINT_SMALL)]: {
@@ -1242,49 +1221,7 @@ const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({
         ]);
     }
 
-    if (event.metadata.dcterms.language) {
-        const languageNames = new Intl.DisplayNames(i18n.resolvedLanguage, { type: "language" });
-        const languages = event.metadata.dcterms.language.map(lng => languageNames.of(lng) ?? lng);
-
-        pairs.push([
-            t("general.language.language", { count: languages.length }),
-            languages.join(", "),
-        ]);
-    }
-
-    for (const [namespace, fields] of Object.entries(CONFIG.metadataLabels)) {
-        const metadataNs = event.metadata[namespace];
-        if (metadataNs === undefined) {
-            continue;
-        }
-
-        for (const [field, label] of Object.entries(fields)) {
-            if (field in metadataNs) {
-                const translatedLabel = typeof label === "object"
-                    ? translatedConfig(label, i18n)
-                    : match(label, {
-                        "builtin:license": () => t("video.license"),
-                        "builtin:source": () => t("video.source"),
-                    });
-
-                const values = metadataNs[field].map((value, i) => {
-                    const displayValue = (
-                        label === "builtin:license" && value in LICENSE_TRANSLATIONS
-                    ) ? LICENSE_TRANSLATIONS[value](t) : value;
-
-                    return <React.Fragment key={i}>
-                        {i > 0 && <br />}
-                        {isValidLink(displayValue)
-                            ? <Link to={displayValue}>{displayValue}</Link>
-                            : displayValue
-                        }
-                    </React.Fragment>;
-                });
-
-                pairs.push([translatedLabel, values]);
-            }
-        }
-    }
+    pairs.push(...getMetadataPairs(event, t, i18n, "line-break"));
 
     if (event.syncedData?.duration && !event.isLive) {
         pairs.push([
