@@ -172,6 +172,11 @@ input NewVideoBlock {
   displayOptions: DisplayOptions!
 }
 
+input PlaylistEntrySlot {
+  "Tobira ID for visible events." id: ID
+  "Opencast ID for hidden/missing entries (from `NotAllowed` or `Missing`)." opencastId: String
+}
+
 input PlaylistsSortOrder {
   column: PlaylistsSortColumn!
   direction: SortDirection!
@@ -549,12 +554,9 @@ type KnownUserSearchResults {
   items: [KnownUser!]!
 }
 
+"A video list entry whose data was not found."
 type Missing {
-  """
-    Unused dummy field for this marker type. GraphQL requires all objects to
-    have at least one field. Always returns `null`.
-  """
-  dummy: Boolean
+  opencastId: String!
 }
 
 type Mutation {
@@ -629,7 +631,7 @@ type Mutation {
     Updates a playlist's metadata, entries or acl by sending the changes to Opencast
     and updating the playlist in Tobira's DB.
   """
-  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [ID!], acl: [AclItem!]): AuthorizedPlaylist!
+  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [PlaylistEntrySlot!], acl: [AclItem!]): AuthorizedPlaylist!
   "Deletes the given playlist by sending a delete request to Opencast."
   deletePlaylist(id: ID!): RemovedPlaylist!
   """
@@ -729,6 +731,7 @@ type NotAllowed {
     have at least one field. Always returns `null`.
   """
   dummy: Boolean
+  opencastId: String!
 }
 
 type PageInfo {
