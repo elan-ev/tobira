@@ -458,15 +458,18 @@ pub(crate) enum VideoListEntry {
 }
 
 /// The data referred to by a playlist entry was not found.
-pub(crate) struct Missing;
-crate::api::util::impl_object_with_dummy_field!(Missing);
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct Missing {
+    pub(crate) opencast_id: String,
+}
 
 impl Event {
     pub(crate) fn check_auth(event: AuthorizedEvent, auth: &AuthContext) -> Self {
         if event.can_be_previewed(auth) {
             Self::Event(event)
         } else {
-            Self::NotAllowed(NotAllowed)
+            Self::NotAllowed(NotAllowed { opencast_id: event.opencast_id.to_string() })
         }
     }
 
@@ -515,7 +518,9 @@ impl Event {
             .query_mapped(&query, dbargs![&series_key], |row| {
                 let event = AuthorizedEvent::from_row_start(&row);
                 if !event.can_be_previewed(&context.auth) {
-                    return VideoListEntry::NotAllowed(NotAllowed);
+                    return VideoListEntry::NotAllowed(NotAllowed {
+                        opencast_id: event.opencast_id.to_string(),
+                    });
                 }
 
                 VideoListEntry::Event(event)

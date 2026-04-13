@@ -8,7 +8,7 @@ use super::{
     id::Id,
     model::{
         series::{Series, NewSeries, RemovedEventFromSeries},
-        playlist::{AuthorizedPlaylist, RemovedPlaylist},
+        playlist::{AuthorizedPlaylist, PlaylistEntrySlot, RemovedPlaylist},
         shared::BasicMetadata,
         realm::{
             ChildIndex,
@@ -165,7 +165,7 @@ impl Mutation {
     async fn update_playlist(
         id: Id,
         metadata: Option<BasicMetadata>,
-        entries: Option<Vec<Id>>,
+        entries: Option<Vec<PlaylistEntrySlot>>,
         acl: Option<Vec<AclItem>>,
         context: &Context,
     ) -> ApiResult<AuthorizedPlaylist> {
@@ -174,7 +174,14 @@ impl Mutation {
             None => (None, None),
         };
 
-        AuthorizedPlaylist::update(id, title, description, entries, acl, context).await
+        AuthorizedPlaylist::update(
+            id,
+            title,
+            description,
+            entries,
+            acl,
+            context,
+        ).await
     }
 
     /// Deletes the given playlist by sending a delete request to Opencast.

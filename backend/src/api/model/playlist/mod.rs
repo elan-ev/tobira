@@ -37,7 +37,7 @@ use super::event::AuthorizedEvent;
 
 mod mutations;
 
-pub(crate) use mutations::RemovedPlaylist;
+pub(crate) use mutations::{PlaylistEntrySlot, RemovedPlaylist};
 
 
 #[derive(juniper::GraphQLUnion)]
@@ -125,7 +125,7 @@ impl Playlist {
         if auth.overlaps_roles(&playlist.acl.read_roles) {
             Self::Playlist(playlist)
         } else {
-            Self::NotAllowed(NotAllowed)
+            Self::NotAllowed(NotAllowed { opencast_id: playlist.opencast_id.0 })
         }
     }
 
@@ -300,32 +300,31 @@ impl AuthorizedPlaylist {
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
         let (selection, mapping) = select!(
             found: "events.id is not null",
+            content_id: "t.content_id",
             event: AuthorizedEvent,
         );
         let query = format!("\
-            with entries as (\
-                select unnest(entries) as entry \
-                from playlists \
-                where id = $1\
-            ),
-            event_ids as (\
-                select (entry).content_id as id \
-                from entries \
-                where (entry).type = 'event'\
-            )
-            select {selection} from event_ids \
-            left join events on events.opencast_id = event_ids.id \
-            left join series on series.id = events.series\
+            select {selection} \
+            from playlists, \
+            lateral unnest(playlists.entries) with ordinality as t \
+            left join events on events.opencast_id = t.content_id \
+            left join series on series.id = events.series \
+            where playlists.id = $1 and t.type = 'event' \
+            order by t.ordinality\
         ");
         context.db
             .query_mapped(&query, dbargs![&self.key], |row| {
                 if !mapping.found.of::<bool>(&row) {
-                    return VideoListEntry::Missing(Missing);
+                    return VideoListEntry::Missing(Missing {
+                        opencast_id: mapping.content_id.of::<String>(&row),
+                    });
                 }
 
                 let event = AuthorizedEvent::from_row(&row, mapping.event);
                 if !context.auth.overlaps_roles(&event.acl.read_roles) {
-                    return VideoListEntry::NotAllowed(NotAllowed);
+                    return VideoListEntry::NotAllowed(NotAllowed {
+                        opencast_id: mapping.content_id.of::<String>(&row),
+                    });
                 }
 
                 VideoListEntry::Event(event)
