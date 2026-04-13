@@ -560,6 +560,8 @@ manage:
       move: Verschieben
       to-be-moved: "wird verschoben in: {{series}}"
       cannot-be-removed: "Nicht entfernbar: Fehlender Schreibzugriff"
+      placeholder-missing: Fehlendes Video
+      placeholder-not-allowed: Fehlende Berechtigung
       undo: Rückgängig
       save: Änderungen speichern
       error: Es gab einen Fehler beim Speichern der Änderungen.

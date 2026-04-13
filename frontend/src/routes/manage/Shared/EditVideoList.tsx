@@ -7,9 +7,11 @@ import {
     LuArrowLeftRight,
     LuArrowUp,
     LuCalendar,
+    LuCircleHelp,
     LuCircleUser,
     LuListPlus,
     LuListX,
+    LuShieldQuestion,
     LuUndo2,
     LuUpload,
 } from "react-icons/lu";
@@ -40,7 +42,7 @@ import { displayCommitError } from "../Realm/util";
 import { EventSelector } from "../../../ui/EventSelector";
 import { currentRef, floatingMenuProps, Inertable, keyOfId } from "../../../util";
 import { ellipsisOverflowCss, focusStyle } from "../../../ui";
-import { Thumbnail } from "../../../ui/Video";
+import { PlaceholderThumbnailReplacement, Thumbnail } from "../../../ui/Video";
 import { Link } from "../../../router";
 import { DirectVideoRoute } from "../../Video";
 import { thumbnailLinkStyle, titleLinkStyle } from "./Table";
@@ -60,6 +62,15 @@ export type ListEvent = AuthEvent & (
     | { action: "move", targetSeries: { id: string; title: string } }
 );
 
+type PlaceholderEvent = {
+    __typename: "placeholder";
+    placeholderKind: "missing" | "not-allowed";
+    id: string;
+    action: "none" | "remove";
+};
+
+export type ListItem = ListEvent | PlaceholderEvent;
+
 
 type VideoListMutationParams = MutationParameters & {
     variables: {
@@ -71,7 +82,10 @@ type VideoListMutationParams = MutationParameters & {
             seriesId?: string | null;
         }[];
     } | {
-        entries: readonly string[];
+        entries?: readonly {
+            id?: string | null;
+            opencastId?: string | null;
+        }[] | null;
     }
 };
 type ManageVideoListProps<TMutation extends VideoListMutationParams> = {
@@ -95,23 +109,27 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [success, setSuccess] = useState(false);
     const isPlaylist = listId.startsWith("pl");
-    const [events, setEvents] = useState(mapItems(listEntries, isPlaylist));
+    const [items, setItems] = useState(mapItems(listEntries, isPlaylist));
+    const events = items.filter(isListEvent);
 
-    const initialOrderRef = useRef(
-        isPlaylist ? listEntries.filter(isAuthorizedEvent).map(e => e.id) : [],
-    );
+    const initialOrder = isPlaylist
+        ? items.filter(e => e.action !== "remove").map(e => e.id)
+        : [];
+    const initialOrderRef = useRef(initialOrder);
 
     const isOrderChanged = () => {
         if (!isPlaylist) {
             return false;
         }
-        const currentOrder = events.filter(e => e.action !== "remove").map(e => e.id);
+        const currentOrder = items
+            .filter(e => e.action !== "remove")
+            .map(e => e.id);
         const initialOrder = initialOrderRef.current;
         return currentOrder.length === initialOrder.length
             && currentOrder.some((id, i) => id !== initialOrder[i]);
     };
 
-    const hasChanges = events.some(e => e.action !== "none") || isOrderChanged();
+    const hasChanges = items.some(e => e.action !== "none") || isOrderChanged();
 
     useNavBlocker(() => hasChanges || inFlight);
 
@@ -120,17 +138,19 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         return bug("Used <ManageVideoListContent> without user");
     }
 
-    const unknownItemsCount = listEntries.filter(e => e.__typename !== "AuthorizedEvent").length;
-
     const updatedEntries = isPlaylist ? {
-        entries: events.filter(e => e.action !== "remove").map(e => e.id),
+        entries: items
+            .filter(e => e.action !== "remove")
+            .map(e => isPlaceholder(e)
+                ? { opencastId: e.id }
+                : { id: e.id }),
     } : {
         addedEvents: events.filter(e => e.action === "add").map(e => e.id),
         removedEvents: events
             .filter(e => e.action === "remove" || e.action === "move")
             .map(e => ({
                 id: e.id,
-                targetSeries: e.action === "move" ? e.targetSeries.id : undefined,
+                seriesId: e.action === "move" ? e.targetSeries.id : undefined,
             })),
     };
 
@@ -142,10 +162,11 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         onCompleted: data => {
             setSuccess(true);
             const newEntries = getUpdatedEntries(data);
+            const newItems = mapItems(newEntries, isPlaylist);
             if (isPlaylist) {
-                initialOrderRef.current = newEntries.filter(isAuthorizedEvent).map(e => e.id);
+                initialOrderRef.current = newItems.map(e => e.id);
             }
-            setEvents(mapItems(newEntries, isPlaylist));
+            setItems(newItems);
         },
         onError: e => {
             setSuccess(false);
@@ -156,7 +177,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
     return <Inertable isInert={inFlight || !!commitError} css={{ marginBottom: 32, maxWidth: 750 }}>
         <VideoListMenu
-            {...{ listEntries, isPlaylist, events, setEvents, listId }}
+            {...{ isPlaylist, listId, items, setItems }}
             seriesLink={
                 user.canUpload && !isPlaylist && <LinkButton
                     to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
@@ -172,10 +193,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
                 {t("manage.video-list.removing-disabled")}
             </Card>}
         </VideoListMenu>
-        {unknownItemsCount > 0 && <Card css={{ marginTop: 12 }} kind="info">
-            {t("manage.video-list.details.unknown", { count: unknownItemsCount })}
-        </Card>}
-        {events.length > 0 && <SubmitButtonWithStatus
+        {items.length > 0 && <SubmitButtonWithStatus
             label={t("manage.video-list.edit.save")}
             onClick={onSubmit}
             disabled={!!commitError || !hasChanges || inFlight}
@@ -188,27 +206,30 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 type VideoListMenuProps = PropsWithChildren<{
     isPlaylist: boolean;
     listId?: string;
-    events: ListEvent[];
-    setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    items: ListItem[];
+    setItems: React.Dispatch<React.SetStateAction<ListItem[]>>;
     seriesLink?: React.ReactNode;
 }>;
 
 export const VideoListMenu: React.FC<VideoListMenuProps> = ({
     isPlaylist,
     listId,
-    events,
-    setEvents,
+    items,
+    setItems,
     children,
     seriesLink,
 }) => {
     const { t } = useTranslation();
 
-    const handleSeriesChange = (eventId: string, targetSeries: { id: string; title: string }) => {
-        setEvents(prev => prev.map(e => e.id !== eventId ? e : {
-            ...e,
-            action: "move",
-            targetSeries,
-        }));
+    const handleSeriesChange = (
+        eventId: string,
+        targetSeries: { id: string; title: string },
+    ) => {
+        setItems(prev => updateListEventById(
+            prev,
+            eventId,
+            event => setEventAction(event, "move", targetSeries),
+        ));
     };
 
     return <>
@@ -217,18 +238,18 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                 {t("video.plural")}
             </h2>
             <i css={{ fontSize: 14, color: COLORS.neutral50 }}>
-                ({events.length > 0
-                    ? t("manage.video-list.no-of-videos", { count: events.length })
+                ({items.length > 0
+                    ? t("manage.video-list.no-of-videos", { count: items.length })
                     : <i>{t("manage.video-list.no-content")}</i>
                 })
             </i>
         </div>
         {children}
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <AddVideoMenu {...{ setEvents, events, isPlaylist }} />
+            <AddVideoMenu {...{ isPlaylist, items, setItems }} />
             {seriesLink}
         </div>
-        {events.length > 0 && <>
+        {items.length > 0 && <>
             <div css={{
                 maxHeight: 360,
                 overflowY: "auto",
@@ -238,50 +259,77 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                     margin: "0 -12px",
                 },
             }}>
-                {events.map((event, index) => (
-                    <EventEntry
-                        key={event.id}
+                {items.map((item, index) => {
+                    if (isPlaceholder(item)) {
+                        return <PlaceholderEntry
+                            key={item.id}
+                            {...{ index, item }}
+                            totalItems={items.length}
+                            onChange={() => {
+                                setItems(prev => prev.map(e =>
+                                    (e === item ? togglePlaceholderRemoval(e) : e)));
+                            }}
+                            onMove={isPlaylist
+                                ? direction => setItems(
+                                    prev => moveItem(prev, index, index + direction),
+                                )
+                                : undefined
+                            }
+                        />;
+                    }
+                    return <EventEntry
+                        key={item.id}
                         isPlaylistEntry={isPlaylist}
-                        {...{ index, event, listId }}
+                        {...{ index, listId }}
+                        event={item}
                         onSeriesChange={handleSeriesChange}
-                        totalEvents={events.length}
+                        totalEvents={items.length}
                         onMove={isPlaylist
-                            ? direction => setEvents(
+                            ? direction => setItems(
                                 prev => moveItem(prev, index, index + direction),
                             )
                             : undefined
                         }
-                        onChange={() => setEvents(prev => match(event.action, {
-                            // Undo "add" -> remove from list again
-                            "add": () => prev.filter(e => e.id !== event.id),
-                            // Undo "remove" -> set action to "none"
-                            "remove": () => prev.map(e =>
-                                e.id === event.id ? { ...e, action: "none" } : e),
-                            // Undo "move" -> set action to "none" and target series to "undefined"
-                            "move": () => prev.map(e =>
-                                e.id !== event.id ? e : {
-                                    ...e,
-                                    action: "none",
-                                    targetSeries: undefined,
-                                }),
-                            // Remove existing event
-                            "none": () => prev.map(e =>
-                                e.id === event.id ? { ...e, action: "remove" } : e),
-                        }))}
-                    />
-                ))}
+                        onChange={() => setItems(prev => {
+                            const update = match(item.action, {
+                                // Undo "add" -> remove from list again
+                                "add": () => prev.filter(e => e.id !== item.id),
+                                // Undo "remove" -> set action to "none"
+                                "remove": () => updateListEventById(
+                                    prev,
+                                    item.id,
+                                    clearEventAction,
+                                ),
+                                // Undo "move" -> set action to "none" and
+                                // target series to "undefined"
+                                "move": () => updateListEventById(
+                                    prev,
+                                    item.id,
+                                    clearEventAction,
+                                ),
+                                // Remove existing event
+                                "none": () => updateListEventById(
+                                    prev,
+                                    item.id,
+                                    event => setEventAction(event, "remove"),
+                                ),
+                            });
+                            return update;
+                        })}
+                    />;
+                })}
             </div>
         </>}
     </>;
 };
 
 type AddVideoMenuProps = {
-    events: ListEvent[];
-    setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    items: ListItem[];
+    setItems: React.Dispatch<React.SetStateAction<ListItem[]>>;
     isPlaylist: boolean;
 };
 
-const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlaylist }) => {
+const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ items, setItems, isPlaylist }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
     const [buttonIsActive, setButtonIsActive] = useState(false);
@@ -329,7 +377,7 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
                             return;
                         }
 
-                        setEvents(prev => [
+                        setItems(prev => [
                             {
                                 ...event,
                                 __typename: "AuthorizedEvent",
@@ -348,7 +396,9 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
                     menuIsOpen
                     additionalOptions={{
                         excludeSeriesMembers: !isPlaylist,
-                        excludedIds: events.map(e => keyOfId(e.id)),
+                        excludedIds: items
+                            .filter(isListEvent)
+                            .map(e => keyOfId(e.id)),
                     }}
                 />
             </Floating>
@@ -356,6 +406,52 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
     );
 };
 
+
+const thumbnailContainerStyle = {
+    width: 100,
+    flexShrink: 0,
+    [screenWidthAtMost(420)]: {
+        width: "min(100px, 25%)",
+    },
+} as const;
+
+type EntryRowProps = PropsWithChildren<{
+    action: string;
+    actionColor?: string;
+    index: number;
+    totalItems: number;
+    onMove?: (direction: -1 | 1) => void;
+}>;
+
+const EntryRow: React.FC<EntryRowProps> = ({
+    action,
+    actionColor,
+    index,
+    totalItems,
+    onMove,
+    children,
+}) => (
+    <div css={{
+        display: "flex",
+        position: "relative",
+        gap: 8,
+        padding: 6,
+        ":hover": { backgroundColor: COLORS.neutral15 },
+        "::before": {
+            content: "''",
+            position: "absolute",
+            inset: "1px 0",
+            width: 3,
+            backgroundColor: actionColor,
+        },
+    }}>
+        {children}
+        {onMove && <MoveButtons
+            disabled={action === "remove"}
+            {...{ index, totalItems, onMove }}
+        />}
+    </div>
+);
 
 type EventEntryProps = {
     event: ListEvent;
@@ -372,68 +468,37 @@ const EventEntry: React.FC<EventEntryProps> = ({
     event, index, totalEvents, onChange, listId, onSeriesChange, onMove, isPlaylistEntry,
 }) => {
     const { t, i18n } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
-
-    const moveButtonStyle = css({
-        display: "flex",
-        padding: 6,
-        border: "none",
-        borderRadius: 8,
-        color: COLORS.neutral60,
-        backgroundColor: "inherit",
-        "&[disabled]": {
-            color: COLORS.neutral25,
-        },
-        "&:not([disabled])": {
-            cursor: "pointer",
-            "&:hover, &:focus": {
-                backgroundColor: COLORS.neutral10,
-                ...isDark && {
-                    backgroundColor: COLORS.neutral15,
-                    color: COLORS.neutral80,
-                },
-            },
-            ...focusStyle({}),
-        },
-    });
 
     const date = new Date(event.syncedData?.startTime ?? event.created);
 
-    const actionColor = match(event.action, {
-        "add": () => COLORS.happy0,
-        "remove": () => COLORS.danger0,
-        "move": () => COLORS.danger0,
-        "none": () => "transparent",
+    const pendingAction = match(event.action, {
+        "add": () => ({
+            color: COLORS.happy0,
+            label: t("manage.video-list.edit.to-be-added"),
+        }),
+        "remove": () => ({
+            color: COLORS.danger0,
+            label: t("manage.video-list.edit.to-be-removed"),
+        }),
+        "move": () => ({
+            color: COLORS.danger0,
+            label: t("manage.video-list.edit.to-be-moved", {
+                series: event.action === "move" ? event.targetSeries.title : undefined,
+            }),
+        }),
+        "none": () => null,
     });
 
     return (
-        <div
-            key={event.id}
-            css={{
-                display: "flex",
-                position: "relative",
-                gap: 8,
-                padding: 6,
-                ":hover": { backgroundColor: COLORS.neutral15 },
-
-                ...event.action !== "none" && {
-                    "::before": {
-                        content: "''",
-                        position: "absolute",
-                        inset: "1px 0",
-                        width: 3,
-                        backgroundColor: actionColor,
-                    },
-                },
-            }}
+        <EntryRow
+            action={event.action}
+            actionColor={pendingAction?.color}
+            totalItems={totalEvents}
+            {...{ index, onMove }}
         >
             <Link to={DirectVideoRoute.url({ videoId: event.id })} css={{
-                width: 100,
-                flexShrink: 0,
                 ...thumbnailLinkStyle,
-                [screenWidthAtMost(420)]: {
-                    width: "min(100px, 25%)",
-                },
+                ...thumbnailContainerStyle,
             }}>
                 <Thumbnail {...{ event }} />
             </Link>
@@ -494,7 +559,9 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                             padding: "0 4px",
                                         },
                                     },
-                                }}>{event.creators.join(", ")}</span>
+                                }}>
+                                    {event.creators.join(", ")}
+                                </span>
                             </>}
                             <span css={{
                                 [screenWidthAtMost(BREAKPOINT_SMALL)]: {
@@ -510,60 +577,28 @@ const EventEntry: React.FC<EventEntryProps> = ({
                     </div>
 
                     <div css={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignContent: "space-between",
-                        alignItems: "flex-end",
-                        i: { fontSize: 10, whiteSpace: "nowrap" },
+                        ...actionColumnStyle,
                         [screenWidthAbove(BREAKPOINT_SMALL)]: {
                             minWidth: 75,
                         },
                     }}>
-                        {event.action === "remove" && <>
-                            <i css={{ color: COLORS.danger0 }}>
-                                ({t("manage.video-list.edit.to-be-removed")})
-                            </i>
-                            <Button css={buttonStyle} onClick={onChange}>
-                                <LuUndo2 size={16} />
-                                <span>{t("manage.video-list.edit.undo")}</span>
-                            </Button>
-                        </>}
-
-                        {event.action === "add" && <>
-                            <i css={{ color: COLORS.happy0 }}>
-                                ({t("manage.video-list.edit.to-be-added")})
-                            </i>
-                            <Button css={buttonStyle} onClick={onChange}>
-                                <LuUndo2 size={16} />
-                                <span>{t("manage.video-list.edit.undo")}</span>
-                            </Button>
-                        </>}
-
-                        {event.action === "move" && <>
-                            <i css={{ color: COLORS.danger0 }}>
-                                ({t(
-                                    "manage.video-list.edit.to-be-moved",
-                                    { series: event.targetSeries?.title },
-                                )})
-                            </i>
-                            <Button css={buttonStyle} onClick={onChange}>
-                                <LuUndo2 size={16} />
-                                <span>{t("manage.video-list.edit.undo")}</span>
-                            </Button>
+                        {pendingAction && <>
+                            <ActionLabel {...pendingAction} />
+                            <UndoButton onClick={onChange} />
                         </>}
 
                         {event.action === "none" && <>
                             {!event.canWrite && !isPlaylistEntry
-                                && <i css={{ color: COLORS.neutral50 }}>
-                                    ({t("manage.video-list.edit.cannot-be-removed")})
-                                </i>
+                                && <ActionLabel
+                                    color={COLORS.neutral50}
+                                    label={t("manage.video-list.edit.cannot-be-removed")}
+                                />
                             }
                             <div css={{
                                 display: "flex",
                                 gap: 8,
                                 marginTop: "auto",
                             }}>
-                                {/* `listId` is always set for series, so the `!` is fine here */}
                                 {!isPlaylistEntry && onSeriesChange
                                     && <SwitchSeriesMenu
                                         {...{ event, onSeriesChange }}
@@ -571,57 +606,148 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                     />
                                 }
 
-                                <div>
-                                    <Button
-                                        disabled={!isPlaylistEntry && (
-                                            !event.canWrite || !CONFIG.allowSeriesEventRemoval
-                                        )}
-                                        kind="danger"
-                                        css={buttonStyle}
-                                        onClick={onChange}
-                                    >
-                                        <LuListX size={16} />
-                                        <span>{t("manage.video-list.edit.remove")}</span>
-                                    </Button>
-                                </div>
+                                <RemoveButton
+                                    disabled={!isPlaylistEntry && (
+                                        !event.canWrite || !CONFIG.allowSeriesEventRemoval
+                                    )}
+                                    onClick={onChange}
+                                />
                             </div>
                         </>}
                     </div>
                 </div>
             </div>
-            {/* Only show move buttons for playlists */}
-            {onMove && (
-                <div css={{ marginLeft: -2 }}>
-                    <WithTooltip tooltip={t("manage.realm.content.move-up")} placement="left">
-                        <button
-                            aria-label={t("manage.realm.content.move-up")}
-                            disabled={index === 0 || event.action === "remove"}
-                            onClick={e => {
-                                e.currentTarget.blur();
-                                onMove(-1);
-                            }}
-                            css={moveButtonStyle}
-                        >
-                            <LuArrowUp size={16} />
-                        </button>
-                    </WithTooltip>
-                    <WithTooltip tooltip={t("manage.realm.content.move-down")} placement="left">
-                        <button
-                            aria-label={t("manage.realm.content.move-down")}
-                            disabled={index === totalEvents - 1 || event.action === "remove"}
-                            onClick={e => {
-                                e.currentTarget.blur();
-                                onMove(1);
-                            }}
-                            css={moveButtonStyle}
-                        >
-                            <LuArrowDown size={16} />
-                        </button>
-                    </WithTooltip>
-                </div>
-            )}
-        </div>
+        </EntryRow>
     );
+};
+
+
+type PlaceholderEntryProps = {
+    item: PlaceholderEvent;
+    index: number;
+    totalItems: number;
+    onChange: () => void;
+    onMove?: (direction: -1 | 1) => void;
+};
+
+const PlaceholderEntry: React.FC<PlaceholderEntryProps> = ({
+    item,
+    index,
+    totalItems,
+    onChange,
+    onMove,
+}) => {
+    const { t } = useTranslation();
+    const isMissing = item.placeholderKind === "missing";
+    const actionColor = item.action === "remove" ? COLORS.danger0 : "transparent";
+    const label = isMissing
+        ? t("manage.video-list.edit.placeholder-missing")
+        : t("manage.video-list.edit.placeholder-not-allowed");
+    const Icon = isMissing ? LuCircleHelp : LuShieldQuestion;
+
+    return (
+        <EntryRow
+            action={item.action}
+            {...{ actionColor, index, totalItems, onMove }}
+        >
+            <PlaceholderThumbnailReplacement
+                icon={<Icon />}
+                css={{
+                    ...thumbnailContainerStyle,
+                    aspectRatio: "16 / 9",
+                    borderRadius: 8,
+                }}
+            />
+            <div css={{
+                display: "flex",
+                flexGrow: 1,
+                justifyContent: "space-between",
+                gap: 8,
+                minWidth: 0,
+            }}>
+                <i css={{ fontSize: 14, color: COLORS.neutral50, alignSelf: "center" }}>
+                    {label}
+                </i>
+                <div css={actionColumnStyle}>
+                    {item.action === "remove"
+                        ? <>
+                            <ActionLabel
+                                color={COLORS.danger0}
+                                label={t("manage.video-list.edit.to-be-removed")}
+                            />
+                            <UndoButton onClick={onChange} />
+                        </>
+                        : isMissing && <RemoveButton onClick={onChange} />
+                    }
+                </div>
+            </div>
+        </EntryRow>
+    );
+};
+
+
+type MoveButtonsProps = {
+    index: number;
+    totalItems: number;
+    disabled?: boolean;
+    onMove: (direction: -1 | 1) => void;
+};
+
+const MoveButtons: React.FC<MoveButtonsProps> = ({ index, totalItems, disabled, onMove }) => {
+    const { t } = useTranslation();
+    const isDark = useColorScheme().scheme === "dark";
+
+    const style = css({
+        display: "flex",
+        padding: 6,
+        border: "none",
+        borderRadius: 8,
+        color: COLORS.neutral60,
+        backgroundColor: "inherit",
+        "&[disabled]": {
+            color: COLORS.neutral25,
+        },
+        "&:not([disabled])": {
+            cursor: "pointer",
+            "&:hover, &:focus": {
+                backgroundColor: COLORS.neutral10,
+                ...isDark && {
+                    backgroundColor: COLORS.neutral15,
+                    color: COLORS.neutral80,
+                },
+            },
+            ...focusStyle({}),
+        },
+    });
+
+    return <div css={{ marginLeft: -2 }}>
+        <WithTooltip tooltip={t("manage.realm.content.move-up")} placement="left">
+            <button
+                aria-label={t("manage.realm.content.move-up")}
+                disabled={index === 0 || disabled}
+                onClick={e => {
+                    e.currentTarget.blur();
+                    onMove(-1);
+                }}
+                css={style}
+            >
+                <LuArrowUp size={16} />
+            </button>
+        </WithTooltip>
+        <WithTooltip tooltip={t("manage.realm.content.move-down")} placement="left">
+            <button
+                aria-label={t("manage.realm.content.move-down")}
+                disabled={index === totalItems - 1 || disabled}
+                onClick={e => {
+                    e.currentTarget.blur();
+                    onMove(1);
+                }}
+                css={style}
+            >
+                <LuArrowDown size={16} />
+            </button>
+        </WithTooltip>
+    </div>;
 };
 
 
@@ -711,17 +837,37 @@ const SwitchSeriesMenu: React.FC<SwitchSeriesMenuProps> = ({ event, onSeriesChan
 const isAuthorizedEvent = (e: Entry): e is AuthEvent => e.__typename === "AuthorizedEvent";
 
 /** Sorts series by date of creation but preserves manual order for playlists */
-const mapItems = (entries: readonly Entry[], isPlaylist: boolean): ListEvent[] => {
-    const authorized = entries.filter(isAuthorizedEvent);
-    const sorted = isPlaylist
-        ? authorized
-        : [...authorized].sort((a, b) =>
-            a.created === b.created ? 0 : (a.created > b.created ? 1 : -1));
-    return sorted.map(e => ({ ...e, action: "none" }));
+const mapItems = (entries: readonly Entry[], isPlaylist: boolean): ListItem[] => {
+    const toPlaceholder = (e: Exclude<Entry, AuthEvent>): PlaceholderEvent | null => {
+        if (e.__typename !== "Missing" && e.__typename !== "NotAllowed") {
+            return null;
+        }
+        return {
+            __typename: "placeholder",
+            placeholderKind: e.__typename === "Missing" ? "missing" : "not-allowed",
+            id: e.opencastId,
+            action: "none",
+        };
+    };
+
+    if (isPlaylist) {
+        // Preserve original order for all entry types (regular events and placeholders).
+        return entries.flatMap(e =>
+            isAuthorizedEvent(e) ? { ...e, action: "none" } : toPlaceholder(e) ?? []);
+    }
+
+    // For series: sort authorized events by creation date, keep placeholders in.. place.
+    const authorized = [...entries.filter(isAuthorizedEvent)]
+        .sort((a, b) => a.created === b.created ? 0 : (a.created > b.created ? 1 : -1));
+    let eventIdx = 0;
+    return entries.flatMap(e =>
+        isAuthorizedEvent(e)
+            ? { ...authorized[eventIdx++], action: "none" }
+            : toPlaceholder(e) ?? []);
 };
 
 /** Swap two items in the video list */
-const moveItem = (arr: ListEvent[], from: number, to: number): ListEvent[] => {
+const moveItem = (arr: ListItem[], from: number, to: number): ListItem[] => {
     if (to < 0 || to >= arr.length) {
         return arr;
     }
@@ -741,3 +887,93 @@ const buttonStyle = css({
         span: { display: "none" },
     },
 });
+
+const actionColumnStyle = {
+    display: "flex",
+    flexDirection: "column",
+    alignContent: "space-between",
+    alignItems: "flex-end",
+} as const;
+
+const ActionLabel: React.FC<{ color: string; label: string }> = ({ color, label }) => (
+    <i css={{ fontSize: 10, whiteSpace: "nowrap", color }}>({label})</i>
+);
+
+const UndoButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
+    const { t } = useTranslation();
+    return (
+        <Button css={buttonStyle} onClick={onClick}>
+            <LuUndo2 size={16} />
+            <span>{t("manage.video-list.edit.undo")}</span>
+        </Button>
+    );
+};
+
+const RemoveButton: React.FC<{ onClick: () => void; disabled?: boolean }> = ({
+    onClick,
+    disabled,
+}) => {
+    const { t } = useTranslation();
+    return (
+        <Button disabled={disabled} kind="danger" css={buttonStyle} onClick={onClick}>
+            <LuListX size={16} />
+            <span>{t("manage.video-list.edit.remove")}</span>
+        </Button>
+    );
+};
+
+const isPlaceholder = (item: ListItem): item is PlaceholderEvent =>
+    item.__typename === "placeholder";
+const isListEvent = (item: ListItem): item is ListEvent =>
+    item.__typename === "AuthorizedEvent";
+
+const updateListEventById = (
+    items: ListItem[],
+    id: string,
+    update: (event: ListEvent) => ListEvent,
+): ListItem[] => items.map(item => {
+    if (item.id === id && isListEvent(item)) {
+        return update(item);
+    }
+
+    return item;
+});
+
+
+/**
+ * Returns the event without the `targetSeries` field. This is needed because
+ * `targetSeries` only exists on events with `action: "move"` (see the
+ * `ListEvent` type), so before changing an event's action, we need to strip
+ * it to avoid a stale `targetSeries` leaking into the new state.
+ */
+const stripTargetSeries = (event: ListEvent): AuthEvent & { action: string } => {
+    if (event.action !== "move") {
+        return event;
+    }
+    const { targetSeries, ...rest } = event;
+    return rest;
+};
+
+const clearEventAction = (event: ListEvent): ListEvent =>
+    ({ ...stripTargetSeries(event), action: "none" });
+
+const togglePlaceholderRemoval = (placeholder: PlaceholderEvent): PlaceholderEvent => {
+    if (placeholder.placeholderKind === "not-allowed") {
+        return placeholder;
+    }
+    return {
+        ...placeholder,
+        action: placeholder.action === "remove" ? "none" : "remove",
+    };
+};
+
+const setEventAction = (
+    event: ListEvent,
+    action: "remove" | "move",
+    targetSeries?: { id: string; title: string },
+): ListEvent => {
+    const base = stripTargetSeries(event);
+    return action === "move"
+        ? { ...base, action, targetSeries: notNullish(targetSeries) }
+        : { ...base, action };
+};

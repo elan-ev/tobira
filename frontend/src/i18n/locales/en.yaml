@@ -531,6 +531,8 @@ manage:
       move: Move
       to-be-moved: "will be moved to: {{series}}"
       cannot-be-removed: "Can't be removed: Missing write access"
+      placeholder-missing: Missing video
+      placeholder-not-allowed: Insufficient permissions
       undo: Undo
       save: Save changes
       error: Failed to update series content.
