@@ -3,6 +3,12 @@ import { useTranslation } from "react-i18next";
 import { UseMutationConfig } from "react-relay";
 import { MutationParameters, Disposable } from "relay-runtime";
 import {
+    DragDropContext,
+    Droppable,
+    Draggable,
+    DropResult,
+} from "@hello-pangea/dnd";
+import {
     LuArrowDown,
     LuArrowLeftRight,
     LuArrowUp,
@@ -252,75 +258,115 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
             {seriesLink}
         </div>
         {items.length > 0 && <>
-            <div css={{
-                maxHeight: 360,
-                overflowY: "auto",
-                border: `1px solid ${COLORS.neutral25}`,
-                borderRadius: 8,
-                [screenWidthAtMost(420)]: {
-                    margin: "0 -12px",
-                },
+            <DragDropContext onDragEnd={(result: DropResult) => {
+                if (!result.destination || !isPlaylist) {
+                    return;
+                }
+                const from = result.source.index;
+                const to = result.destination.index;
+                if (from === to) {
+                    return;
+                }
+                setItems(prev => reorderItems(prev, from, to));
             }}>
-                {items.map((item, index) => {
-                    if (isPlaceholder(item)) {
-                        return <PlaceholderEntry
-                            key={item.id}
-                            {...{ index, item }}
-                            totalItems={items.length}
-                            onChange={() => {
-                                setItems(prev => prev.map(e =>
-                                    (e === item ? togglePlaceholderRemoval(e) : e)));
+                <Droppable droppableId="video-list">
+                    {provided => (
+                        <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            css={{
+                                maxHeight: 360,
+                                overflowY: "auto",
+                                border: `1px solid ${COLORS.neutral25}`,
+                                borderRadius: 8,
+                                [screenWidthAtMost(420)]: {
+                                    margin: "0 -12px",
+                                },
                             }}
-                            onMove={isPlaylist
-                                ? direction => setItems(
-                                    prev => moveItem(prev, index, index + direction),
-                                )
-                                : undefined
-                            }
-                        />;
-                    }
-                    return <EventEntry
-                        key={item.id}
-                        isPlaylistEntry={isPlaylist}
-                        {...{ index, listId }}
-                        event={item}
-                        onSeriesChange={handleSeriesChange}
-                        totalEvents={items.length}
-                        onMove={isPlaylist
-                            ? direction => setItems(
-                                prev => moveItem(prev, index, index + direction),
-                            )
-                            : undefined
-                        }
-                        onChange={() => setItems(prev => {
-                            const update = match(item.action, {
-                                // Undo "add" -> remove from list again
-                                "add": () => prev.filter(e => e.id !== item.id),
-                                // Undo "remove" -> set action to "none"
-                                "remove": () => updateListEventById(
-                                    prev,
-                                    item.id,
-                                    clearEventAction,
-                                ),
-                                // Undo "move" -> set action to "none" and
-                                // target series to "undefined"
-                                "move": () => updateListEventById(
-                                    prev,
-                                    item.id,
-                                    clearEventAction,
-                                ),
-                                // Remove existing event
-                                "none": () => updateListEventById(
-                                    prev,
-                                    item.id,
-                                    event => setEventAction(event, "remove"),
-                                ),
-                            });
-                            return update;
-                        })}
-                    />;
-                })}
-            </div>
+                        >
+                            {items.map((item, index) => {
+                                if (isPlaceholder(item)) {
+                                    return <DraggableItem
+                                        key={item.id}
+                                        id={item.id}
+                                        {...{ index }}
+                                        isDragDisabled={!isPlaylist || item.action === "remove"}
+                                    >
+                                        <PlaceholderEntry
+                                            {...{ index, item }}
+                                            totalItems={items.length}
+                                            onChange={() => {
+                                                setItems(prev => prev.map(e =>
+                                                    (e === item
+                                                        ? togglePlaceholderRemoval(e)
+                                                        : e)));
+                                            }}
+                                            onMove={isPlaylist
+                                                ? direction => setItems(
+                                                    prev => moveItem(
+                                                        prev,
+                                                        index,
+                                                        index + direction,
+                                                    ),
+                                                )
+                                                : undefined
+                                            }
+                                        />
+                                    </DraggableItem>;
+                                }
+
+                                return <DraggableItem
+                                    key={item.id}
+                                    id={item.id}
+                                    {...{ index }}
+                                    isDragDisabled={!isPlaylist || item.action === "remove"}
+                                >
+                                    <EventEntry
+                                        isPlaylistEntry={isPlaylist}
+                                        {...{ index, listId }}
+                                        event={item}
+                                        onSeriesChange={handleSeriesChange}
+                                        totalEvents={items.length}
+                                        onMove={isPlaylist
+                                            ? direction => setItems(
+                                                prev => moveItem(prev, index, index + direction),
+                                            )
+                                            : undefined
+                                        }
+                                        onChange={() => setItems(prev => {
+                                            const update = match(item.action, {
+                                                // Undo "add" -> remove from list again
+                                                "add": () => prev.filter(e => e.id !== item.id),
+                                                // Undo "remove" -> set action to "none"
+                                                "remove": () => updateListEventById(
+                                                    prev,
+                                                    item.id,
+                                                    clearEventAction,
+                                                ),
+                                                // Undo "move" -> set action to "none" and
+                                                // target series to "undefined"
+                                                "move": () => updateListEventById(
+                                                    prev,
+                                                    item.id,
+                                                    clearEventAction,
+                                                ),
+                                                // Remove existing event
+                                                "none": () => updateListEventById(
+                                                    prev,
+                                                    item.id,
+                                                    event => setEventAction(event, "remove"),
+                                                ),
+                                            });
+                                            return update;
+                                        })}
+                                    />
+                                </DraggableItem>;
+                            })}
+                            {provided.placeholder}
+                        </div>
+                    )}
+                </Droppable>
+            </DragDropContext>
         </>}
     </>;
 };
@@ -416,6 +462,37 @@ const thumbnailContainerStyle = {
         width: "min(100px, 25%)",
     },
 } as const;
+
+type DraggableItemProps = PropsWithChildren<{
+    id: string;
+    index: number;
+    isDragDisabled: boolean;
+}>;
+
+const DraggableItem: React.FC<DraggableItemProps> = ({
+    id, index, isDragDisabled, children,
+}) => (
+    <Draggable draggableId={id} {...{ index }} isDragDisabled={isDragDisabled}>
+        {(provided, snapshot) => (
+            <div
+                ref={provided.innerRef}
+                {...provided.draggableProps}
+                {...provided.dragHandleProps}
+                css={{
+                    ...!isDragDisabled && { cursor: "grab" },
+                    ...snapshot.isDragging && {
+                        cursor: "grabbing",
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                        borderRadius: 8,
+                        backgroundColor: COLORS.neutral05,
+                    },
+                }}
+            >
+                {children}
+            </div>
+        )}
+    </Draggable>
+);
 
 type EntryRowProps = PropsWithChildren<{
     action: string;
@@ -879,7 +956,7 @@ const mapItems = (entries: readonly Entry[], isPlaylist: boolean): ListItem[] =>
             : toPlaceholder(e) ?? []);
 };
 
-/** Swap two items in the video list */
+/** Swap two adjacent items in the video list */
 const moveItem = (arr: ListItem[], from: number, to: number): ListItem[] => {
     if (to < 0 || to >= arr.length) {
         return arr;
@@ -887,6 +964,14 @@ const moveItem = (arr: ListItem[], from: number, to: number): ListItem[] => {
     const result = [...arr];
     result[from] = arr[to];
     result[to] = arr[from];
+    return result;
+};
+
+/** Reorder items after drag and drop */
+const reorderItems = (arr: ListItem[], from: number, to: number): ListItem[] => {
+    const result = [...arr];
+    const [removed] = result.splice(from, 1);
+    result.splice(to, 0, removed);
     return result;
 };
 
