@@ -40,7 +40,9 @@ import { COLORS } from "../../../color";
 import { SubmitButtonWithStatus } from "../../../ui/metadata";
 import { displayCommitError } from "../Realm/util";
 import { EventSelector } from "../../../ui/EventSelector";
-import { currentRef, floatingMenuProps, Inertable, keyOfId } from "../../../util";
+import {
+    ConditionalWrapper, currentRef, floatingMenuProps, Inertable, keyOfId,
+} from "../../../util";
 import { ellipsisOverflowCss, focusStyle } from "../../../ui";
 import { PlaceholderThumbnailReplacement, Thumbnail } from "../../../ui/Thumbnail";
 import { Link } from "../../../router";
@@ -724,11 +726,18 @@ const MoveButtons: React.FC<MoveButtonsProps> = ({ index, totalItems, disabled, 
         },
     });
 
+    const upDisabled = index === 0 || disabled;
+    const downDisabled = index === totalItems - 1 || disabled;
+
     return <div css={{ marginLeft: -2 }}>
-        <WithTooltip tooltip={t("manage.realm.content.move-up")} placement="left">
+        <ConditionalWrapper condition={!upDisabled} wrapper={children =>
+            <WithTooltip tooltip={t("manage.realm.content.move-up")} placement="left">
+                {children}
+            </WithTooltip>
+        }>
             <button
                 aria-label={t("manage.realm.content.move-up")}
-                disabled={index === 0 || disabled}
+                disabled={upDisabled}
                 onClick={e => {
                     e.currentTarget.blur();
                     onMove(-1);
@@ -737,11 +746,15 @@ const MoveButtons: React.FC<MoveButtonsProps> = ({ index, totalItems, disabled, 
             >
                 <LuArrowUp size={16} />
             </button>
-        </WithTooltip>
-        <WithTooltip tooltip={t("manage.realm.content.move-down")} placement="left">
+        </ConditionalWrapper>
+        <ConditionalWrapper condition={!downDisabled} wrapper={children =>
+            <WithTooltip tooltip={t("manage.realm.content.move-down")} placement="left">
+                {children}
+            </WithTooltip>
+        }>
             <button
                 aria-label={t("manage.realm.content.move-down")}
-                disabled={index === totalItems - 1 || disabled}
+                disabled={downDisabled}
                 onClick={e => {
                     e.currentTarget.blur();
                     onMove(1);
@@ -750,7 +763,7 @@ const MoveButtons: React.FC<MoveButtonsProps> = ({ index, totalItems, disabled, 
             >
                 <LuArrowDown size={16} />
             </button>
-        </WithTooltip>
+        </ConditionalWrapper>
     </div>;
 };
 
