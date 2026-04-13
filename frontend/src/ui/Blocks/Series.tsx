@@ -52,7 +52,7 @@ const seriesFragment = graphql`
         entries {
             __typename
             ...on AuthorizedEvent { id, ...VideoListEventData }
-            ...on NotAllowed { dummy }
+            ...on NotAllowed { __typename }
         }
     }
 `;

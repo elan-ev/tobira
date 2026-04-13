@@ -110,6 +110,8 @@ const query = graphql`
                             endTime
                         }
                     }
+                    ...on Missing { opencastId }
+                    ...on NotAllowed { opencastId }
                 }
                 hostRealms { id isMainRoot name path }
             }
