@@ -173,6 +173,23 @@ export const BaseThumbnailReplacement: React.FC<BaseThumbnailReplacementProps> =
     }}>{children}</div>
 );
 
+type PlaceholderThumbnailReplacementProps = {
+    icon: React.ReactNode;
+    className?: string;
+};
+export const PlaceholderThumbnailReplacement: React.FC<PlaceholderThumbnailReplacementProps> = ({
+    icon,
+    className,
+}) => (
+    <BaseThumbnailReplacement className={className} css={{
+        background: "repeating-linear-gradient(115deg, "
+            + "#2e2e2e, #2e2e2e 30px, #292929 30px, #292929 60px)",
+        color: "#dbdbdb",
+    }}>
+        {icon}
+    </BaseThumbnailReplacement>
+);
+
 type ThumbnailOverlayProps = PropsWithChildren<{
     backgroundColor: string;
 }>;

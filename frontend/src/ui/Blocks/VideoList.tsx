@@ -33,7 +33,7 @@ import { floatingMenuProps, keyOfId } from "../../util";
 import { Link } from "../../router";
 import SeriesIcon from "../../icons/series.svg";
 import {
-    BaseThumbnailReplacement, isPastLiveEvent, isUpcomingLiveEvent, Thumbnail,
+    isPastLiveEvent, isUpcomingLiveEvent, PlaceholderThumbnailReplacement, Thumbnail,
     ThumbnailOverlayContainer,
 } from "../Video";
 import { PrettyDate } from "../time";
@@ -1047,13 +1047,7 @@ const Item: React.FC<ItemProps> = ({
 
     const thumbnail = isPlaceholder
         ? <ThumbnailOverlayContainer>
-            <BaseThumbnailReplacement css={{
-                background: "repeating-linear-gradient(115deg, "
-                    + "#2e2e2e, #2e2e2e 30px, #292929 30px, #292929 60px)",
-                color: "#dbdbdb",
-            }}>
-                <LuCircleAlert />
-            </BaseThumbnailReplacement>
+            <PlaceholderThumbnailReplacement icon={<LuCircleAlert />} />
         </ThumbnailOverlayContainer>
         : <>
             <Thumbnail event={item} active={active} />
