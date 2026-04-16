@@ -58,7 +58,7 @@ percent-encoding = "2.1.0"
 postgres-protocol = "0.6.6"
 postgres-types = { version = "0.2.2", features = ["derive", "array-impls"] }
 prometheus-client = "0.24.0"
-rand = "0.10.0"
+rand = "0.10.1"
 regex = "1.7.1"
 reinda = "0.3"
 rustls = "0.23.20"
