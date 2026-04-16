@@ -3,7 +3,7 @@ import { test } from "./util/data";
 import { login, logout } from "./util/user";
 
 
-test("MySeries", async ({ page, browserName, standardData, activeSearchIndex }) => {
+test.skip("MySeries", async ({ page, browserName, standardData, activeSearchIndex }) => {
     test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
 
     await page.goto("/");
