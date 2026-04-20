@@ -282,6 +282,17 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     containerName: "video-canvas",
                     containerType: "inline-size",
                 },
+                "& .preview-container": {
+                    backgroundColor: "#000 !important",
+                    "div, div img": {
+                        height: "inherit",
+                    },
+                    "div img": {
+                        display: "block",
+                        margin: "0 auto",
+                        width: "unset !important",
+                    },
+                },
                 "@container video-canvas (width < 400px)": {
                     "& .button-area": {
                         padding: "2px !important",
