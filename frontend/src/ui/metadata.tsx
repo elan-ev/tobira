@@ -1,4 +1,5 @@
 import {
+    Fragment,
     PropsWithChildren,
     ReactNode,
     forwardRef,
@@ -21,6 +22,11 @@ import { Inertable, OcEntity } from "../util";
 import { PrettyDate } from "./time";
 import { autoLink as makeAutoLink } from "./text";
 import { Link } from "../router";
+import { TFunction } from "i18next";
+import { i18n as I18n } from "i18next";
+import { match } from "@opencast/appkit";
+import CONFIG, { MetadataLabel } from "../config";
+import { translatedConfig } from "../util";
 
 
 export const TitleLabel: React.FC<{ htmlFor: string }> = ({ htmlFor }) => {
@@ -420,4 +426,158 @@ export const SubmitButtonWithStatus: React.FC<SubmitButtonWithStatusProps> = ({
             }} />
         </span>
     </div>;
+};
+
+
+
+export const LICENSE_TRANSLATIONS: Record<string, (t: TFunction) => string> = {
+    "ALLRIGHTS": (t: TFunction) => t("license.all-rights"),
+    "CC-BY": () => "CC BY",
+    "CC-BY-SA": () => "CC BY-SA",
+    "CC-BY-ND": () => "CC BY-ND",
+    "CC-BY-NC": () => "CC BY-NC",
+    "CC-BY-NC-SA": () => "CC BY-NC-SA",
+    "CC-BY-NC-ND": () => "CC BY-NC-ND",
+};
+
+export const isValidLink = (s: string): boolean => {
+    const trimmed = s.trim();
+    if (!(trimmed.startsWith("http://") || trimmed.startsWith("https://"))) {
+        return false;
+    }
+
+    try {
+        new URL(trimmed);
+    } catch (_) {
+        return false;
+    }
+
+    return true;
+};
+
+export const createAutoTimestampProcessor = (args: {
+    duration?: number;
+    onTimestampClick: (timestamp: number) => void;
+}): ((text: string) => JSX.Element) => {
+    const { duration, onTimestampClick } = args;
+    const timestampRegex = /((?<!\S)(?:\d?\d:)?\d?\d:\d{2}(?!\S))/g;
+
+    return (text: string) => <>{text.split(timestampRegex).map((part, index) => {
+        if (!part.match(timestampRegex)) {
+            return part;
+        }
+
+        const parts = part.split(":").map(Number);
+        const [hours, minutes, seconds] = parts.length === 2 ? [0, ...parts] : parts;
+        const timestamp = ((hours * 60) + minutes) * 60 + seconds;
+        if (duration == null || timestamp * 1000 > duration) {
+            return part;
+        }
+
+        return <ProtoButton
+            key={index}
+            onClick={() => onTimestampClick(timestamp)}
+            css={{
+                color: COLORS.primary0,
+                ":hover": {
+                    color: COLORS.primary1,
+                },
+            }}
+        >{part}</ProtoButton>;
+    })}</>;
+};
+
+type MetadataPairsEvent = {
+    metadata: Record<string, Record<string, string[]>>;
+};
+
+export type MetadataValueStyle = "line-break" | "inline-bullets";
+
+const translateMetadataValue = (
+    label: MetadataLabel,
+    value: string,
+    t: TFunction,
+): ReactNode => {
+    const displayValue = (
+        label === "builtin:license" && value in LICENSE_TRANSLATIONS
+    ) ? LICENSE_TRANSLATIONS[value](t) : value;
+
+    return isValidLink(displayValue)
+        ? <Link to={displayValue}>{displayValue}</Link>
+        : displayValue;
+};
+
+const renderMetadataValues = (
+    values: string[],
+    label: MetadataLabel,
+    t: TFunction,
+    valueStyle: MetadataValueStyle,
+): ReactNode => {
+    if (valueStyle === "line-break") {
+        return values.map((value, i) => <Fragment key={i}>
+            {i > 0 && <br />}
+            {translateMetadataValue(label, value, t)}
+        </Fragment>);
+    }
+
+    return values.length > 1
+        ? <ul css={{
+            listStyle: "none",
+            display: "inline-flex",
+            flexWrap: "wrap",
+            margin: 0,
+            padding: 0,
+            "& > li:not(:last-child)::after": {
+                content: "'•'",
+                padding: "0 6px",
+                color: COLORS.neutral40,
+            },
+        }}>
+            {values.map((value, i) => <li key={i}>{translateMetadataValue(label, value, t)}</li>)}
+        </ul>
+        : translateMetadataValue(label, values[0], t);
+};
+
+export const getMetadataPairs = (
+    event: MetadataPairsEvent,
+    t: TFunction,
+    i18n: I18n,
+    valueStyle: MetadataValueStyle,
+): [string, ReactNode][] => {
+    const pairs: [string, ReactNode][] = [];
+
+    if (event.metadata.dcterms?.language) {
+        const languageNames = new Intl.DisplayNames(i18n.resolvedLanguage, { type: "language" });
+        const languages = event.metadata.dcterms.language.map(lng => languageNames.of(lng) ?? lng);
+
+        pairs.push([
+            t("general.language.language", { count: languages.length }),
+            languages.join(", "),
+        ]);
+    }
+
+    for (const [namespace, fields] of Object.entries(CONFIG.metadataLabels)) {
+        const metadataNs = event.metadata[namespace];
+        if (metadataNs === undefined) {
+            continue;
+        }
+
+        for (const [field, label] of Object.entries(fields)) {
+            if (field in metadataNs) {
+                const translatedLabel = typeof label === "object"
+                    ? translatedConfig(label, i18n)
+                    : match(label, {
+                        "builtin:license": () => t("video.license"),
+                        "builtin:source": () => t("video.source"),
+                    });
+
+                pairs.push([
+                    translatedLabel,
+                    renderMetadataValues(metadataNs[field], label, t, valueStyle),
+                ]);
+            }
+        }
+    }
+
+    return pairs;
 };

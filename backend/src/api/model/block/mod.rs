@@ -217,6 +217,7 @@ pub(crate) struct VideoBlock {
     pub(crate) event: Option<Id>,
     pub(crate) show_title: bool,
     pub(crate) show_link: bool,
+    pub(crate) show_metadata: bool,
 }
 
 impl_block!(VideoBlock);
@@ -237,6 +238,10 @@ impl VideoBlock {
 
     fn show_link(&self) -> bool {
         self.show_link
+    }
+
+    fn show_metadata(&self) -> bool {
+        self.show_metadata
     }
 
     fn id(&self) -> Id {
@@ -356,6 +361,7 @@ impl_from_db!(
                 event: row.video::<Option<Key>>().map(Id::event),
                 show_title: unwrap_type_dep(row.show_title(), "event", "show_title"),
                 show_link: unwrap_type_dep(row.show_link(), "event", "show_link"),
+                show_metadata: unwrap_type_dep(row.show_metadata(), "event", "show_metadata"),
             }.into(),
 
             BlockType::Playlist => PlaylistBlock {
