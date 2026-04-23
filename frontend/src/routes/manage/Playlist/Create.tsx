@@ -10,7 +10,7 @@ import { ManageNav } from "..";
 import { CreatePlaylistMutation } from "./__generated__/CreatePlaylistMutation.graphql";
 import { ManagePlaylistDetailsRoute } from "./PlaylistDetails";
 import { CreatePlaylistQuery } from "./__generated__/CreatePlaylistQuery.graphql";
-import { ListEvent, VideoListMenu } from "../Shared/EditVideoList";
+import { ListItem, VideoListMenu } from "../Shared/EditVideoList";
 import { CreateVideoList } from "../Shared/Create";
 import { InputContainer } from "../../../ui/metadata";
 
@@ -67,7 +67,7 @@ type CreatePlaylistPageProps = {
 
 const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({ knownRolesRef }) => {
     const [commit, inFlight] = useMutation<CreatePlaylistMutation>(createPlaylistMutation);
-    const [events, setEvents] = useState<ListEvent[]>([]);
+    const [items, setItems] = useState<ListItem[]>([]);
 
     const canUserCreateList = (user: User) => user.canCreatePlaylists;
 
@@ -77,14 +77,14 @@ const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({ knownRolesRef }
             kind="playlist"
             buildVariables={({ username }) => ({
                 creator: username,
-                entries: events.map(e => e.id),
+                entries: items.map(e => e.id),
             })}
             returnPath={response =>
                 ManagePlaylistDetailsRoute.url({ id: response.createPlaylist.id })
             }
         >
             <InputContainer css={{ maxWidth: 900 }}>
-                <VideoListMenu events={events} setEvents={setEvents} isPlaylist />
+                <VideoListMenu {...{ items, setItems }} isPlaylist />
             </InputContainer>
         </CreateVideoList>
     );

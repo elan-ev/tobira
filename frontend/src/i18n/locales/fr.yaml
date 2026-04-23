@@ -544,6 +544,8 @@ manage:
       move: Déplacer # verify
       to-be-moved: "sera déplacé vers : {{series}}" # verify
       cannot-be-removed: 'Pas possible de supprimer : manque du droit d''écriture'
+      placeholder-missing: Vidéo manquante # verify
+      placeholder-not-allowed: Permissions insuffisantes # verify
       undo: Annuler
       save: Sauvegarder les modifications
       error: Échec de la mise à jour du contenu de la série.

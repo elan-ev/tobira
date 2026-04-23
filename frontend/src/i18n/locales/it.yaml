@@ -582,6 +582,8 @@ manage:
       move: Spostare # verify
       to-be-moved: "sarà spostato in: {{series}}" # verify
       cannot-be-removed: 'Non può essere rimosso: Manca l''accesso in scrittura'
+      placeholder-missing: Video mancante # verify
+      placeholder-not-allowed: Permessi insufficienti # verify
       undo: Annulla
       save: Salvare le modifiche
       error: Non è stato possibile aggiornare il contenuto della serie.

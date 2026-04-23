@@ -36,7 +36,7 @@ use super::event::AuthorizedEvent;
 
 mod mutations;
 
-pub(crate) use mutations::RemovedPlaylist;
+pub(crate) use mutations::{PlaylistEntrySlot, RemovedPlaylist};
 
 
 #[derive(juniper::GraphQLUnion)]
@@ -69,9 +69,12 @@ pub(crate) enum VideoListEntry {
     Missing(Missing),
 }
 
-/// The data referred to by a playlist entry was not found.
-pub(crate) struct Missing;
-crate::api::util::impl_object_with_dummy_field!(Missing);
+/// A video list entry whose data was not found.
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct Missing {
+    pub(crate) opencast_id: String,
+}
 
 
 impl_from_db!(
@@ -130,7 +133,7 @@ impl Playlist {
                 if context.auth.overlaps_roles(&playlist.read_roles) {
                     Playlist::Playlist(playlist)
                 } else {
-                    Playlist::NotAllowed(NotAllowed)
+                    Playlist::NotAllowed(NotAllowed { opencast_id: None })
                 }
             })
             .pipe(Ok)
@@ -280,32 +283,31 @@ impl AuthorizedPlaylist {
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
         let (selection, mapping) = select!(
             found: "events.id is not null",
+            content_id: "t.content_id",
             event: AuthorizedEvent,
         );
         let query = format!("\
-            with entries as (\
-                select unnest(entries) as entry \
-                from playlists \
-                where id = $1\
-            ),
-            event_ids as (\
-                select (entry).content_id as id \
-                from entries \
-                where (entry).type = 'event'\
-            )
-            select {selection} from event_ids \
-            left join events on events.opencast_id = event_ids.id \
-            left join series on series.id = events.series\
+            select {selection} \
+            from playlists, \
+            lateral unnest(playlists.entries) with ordinality as t \
+            left join events on events.opencast_id = t.content_id \
+            left join series on series.id = events.series \
+            where playlists.id = $1 and t.type = 'event' \
+            order by t.ordinality\
         ");
         context.db
             .query_mapped(&query, dbargs![&self.key], |row| {
                 if !mapping.found.of::<bool>(&row) {
-                    return VideoListEntry::Missing(Missing);
+                    return VideoListEntry::Missing(Missing {
+                        opencast_id: mapping.content_id.of::<String>(&row),
+                    });
                 }
 
                 let event = AuthorizedEvent::from_row(&row, mapping.event);
                 if !context.auth.overlaps_roles(&event.read_roles) {
-                    return VideoListEntry::NotAllowed(NotAllowed);
+                    return VideoListEntry::NotAllowed(NotAllowed {
+                        opencast_id: Some(mapping.content_id.of::<String>(&row)),
+                    });
                 }
 
                 VideoListEntry::Event(event)
