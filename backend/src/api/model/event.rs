@@ -796,6 +796,7 @@ impl AuthorizedEvent {
             table: "all_events",
             alias: Some("events"),
             join_clause: "left join series on series.id = events.series",
+            date_column: "events.created",
         };
 
         load_writable_for_user(
