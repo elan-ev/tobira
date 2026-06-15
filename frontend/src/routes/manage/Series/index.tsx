@@ -88,7 +88,6 @@ const query = graphql`
                     numVideos
                     creators
                     thumbnailStack { thumbnails { url live audioOnly state }}
-                    hostRealms { id }
                 }
             }
         }
