@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState, ReactNode } from "react";
+import React, { useRef, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineSearch } from "react-icons/hi";
 import { ProtoButton, screenWidthAtMost } from "@opencast/appkit";
@@ -17,6 +17,8 @@ import { BREAKPOINT as NAV_BREAKPOINT } from "../Navigation";
 import { COLORS } from "../../color";
 import { useUser } from "../../User";
 import { SHORTCUTS, useShortcut } from "../../ui/Shortcuts";
+import { IconType } from "react-icons";
+import { css, CSSObject } from "@emotion/react";
 
 
 type SearchFieldProps = {
@@ -99,7 +101,10 @@ type SearchInputProps = Partial<SearchFieldProps> & {
     defaultValue?: string;
     height?: number;
     spinnerSize?: number;
-    icon?: ReactNode;
+    customIcon?: {
+        icon: IconType;
+        style: CSSObject;
+    };
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({
@@ -111,7 +116,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     variant,
     height = 42,
     spinnerSize = 24,
-    icon,
+    customIcon,
 }) => {
     const { t } = useTranslation();
     const [inputIsEmpty, setInputIsEmpty] = useState(!defaultValue);
@@ -123,6 +128,16 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
     const paddingSpinner = (height - spinnerSize) / 2;
 
+    const iconCss = css({
+        position: "absolute",
+        height: "100%",
+        left: 11,
+        fontSize: 23,
+        color: COLORS.neutral60,
+        ...customIcon?.style,
+    });
+
+    const Icon = customIcon?.icon ?? HiOutlineSearch;
 
     return (
         <div css={{
@@ -136,13 +151,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                 },
             },
         }}>
-            {icon ?? <HiOutlineSearch css={{
-                position: "absolute",
-                height: "100%",
-                left: 11,
-                fontSize: 23,
-                color: COLORS.neutral60,
-            }} />}
+            <Icon css={{ ...iconCss }} />
             <form onSubmit={event => {
                 event.preventDefault();
                 search(currentRef(inputRef).value);

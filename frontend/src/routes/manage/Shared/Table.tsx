@@ -855,12 +855,10 @@ const SearchField: React.FC<{ vars: ItemVars }> = ({ vars }) => {
             spinnerSize={20}
             defaultValue={vars.filters.textQuery}
             inputProps={{}}
-            icon={<LucideFunnel size={18} css={{
-                position: "absolute",
-                height: "100%",
-                left: 8,
-                color: COLORS.neutral60,
-            }} />}
+            customIcon={{
+                icon: LucideFunnel,
+                style: { width: 18, left: 8 },
+            }}
         />
     </div>;
 };
