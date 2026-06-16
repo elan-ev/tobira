@@ -10,6 +10,7 @@ import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
 import { Inertable, isSynced, translatedConfig } from "../../../util";
 import { DirectVideoRoute, VideoRoute, VideoShareButton } from "../../Video";
+import { DirectSeriesRoute } from "../../Series";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
 import {
@@ -43,6 +44,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
             }} />,
             <VideoButtonSection key="button-section" event={authEvent} />,
             <VideoMetadataSection key="metadata" event={event} />,
+            <VideoSeriesSection key="series" event={event} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms kind="video" hostRealms={authEvent.hostRealms} itemLink={realmPath => (
                     <Link to={VideoRoute.url({ realmPath: realmPath, videoID: authEvent.id })}>
@@ -121,6 +123,24 @@ const VideoButtonSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
             commit={commit}
         />
     </ButtonSection>;
+};
+
+const VideoSeriesSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
+    const { t } = useTranslation();
+    if (!event.series) {
+        return null;
+    }
+
+    return <div css={{ marginBottom: 32 }}>
+        <h2 css={{ fontSize: 20, marginBottom: 16 }}>
+            {t("video.part-of-series")}
+        </h2>
+        <span css={{ marginLeft: 40 }}>
+            <Link to={DirectSeriesRoute.url({ seriesId: event.series.id })}>
+                {event.series.title}
+            </Link>
+        </span>
+    </div>;
 };
 
 const VideoMetadataSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
