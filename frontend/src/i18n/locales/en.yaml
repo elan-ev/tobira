@@ -137,6 +137,8 @@ video:
   duration: Duration
   details: Video details
   part-of-series: Part of series
+  part-of-playlists: Part of playlists
+  private-playlist: Private playlist
   more-from-series: More from “{{series}}”
   more-from-playlist: More from “{{playlist}}”
   deleted-block: The video referenced here was deleted.

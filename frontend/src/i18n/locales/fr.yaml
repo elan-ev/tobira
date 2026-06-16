@@ -142,6 +142,8 @@ video:
   duration: Durée de lecture
   details: Détails de la vidéo
   part-of-series: Partie de la série
+  part-of-playlists: Partie des playlist # verify
+  private-playlist: Playlist privée # verify
   more-from-series: Plus de « {{series}} »
   more-from-playlist: Plus de « {{playlist}} »
   deleted-block: La vidéo mentionnée ici a été supprimée.

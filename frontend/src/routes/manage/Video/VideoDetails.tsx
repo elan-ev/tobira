@@ -10,6 +10,7 @@ import { AuthorizedEvent, makeManageVideoRoute } from "./Shared";
 import { ExternalLink } from "../../../relay/auth";
 import { Inertable, isSynced, translatedConfig } from "../../../util";
 import { DirectVideoRoute, VideoRoute, VideoShareButton } from "../../Video";
+import { DirectPlaylistRoute } from "../../Playlist";
 import { DirectSeriesRoute } from "../../Series";
 import { ManageVideosRoute } from ".";
 import CONFIG from "../../../config";
@@ -45,6 +46,7 @@ export const ManageVideoDetailsRoute = makeManageVideoRoute(
             <VideoButtonSection key="button-section" event={authEvent} />,
             <VideoMetadataSection key="metadata" event={event} />,
             <VideoSeriesSection key="series" event={event} />,
+            <VideoPlaylistSection key="playlists" event={event} />,
             <div key="host-realms" css={{ marginBottom: 32 }}>
                 <HostRealms kind="video" hostRealms={authEvent.hostRealms} itemLink={realmPath => (
                     <Link to={VideoRoute.url({ realmPath: realmPath, videoID: authEvent.id })}>
@@ -140,6 +142,35 @@ const VideoSeriesSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
                 {event.series.title}
             </Link>
         </span>
+    </div>;
+};
+
+const VideoPlaylistSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => {
+    const { t } = useTranslation();
+    if (!event.referencingPlaylists || event.referencingPlaylists.length === 0) {
+        return null;
+    }
+
+    return <div css={{ marginBottom: 32 }}>
+        <h2 css={{ fontSize: 20 }}>
+            {t("video.part-of-playlists")}
+        </h2>
+        <ul>
+            {event.referencingPlaylists.map((playlist, index) => (
+                <li key={playlist.__typename === "AuthorizedPlaylist"
+                    ? playlist.id
+                    : `private-${index}`
+                }>
+                    {playlist.__typename === "AuthorizedPlaylist" ? (
+                        <Link to={DirectPlaylistRoute.url({ playlistId: playlist.id })}>
+                            {playlist.title}
+                        </Link>
+                    ) : (
+                        <span>{t("video.private-playlist")}</span>
+                    )}
+                </li>
+            ))}
+        </ul>
     </div>;
 };
 
