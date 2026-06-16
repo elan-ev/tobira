@@ -230,7 +230,7 @@ export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps>
         container: "thumbnail / inline-size",
         position: "relative",
         transition: "0.2s box-shadow",
-        overflow: "hidden",
+        overflow: "visible",
         height: "fit-content",
         borderRadius: 8,
         aspectRatio: "16 / 9",
@@ -241,6 +241,15 @@ export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps>
             },
         },
     }}>
+        <div css={{
+            position: "absolute",
+            inset: 0,
+            overflow: "hidden",
+            borderRadius: 8,
+            zIndex: 0,
+        }}>
+            {children}
+        </div>
         {accessRoles && <div css={{
             position: "absolute",
             top: 2,
@@ -250,10 +259,10 @@ export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps>
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
+            zIndex: 1,
         }}>
             <AccessIcon item={accessRoles} />
         </div>}
-        {children}
     </div>;
 };
 
