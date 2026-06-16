@@ -114,7 +114,7 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
     itemType="playlist"
     item={{ ...item, state: "READY" }}
     link={`${PATH}/${keyOfId(item.id)}`}
-    thumbnail={_ => <PlaylistThumbnail playlist={item} />}
+    thumbnail={_ => <PlaylistThumbnail showAccessIcon playlist={item} />}
     generalMetadataProps={{
         timestamp: item.updated ?? undefined,
         creators: [item.creator],

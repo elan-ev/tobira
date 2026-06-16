@@ -42,7 +42,7 @@ import { Link, useRouter } from "../../../router";
 import { VideosSortColumn } from "../Video/__generated__/VideoManageQuery.graphql";
 import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.graphql";
 import { useNotification } from "../../../ui/NotificationContext";
-import { AccessIcon, floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
+import { floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
 import { isSynced } from "../../../util";
 import { ThumbnailItemState } from "../../../ui/Video";
 import { SearchInput } from "../../../layout/header/Search";
@@ -932,11 +932,6 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
     // one since they generally have less metadata..
     const variableBreakpoint = props.itemType === "video" ? BREAKPOINT_MEDIUM : BREAKPOINT_SMALL;
 
-    const hasRoles = (i: ListItemProps): i is ListItemProps & {
-        readRoles: readonly string[];
-        writeRoles: readonly string[];
-    } => i.readRoles != null && i.writeRoles != null;
-
     return <li css={{
         position: "relative",
         display: "flex",
@@ -985,10 +980,10 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
                     {props.thumbnail(thumbnailState)}
                 </Link>
             }
-            {hasRoles(item) && <AccessIcon
+            {/* {hasRoles(item) && <AccessIcon
                 {...{ item }}
                 isPlaylist={props.itemType === "playlist"}
-            />}
+            />} */}
         </div>
 
 

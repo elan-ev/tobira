@@ -7,7 +7,7 @@ import { COLORS } from "../color";
 import { MovingTruck } from "./Waiting";
 import { AuthorizedEvent } from "../routes/manage/Video/Shared";
 import { Caption } from "./player";
-import { captionsWithLabels } from "../util";
+import { AccessIcon, captionsWithLabels } from "../util";
 import { graphql } from "react-relay";
 import { fetchQuery } from "../relay";
 import { VideoStaticFileLinkQuery } from "./__generated__/VideoStaticFileLinkQuery.graphql";
@@ -31,6 +31,9 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
             audioOnly?: boolean;
         } | null;
         tobiraDeletionTimestamp?: string | null;
+        // Pass these if you want to show an access indicating icon inside the thumbnail.
+        readRoles?: readonly string[];
+        writeRoles?: readonly string[];
     };
 
     /** If `true`, an indicator overlay is shown */
@@ -103,11 +106,19 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({ event, active, ...rest }) 
         </ThumbnailOverlay>;
     }
 
-    return <ThumbnailOverlayContainer {...rest}>
-        {inner}
-        {active && <ActiveIndicator />}
-        {overlay}
-    </ThumbnailOverlayContainer>;
+    return (
+        <ThumbnailOverlayContainer
+            accessRoles={(event.readRoles && event.writeRoles) ? {
+                readRoles: event.readRoles,
+                writeRoles: event.writeRoles,
+            } : undefined}
+            {...rest}
+        >
+            {inner}
+            {active && <ActiveIndicator />}
+            {overlay}
+        </ThumbnailOverlayContainer>
+    );
 };
 
 type ThumbnailReplacementProps = {
@@ -201,7 +212,15 @@ export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = ({
     </div>
 );
 
-export const ThumbnailOverlayContainer: React.FC<JSX.IntrinsicElements["div"]> = ({
+
+type ThumbnailOverlayContainerProps = JSX.IntrinsicElements["div"] & {
+    accessRoles?: {
+        readRoles: readonly string[];
+        writeRoles: readonly string[];
+    },
+}
+export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps> = ({
+    accessRoles,
     children,
     ...rest
 }) => {
@@ -222,6 +241,18 @@ export const ThumbnailOverlayContainer: React.FC<JSX.IntrinsicElements["div"]> =
             },
         },
     }}>
+        {accessRoles && <div css={{
+            position: "absolute",
+            top: 2,
+            right: 2,
+            fontSize: 16,
+            padding: 2,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+        }}>
+            <AccessIcon item={accessRoles} />
+        </div>}
         {children}
     </div>;
 };

@@ -18,7 +18,6 @@ import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import { COLORS } from "../color";
 import { Caption } from "../ui/player";
-import { isRealUser, useUser } from "../User";
 
 
 /**
@@ -385,20 +384,16 @@ export function ConditionalWrapper({
     return condition ? wrapper(children) : children;
 }
 
-
-export type AccessProps = {
-    item: {
-        readRoles: readonly string[];
-        writeRoles: readonly string[];
-    }
-    isPlaylist: boolean;
+export type AccessRoles = {
+    readRoles: readonly string[];
+    writeRoles: readonly string[];
 }
-export const AccessIcon: React.FC<AccessProps> = ({ item, isPlaylist }) => {
+type AccessProps = {
+    item: AccessRoles;
+}
+
+export const AccessIcon: React.FC<AccessProps> = ({ item }) => {
     const { t } = useTranslation();
-    const user = useUser();
-    if (!isRealUser(user)) {
-        return null;
-    }
 
     const PUBLIC_ROLE = "ROLE_ANONYMOUS";
     type AccessLevel = "public" | "shared" | "private";
@@ -420,27 +415,14 @@ export const AccessIcon: React.FC<AccessProps> = ({ item, isPlaylist }) => {
 
     const tooltipKey: ParseKeys = `manage.table.filter.visibility-${accessLevel}-tooltip`;
 
-    return (
+    return <WithTooltip placement="bottom" tooltip={<>{t(tooltipKey)}</>}>
         <div css={{
-            position: "absolute",
-            top: isPlaylist ? 18 : 2,
-            right: 2,
-            fontSize: 16,
-            padding: 2,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-        }}>
-            <WithTooltip placement="bottom" tooltip={<>{t(tooltipKey)}</>}>
-                <div css={{
-                    color: "#ddd",
-                    filter: [
-                        "drop-shadow(0 0 1px rgba(0, 0, 0, 0.8))",
-                        "drop-shadow(0 0 1px rgba(0, 0, 0, 0.8))",
-                        "drop-shadow(0 0 3px rgba(0, 0, 0, 0.5))",
-                    ].join(" "),
-                }}>{icon}</div>
-            </WithTooltip>
-        </div>
-    );
+            color: "#ddd",
+            filter: [
+                "drop-shadow(0 0 1px rgba(0, 0, 0, 0.8))",
+                "drop-shadow(0 0 1px rgba(0, 0, 0, 0.8))",
+                "drop-shadow(0 0 3px rgba(0, 0, 0, 0.5))",
+            ].join(" "),
+        }}>{icon}</div>
+    </WithTooltip>;
 };
