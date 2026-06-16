@@ -18,6 +18,7 @@ import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import { COLORS } from "../color";
 import { Caption } from "../ui/player";
+import { thumbnailOverlayStyles } from "../ui/Video";
 
 
 /**
@@ -417,12 +418,11 @@ export const AccessIcon: React.FC<AccessProps> = ({ item }) => {
 
     return <WithTooltip placement="bottom" tooltip={<>{t(tooltipKey)}</>}>
         <div css={{
-            color: "#ddd",
-            filter: [
-                "drop-shadow(0 0 1px rgba(0, 0, 0, 0.8))",
-                "drop-shadow(0 0 1px rgba(0, 0, 0, 0.8))",
-                "drop-shadow(0 0 3px rgba(0, 0, 0, 0.5))",
-            ].join(" "),
-        }}>{icon}</div>
+            backgroundColor: "hsla(0, 0%, 0%, 0.75)",
+            padding: 4,
+            ...thumbnailOverlayStyles,
+        }}>
+            {icon}
+        </div>
     </WithTooltip>;
 };

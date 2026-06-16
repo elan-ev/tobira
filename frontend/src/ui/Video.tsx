@@ -1,7 +1,7 @@
 import { Fragment, PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuCircleUser, LuVolume2 } from "react-icons/lu";
-import { Spinner, useColorScheme } from "@opencast/appkit";
+import { screenWidthAtMost, Spinner, useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
 import { MovingTruck } from "./Waiting";
@@ -12,6 +12,7 @@ import { graphql } from "react-relay";
 import { fetchQuery } from "../relay";
 import { VideoStaticFileLinkQuery } from "./__generated__/VideoStaticFileLinkQuery.graphql";
 import CONFIG from "../config";
+import { BREAKPOINT_SMALL } from "../GlobalStyle";
 
 
 export type ThumbnailItemState
@@ -184,6 +185,17 @@ export const BaseThumbnailReplacement: React.FC<BaseThumbnailReplacementProps> =
     }}>{children}</div>
 );
 
+export const thumbnailOverlayStyles = ({
+    display: "inline-flex",
+    borderRadius: 4,
+    fontSize: 14,
+    color: "white",
+    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+        fontSize: 12,
+        " > svg": { fontSize: 15 },
+    },
+});
+
 type ThumbnailOverlayProps = PropsWithChildren<{
     backgroundColor: string;
 }>;
@@ -192,21 +204,14 @@ export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = ({
     backgroundColor,
 }) => (
     <div css={{
-        display: "inline-flex",
         alignItems: "center",
         gap: 6,
         position: "absolute",
         right: 6,
         bottom: 6,
-        borderRadius: 4,
-        padding: "1px 5px",
-        fontSize: 14,
         backgroundColor,
-        color: "white",
-        "@container thumbnail (width < 110px)": {
-            fontSize: 12,
-            " > svg": { fontSize: 15 },
-        },
+        padding: "1px 5px",
+        ...thumbnailOverlayStyles,
     }}>
         {children}
     </div>
@@ -227,7 +232,6 @@ export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps>
     const isDark = useColorScheme().scheme === "dark";
 
     return <div {...rest} css={{
-        container: "thumbnail / inline-size",
         position: "relative",
         transition: "0.2s box-shadow",
         overflow: "visible",
