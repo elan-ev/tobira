@@ -10,6 +10,7 @@ import {
     ThumbnailReplacement,
 } from "./Video";
 import { COLORS } from "../color";
+import { AccessRoles } from "../util";
 
 
 type ThumbnailStackProps = {
@@ -17,6 +18,7 @@ type ThumbnailStackProps = {
     thumbnails?: readonly ThumbnailInfo[];
     kind: "series" | "playlist";
     className?: string;
+    accessRoles?: AccessRoles;
 }
 
 export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
@@ -24,6 +26,7 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
     title,
     kind,
     className,
+    accessRoles,
 }) => {
     const isDarkScheme = useColorScheme().scheme === "dark";
 
@@ -84,13 +87,19 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
             },
         }}>
             {thumbnails && thumbnails.slice(0, 3).map((info, idx) => <div key={idx}>
-                <SeriesThumbnail {...{ info, title }} />
+                <SeriesThumbnail
+                    accessRoles={accessRoles && idx === 0 ? accessRoles : undefined}
+                    {...{ info, title }}
+                />
             </div>)}
             {/* Add fake thumbnails to always have 3. The visual image of 3 things behind each other
                 is more important than actually showing the correct number of thumbnails. */}
             {[...Array(Math.max(0, 3 - (thumbnails?.length ?? 0)))].map((_, idx) => (
                 <div key={"dummy" + idx}>
-                    <DummySeriesStackThumbnail {...{ isDarkScheme }} />
+                    <DummySeriesStackThumbnail
+                        accessRoles={accessRoles && idx === 0 ? accessRoles : undefined}
+                        {...{ isDarkScheme }}
+                    />
                 </div>
             ))}
         </div>
@@ -98,9 +107,14 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
 };
 
 
-const DummySeriesStackThumbnail: React.FC<{ isDarkScheme: boolean }> = ({
+type DummySeriesStackThumbnailProps = {
+    isDarkScheme: boolean;
+    accessRoles?: AccessRoles;
+}
+const DummySeriesStackThumbnail: React.FC<DummySeriesStackThumbnailProps> = ({
     isDarkScheme,
-}) => <ThumbnailOverlayContainer css={{
+    accessRoles,
+}) => <ThumbnailOverlayContainer {...{ accessRoles }} css={{
     // Pattern from https://css-pattern.com/overlapping-cubes/,
     // MIT licensed: https://github.com/Afif13/CSS-Pattern
     "--s": "40px",
@@ -144,9 +158,10 @@ type ThumbnailInfo = {
 type SeriesThumbnailProps = {
     info: ThumbnailInfo;
     title: string;
+    accessRoles?: AccessRoles;
 }
 
-const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
+const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title, accessRoles }) => {
     const { t } = useTranslation();
     const isDark = useColorScheme().scheme === "dark";
 
@@ -170,7 +185,7 @@ const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title }) => {
         {t("video.live")}
     </ThumbnailOverlay>;
 
-    return <ThumbnailOverlayContainer>
+    return <ThumbnailOverlayContainer accessRoles={accessRoles}>
         {inner}
         {info.live && overlay}
     </ThumbnailOverlayContainer>;

@@ -88,6 +88,8 @@ const query = graphql`
                 title
                 description
                 canWrite
+                readRoles
+                writeRoles
                 acl { role actions info { label implies large } }
                 updated
                 thumbnailStack { thumbnails { url live audioOnly state }}
@@ -172,12 +174,22 @@ const ManagePlaylistNav: React.FC<ManagePlaylistNavProps> = ({ playlist, active 
 };
 
 
-export const PlaylistThumbnail: React.FC<{
-    playlist: Pick<SinglePlaylist, "title" | "thumbnailStack">
-}> = ({ playlist }) => <div css={{ position: "relative", "> div": { width: "100%" } }}>
+type PlaylistThumbnailProps = {
+    playlist: Pick<SinglePlaylist, "title" | "thumbnailStack" | "readRoles" | "writeRoles">
+    showAccessIcon?: boolean;
+}
+
+export const PlaylistThumbnail: React.FC<PlaylistThumbnailProps> = ({
+    playlist,
+    showAccessIcon = false,
+}) => <div css={{ position: "relative", "> div": { width: "100%" } }}>
     <ThumbnailStack
         kind="playlist"
         thumbnails={playlist.thumbnailStack?.thumbnails}
         title={playlist.title}
+        accessRoles={showAccessIcon ? {
+            readRoles: playlist.readRoles,
+            writeRoles: playlist.writeRoles,
+        } : undefined}
     />
 </div>;

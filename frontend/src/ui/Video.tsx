@@ -1,17 +1,18 @@
 import { Fragment, PropsWithChildren, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuCircleUser, LuVolume2 } from "react-icons/lu";
-import { Spinner, useColorScheme } from "@opencast/appkit";
+import { screenWidthAtMost, Spinner, useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
 import { MovingTruck } from "./Waiting";
 import { AuthorizedEvent } from "../routes/manage/Video/Shared";
 import { Caption } from "./player";
-import { captionsWithLabels } from "../util";
+import { AccessIcon, captionsWithLabels } from "../util";
 import { graphql } from "react-relay";
 import { fetchQuery } from "../relay";
 import { VideoStaticFileLinkQuery } from "./__generated__/VideoStaticFileLinkQuery.graphql";
 import CONFIG from "../config";
+import { BREAKPOINT_SMALL } from "../GlobalStyle";
 
 
 export type ThumbnailItemState
@@ -31,6 +32,9 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
             audioOnly?: boolean;
         } | null;
         tobiraDeletionTimestamp?: string | null;
+        // Pass these if you want to show an access indicating icon inside the thumbnail.
+        readRoles?: readonly string[];
+        writeRoles?: readonly string[];
     };
 
     /** If `true`, an indicator overlay is shown */
@@ -103,11 +107,19 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({ event, active, ...rest }) 
         </ThumbnailOverlay>;
     }
 
-    return <ThumbnailOverlayContainer {...rest}>
-        {inner}
-        {active && <ActiveIndicator />}
-        {overlay}
-    </ThumbnailOverlayContainer>;
+    return (
+        <ThumbnailOverlayContainer
+            accessRoles={(event.readRoles && event.writeRoles) ? {
+                readRoles: event.readRoles,
+                writeRoles: event.writeRoles,
+            } : undefined}
+            {...rest}
+        >
+            {inner}
+            {active && <ActiveIndicator />}
+            {overlay}
+        </ThumbnailOverlayContainer>
+    );
 };
 
 type ThumbnailReplacementProps = {
@@ -173,6 +185,17 @@ export const BaseThumbnailReplacement: React.FC<BaseThumbnailReplacementProps> =
     }}>{children}</div>
 );
 
+export const thumbnailOverlayStyles = ({
+    display: "inline-flex",
+    borderRadius: 4,
+    fontSize: 14,
+    color: "white",
+    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+        fontSize: 12,
+        " > svg": { fontSize: 15 },
+    },
+});
+
 type ThumbnailOverlayProps = PropsWithChildren<{
     backgroundColor: string;
 }>;
@@ -181,37 +204,37 @@ export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = ({
     backgroundColor,
 }) => (
     <div css={{
-        display: "inline-flex",
         alignItems: "center",
         gap: 6,
         position: "absolute",
         right: 6,
         bottom: 6,
-        borderRadius: 4,
-        padding: "1px 5px",
-        fontSize: 14,
         backgroundColor,
-        color: "white",
-        "@container thumbnail (width < 110px)": {
-            fontSize: 12,
-            " > svg": { fontSize: 15 },
-        },
+        padding: "1px 5px",
+        ...thumbnailOverlayStyles,
     }}>
         {children}
     </div>
 );
 
-export const ThumbnailOverlayContainer: React.FC<JSX.IntrinsicElements["div"]> = ({
+
+type ThumbnailOverlayContainerProps = JSX.IntrinsicElements["div"] & {
+    accessRoles?: {
+        readRoles: readonly string[];
+        writeRoles: readonly string[];
+    },
+}
+export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps> = ({
+    accessRoles,
     children,
     ...rest
 }) => {
     const isDark = useColorScheme().scheme === "dark";
 
     return <div {...rest} css={{
-        container: "thumbnail / inline-size",
         position: "relative",
         transition: "0.2s box-shadow",
-        overflow: "hidden",
+        overflow: "visible",
         height: "fit-content",
         borderRadius: 8,
         aspectRatio: "16 / 9",
@@ -222,7 +245,28 @@ export const ThumbnailOverlayContainer: React.FC<JSX.IntrinsicElements["div"]> =
             },
         },
     }}>
-        {children}
+        <div css={{
+            position: "absolute",
+            inset: 0,
+            overflow: "hidden",
+            borderRadius: 8,
+            zIndex: 0,
+        }}>
+            {children}
+        </div>
+        {accessRoles && <div css={{
+            position: "absolute",
+            top: 2,
+            right: 2,
+            fontSize: 16,
+            padding: 2,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1,
+        }}>
+            <AccessIcon item={accessRoles} />
+        </div>}
     </div>;
 };
 

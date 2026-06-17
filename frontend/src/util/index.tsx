@@ -1,4 +1,3 @@
-import { i18n, TFunction } from "i18next";
 import {
     MutableRefObject,
     PropsWithChildren,
@@ -7,15 +6,19 @@ import {
     useRef,
     useState,
 } from "react";
+import { i18n, TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { bug, match, useColorScheme } from "@opencast/appkit";
+import { bug, match, useColorScheme, WithTooltip } from "@opencast/appkit";
 import { css } from "@emotion/react";
+import { ParseKeys } from "i18next";
+import { LuGlobe, LuLock, LuUsers } from "react-icons/lu";
 
 import CONFIG, { TranslatedString } from "../config";
 import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import { COLORS } from "../color";
 import { Caption } from "../ui/player";
+import { thumbnailOverlayStyles } from "../ui/Video";
 
 
 /**
@@ -382,3 +385,44 @@ export function ConditionalWrapper({
     return condition ? wrapper(children) : children;
 }
 
+export type AccessRoles = {
+    readRoles: readonly string[];
+    writeRoles: readonly string[];
+}
+type AccessProps = {
+    item: AccessRoles;
+}
+
+export const AccessIcon: React.FC<AccessProps> = ({ item }) => {
+    const { t } = useTranslation();
+
+    const PUBLIC_ROLE = "ROLE_ANONYMOUS";
+    type AccessLevel = "public" | "shared" | "private";
+    let accessLevel: AccessLevel = "private";
+
+    if (item.readRoles.length > 1) {
+        accessLevel = "shared";
+    }
+
+    if (item.readRoles.includes(PUBLIC_ROLE)) {
+        accessLevel = "public";
+    }
+
+    const icon = match(accessLevel, {
+        "public": () => <LuGlobe />,
+        "shared": () => <LuUsers />,
+        "private": () => <LuLock />,
+    });
+
+    const tooltipKey: ParseKeys = `manage.table.filter.visibility-${accessLevel}-tooltip`;
+
+    return <WithTooltip placement="bottom" tooltip={<>{t(tooltipKey)}</>}>
+        <div css={{
+            backgroundColor: "hsla(0, 0%, 0%, 0.75)",
+            padding: 4,
+            ...thumbnailOverlayStyles,
+        }}>
+            {icon}
+        </div>
+    </WithTooltip>;
+};

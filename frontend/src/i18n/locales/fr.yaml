@@ -137,6 +137,7 @@ login-page:
 video:
   singular: Vidéo
   plural: Vidéos
+  count: Nombre de vidéos # verify
   video-page: 'Page vidéo: « {{video}} »'
   video-player: Videoplayer
   duration: Durée de lecture
@@ -210,6 +211,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Nombre d'entrées # verify
+  no-of-entries_one: '{{count}} entrée' # verify
+  no-of-entries_other: '{{count}} entrées' # verify
   playlist-page: 'Page de la playlist : « {{playlist}} »' # needs verification
   deleted-block: La playlist référencée ici a été supprimée.
   not-allowed: Vous n'êtes pas autorisé(e) à voir cette playlist.
@@ -567,13 +571,38 @@ manage:
       next: Page suivante
       last: Dernière page
     filter:
-      by-title: Filtrer par titre #todo: verify
-    columns:
+      date: Date # verify
+      select-date: Sélectionner une période # verify
+      from: De # verify
+      to: À # verify
+      date-last-3-months: 3 derniers mois # verify
+      date-last-6-months: 6 derniers mois # verify
+      date-last-12-months: Les 12 derniers mois # verify
+      date-custom-range: Plage personnalisée # verify
+      filter-by-visibility: Filtrer par visibilité # verify
+      remove: Supprimer le filtre # verify
+      visibility: Visibilité # verify
+      visibility-public: Public # verify
+      visibility-public-tooltip: Visible par tout le monde # verify
+      visibility-private: Privé # verify
+      visibility-private-tooltip: Visible uniquement par vous # verify
+      visibility-shared: Partagé # verify
+      visibility-shared-tooltip: Visible par un groupe sélectionné # verify
+      writable: Accès # verify
+      write: Écriture # verify
+      read: Lecture # verify
+    sorting:
+      label: Trier les entrées # check
+      sort-by: Trier par # check
+      order: Organiser # check
       description: Trier par {{title}}, {{direction}}
       ascending: Croissant
       descending: Décroissant
+      ascending-cap: Croissant # check: does it need to be capitalized in context?
+      descending-cap: Décroissant # check: does it need to be capitalized in context?
       created: Créé
       updated: Actualisé
+      unknown: Tri inconnu # check
     no-series-title: Titre manquant
     no-entries-found: Aucune entrée trouvée.
     missing-date: Inconnu
