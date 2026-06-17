@@ -114,6 +114,14 @@ const query = graphql`
                     opencastId
                     ...SeriesBlockSeriesData
                 }
+                referencingPlaylists {
+                    __typename
+                    ... on AuthorizedPlaylist {
+                        id
+                        title
+                    }
+                    ... on NotAllowed { dummy }
+                }
                 hostRealms { id isMainRoot name path }
             }
         }

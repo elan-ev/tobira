@@ -37,7 +37,7 @@ use crate::{
 };
 
 use super::{
-    playlist::VideoListEntry,
+    playlist::{AuthorizedPlaylist, Playlist, VideoListEntry},
     shared::{
         define_sort_column_and_order,
         load_writable_for_user,
@@ -366,6 +366,21 @@ impl AuthorizedEvent {
         }
     }
 
+    async fn referencing_playlists(&self, context: &Context) -> ApiResult<Vec<Playlist>> {
+        let selection = AuthorizedPlaylist::select();
+        let query = format!("select {selection} from playlists where array[$1] <@ event_entry_ids(entries)");
+        let playlists = context.db.query_mapped(&query, &[&self.opencast_id], |row| {
+            let playlist = AuthorizedPlaylist::from_row_start(&row);
+            if context.auth.overlaps_roles(&playlist.read_roles) {
+                Playlist::Playlist(playlist)
+            } else {
+                Playlist::NotAllowed(NotAllowed)
+            }
+        }).await?;
+
+        Ok(playlists.into_iter().collect())
+    }
+
     /// Returns a list of realms where this event is referenced (via some kind of block).
     async fn host_realms(&self, context: &Context) -> ApiResult<Vec<Realm>> {
         let selection = Realm::select();
@@ -383,7 +398,6 @@ impl AuthorizedEvent {
             |row| Realm::from_row_start(&row)
         ).await?.pipe(Ok)
     }
-
 
     /// Whether this event is password protected.
     async fn has_password(&self) -> bool {

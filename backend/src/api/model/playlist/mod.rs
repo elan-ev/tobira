@@ -56,7 +56,7 @@ pub(crate) struct AuthorizedPlaylist {
     num_entries: LazyLoad<u32>,
     thumbnail_stack: LazyLoad<ThumbnailStack>,
 
-    read_roles: Vec<String>,
+    pub(crate) read_roles: Vec<String>,
     write_roles: Vec<String>,
 }
 
