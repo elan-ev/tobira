@@ -528,6 +528,10 @@ type EventSearchResults {
   duration: Int!
 }
 
+type InaccessibleFavoriteItem {
+  id: ID!
+}
+
 """
   A group selectable in the ACL UI. Basically a mapping from role to a nice
   label and info about the relationship to other roles/groups.
@@ -721,6 +725,17 @@ type Mutation {
     and adds a block with the given series at the leaf.
   """
   mountSeries(series: NewSeries!, parentRealmPath: String!, newRealms: [RealmSpecifier!]! = []): Realm!
+  """
+    Adds the item referred to by `id`. Must be a series or playlist.
+    Mutation is idempotent. Returns `true` if the item was not a favorite
+    before already.
+  """
+  addFavorite(id: ID!): Boolean!
+  """
+    Removes an item from the users favorites. Returns whether the item
+    existed as favorite before.
+  """
+  removeFavorite(id: ID!): Boolean!
 }
 
 type NotAllowed {
@@ -1284,6 +1299,8 @@ type User {
     on the "my playlists" page.
   """
   myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
+  "Returns all items that the user has marked as favorite."
+  myFavorites: [FavoriteItem!]!
 }
 
 type UserInfo {
@@ -1313,6 +1330,8 @@ type VideoBlock implements Block {
 union Event = AuthorizedEvent | NotAllowed
 
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
+
+union FavoriteItem = Series | AuthorizedPlaylist | InaccessibleFavoriteItem
 
 union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 

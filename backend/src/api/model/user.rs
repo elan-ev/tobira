@@ -3,6 +3,7 @@ use crate::{
         err::ApiResult,
         model::{
             event::AuthorizedEvent,
+            favorites::{self, FavoriteItem},
             playlist::{AuthorizedPlaylist, Playlist, PlaylistsSortOrder},
         },
         Context,
@@ -139,5 +140,10 @@ impl User {
         filter: Option<SearchFilter>,
     ) -> ApiResult<Connection<AuthorizedPlaylist>> {
         Playlist::load_writable_for_user(context, order.into(), offset, limit, filter).await
+    }
+
+    /// Returns all items that the user has marked as favorite.
+    async fn my_favorites(&self, context: &Context) -> ApiResult<Vec<FavoriteItem>> {
+        favorites::fetch_for_user(context).await
     }
 }
