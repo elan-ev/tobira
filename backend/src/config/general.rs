@@ -62,6 +62,36 @@ pub(crate) struct GeneralConfig {
     #[config(default = ["about", "graphiql"])]
     pub footer_links: Vec<FooterLink>,
 
+    /// Optional markdown footer content. If set, this markdown is rendered
+    /// instead of the inline footer links.
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// footer_markdown.default = """
+    /// Tobira is the university video portal for recorded lectures,
+    /// seminars, and academic events.
+    ///
+    /// This footer supports markdown, so you can add links and formatting:
+    ///
+    /// - [Support](https://example.edu/support)
+    /// - [Contact](mailto:help@example.edu)
+    /// - **Important:** Only authorized users may access this portal.
+    /// """
+    /// ```
+    ///
+    /// Example with translated markdown:
+    ///
+    /// ```
+    /// footer_markdown.default = """
+    /// Tobira is the university video portal.
+    /// """
+    /// footer_markdown.de = """
+    /// Tobira ist das universitäre Portal für Videoaufzeichnungen.
+    /// """
+    /// ```
+    pub footer_markdown: Option<TranslatedString>,
+
     /// Additional metadata that is shown below a video. Example:
     ///
     ///     [general.metadata]
