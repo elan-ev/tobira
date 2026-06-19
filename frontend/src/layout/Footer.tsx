@@ -1,13 +1,19 @@
 import { useTranslation } from "react-i18next";
+
 import CONFIG from "../config";
 import { Link } from "../router";
 import { translatedConfig } from "../util";
 import { COLORS } from "../color";
+import { RenderMarkdown } from "../ui/Blocks/Text";
 import { AboutRoute } from "../routes/About";
 
 
 export const Footer: React.FC = () => {
     const { t, i18n } = useTranslation();
+
+    const markdownText = CONFIG.footerMarkdown
+        ? translatedConfig(CONFIG.footerMarkdown, i18n)
+        : null;
 
     return (
         <footer css={{
@@ -16,47 +22,66 @@ export const Footer: React.FC = () => {
             fontSize: 14,
             textAlign: "center",
         }}>
-            <ul css={{
-                listStyle: "none",
-                margin: 0,
-                padding: 0,
-                display: "flex",
-                justifyContent: "center",
-                flexWrap: "wrap",
-                "& > li": {
-                    "&:not(:first-child):before": {
-                        content: "\"•\"",
-                        color: COLORS.neutral60,
-                        margin: "0 12px",
+            {markdownText ? (
+                <div css={{
+                    margin: "0 auto",
+                    maxWidth: 800,
+                    color: COLORS.neutral80,
+                    textAlign: "center",
+                    p: {
+                        margin: "4px 0",
                     },
-                    a: {
-                        borderRadius: 4,
-                        outlineOffset: 1,
+                    ul: {
+                        listStyleType: "none",
+                        margin: "0 auto",
+                        padding: 0,
                     },
-                },
-            }}>
-                {CONFIG.footerLinks.map((entry, i) => {
-                    if (entry === "about") {
-                        return <li key={i}>
-                            <Link to={AboutRoute.url}>{t("about-tobira.title")}</Link>
-                        </li>;
-                    } else if (entry === "graphiql") {
-                        return <li key={i}>
-                            <Link to="/~graphiql" htmlLink>Graph<em>i</em>QL</Link>
-                        </li>;
-                    } else {
-                        return <li key={i}>
-                            <Link to={
-                                typeof entry.link === "string"
-                                    ? entry.link
-                                    : translatedConfig(entry.link, i18n)
-                            }>
-                                {translatedConfig(entry.label, i18n)}
-                            </Link>
-                        </li>;
-                    }
-                })}
-            </ul>
+                }}>
+                    <RenderMarkdown>{markdownText}</RenderMarkdown>
+                </div>
+            ) : (
+                <ul css={{
+                    listStyle: "none",
+                    margin: 0,
+                    padding: 0,
+                    display: "flex",
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    "& > li": {
+                        "&:not(:first-child):before": {
+                            content: "\"•\"",
+                            color: COLORS.neutral60,
+                            margin: "0 12px",
+                        },
+                        a: {
+                            borderRadius: 4,
+                            outlineOffset: 1,
+                        },
+                    },
+                }}>
+                    {CONFIG.footerLinks.map((entry, i) => {
+                        if (entry === "about") {
+                            return <li key={i}>
+                                <Link to={AboutRoute.url}>{t("about-tobira.title")}</Link>
+                            </li>;
+                        } else if (entry === "graphiql") {
+                            return <li key={i}>
+                                <Link to="/~graphiql" htmlLink>Graph<em>i</em>QL</Link>
+                            </li>;
+                        } else {
+                            return <li key={i}>
+                                <Link to={
+                                    typeof entry.link === "string"
+                                        ? entry.link
+                                        : translatedConfig(entry.link, i18n)
+                                }>
+                                    {translatedConfig(entry.label, i18n)}
+                                </Link>
+                            </li>;
+                        }
+                    })}
+                </ul>
+            )}
         </footer>
     );
 };
