@@ -22,24 +22,7 @@ export const Footer: React.FC = () => {
             fontSize: 14,
             textAlign: "center",
         }}>
-            {markdownText ? (
-                <div css={{
-                    margin: "0 auto",
-                    maxWidth: 800,
-                    color: COLORS.neutral80,
-                    textAlign: "center",
-                    p: {
-                        margin: "4px 0",
-                    },
-                    ul: {
-                        listStyleType: "none",
-                        margin: "0 auto",
-                        padding: 0,
-                    },
-                }}>
-                    <RenderMarkdown>{markdownText}</RenderMarkdown>
-                </div>
-            ) : (
+            {CONFIG.footerLinks.length > 0 && (
                 <ul css={{
                     listStyle: "none",
                     margin: 0,
@@ -81,6 +64,25 @@ export const Footer: React.FC = () => {
                         }
                     })}
                 </ul>
+            )}
+            {markdownText && (
+                <div css={{
+                    margin: "0 auto",
+                    marginTop: CONFIG.footerLinks.length > 0 ? 10 : 0,
+                    maxWidth: 800,
+                    color: COLORS.neutral80,
+                    textAlign: "center",
+                    p: {
+                        margin: 0,
+                    },
+                    ul: {
+                        listStyleType: "none",
+                        margin: "0 auto",
+                        padding: 2,
+                    },
+                }}>
+                    <RenderMarkdown>{markdownText}</RenderMarkdown>
+                </div>
             )}
         </footer>
     );
