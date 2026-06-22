@@ -15,9 +15,9 @@ export const Footer: React.FC = () => {
         ? translatedConfig(CONFIG.footerMarkdown, i18n)
         : null;
 
-    return (
+    return <>
+        <div css={{ margin: 0, height: 2, backgroundColor: COLORS.neutral15 }} />
         <footer css={{
-            backgroundColor: COLORS.neutral10,
             padding: 16,
             fontSize: 14,
             textAlign: "center",
@@ -83,5 +83,5 @@ export const Footer: React.FC = () => {
                 </div>
             )}
         </footer>
-    );
+    </>;
 };
