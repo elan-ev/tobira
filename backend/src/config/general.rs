@@ -50,6 +50,7 @@ pub(crate) struct GeneralConfig {
     /// be specified with only the shown string. To add custom ones, you need
     /// to define a label and a link. The link is either the same for every language
     /// or can be specified for each language in the same manner as the label.
+    /// To leave this empty and only use the markdown footer below, set this to `[]`.
     /// Example:
     ///
     /// ```
@@ -59,11 +60,16 @@ pub(crate) struct GeneralConfig {
     ///     "about",
     /// ]
     /// ```
+    ///
+    /// Example (empty):
+    ///
+    /// ```
+    /// footer_links = []
+    /// ```
     #[config(default = ["about", "graphiql"])]
     pub footer_links: Vec<FooterLink>,
 
-    /// Optional markdown footer content. If set, this markdown is rendered
-    /// instead of the inline footer links.
+    /// Optional markdown footer content. Will be rendered below the footer links or on its own.
     ///
     /// Example:
     ///
