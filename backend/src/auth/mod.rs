@@ -119,6 +119,13 @@ impl AuthState {
         matches!(self, Self::User(_))
     }
 
+    pub(crate) fn username(&self) -> Option<&str> {
+        match self {
+            AuthState::User(user) => Some(&user.username),
+            _ => None,
+        }
+    }
+
     /// Returns a representation of the optional username useful for logging.
     pub(crate) fn debug_log_username(&self) -> Cow<'static, str> {
         match self {
