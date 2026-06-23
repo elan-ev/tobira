@@ -16,7 +16,7 @@ export const Footer: React.FC = () => {
         : null;
 
     return <>
-        <div css={{ margin: 0, height: 2, backgroundColor: COLORS.neutral15 }} />
+        <div css={{ margin: 0, height: 1, backgroundColor: COLORS.neutral15 }} />
         <footer css={{
             padding: 16,
             fontSize: 14,
