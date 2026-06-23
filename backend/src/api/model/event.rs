@@ -349,6 +349,7 @@ impl AuthorizedEvent {
                     metadata: None,
                     read_roles: None,
                     write_roles: None,
+                    is_fav: LazyLoad::NotLoaded,
                     num_videos: LazyLoad::NotLoaded,
                     thumbnail_stack: LazyLoad::NotLoaded,
                     has_public_videos: LazyLoad::NotLoaded,

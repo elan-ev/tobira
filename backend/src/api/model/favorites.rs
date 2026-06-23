@@ -71,7 +71,7 @@ pub async fn add_favorite(id: Id, context: &Context) -> ApiResult<bool> {
     }
 
     if let Some(playlist_key) = playlist_id {
-        let playlist = Playlist::load_by_key(playlist_key, context).await?;
+        let playlist = Playlist::load(playlist_key, context).await?;
         if let Some(Playlist::NotAllowed(_)) = playlist {
             return Err(not_authorized!("not allowed to read playlist"));
         }
