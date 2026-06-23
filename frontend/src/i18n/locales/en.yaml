@@ -234,6 +234,12 @@ share:
   set-time-label: 'Set video start time. Current time: {{time}}.'
   set-time-unit: Set {{unit}}
 
+fav:
+  add: Add favorite
+  remove: Remove favorite
+  failed-to-add: Failed to add favorite
+  failed-to-remove: Failed to remove favorite
+
 video-list-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"
   unauthorized: Missing permissions

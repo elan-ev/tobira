@@ -46,6 +46,7 @@ import { QrCodeButton, ShareButton } from "../ShareButton";
 import { CopyableInput } from "../Input";
 import { LinkButton } from "../LinkButton";
 import { PaginationNav, paginationControlStyles } from "../PaginationNav";
+import { FavButton } from "../FavButton";
 
 
 
@@ -109,7 +110,8 @@ export type VideoListDisplayOptions = {
 };
 
 export type VideoListBlockProps = {
-    listId?: string;
+    listId: string;
+    isFav: boolean;
     realmPath: string | null;
     activeEventId?: string;
     displayOptions: VideoListDisplayOptions;
@@ -130,6 +132,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     listEntries,
     editMode,
     linkToManagePage,
+    isFav,
 }) => {
     const { t, i18n } = useTranslation();
     const user = useUser();
@@ -186,6 +189,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
                 kind={shareInfo.kind}
                 link={linkToManagePage}
             />}
+            {isRealUser(user) && <FavButton id={listId} isFav={isFav} />}
             <VideoListShareButton {...shareInfo} hideLabel />
         </div>
         {items.length > 0 && <div>
@@ -749,7 +753,7 @@ export const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
 type ViewProps = {
     basePath: string;
     showSeries?: boolean;
-    listId?: string;
+    listId: string;
     items: {
         item: VideoListItem;
         active: boolean;
@@ -1100,7 +1104,7 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
 type ItemProps = {
     basePath: string;
     item: VideoListItem;
-    listId?: string;
+    listId: string;
     active: boolean;
     showDescription?: boolean;
     dateAndCreatorOneLine?: boolean;
@@ -1296,9 +1300,9 @@ const Item: React.FC<ItemProps> = ({
         },
     } as const;
 
-    const inPlaylist = listId?.substring(0, 2) === "pl";
+    const inPlaylist = listId.substring(0, 2) === "pl";
     const params = new URLSearchParams();
-    if (listId) {
+    if (inPlaylist) {
         params.set("list", keyOfId(listId));
     }
     if (layoutState !== "GALLERY") {
