@@ -467,6 +467,11 @@ type AuthorizedPlaylist implements Node {
   creator: String!
   updated: DateTime!
   """
+    Returns `true` iff this playlist is a favorite of the current user. Note:
+    this is lazily loaded and only available in certain contexts.
+  """
+  isFav: Boolean!
+  """
     Returns the number of entries in this playlist. Note: this is lazily loaded
     and only available in certain contexts (e.g., playlist listings).
   """
@@ -1119,6 +1124,11 @@ type Series implements Node {
   created: DateTime
   updated: DateTime
   metadata: ExtraMetadata
+  """
+    Returns `true` iff this series is a favorite of the current user. Note:
+    this is lazily loaded and only available in certain contexts.
+  """
+  isFav: Boolean!
   """
     Returns creators extracted from the series metadata.
     Looks for `creator` or `createdBy` in the dcterms namespace.

@@ -69,6 +69,7 @@ pub(crate) struct Series {
     #[allow(dead_code)]
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
+    pub(crate) is_fav: LazyLoad<bool>,
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<ThumbnailStack>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
@@ -102,6 +103,7 @@ impl_from_db!(
             write_roles: row.write_roles(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             description: row.description(),
+            is_fav: LazyLoad::NotLoaded,
             num_videos: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
         }
@@ -130,12 +132,19 @@ impl Series {
         id: &(dyn ToSql + Sync),
         context: &Context,
     ) -> ApiResult<Option<Self>> {
-        let selection = Self::select();
+        let (selection, mapping) = select!(
+            series: Series,
+            is_fav: "exists(select from favorites where series = $1 and username = $2)",
+        );
         let query = format!("select {selection} from series where {col} = $1");
         context.db
-            .query_opt(&query, &[id])
+            .query_opt(&query, &[id, &context.auth.state.username()])
             .await?
-            .map(|row| Self::from_row_start(&row))
+            .map(|row| {
+                let mut series = Self::from_row(&row, mapping.series);
+                series.is_fav = LazyLoad::Loaded(mapping.is_fav.of(&row));
+                series
+            })
             .pipe(Ok)
     }
 
@@ -720,6 +729,12 @@ impl Series {
 
     fn metadata(&self) -> &Option<ExtraMetadata> {
         &self.metadata
+    }
+
+    /// Returns `true` iff this series is a favorite of the current user. Note:
+    /// this is lazily loaded and only available in certain contexts.
+    fn is_fav(&self) -> bool {
+        self.is_fav.unwrap()
     }
 
     /// Returns creators extracted from the series metadata.
