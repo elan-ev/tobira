@@ -48,6 +48,7 @@ const seriesFragment = graphql`
         creators
         description
         state
+        isFav
         canWrite
         hasPublicVideos
         entries {
@@ -116,6 +117,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
             allowOriginalOrder: false,
         }}
         listId={series.id}
+        isFav={series.isFav}
         metadata={{
             title: props.title ?? (props.showTitle ? series.title : undefined),
             description: (props.showMetadata && series.description) || undefined,

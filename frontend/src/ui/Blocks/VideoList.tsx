@@ -49,6 +49,7 @@ import { QrCodeButton, ShareButton } from "../ShareButton";
 import { CopyableInput } from "../Input";
 import { LinkButton } from "../LinkButton";
 import { PaginationNav, paginationControlStyles } from "../PaginationNav";
+import { FavButton } from "../FavButton";
 
 
 
@@ -113,6 +114,7 @@ export type VideoListDisplayOptions = {
 
 export type VideoListBlockProps = {
     listId: string;
+    isFav: boolean;
     realmPath: string | null;
     activeEventId?: string;
     displayOptions: VideoListDisplayOptions;
@@ -133,6 +135,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     listEntries,
     editMode,
     linkToManagePage,
+    isFav,
 }) => {
     const { t, i18n } = useTranslation();
     const user = useUser();
@@ -207,6 +210,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
                 kind={shareInfo.kind}
                 link={linkToManagePage}
             />}
+            {isRealUser(user) && <FavButton id={listId} isFav={isFav} />}
             <VideoListShareButton {...shareInfo} hideLabel />
         </div>
         {items.length > 0 && <div>
