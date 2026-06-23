@@ -94,13 +94,13 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
     const { t } = useTranslation();
 
     if (!playlist) {
-        return <VideoListBlockContainer showViewOptions={false}>
+        return <VideoListBlockContainer>
             {t("playlist.deleted-block")}
         </VideoListBlockContainer>;
     }
 
     if (playlist.__typename === "NotAllowed") {
-        return <VideoListBlockContainer showViewOptions={false}>
+        return <VideoListBlockContainer>
             {t("playlist.not-allowed-block")}
         </VideoListBlockContainer>;
     }
