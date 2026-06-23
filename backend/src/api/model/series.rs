@@ -41,7 +41,7 @@ use super::{
         VideoListOrder,
         mutations::DisplayOptions,
     },
-    playlist::VideoListEntry,
+    event::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
     shared::{
         define_sort_column_and_order,

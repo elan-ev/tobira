@@ -37,7 +37,7 @@ use crate::{
 };
 
 use super::{
-    playlist::{AuthorizedPlaylist, Playlist, VideoListEntry},
+    playlist::{AuthorizedPlaylist, Playlist},
     shared::{
         define_sort_column_and_order,
         load_writable_for_user,
@@ -454,6 +454,18 @@ pub(crate) enum Event {
     Event(AuthorizedEvent),
     NotAllowed(NotAllowed),
 }
+
+#[derive(juniper::GraphQLUnion)]
+#[graphql(Context = Context)]
+pub(crate) enum VideoListEntry {
+    Event(AuthorizedEvent),
+    NotAllowed(NotAllowed),
+    Missing(Missing),
+}
+
+/// The data referred to by a playlist entry was not found.
+pub(crate) struct Missing;
+crate::api::util::impl_object_with_dummy_field!(Missing);
 
 impl Event {
     pub(crate) fn into_result(self) -> ApiResult<AuthorizedEvent> {
