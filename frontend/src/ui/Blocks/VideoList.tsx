@@ -374,7 +374,6 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
     title, buttons, metadata, children,
 }) => {
     const isDark = useColorScheme().scheme === "dark";
-    const onlyButtons = !title && !metadata;
 
     return (
         <div css={{
@@ -386,22 +385,27 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
         }}>
             <div css={{
                 display: "grid",
-                gridTemplateColumns: onlyButtons
-                    ? "1fr"
-                    : "minmax(200px, 1fr) fit-content(40%)",
-                gridTemplateRows: "auto auto",
+                gridTemplateAreas: title
+                    ? '"title buttons" "metadata metadata"'
+                    : '"metadata buttons"',
+                gridTemplateColumns: "fit-content(60%) 1fr",
                 columnGap: 12,
                 rowGap: 8,
                 alignItems: "start",
 
                 // Stack vertically on small screens
                 [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
+                    gridTemplateAreas: [
+                        title && '"title"',
+                        metadata && '"metadata"',
+                        buttons && '"buttons"',
+                    ].join(" "),
                     gridTemplateColumns: "1fr",
-                    gridTemplateRows: "auto auto auto",
                 },
             }}>
                 {/* Title */}
                 {title && <h2 css={{
+                    gridArea: "title",
                     padding: "8px 12px",
                     color: isDark ? COLORS.neutral90 : COLORS.neutral80,
                     fontSize: 20,
@@ -410,13 +414,10 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                 }}>{title}</h2>}
 
                 {/* Buttons */}
-                <div css={{
-                    gridColumn: onlyButtons ? 1 : 2,
-                    gridRow: onlyButtons ? 1 : "1 / 3",
+                {buttons && <div css={{
+                    gridArea: "buttons",
                     display: "flex",
                     justifyContent: "flex-end",
-                    alignItems: "flex-start",
-                    alignContent: "space-between",
                     flexWrap: "wrap-reverse",
                     gap: 8,
                     padding: 5,
@@ -429,19 +430,15 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
                         minWidth: "fit-content",
                     },
 
-                    // Move buttons to bottom row on small screens
                     [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
-                        gridColumn: 1,
-                        gridRow: 3,
-                        alignContent: "flex-start",
                         flexWrap: "wrap",
                     },
                 }}>
                     {buttons}
-                </div>
+                </div>}
 
                 {/* Metadata */}
-                {metadata && <div css={{ gridRow: 2, maxWidth: "85ch" }}>
+                {metadata && <div css={{ gridArea: "metadata", maxWidth: "85ch" }}>
                     {metadata}
                 </div>}
             </div>
