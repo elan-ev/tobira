@@ -49,6 +49,7 @@ const seriesFragment = graphql`
         description
         state
         metadata
+        isFav
         canWrite
         entries {
             __typename
@@ -125,6 +126,8 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
                 ?? "NEW_TO_OLD",
             allowOriginalOrder: false,
         }}
+        listId={series.id}
+        isFav={series.isFav}
         metadata={{
             title: props.title ?? (props.showTitle ? series.title : undefined),
             description: (props.showMetadata && series.description) || undefined,

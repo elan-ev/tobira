@@ -237,6 +237,12 @@ share:
   set-time-label: 'Videostartzeit einstellen. Aktuell: {{time}}.'
   set-time-unit: '{{unit}} einstellen'
 
+fav:
+  add: Favoriten hinzufügen
+  remove: Favoriten entfernen
+  failed-to-add: Favoriten hinzufügen fehlgeschlagen
+  failed-to-remove: Favoriten entfernen fehlgeschlagen
+
 video-list-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
   unauthorized: Fehlende Berechtigung
