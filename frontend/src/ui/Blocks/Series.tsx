@@ -15,6 +15,7 @@ import { VideoListBlock, VideoListBlockContainer, Order } from "./VideoList";
 import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
 import { ManageSeriesDetailsRoute } from "../../routes/manage/Series/SeriesDetails";
 import { DirectSeriesRoute, SeriesRoute } from "../../routes/Series";
+import { MovingTruck } from "../Waiting";
 
 
 // ==============================================================================================
@@ -96,9 +97,11 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const { t } = useTranslation();
 
     if (!isSynced(series)) {
-        const { title, layout } = props;
-        return <VideoListBlockContainer showViewOptions={false} {...{ title, layout }}>
-            {t("series.not-ready.text")}
+        return <VideoListBlockContainer title={series.title}>
+            <div css={{ display: "flex", alignItems: "center", gap: 32, marginLeft: 16 }}>
+                <MovingTruck css={{ flexShrink: 0 }} />
+                <div css={{ maxWidth: 600 }}>{t("series.not-ready.text")}</div>
+            </div>
         </VideoListBlockContainer>;
     }
     const creators = (() => {
