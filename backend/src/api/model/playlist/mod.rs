@@ -8,6 +8,7 @@ use crate::{
         err::{self, ApiResult},
         model::{
             acl::{self, Acl},
+            event::{Missing, VideoListEntry},
             realm::Realm,
             shared::{
                 define_sort_column_and_order,
@@ -59,20 +60,6 @@ pub(crate) struct AuthorizedPlaylist {
     pub(crate) read_roles: Vec<String>,
     write_roles: Vec<String>,
 }
-
-
-#[derive(juniper::GraphQLUnion)]
-#[graphql(Context = Context)]
-pub(crate) enum VideoListEntry {
-    Event(AuthorizedEvent),
-    NotAllowed(NotAllowed),
-    Missing(Missing),
-}
-
-/// The data referred to by a playlist entry was not found.
-pub(crate) struct Missing;
-crate::api::util::impl_object_with_dummy_field!(Missing);
-
 
 impl_from_db!(
     AuthorizedPlaylist,
