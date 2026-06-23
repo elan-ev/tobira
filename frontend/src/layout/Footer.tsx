@@ -16,11 +16,11 @@ export const Footer: React.FC = () => {
         : null;
 
     return <>
-        <div css={{ margin: 0, height: 2, backgroundColor: COLORS.neutral15 }} />
         <footer css={{
             padding: 16,
             fontSize: 14,
             textAlign: "center",
+            borderTop: `1px solid ${COLORS.neutral15}`,
         }}>
             {CONFIG.footerLinks.length > 0 && (
                 <ul css={{
