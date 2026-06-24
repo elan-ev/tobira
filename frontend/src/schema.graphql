@@ -533,6 +533,23 @@ type EventSearchResults {
   duration: Int!
 }
 
+type FavFeedConnection {
+  pageInfo: PageInfo!
+  items: [FavFeedItem!]!
+  totalCount: Int!
+}
+
+type FavFeedItem {
+  event: Event!
+  """
+    The favorite series that caused this event to appear in the feed. It's
+    the event's series or `null`.
+  """
+  favSeries: Series
+  "All favorite playlists that caused this event to appear in the feed."
+  favPlaylists: [AuthorizedPlaylist!]!
+}
+
 type InaccessibleFavoriteItem {
   id: ID!
 }
@@ -1311,6 +1328,11 @@ type User {
   myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
   "Returns all items that the user has marked as favorite."
   myFavorites: [FavoriteItem!]!
+  """
+    Returns the latest videos (by `created` date) from items that the user
+    added as favorite.
+  """
+  favoritesFeed(offset: Int! = 0, limit: Int!): FavFeedConnection!
 }
 
 type UserInfo {
