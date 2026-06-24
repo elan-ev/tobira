@@ -45,6 +45,7 @@ import { ManagePlaylistAccessRoute } from "./routes/manage/Playlist/PlaylistAcce
 import { CreatePlaylistRoute } from "./routes/manage/Playlist/Create";
 import { AdminDashboardUserRealmsRoute } from "./routes/manage/admin/UserRealm";
 import { AdminDashboardUserSessionsRoute } from "./routes/manage/admin/UserSessions";
+import { FavoritesManageRoute } from "./routes/manage/Favorites";
 
 
 
@@ -77,6 +78,7 @@ const {
         DirectPlaylistOCRoute,
         OpencastPlaylistRoute,
         PlaylistRoute,
+        FavoritesManageRoute,
         ManageRoute,
         ManageVideosRoute,
         ManageVideoAccessRoute,
