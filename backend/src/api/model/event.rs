@@ -368,11 +368,7 @@ impl AuthorizedEvent {
         let query = format!("select {selection} from playlists where array[$1] <@ event_entry_ids(entries)");
         let playlists = context.db.query_mapped(&query, &[&self.opencast_id], |row| {
             let playlist = AuthorizedPlaylist::from_row_start(&row);
-            if context.auth.overlaps_roles(&playlist.read_roles) {
-                Playlist::Playlist(playlist)
-            } else {
-                Playlist::NotAllowed(NotAllowed)
-            }
+            Playlist::check_auth(playlist, &context.auth)
         }).await?;
 
         Ok(playlists.into_iter().collect())
