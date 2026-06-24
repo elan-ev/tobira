@@ -1,12 +1,12 @@
 use crate::{
     api::{
+        Context,
         err::ApiResult,
         model::{
             event::AuthorizedEvent,
-            favorites::{self, FavoriteItem},
+            favorites::{self, FavFeedItem, FavoriteItem},
             playlist::{AuthorizedPlaylist, Playlist, PlaylistsSortOrder},
         },
-        Context,
     },
     auth::User,
     prelude::*,
@@ -145,5 +145,17 @@ impl User {
     /// Returns all items that the user has marked as favorite.
     async fn my_favorites(&self, context: &Context) -> ApiResult<Vec<FavoriteItem>> {
         favorites::fetch_for_user(context).await
+    }
+
+    /// Returns the latest videos (by `created` date) from items that the user
+    /// added as favorite.
+    async fn favorites_feed(
+        &self,
+        context: &Context,
+        #[graphql(default)]
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<Connection<FavFeedItem>> {
+        favorites::feed(context, offset, limit).await
     }
 }
