@@ -235,10 +235,13 @@ share:
   set-time-unit: Set {{unit}}
 
 fav:
+  main-label: Favorites
   add: Add favorite
   remove: Remove favorite
+  manage: Manage favorites
   failed-to-add: Failed to add favorite
   failed-to-remove: Failed to remove favorite
+  inaccessible: Inaccessible (not allowed to see)
 
 video-list-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"
