@@ -28,6 +28,7 @@ use crate::{
         Node,
         NodeValue,
     },
+    auth::AuthContext,
     db::util::{impl_from_db, select},
     model::{Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
@@ -114,13 +115,17 @@ impl Playlist {
             .await?
             .map(|row| {
                 let playlist = AuthorizedPlaylist::from_row_start(&row);
-                if context.auth.overlaps_roles(&playlist.read_roles) {
-                    Playlist::Playlist(playlist)
-                } else {
-                    Playlist::NotAllowed(NotAllowed)
-                }
+                Self::check_auth(playlist, &context.auth)
             })
             .pipe(Ok)
+    }
+
+    pub(crate) fn check_auth(playlist: AuthorizedPlaylist, auth: &AuthContext) -> Self {
+        if auth.overlaps_roles(&playlist.read_roles) {
+            Self::Playlist(playlist)
+        } else {
+            Self::NotAllowed(NotAllowed)
+        }
     }
 
     async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<AuthorizedPlaylist> {
