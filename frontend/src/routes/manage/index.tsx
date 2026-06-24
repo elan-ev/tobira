@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineFire } from "react-icons/hi";
 import {
     LuFilm, LuLayoutTemplate, LuCirclePlus, LuUpload, LuVideo,
+    LuStar,
 } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
@@ -31,6 +32,7 @@ import { ManageSeriesRoute } from "./Series";
 import { CreateSeriesRoute } from "./Series/Create";
 import { ManagePlaylistsRoute } from "./Playlist";
 import { CreatePlaylistRoute } from "./Playlist/Create";
+import { FavoritesManageRoute } from "./Favorites";
 
 
 const PATH = "/~manage" as const;
@@ -87,6 +89,7 @@ type ManageNavProps = {
         | typeof CreateSeriesRoute.url
         | typeof ManagePlaylistsRoute.url
         | typeof CreatePlaylistRoute.url
+        | typeof FavoritesManageRoute.url
         | `/@${string}`
         | "STUDIO";
 };
@@ -131,6 +134,11 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     if (isRealUser(user) && user.canCreatePlaylists) {
         entries.push(
             [CreatePlaylistRoute.url, t("manage.playlist.table.create"), <LuCirclePlus />],
+        );
+    }
+    if (isRealUser(user)) {
+        entries.push(
+            [FavoritesManageRoute.url, t("fav.main-label"), <LuStar />],
         );
     }
     /* eslint-enable react/jsx-key */

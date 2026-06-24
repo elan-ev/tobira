@@ -238,10 +238,13 @@ share:
   set-time-unit: '{{unit}} einstellen'
 
 fav:
+  main-label: Favoriten
   add: Favoriten hinzufügen
   remove: Favoriten entfernen
+  manage: Favoriten verwalten
   failed-to-add: Favoriten hinzufügen fehlgeschlagen
   failed-to-remove: Favoriten entfernen fehlgeschlagen
+  inaccessible: Unzugänglich (keine Leseberechtigung)
 
 video-list-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
