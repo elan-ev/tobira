@@ -5,6 +5,7 @@ import {
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
     LuCirclePlus,
     LuGauge,
+    LuStar,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
@@ -37,6 +38,7 @@ import { ModalHandle } from "../../ui/Modal";
 import { AdminDashboardRoute } from "../../routes/manage/admin";
 import { ManagePlaylistsRoute } from "../../routes/manage/Playlist";
 import { CreatePlaylistRoute } from "../../routes/manage/Playlist/Create";
+import { FavoritesRoute } from "../../routes/Favorites";
 
 
 
@@ -236,6 +238,12 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
 
     const indent = { paddingLeft: 30 };
     const items: HeaderMenuProps["items"] = [
+        {
+            icon: <LuStar />,
+            wrapper: <Link to={FavoritesRoute.url} />,
+            children: t("fav.main-label"),
+            css: { minWidth: 200 },
+        },
         {
             icon: <LuFolder />,
             wrapper: <Link to={ManageRoute.url} />,
