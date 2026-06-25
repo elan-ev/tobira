@@ -53,14 +53,17 @@ import { LinkButton } from "../LinkButton";
 // This uses `@inline` because the fragment is used in different situations,
 // where using `useFragment` is very tricky (or maybe even impossible).
 export const videoListEventFragment = graphql`
-    fragment VideoListEventData on AuthorizedEvent @inline {
+    fragment VideoListEventData on AuthorizedEvent @inline
+    @argumentDefinitions(
+        includeSeries: { type: "Boolean!", defaultValue: false }
+    ) {
         id
         title
         created
         creators
         isLive
         description
-        series { title id }
+        series @include(if: $includeSeries) { title id }
         syncedData {
             thumbnail
             duration
