@@ -3,7 +3,6 @@ import React, {
     ReactNode,
     createContext,
     useContext,
-    useEffect,
     useId,
     useRef,
     useState,
@@ -85,6 +84,7 @@ type ListKind = "series" | "playlist";
 
 const VIDEO_GRID_BREAKPOINT = 600;
 const DEFAULT_ITEMS_PER_PAGE = 36;
+const SLIDER_BATCH_SIZE = 36;
 
 type VideoListItem = Event | "missing" | "unauthorized";
 
@@ -778,7 +778,6 @@ const Items: React.FC<ItemsProps> = ({
     const shownItems = items.slice(startIndex, startIndex + itemsPerPage);
 
     if (layoutState === "SLIDER") {
-        // Todo: pagination for slider view.
         return <SliderView {...{ listId, basePath, items }} />;
     }
 
@@ -968,32 +967,47 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const scrollDistance = 240;
+    const [loadedCount, setLoadedCount] = useState(() => Math.min(items.length, SLIDER_BATCH_SIZE));
 
-    const [rightVisible, setRightVisible] = useState(false);
+    const [rightVisible, setRightVisible] = useState(items.length > SLIDER_BATCH_SIZE);
     const [leftVisible, setLeftVisible] = useState(false);
 
     /**
      * This hides the left and/or right scroll buttons if the slider is scrolled almost all
      * the way to the left or right respectively, or when there is nothing to scroll to.
+     *
+     * We also load the next batch here so native scrolling keeps working as the track grows.
      */
-    const setVisibilities = () => {
-        if (ref.current) {
-            const totalSliderWidth = ref.current.scrollWidth;
-            const scrollPositionLeft = ref.current.scrollLeft;
-            const scrollPositionRight = ref.current.scrollLeft + ref.current.offsetWidth;
-            setRightVisible(scrollPositionRight < (totalSliderWidth - 16));
-            setLeftVisible(scrollPositionLeft > 16);
+    const updateSliderState = () => {
+        if (!ref.current) {
+            return;
         }
+
+        const totalSliderWidth = ref.current.scrollWidth;
+        const scrollPositionLeft = ref.current.scrollLeft;
+        const scrollPositionRight = ref.current.scrollLeft + ref.current.offsetWidth;
+        const hasMoreItems = loadedCount < items.length;
+
+        // 1200px is the width of roughly four thumbnails (+ margins).
+        // So will load in more items when the scroll state is at a point where about
+        // four items are still off screen on the right.
+        if (hasMoreItems && scrollPositionRight >= (totalSliderWidth - 1200)) {
+            setLoadedCount(currentLoadedCount => Math.min(
+                items.length,
+                currentLoadedCount + SLIDER_BATCH_SIZE,
+            ));
+        }
+
+        setRightVisible(hasMoreItems || scrollPositionRight < (totalSliderWidth - 16));
+        setLeftVisible(scrollPositionLeft > 16);
     };
 
     const scroll = (distance: number) => {
         if (ref.current) {
             ref.current.scrollLeft += distance;
-            setVisibilities();
+            updateSliderState();
         }
     };
-
-    useEffect(setVisibilities, []);
 
     const buttonCss = {
         zIndex: 5,
@@ -1016,7 +1030,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
     } as const;
 
     return <div css={{ position: "relative" }}>
-        <div tabIndex={-1} onScroll={() => setVisibilities()} ref={ref} css={{
+        <div tabIndex={-1} onScroll={updateSliderState} ref={ref} css={{
             display: "flex",
             marginRight: 5,
             overflow: "auto",
@@ -1026,7 +1040,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
                 scrollMargin: 6,
             },
         }}>
-            {items.map(({ item, active }, idx) => (
+            {items.slice(0, loadedCount).map(({ item, active }, idx) => (
                 <Item
                     key={idx}
                     {...{ item, active, basePath, listId }}
