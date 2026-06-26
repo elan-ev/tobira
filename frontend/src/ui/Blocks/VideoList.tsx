@@ -46,6 +46,7 @@ import { LoginLink } from "../../routes/util";
 import { QrCodeButton, ShareButton } from "../ShareButton";
 import { CopyableInput } from "../Input";
 import { LinkButton } from "../LinkButton";
+import { PaginationNav, createPaginationControls, paginationControlStyles } from "../PaginationNav";
 
 
 
@@ -83,6 +84,7 @@ type ListKind = "series" | "playlist";
 
 
 const VIDEO_GRID_BREAKPOINT = 600;
+const DEFAULT_ITEMS_PER_PAGE = 36;
 
 type VideoListItem = Event | "missing" | "unauthorized";
 
@@ -136,6 +138,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     const { initialOrder, allowOriginalOrder, initialLayout = "GALLERY" } = displayOptions;
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
     const [layoutState, setLayoutState] = useState<VideoListLayout>(initialLayout);
+    const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
     const layoutOrderContext: LayoutOrderContext = {
         allowOriginalOrder,
         eventOrder,
@@ -164,7 +167,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         <Items
             basePath={basePath}
             showSeries={shareInfo.kind === "playlist"}
-            {...{ listId }}
+            {...{ listId, itemsPerPage }}
             items={events.map(item => ({
                 item,
                 active: item !== "missing"
@@ -753,14 +756,78 @@ type ViewProps = {
     }[];
 };
 
-const Items: React.FC<ViewProps> = ({ basePath, items, showSeries = false, listId }) => {
+type ItemsProps = ViewProps & {
+    itemsPerPage: number;
+};
+
+const Items: React.FC<ItemsProps> = ({
+    basePath,
+    items,
+    showSeries = false,
+    listId,
+    itemsPerPage,
+}) => {
+    const { t } = useTranslation();
     const { layoutState } = useLayoutOrderContext();
-    return match(layoutState, {
-        SLIDER: () => <SliderView {...{ listId, basePath, items }} />,
-        GALLERY: () => <GalleryView {...{ listId, basePath, items }} />,
-        LIST: () => <ListView {...{ listId, basePath, items, showSeries }} />,
-        "%future added value": () => unreachable(),
+
+    const [page, setPage] = useState(1);
+    const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage));
+    const currentPage = Math.min(page, totalPages);
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const shownItems = items.slice(startIndex, startIndex + itemsPerPage);
+
+    if (layoutState === "SLIDER") {
+        // Todo: pagination for slider view.
+        return <SliderView {...{ listId, basePath, items }} />;
+    }
+
+    if (layoutState === "%future added value") {
+        return unreachable();
+    }
+
+    const content = match(layoutState, {
+        GALLERY: () => <GalleryView {...{ listId, basePath, items: shownItems }} />,
+        LIST: () => <ListView {...{ listId, basePath, items: shownItems, showSeries }} />,
     });
+
+    if (totalPages <= 1) {
+        return content;
+    }
+
+    const start = items.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage * itemsPerPage, items.length);
+    const controls = createPaginationControls({
+        currentPage,
+        totalPages,
+        navigateToPage: targetPage => ({
+            onClick: () => setPage(Math.max(1, Math.min(totalPages, targetPage))),
+        }),
+    });
+
+    return <>
+        {content}
+        <div css={{ marginTop: 16 }}>
+            <PaginationNav
+                itemsSummary={t("manage.table.page-showing-ids", {
+                    start, end, total: items.length,
+                })}
+                controls={controls}
+                renderControl={({ label, icon, disabled, target }) => <ProtoButton
+                    css={paginationControlStyles}
+                    aria-label={t(label)}
+                    aria-disabled={disabled}
+                    disabled={disabled}
+                    onClick={target && "onClick" in target
+                        ? target.onClick
+                        : undefined
+                    }
+                >
+                    {icon}
+                </ProtoButton>}
+            />
+        </div>
+    </>;
 };
 
 const ITEM_MIN_SIZE = 250;
