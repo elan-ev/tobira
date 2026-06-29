@@ -245,6 +245,7 @@ fav:
   failed-to-add: Favoriten hinzufügen fehlgeschlagen
   failed-to-remove: Favoriten entfernen fehlgeschlagen
   inaccessible: Unzugänglich (keine Leseberechtigung)
+  feed-title: Neuste Videos
 
 video-list-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"

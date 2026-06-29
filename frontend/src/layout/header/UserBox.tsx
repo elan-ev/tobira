@@ -240,7 +240,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
     const items: HeaderMenuProps["items"] = [
         {
             icon: <LuStar />,
-            wrapper: <Link to={FavoritesRoute.url} />,
+            wrapper: <Link to={FavoritesRoute.url({})} />,
             children: t("fav.main-label"),
             css: { minWidth: 200 },
         },

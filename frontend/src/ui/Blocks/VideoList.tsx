@@ -76,6 +76,9 @@ export const videoListEventFragment = graphql`
 type Event = VideoListEventData$data;
 type ListKind = "series" | "playlist";
 
+export const readVideoListEventDataFragment = (entry: AuthorizedEntry) =>
+    readInlineData<VideoListEventData$key>(videoListEventFragment, entry);
+
 
 // ==============================================================================================
 // ===== Main components defining UI
@@ -86,13 +89,13 @@ const VIDEO_GRID_BREAKPOINT = 600;
 const DEFAULT_ITEMS_PER_PAGE = 36;
 const SLIDER_BATCH_SIZE = 36;
 
-type VideoListItem = Event | "missing" | "unauthorized";
-
+export type VideoListItem = Event | "missing" | "unauthorized";
 
 type Entries = Extract<
     PlaylistBlockPlaylistData$data,
     { __typename: "AuthorizedPlaylist" }
 >["entries"];
+type AuthorizedEntry = Extract<Entries[number], { __typename: "AuthorizedEvent" }>;
 
 export type VideoListMetadata = {
     title?: string;
@@ -150,8 +153,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     };
 
     const items = listEntries.map(entry => matchTag(entry, "__typename", {
-        "AuthorizedEvent": entry =>
-            readInlineData<VideoListEventData$key>(videoListEventFragment, entry),
+        "AuthorizedEvent": entry => readVideoListEventDataFragment(entry),
         "Missing": () => "missing" as VideoListItem,
         "NotAllowed": () => "unauthorized" as VideoListItem,
         "%other": () => unreachable(),
@@ -185,7 +187,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     })();
 
     const renderEvents = (events: readonly VideoListItem[]) => (
-        <Items
+        <VideoListItems
             showSeries={shareInfo.kind === "playlist"}
             {...{ itemsPerPage, itemLink }}
             items={events.map(item => ({
@@ -211,7 +213,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         </div>
         {items.length > 0 && <div>
             <OrderMenu />
-            <LayoutMenu />
+            <VideoListLayoutMenu />
         </div>}
     </>;
 
@@ -304,6 +306,20 @@ type OrderedItems = {
     unauthorizedItems: number;
 };
 
+export const categorizeEvent = (
+    event: VideoListItem,
+    main: VideoListItem[],
+    upcoming: VideoListItem[],
+) => {
+    if (event === "missing" || event === "unauthorized") {
+        main.push(event);
+    } else if (isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive)) {
+        upcoming.push(event);
+    } else if (!isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)) {
+        main.push(event);
+    }
+};
+
 const orderItems = (
     items: readonly VideoListItem[],
     eventOrder: Order,
@@ -334,11 +350,7 @@ const orderItems = (
             continue;
         }
 
-        if (isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive)) {
-            upcomingLiveEvents.push(event);
-        } else if (!isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)) {
-            mainItems.push(event);
-        }
+        categorizeEvent(event, mainItems, upcomingLiveEvents);
     }
 
     const timeMs = (event: Event) =>
@@ -546,7 +558,7 @@ export const LIST_ORDERS = ["ORIGINAL", "AZ", "ZA", "NEW_TO_OLD", "OLD_TO_NEW"] 
 export type Order = typeof LIST_ORDERS[number];
 export type VideoListLayout = "GALLERY" | "LIST" | "SLIDER";
 
-type LayoutOrderContext = {
+export type LayoutOrderContext = {
     layoutState: VideoListLayout;
     setLayoutState: (layout: VideoListLayout) => void;
     eventOrder: Order;
@@ -554,7 +566,7 @@ type LayoutOrderContext = {
     allowOriginalOrder: boolean;
 };
 
-const LayoutOrderContext = createContext<LayoutOrderContext | null>(null);
+export const LayoutOrderContext = createContext<LayoutOrderContext | null>(null);
 const useLayoutOrderContext = () => useContext(LayoutOrderContext)
     ?? bug("order context not defined for video-list block");
 
@@ -579,7 +591,7 @@ const OrderMenu: React.FC = () => {
     />;
 };
 
-const LayoutMenu: React.FC = () => {
+export const VideoListLayoutMenu: React.FC = () => {
     const { t } = useTranslation();
     const ctx = useLayoutOrderContext();
     const ref = useRef<FloatingHandle>(null);
@@ -785,7 +797,7 @@ const itemKey = (item: VideoListItem, index: number): string =>
         ? `${item}-${index}`
         : item.id;
 
-const Items: React.FC<ItemsProps> = ({
+export const VideoListItems: React.FC<ItemsProps> = ({
     items,
     showSeries = false,
     itemLink,
@@ -1077,7 +1089,7 @@ type UpcomingEventsGridProps = React.PropsWithChildren<{
     count: number;
 }>;
 
-const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children }) => {
+export const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children }) => {
     const { t } = useTranslation();
 
     return (
