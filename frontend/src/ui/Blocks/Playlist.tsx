@@ -48,7 +48,7 @@ const playlistFragment = graphql`
             canWrite
             entries {
                 __typename
-                ... on AuthorizedEvent { id, ...VideoListEventData }
+                ... on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
                 ... on Missing { dummy }
                 ... on NotAllowed { dummy }
             }

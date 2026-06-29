@@ -20,8 +20,6 @@ import { useTranslation } from "react-i18next";
 import {
     LuArrowDownNarrowWide,
     LuArrowUpWideNarrow,
-    LuChevronLeft,
-    LuChevronRight,
     LuCornerUpRight,
     LuX,
 } from "react-icons/lu";
@@ -29,8 +27,6 @@ import { IconType } from "react-icons";
 import { css } from "@emotion/react";
 import { LucideFunnel } from "lucide-react";
 
-import FirstPage from "../../../icons/first-page.svg";
-import LastPage from "../../../icons/last-page.svg";
 import { PrettyDate, prettyDate } from "../../../ui/time";
 import { ellipsisOverflowCss, focusStyle, IconWithTooltip } from "../../../ui";
 import CONFIG from "../../../config";
@@ -51,6 +47,7 @@ import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../../GlobalStyle";
 import { FloatingBaseMenu } from "../../../ui/FloatingBaseMenu";
 import { MenuItem } from "../../../ui/Blocks/VideoList";
 import { LinkButton } from "../../../ui/LinkButton";
+import { PaginationNav, paginationControlStyles } from "../../../ui/PaginationNav";
 import { isRealUser, useUser } from "../../../User";
 import { Creators } from "../../../ui/Video";
 
@@ -1310,90 +1307,24 @@ export const CreateButton: React.FC<CreateButtonProps> = ({
 
 const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
     const { t } = useTranslation();
-    const pageInfo = connection.pageInfo;
     const total = connection.totalCount;
     const page = vars.page;
 
-    return (
-        <div css={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: 48,
-        }}>
-            <div>
-                {t("manage.table.page-showing-ids", {
-                    start: page * LIMIT - LIMIT + 1,
-                    end: Math.min(page * LIMIT, total),
-                    total,
-                })}
-            </div>
-            <div css={{ display: "flex", alignItems: "center" }}>
-                {/* First page */}
-                <PageLink
-                    vars={{ ...vars, page: 1 }}
-                    disabled={!pageInfo.hasPrevPage}
-                    label={t("manage.table.navigation.first")}
-                ><FirstPage /></PageLink>
-                {/* Previous page */}
-                <PageLink
-                    vars={{ ...vars, page: page - 1 }}
-                    disabled={!pageInfo.hasPrevPage}
-                    label={t("manage.table.navigation.previous")}
-                ><LuChevronLeft /></PageLink>
-                {/* Next page */}
-                <PageLink
-                    vars={{ ...vars, page: page + 1 }}
-                    disabled={!pageInfo.hasNextPage}
-                    label={t("manage.table.navigation.next")}
-                ><LuChevronRight /></PageLink>
-                {/* Last page */}
-                <PageLink
-                    vars={{ ...vars, page: Math.ceil(total / LIMIT) }}
-                    disabled={!pageInfo.hasNextPage}
-                    label={t("manage.table.navigation.last")}
-                ><LastPage /></PageLink>
-            </div>
-        </div>
-    );
+    return <PaginationNav
+        totalItems={total}
+        itemsPerPage={LIMIT}
+        currentPage={page}
+        renderControl={({ label, icon, disabled, targetPage }) => <Link
+            css={paginationControlStyles}
+            to={varsToLink({ ...vars, page: targetPage })}
+            aria-label={t(label)}
+            aria-disabled={disabled}
+            tabIndex={disabled ? -1 : 0}
+        >
+            {icon}
+        </Link>}
+    />;
 };
-
-type PageLinkProps = {
-    vars: ItemVars;
-    disabled: boolean;
-    children: ReactNode;
-    label: string;
-};
-
-const PageLink: React.FC<PageLinkProps> = ({ children, vars, disabled, label }) => (
-    <Link
-        to={varsToLink(vars)}
-        tabIndex={disabled ? -1 : 0}
-        aria-hidden={disabled}
-        aria-label={label}
-        css={{
-            background: "none",
-            border: "none",
-            fontSize: 24,
-            padding: "4px 4px",
-            margin: "0 4px",
-            lineHeight: 0,
-            borderRadius: 4,
-            ...disabled
-                ? {
-                    color: COLORS.neutral25,
-                    pointerEvents: "none",
-                }
-                : {
-                    color: COLORS.neutral60,
-                    cursor: "pointer",
-                    ":hover, :focus": {
-                        color: COLORS.neutral90,
-                    },
-                },
-        }}
-    >{children}</Link>
-);
 
 
 

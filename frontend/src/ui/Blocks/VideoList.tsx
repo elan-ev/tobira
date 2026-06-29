@@ -3,7 +3,6 @@ import React, {
     ReactNode,
     createContext,
     useContext,
-    useEffect,
     useId,
     useRef,
     useState,
@@ -46,6 +45,7 @@ import { LoginLink } from "../../routes/util";
 import { QrCodeButton, ShareButton } from "../ShareButton";
 import { CopyableInput } from "../Input";
 import { LinkButton } from "../LinkButton";
+import { PaginationNav, paginationControlStyles } from "../PaginationNav";
 
 
 
@@ -53,14 +53,17 @@ import { LinkButton } from "../LinkButton";
 // This uses `@inline` because the fragment is used in different situations,
 // where using `useFragment` is very tricky (or maybe even impossible).
 export const videoListEventFragment = graphql`
-    fragment VideoListEventData on AuthorizedEvent @inline {
+    fragment VideoListEventData on AuthorizedEvent @inline
+    @argumentDefinitions(
+        includeSeries: { type: "Boolean!", defaultValue: false }
+    ) {
         id
         title
         created
         creators
         isLive
         description
-        series { title id }
+        series @include(if: $includeSeries) { title id }
         syncedData {
             thumbnail
             duration
@@ -80,6 +83,8 @@ type ListKind = "series" | "playlist";
 
 
 const VIDEO_GRID_BREAKPOINT = 600;
+const DEFAULT_ITEMS_PER_PAGE = 36;
+const SLIDER_BATCH_SIZE = 36;
 
 type VideoListItem = Event | "missing" | "unauthorized";
 
@@ -133,6 +138,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     const { initialOrder, allowOriginalOrder, initialLayout = "GALLERY" } = displayOptions;
     const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
     const [layoutState, setLayoutState] = useState<VideoListLayout>(initialLayout);
+    const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
     const layoutOrderContext: LayoutOrderContext = {
         allowOriginalOrder,
         eventOrder,
@@ -161,7 +167,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         <Items
             basePath={basePath}
             showSeries={shareInfo.kind === "playlist"}
-            {...{ listId }}
+            {...{ listId, itemsPerPage }}
             items={events.map(item => ({
                 item,
                 active: item !== "missing"
@@ -750,14 +756,67 @@ type ViewProps = {
     }[];
 };
 
-const Items: React.FC<ViewProps> = ({ basePath, items, showSeries = false, listId }) => {
+type ItemsProps = ViewProps & {
+    itemsPerPage: number;
+};
+
+const itemKey = (item: VideoListItem, index: number): string =>
+    item === "missing" || item === "unauthorized"
+        ? `${item}-${index}`
+        : item.id;
+
+const Items: React.FC<ItemsProps> = ({
+    basePath,
+    items,
+    showSeries = false,
+    listId,
+    itemsPerPage,
+}) => {
+    const { t } = useTranslation();
     const { layoutState } = useLayoutOrderContext();
-    return match(layoutState, {
-        SLIDER: () => <SliderView {...{ listId, basePath, items }} />,
-        GALLERY: () => <GalleryView {...{ listId, basePath, items }} />,
-        LIST: () => <ListView {...{ listId, basePath, items, showSeries }} />,
-        "%future added value": () => unreachable(),
+
+    const [page, setPage] = useState(1);
+    const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage));
+    const currentPage = Math.min(page, totalPages);
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const shownItems = items.slice(startIndex, startIndex + itemsPerPage);
+
+    if (layoutState === "SLIDER") {
+        return <SliderView {...{ listId, basePath, items }} />;
+    }
+
+    if (layoutState === "%future added value") {
+        return unreachable();
+    }
+
+    const content = match(layoutState, {
+        GALLERY: () => <GalleryView {...{ listId, basePath, items: shownItems }} />,
+        LIST: () => <ListView {...{ listId, basePath, items: shownItems, showSeries }} />,
     });
+
+    if (totalPages <= 1) {
+        return content;
+    }
+
+    return <>
+        {content}
+        <div css={{ marginTop: 16 }}>
+            <PaginationNav
+                totalItems={items.length}
+                {...{ itemsPerPage, currentPage }}
+                renderControl={({ label, icon, disabled, targetPage }) => <ProtoButton
+                    css={paginationControlStyles}
+                    aria-label={t(label)}
+                    aria-disabled={disabled}
+                    disabled={disabled}
+                    onClick={() => setPage(Math.max(1, Math.min(totalPages, targetPage)))}
+                >
+                    {icon}
+                </ProtoButton>}
+            />
+        </div>
+    </>;
 };
 
 const ITEM_MIN_SIZE = 250;
@@ -840,7 +899,7 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items, listId }) => (
     }}>
         {items.map(({ item, active }, idx) => (
             <Item
-                key={idx}
+                key={itemKey(item, idx)}
                 {...{ item, active, basePath, listId }}
                 css={{
                     width: "100%",
@@ -870,7 +929,7 @@ const ListView: React.FC<ViewProps> = ({ basePath, items, showSeries, listId }) 
     }}>
         {items.map(({ item, active }, idx) => (
             <Item
-                key={idx}
+                key={itemKey(item, idx)}
                 {...{ item, active, basePath, showSeries, listId }}
                 showDescription
                 dateAndCreatorOneLine
@@ -898,32 +957,47 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const scrollDistance = 240;
+    const [loadedCount, setLoadedCount] = useState(() => Math.min(items.length, SLIDER_BATCH_SIZE));
 
-    const [rightVisible, setRightVisible] = useState(false);
+    const [rightVisible, setRightVisible] = useState(items.length > SLIDER_BATCH_SIZE);
     const [leftVisible, setLeftVisible] = useState(false);
 
     /**
      * This hides the left and/or right scroll buttons if the slider is scrolled almost all
      * the way to the left or right respectively, or when there is nothing to scroll to.
+     *
+     * We also load the next batch here so native scrolling keeps working as the track grows.
      */
-    const setVisibilities = () => {
-        if (ref.current) {
-            const totalSliderWidth = ref.current.scrollWidth;
-            const scrollPositionLeft = ref.current.scrollLeft;
-            const scrollPositionRight = ref.current.scrollLeft + ref.current.offsetWidth;
-            setRightVisible(scrollPositionRight < (totalSliderWidth - 16));
-            setLeftVisible(scrollPositionLeft > 16);
+    const updateSliderState = () => {
+        if (!ref.current) {
+            return;
         }
+
+        const totalSliderWidth = ref.current.scrollWidth;
+        const scrollPositionLeft = ref.current.scrollLeft;
+        const scrollPositionRight = ref.current.scrollLeft + ref.current.offsetWidth;
+        const hasMoreItems = loadedCount < items.length;
+
+        // 1200px is the width of roughly four thumbnails (+ margins).
+        // So will load in more items when the scroll state is at a point where about
+        // four items are still off screen on the right.
+        if (hasMoreItems && scrollPositionRight >= (totalSliderWidth - 1200)) {
+            setLoadedCount(currentLoadedCount => Math.min(
+                items.length,
+                currentLoadedCount + SLIDER_BATCH_SIZE,
+            ));
+        }
+
+        setRightVisible(hasMoreItems || scrollPositionRight < (totalSliderWidth - 16));
+        setLeftVisible(scrollPositionLeft > 16);
     };
 
     const scroll = (distance: number) => {
         if (ref.current) {
             ref.current.scrollLeft += distance;
-            setVisibilities();
+            updateSliderState();
         }
     };
-
-    useEffect(setVisibilities, []);
 
     const buttonCss = {
         zIndex: 5,
@@ -946,7 +1020,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
     } as const;
 
     return <div css={{ position: "relative" }}>
-        <div tabIndex={-1} onScroll={() => setVisibilities()} ref={ref} css={{
+        <div tabIndex={-1} onScroll={updateSliderState} ref={ref} css={{
             display: "flex",
             marginRight: 5,
             overflow: "auto",
@@ -956,9 +1030,9 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
                 scrollMargin: 6,
             },
         }}>
-            {items.map(({ item, active }, idx) => (
+            {items.slice(0, loadedCount).map(({ item, active }, idx) => (
                 <Item
-                    key={idx}
+                    key={itemKey(item, idx)}
                     {...{ item, active, basePath, listId }}
                     css={{
                         scrollSnapAlign: "start",

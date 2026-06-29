@@ -52,7 +52,7 @@ const seriesFragment = graphql`
         canWrite
         entries {
             __typename
-            ...on AuthorizedEvent { id, ...VideoListEventData }
+            ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: false) }
             ...on NotAllowed { dummy }
         }
     }
