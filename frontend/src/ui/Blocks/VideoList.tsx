@@ -22,7 +22,6 @@ import {
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
-import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
 import {
     VideoListEventData$data,
     VideoListEventData$key,
@@ -545,6 +544,7 @@ const VideoListManageButton: React.FC<VideoListManageButtonProps> = ({ link, kin
 
 export const LIST_ORDERS = ["ORIGINAL", "AZ", "ZA", "NEW_TO_OLD", "OLD_TO_NEW"] as const;
 export type Order = typeof LIST_ORDERS[number];
+export type VideoListLayout = "GALLERY" | "LIST" | "SLIDER";
 
 type LayoutOrderContext = {
     layoutState: VideoListLayout;
@@ -588,7 +588,6 @@ const LayoutMenu: React.FC = () => {
         SLIDER: () => <LuColumns2 />,
         GALLERY: () => <LuLayoutGrid />,
         LIST: () => <LuList />,
-        "%future added value": () => unreachable(),
     });
 
     const triggerContent = (
@@ -804,10 +803,6 @@ const Items: React.FC<ItemsProps> = ({
 
     if (layoutState === "SLIDER") {
         return <SliderView {...{ itemLink, items }} />;
-    }
-
-    if (layoutState === "%future added value") {
-        return unreachable();
     }
 
     const content = match(layoutState, {
