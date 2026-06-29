@@ -137,7 +137,11 @@ const VideoSeriesSection: React.FC<{ event: AuthorizedEvent }> = ({ event }) => 
         <h2 css={{ fontSize: 20, marginBottom: 16 }}>
             {t("video.part-of-series")}
         </h2>
-        <span css={{ marginLeft: 40 }}>
+        <span css={{
+            display: "list-item",
+            listStyleType: "disc",
+            marginLeft: 40,
+        }}>
             <Link to={DirectSeriesRoute.url({ seriesId: event.series.id })}>
                 {event.series.title}
             </Link>
