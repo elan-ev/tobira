@@ -45,7 +45,7 @@ import { LoginLink } from "../../routes/util";
 import { QrCodeButton, ShareButton } from "../ShareButton";
 import { CopyableInput } from "../Input";
 import { LinkButton } from "../LinkButton";
-import { PaginationNav, createPaginationControls, paginationControlStyles } from "../PaginationNav";
+import { PaginationNav, paginationControlStyles } from "../PaginationNav";
 
 
 
@@ -794,33 +794,18 @@ const Items: React.FC<ItemsProps> = ({
         return content;
     }
 
-    const start = items.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-    const end = Math.min(currentPage * itemsPerPage, items.length);
-    const controls = createPaginationControls({
-        currentPage,
-        totalPages,
-        navigateToPage: targetPage => ({
-            onClick: () => setPage(Math.max(1, Math.min(totalPages, targetPage))),
-        }),
-    });
-
     return <>
         {content}
         <div css={{ marginTop: 16 }}>
             <PaginationNav
-                itemsSummary={t("manage.table.page-showing-ids", {
-                    start, end, total: items.length,
-                })}
-                controls={controls}
-                renderControl={({ label, icon, disabled, target }) => <ProtoButton
+                totalItems={items.length}
+                {...{ itemsPerPage, currentPage }}
+                renderControl={({ label, icon, disabled, targetPage }) => <ProtoButton
                     css={paginationControlStyles}
                     aria-label={t(label)}
                     aria-disabled={disabled}
                     disabled={disabled}
-                    onClick={target && "onClick" in target
-                        ? target.onClick
-                        : undefined
-                    }
+                    onClick={() => setPage(Math.max(1, Math.min(totalPages, targetPage)))}
                 >
                     {icon}
                 </ProtoButton>}

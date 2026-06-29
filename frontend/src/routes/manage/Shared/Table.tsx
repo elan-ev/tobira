@@ -47,11 +47,7 @@ import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../../GlobalStyle";
 import { FloatingBaseMenu } from "../../../ui/FloatingBaseMenu";
 import { MenuItem } from "../../../ui/Blocks/VideoList";
 import { LinkButton } from "../../../ui/LinkButton";
-import {
-    PaginationNav,
-    createPaginationControls,
-    paginationControlStyles,
-} from "../../../ui/PaginationNav";
+import { PaginationNav, paginationControlStyles } from "../../../ui/PaginationNav";
 import { isRealUser, useUser } from "../../../User";
 import { Creators } from "../../../ui/Video";
 
@@ -1313,28 +1309,14 @@ const PageNavigation = <T, >({ connection, vars }: SharedManageProps<T>) => {
     const { t } = useTranslation();
     const total = connection.totalCount;
     const page = vars.page;
-    const totalPages = Math.max(1, Math.ceil(total / LIMIT));
-    const controls = createPaginationControls({
-        currentPage: page,
-        totalPages,
-        navigateToPage: targetPage => ({
-            to: varsToLink({ ...vars, page: targetPage }),
-        }),
-    });
 
     return <PaginationNav
-        itemsSummary={t("manage.table.page-showing-ids", {
-            start: page * LIMIT - LIMIT + 1,
-            end: Math.min(page * LIMIT, total),
-            total,
-        })}
-        controls={controls}
-        renderControl={({ label, icon, disabled, target }) => <Link
+        totalItems={total}
+        itemsPerPage={LIMIT}
+        currentPage={page}
+        renderControl={({ label, icon, disabled, targetPage }) => <Link
             css={paginationControlStyles}
-            to={target && "to" in target
-                ? target.to
-                : varsToLink(vars)
-            }
+            to={varsToLink({ ...vars, page: targetPage })}
             aria-label={t(label)}
             aria-disabled={disabled}
             tabIndex={disabled ? -1 : 0}
