@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
@@ -10,30 +10,46 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { FavoritesQuery, FavoritesQuery$data } from "./__generated__/FavoritesQuery.graphql";
 import { RealmNav } from "../layout/Navigation";
 import { NotAuthorized } from "../ui/error";
-import { matchTag } from "@opencast/appkit";
+import { matchTag, unreachable } from "@opencast/appkit";
 import { DirectPlaylistRoute } from "./Playlist";
 import { DirectSeriesRoute } from "./Series";
 import { COLORS } from "../color";
 import { Link } from "../router";
 import { LinkButton } from "../ui/LinkButton";
 import { FavoritesManageRoute } from "./manage/Favorites";
+import {
+    categorizeEvent, LayoutOrderContext, readVideoListEventDataFragment, UpcomingEventsGrid,
+    VideoListBlockContainer, VideoListItem, VideoListItems, VideoListLayout, VideoListLayoutMenu,
+} from "../ui/Blocks/VideoList";
+import { paginationControlStyles, PaginationNav } from "../ui/PaginationNav";
 
+
+const ITEMS_PER_PAGE = 24;
 
 export const PATH = "/~favorites" as const;
 export const FavoritesRoute = makeRoute({
-    url: PATH,
+    url: ({ page }: { page?: number }) => PATH + (page && page > 1
+        ? "?" + new URLSearchParams({ page: page.toString() }).toString()
+        : ""),
     match: url => {
         if (url.pathname !== PATH) {
             return null;
         }
+        const page = (() => {
+            const num = Number(url.searchParams.get("page") ?? "1");
+            return Number.isInteger(num) && num > 0 ? num : 1;
+        })();
 
-        const queryRef = loadQuery<FavoritesQuery>(query, {});
+        const queryRef = loadQuery<FavoritesQuery>(query, {
+            limit: ITEMS_PER_PAGE,
+            offset: (page - 1) * ITEMS_PER_PAGE,
+        });
         return {
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
                 nav={data => <RealmNav fragRef={data.realm} />}
-                render={data => <Favorites queryData={data} />}
+                render={data => <Favorites queryData={data} page={page} />}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -41,7 +57,7 @@ export const FavoritesRoute = makeRoute({
 });
 
 const query = graphql`
-    query FavoritesQuery {
+    query FavoritesQuery($offset:Int!, $limit: Int!) {
         ... UserData
         realm: rootRealm {
             ... NavigationData
@@ -53,6 +69,18 @@ const query = graphql`
                 ... on AuthorizedPlaylist { id title creator }
                 ... on InaccessibleFavoriteItem { id }
             }
+            favoritesFeed(offset:$offset, limit: $limit) {
+                totalCount
+                items {
+                    event {
+                        __typename
+                        ... on AuthorizedEvent {
+                            ...VideoListEventData @arguments(includeSeries: true)
+                        }
+                        ... on NotAllowed { dummy }
+                    }
+                }
+            }
         }
     }
 `;
@@ -60,9 +88,10 @@ const query = graphql`
 
 type Props = {
     queryData: FavoritesQuery$data;
+    page: number;
 };
 
-const Favorites: React.FC<Props> = ({ queryData }) => {
+const Favorites: React.FC<Props> = ({ queryData, page }) => {
     const { t } = useTranslation();
     const user = queryData.currentUser;
     if (!user) {
@@ -92,7 +121,9 @@ const Favorites: React.FC<Props> = ({ queryData }) => {
                     <LinkButton to={FavoritesManageRoute.url}>{t("fav.manage")}</LinkButton>
                 </div>
             </div>
+
             <QuickLinks favs={user.myFavorites} />
+            <Feed feed={user.favoritesFeed} page={page} />
         </div>
     );
 };
@@ -153,3 +184,78 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ favs }) => (
         })}
     </ul>
 );
+
+type FeedProps = {
+    feed: NonNullable<FavoritesQuery$data["currentUser"]>["favoritesFeed"];
+    page: number,
+};
+
+const ALLOWED_INLINE_UPCOMING_ITEMS = 3;
+
+const Feed: React.FC<FeedProps> = ({ feed, page }) => {
+    const { t } = useTranslation();
+
+    const items = feed.items.map(item => matchTag(item.event, "__typename", {
+        "AuthorizedEvent": entry => readVideoListEventDataFragment(entry),
+        "NotAllowed": () => "unauthorized" as VideoListItem,
+        "%other": () => unreachable(),
+    }));
+
+    let mainItems: VideoListItem[] = [];
+    let upcomingItems: VideoListItem[] = [];
+    for (const item of items) {
+        categorizeEvent(item, mainItems, upcomingItems);
+    }
+    if (upcomingItems.length <= ALLOWED_INLINE_UPCOMING_ITEMS) {
+        mainItems = [...upcomingItems, ...mainItems];
+        upcomingItems = [];
+    }
+
+    const [layoutState, setLayoutState] = useState<VideoListLayout>("GALLERY");
+    const layoutOrderContext: LayoutOrderContext = {
+        allowOriginalOrder: true,
+        eventOrder: "ORIGINAL",
+        setEventOrder: () => {},
+        layoutState,
+        setLayoutState,
+    };
+
+    const renderEvents = (items: VideoListItem[]) => <VideoListItems
+        items={items.map(item => ({ item, active: false }))}
+        itemsPerPage={ITEMS_PER_PAGE * 1000} // Do not render frontend-pagination
+        showSeries={true}
+        itemLink={key => `/!v/${key}`}
+    />;
+
+    return (
+        <LayoutOrderContext.Provider value={layoutOrderContext}>
+            <VideoListBlockContainer
+                buttons={<VideoListLayoutMenu />}
+                title={t("fav.feed-title")}
+            >
+                {upcomingItems.length > 1 && (
+                    <UpcomingEventsGrid count={upcomingItems.length}>
+                        {renderEvents(upcomingItems)}
+                    </UpcomingEventsGrid>
+                )}
+
+                {renderEvents(mainItems)}
+
+                <div css={{ marginTop: 16 }}>
+                    <PaginationNav
+                        totalItems={feed.totalCount}
+                        itemsPerPage={ITEMS_PER_PAGE}
+                        currentPage={page}
+                        renderControl={({ label, icon, disabled, targetPage }) => <Link
+                            css={paginationControlStyles}
+                            to={FavoritesRoute.url({ page: targetPage })}
+                            aria-label={t(label)}
+                            aria-disabled={disabled}
+                            tabIndex={disabled ? -1 : 0}
+                        >{icon}</Link>}
+                    />
+                </div>
+            </VideoListBlockContainer>
+        </LayoutOrderContext.Provider>
+    );
+};
