@@ -301,6 +301,9 @@ search:
 
 upload:
   title: Upload video
+  no-writable-series-blocked: >
+    Uploading requires a series, but you do not have write access to any series and cannot create one either.
+  create-series-first: You need to create a series first in order to upload.
   drop-to-upload: Drag and drop video file to upload
   not-authorized: You do not have the permission to upload videos.
   specified-series-not-found: Specified series not found.
