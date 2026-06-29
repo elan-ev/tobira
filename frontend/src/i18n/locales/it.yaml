@@ -306,6 +306,10 @@ search:
 
 upload:
   title: Caricare video
+  no-writable-series-blocked: > #verify
+    Il caricamento richiede una serie. Non hai accesso in scrittura a nessuna serie e non puoi crearne una.
+  create-series-first: > #verify
+    Il caricamento richiede una serie. Creane una qui sotto per continuare.
   drop-to-upload: Trascina e rilascia il file video da caricare
   not-authorized: Non hai l'autorizzazione a caricare video.
   specified-series-not-found: Serie specificata non trovata.
