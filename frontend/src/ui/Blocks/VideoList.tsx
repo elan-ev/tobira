@@ -760,6 +760,11 @@ type ItemsProps = ViewProps & {
     itemsPerPage: number;
 };
 
+const itemKey = (item: VideoListItem, index: number): string =>
+    item === "missing" || item === "unauthorized"
+        ? `${item}-${index}`
+        : item.id;
+
 const Items: React.FC<ItemsProps> = ({
     basePath,
     items,
@@ -894,7 +899,7 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items, listId }) => (
     }}>
         {items.map(({ item, active }, idx) => (
             <Item
-                key={idx}
+                key={itemKey(item, idx)}
                 {...{ item, active, basePath, listId }}
                 css={{
                     width: "100%",
@@ -924,7 +929,7 @@ const ListView: React.FC<ViewProps> = ({ basePath, items, showSeries, listId }) 
     }}>
         {items.map(({ item, active }, idx) => (
             <Item
-                key={idx}
+                key={itemKey(item, idx)}
                 {...{ item, active, basePath, showSeries, listId }}
                 showDescription
                 dateAndCreatorOneLine
@@ -1027,7 +1032,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
         }}>
             {items.slice(0, loadedCount).map(({ item, active }, idx) => (
                 <Item
-                    key={idx}
+                    key={itemKey(item, idx)}
                     {...{ item, active, basePath, listId }}
                     css={{
                         scrollSnapAlign: "start",
