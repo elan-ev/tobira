@@ -1,0 +1,21 @@
+insert into favorites(username, series) values('jose', 657761036113493302);
+insert into favorites(username, series) values('jose', 6074339576260149943);
+insert into favorites(username, series) values('jose', -1355390415881086779);
+insert into favorites(username, series) values('jose', -7538469384705213092);
+insert into favorites(username, series) values('jose', -9063036759437229409);
+insert into favorites(username, series) values('jose', 684732537237647925);
+insert into favorites(username, series) values('jose', 5862476853013342784);
+insert into favorites(username, series) values('jose', -7719241687119325543);
+insert into favorites(username, series) values('jose', -4220026685553186897);
+insert into favorites(username, series) values('jose', -1799065309776337260);
+insert into favorites(username, series) values('jose', 4283009875038993628);
+insert into favorites(username, series) values('jose', -6644395571905776141);
+insert into favorites(username, series) values('jose', -539740338685977934);
+insert into favorites(username, series) values('jose', 8566823642180022465);
+insert into favorites(username, series) values('jose', 2804952885442840898);
+insert into favorites(username, series) values('jose', 2913284116211312129);
+
+insert into favorites(username, series) values('sabine', -5252214691212233779);
+insert into favorites(username, playlist) values('sabine', 6634850220416463393);
+insert into favorites(username, series) values('sabine', -831046533574333025);
+insert into favorites(username, playlist) values('sabine', 6550899849189000859);
