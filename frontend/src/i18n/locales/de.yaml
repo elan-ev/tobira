@@ -246,6 +246,8 @@ fav:
   failed-to-remove: Favoriten entfernen fehlgeschlagen
   inaccessible: Unzugänglich (keine Leseberechtigung)
   feed-title: Neuste Videos
+  show-all: Alle anzeigen
+  show-fewer: Weniger anzeigen
 
 video-list-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
