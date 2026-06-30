@@ -243,6 +243,8 @@ fav:
   failed-to-remove: Failed to remove favorite
   inaccessible: Inaccessible (not allowed to see)
   feed-title: Latest videos
+  show-all: Show all
+  show-fewer: Show fewer
 
 video-list-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"
