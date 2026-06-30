@@ -22,6 +22,7 @@ import {
     VideoListBlockContainer, VideoListItem, VideoListItems, VideoListLayout, VideoListLayoutMenu,
 } from "../ui/Blocks/VideoList";
 import { paginationControlStyles, PaginationNav } from "../ui/PaginationNav";
+import { CollapsibleBlock } from "../ui/CollapsibleBlock";
 
 
 const ITEMS_PER_PAGE = 24;
@@ -132,58 +133,71 @@ type QuickLinksProps = {
     favs: NonNullable<FavoritesQuery$data["currentUser"]>["myFavorites"];
 };
 
-const QuickLinks: React.FC<QuickLinksProps> = ({ favs }) => (
+const QuickLinks: React.FC<QuickLinksProps> = ({ favs }) => {
+    const { t } = useTranslation();
+
     // TODO: we might want to deal with items with the same title and year at some point.
-    <ul css={{
-        fontSize: 14,
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "10px 8px",
-        borderLeft: `3px solid ${COLORS.neutral20}`,
-        padding: 12,
-    }}>
-        {favs.map(fav => {
-            if (fav.__typename !== "AuthorizedPlaylist" && fav.__typename !== "Series") {
-                return null;
-            }
 
-            const { link, extraInfo } = matchTag(fav, "__typename", {
-                "AuthorizedPlaylist": playlist => ({
-                    link: DirectPlaylistRoute.url({ playlistId: playlist.id }),
-                    extraInfo: null,
-                }),
-                "Series": series => ({
-                    link: DirectSeriesRoute.url({ seriesId: series.id }),
-                    extraInfo: series.created ? new Date(series.created).getFullYear() : null,
-                }),
-            });
+    return (
+        <CollapsibleBlock
+            maxHeight={160}
+            buttonLabel={expanded => expanded ? t("fav.show-fewer") : t("fav.show-all")}
+        >
+            <ul css={{
+                fontSize: 14,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "10px 8px",
+                borderLeft: `3px solid ${COLORS.neutral20}`,
+                padding: 12,
+                margin: 0,
+            }}>
+                {favs.map(fav => {
+                    if (fav.__typename !== "AuthorizedPlaylist" && fav.__typename !== "Series") {
+                        return null;
+                    }
 
-            return <li key={fav.id} css={{ display: "block" }}>
-                <Link to={link} css={{
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "center",
-                    padding: "2px 6px",
-                    border: `1px solid ${COLORS.neutral25}`,
-                    backgroundColor: COLORS.neutral10,
-                    borderRadius: 8,
-                    textDecoration: "none",
-                    ":hover": {
-                        backgroundColor: COLORS.neutral15,
-                    },
-                    svg: {
-                        color: COLORS.neutral70,
-                    },
-                }}>
-                    {fav.title}
-                    {extraInfo && <span css={{
-                        color: COLORS.neutral70,
-                    }}>{"("}{extraInfo}{")"}</span>}
-                </Link>
-            </li>;
-        })}
-    </ul>
-);
+                    const { link, extraInfo } = matchTag(fav, "__typename", {
+                        "AuthorizedPlaylist": playlist => ({
+                            link: DirectPlaylistRoute.url({ playlistId: playlist.id }),
+                            extraInfo: null,
+                        }),
+                        "Series": series => ({
+                            link: DirectSeriesRoute.url({ seriesId: series.id }),
+                            extraInfo: series.created
+                                ? new Date(series.created).getFullYear()
+                                : null,
+                        }),
+                    });
+
+                    return <li key={fav.id} css={{ display: "block" }}>
+                        <Link to={link} css={{
+                            display: "flex",
+                            gap: 8,
+                            alignItems: "center",
+                            padding: "2px 6px",
+                            border: `1px solid ${COLORS.neutral25}`,
+                            backgroundColor: COLORS.neutral10,
+                            borderRadius: 8,
+                            textDecoration: "none",
+                            ":hover": {
+                                backgroundColor: COLORS.neutral15,
+                            },
+                            svg: {
+                                color: COLORS.neutral70,
+                            },
+                        }}>
+                            {fav.title}
+                            {extraInfo && <span css={{
+                                color: COLORS.neutral70,
+                            }}>{"("}{extraInfo}{")"}</span>}
+                        </Link>
+                    </li>;
+                })}
+            </ul>
+        </CollapsibleBlock>
+    );
+};
 
 type FeedProps = {
     feed: NonNullable<FavoritesQuery$data["currentUser"]>["favoritesFeed"];
