@@ -1216,7 +1216,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             color: COLORS.neutral60,
             fontSize: 14,
         }}>
-            <WithTooltip distance={0} tooltip={tooltip}>
+            <WithTooltip tooltip={tooltip}>
                 <div>
                     <PrettyDate
                         {...prettyDateProps}
