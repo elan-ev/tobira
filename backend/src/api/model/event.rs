@@ -374,7 +374,7 @@ impl AuthorizedEvent {
             if context.auth.overlaps_roles(&playlist.read_roles) {
                 Playlist::Playlist(playlist)
             } else {
-                Playlist::NotAllowed(NotAllowed)
+                Playlist::NotAllowed(NotAllowed { opencast_id: None })
             }
         }).await?;
 
@@ -496,7 +496,7 @@ impl AuthorizedEvent {
                 if event.can_be_previewed(context) {
                     Event::Event(event)
                 } else {
-                    Event::NotAllowed(NotAllowed)
+                    Event::NotAllowed(NotAllowed { opencast_id: None })
                 }
             })
             .pipe(Ok)
@@ -516,7 +516,9 @@ impl AuthorizedEvent {
             .query_mapped(&query, dbargs![&series_key], |row| {
                 let event = Self::from_row_start(&row);
                 if !event.can_be_previewed(context) {
-                    return VideoListEntry::NotAllowed(NotAllowed);
+                    return VideoListEntry::NotAllowed(NotAllowed {
+                        opencast_id: Some(event.opencast_id.to_string()),
+                    });
                 }
 
                 VideoListEntry::Event(event)

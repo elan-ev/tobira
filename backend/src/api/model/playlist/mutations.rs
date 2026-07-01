@@ -17,6 +17,15 @@ use crate::{
 use super::{Playlist, AuthorizedPlaylist};
 
 
+#[derive(juniper::GraphQLInputObject)]
+pub(crate) struct PlaylistEntrySlot {
+    /// Tobira ID for visible events.
+    pub(crate) id: Option<Id>,
+    /// Opencast ID for hidden/missing entries (from `NotAllowed` or `Missing`).
+    pub(crate) opencast_id: Option<String>,
+}
+
+
 
 impl AuthorizedPlaylist {
     pub(crate) async fn create(
@@ -76,43 +85,41 @@ impl AuthorizedPlaylist {
         id: Id,
         title: Option<String>,
         description: Option<String>,
-        entries: Option<Vec<Id>>,
+        entries: Option<Vec<PlaylistEntrySlot>>,
         acl: Option<Vec<AclItem>>,
         context: &Context,
     ) -> ApiResult<Self> {
         // `load_for_mutation` handles authorization.
         let playlist = Playlist::load_for_mutation(id, context).await?;
 
-        let mut entry_ids = if let Some(entries) = entries {
-            Some(load_entries(entries, context).await?)
+        // If a new (i.e. edited) entry list is provided, we need to know the Opencast ID of each.
+        // Entries with a valid Tobira ID are resolved via DB; others are treated
+        // as Opencast IDs directly (for hidden/missing entries).
+        let entry_ids = if let Some(entries) = entries {
+            // Visible entries are resolved via DB; hidden/missing
+            // entries (with `opencast_id`) are used directly.
+            let visible_ids = entries.iter()
+                .filter_map(|e| e.id.clone())
+                .collect();
+            let resolved = load_entries(visible_ids, context).await?;
+            let mut resolved_iter = resolved.into_iter();
+
+            let ids: Result<Vec<OpencastId>, _> = entries.into_iter()
+                .map(|slot| {
+                    match (slot.id, slot.opencast_id) {
+                        (Some(_), _) => Ok(resolved_iter.next().expect("resolved count mismatch")),
+                        (None, Some(oc_id)) => Ok(OpencastId(oc_id)),
+                        (None, None) => Err(err::invalid_input!(
+                            "PlaylistEntrySlot must have either `id` or `opencastId`"
+                        )),
+                    }
+                })
+                .collect();
+
+            Some(ids?)
         } else {
             None
         };
-
-        // If a new explicit entry list is provided, we need to make sure to preserve any existing
-        // entries that are not known to Tobira.
-        // Otherwise an update would accidentally drop those entries from the playlist in Opencast.
-        if let Some(ids) = &mut entry_ids {
-            let query = "\
-                with entries as (\
-                    select unnest(entries) as entry \
-                    from playlists \
-                    where id = $1\
-                ) \
-                select (entry).content_id as id \
-                from entries \
-                left join events on events.opencast_id = (entry).content_id \
-                where (entry).type = 'event' and events.id is null\
-            ";
-
-            let unknown_ids = context.db
-                .query_mapped(query, dbargs![&playlist.key], |row| row.get(0))
-                .await?;
-
-            // This does not preserve the original order, but unknown (i.e. waiting) events in playlists will be a very rare
-            // occurrence. Currently, those can only be added via API.
-            ids.extend(unknown_ids);
-        }
 
         let response = context
             .oc_client

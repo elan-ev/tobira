@@ -44,7 +44,7 @@ const updatePlaylistMetadata = graphql`
 const editPlaylistContent = graphql`
     mutation PlaylistDetailsContentMutation(
         $id: ID!,
-        $entries: [ID!]!,
+        $entries: [PlaylistEntrySlot!],
     ) {
         updatePlaylist(id: $id, entries: $entries) {
             entries {
@@ -65,6 +65,8 @@ const editPlaylistContent = graphql`
                         endTime
                     }
                 }
+                ...on Missing { opencastId }
+                ...on NotAllowed { opencastId }
             }
         }
     }
