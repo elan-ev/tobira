@@ -1,22 +1,24 @@
 import { useTranslation } from "react-i18next";
+import { useId, useState, PropsWithChildren } from "react";
+import { useFragment, UseMutationConfig } from "react-relay";
+import { Controller, useForm } from "react-hook-form";
+import { Disposable, MutationParameters } from "relay-runtime";
+import { boxError } from "@opencast/appkit";
+import { ParseKeys } from "i18next";
+
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import { Acl, AclSelector, knownRolesFragment } from "../../../ui/Access";
 import { useRouter } from "../../../router";
-import { useId, useState, PropsWithChildren } from "react";
-import { useFragment, UseMutationConfig } from "react-relay";
 import { useNotification } from "../../../ui/NotificationContext";
 import { isRealUser, User, useUser } from "../../../User";
-import { Controller, useForm } from "react-hook-form";
 import { defaultAclMap } from "../../../util/roles";
 import { NotAuthorized } from "../../../ui/error";
-import { Disposable, MutationParameters } from "relay-runtime";
 import { displayCommitError } from "../Realm/util";
 import { aclMapToArray } from "../../util";
 import { PageTitle } from "../../../layout/header/ui";
 import { Form } from "../../../ui/Form";
 import { InputContainer, SubmitButtonWithStatus, TitleLabel } from "../../../ui/metadata";
 import { Input, TextArea } from "../../../ui/Input";
-import { boxError } from "@opencast/appkit";
 import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
 
 
@@ -33,6 +35,7 @@ export type CreateVideoListProps<TMutation extends MutationParameters> = PropsWi
     inFlight: boolean;
     returnPath: (response: TMutation["response"]) => string;
     kind: "series" | "playlist";
+    title?: ParseKeys | null;
     buildVariables?: (args: {
         username: string;
     }) => Omit<TMutation["variables"], "metadata" | "acl">;
@@ -45,6 +48,7 @@ export const CreateVideoList = <TMutation extends MutationParameters>({
     inFlight,
     returnPath,
     kind,
+    title = `manage.${kind}.table.create`,
     buildVariables,
     children,
 }: CreateVideoListProps<TMutation>) => {
@@ -98,7 +102,7 @@ export const CreateVideoList = <TMutation extends MutationParameters>({
     const onSubmit = handleSubmit(data => create(data));
 
     return <>
-        <PageTitle title={t(`manage.${kind}.table.create`)} />
+        {title && <PageTitle title={t(title)} />}
         <Form
             noValidate
             onSubmit={e => e.preventDefault()}

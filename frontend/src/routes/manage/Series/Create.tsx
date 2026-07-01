@@ -48,7 +48,7 @@ const createSeriesMutation = graphql`
     }
 `;
 
-type CreateSeriesPageProps = {
+export type CreateSeriesPageProps = {
     knownRolesRef: AccessKnownRolesData$key;
 };
 

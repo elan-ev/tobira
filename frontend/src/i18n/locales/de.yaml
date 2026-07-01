@@ -304,6 +304,9 @@ search:
 
 upload:
   title: Video hochladen
+  no-writable-series-blocked: >
+    Für den Upload ist eine Serie erforderlich, aber Sie haben keinen Schreibzugriff auf Serien und können auch keine erstellen.
+  create-series-first: Sie müssen zunächst eine Serie erstellen, in welche das hochgeladene Video eingebunden werden kann.
   drop-to-upload: Videodatei zum Hochladen per Drag-and-drop hinzufügen
   not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   specified-series-not-found: Angegebene Serie nicht gefunden.
