@@ -345,6 +345,7 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         "lockAclToSeries": config.general.lock_acl_to_series,
         "allowSeriesEventRemoval": config.general.allow_series_event_removal,
         "footerLinks": config.general.footer_links,
+        "footerMarkdown": config.general.footer_markdown,
         "metadataLabels": config.general.metadata,
         "paellaPluginConfig": config.player.paella_plugin_config,
         "paellaSettingsIcon": PAELLA_SETTINGS_ICON,

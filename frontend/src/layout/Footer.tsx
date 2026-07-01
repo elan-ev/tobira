@@ -1,17 +1,23 @@
 import { useTranslation } from "react-i18next";
+
 import CONFIG from "../config";
 import { Link } from "../router";
 import { translatedConfig } from "../util";
 import { COLORS } from "../color";
+import { RenderMarkdown } from "../ui/Blocks/Text";
 import { AboutRoute } from "../routes/About";
 
 
 export const Footer: React.FC = () => {
     const { t, i18n } = useTranslation();
 
-    return (
+    const markdownText = CONFIG.footerMarkdown
+        ? translatedConfig(CONFIG.footerMarkdown, i18n)
+        : null;
+
+    return <>
+        <div css={{ margin: 0, height: 1, backgroundColor: COLORS.neutral15 }} />
         <footer css={{
-            backgroundColor: COLORS.neutral10,
             padding: 16,
             fontSize: 14,
             textAlign: "center",
@@ -57,6 +63,25 @@ export const Footer: React.FC = () => {
                     }
                 })}
             </ul>
+            {markdownText && (
+                <div css={{
+                    margin: "0 auto",
+                    marginTop: CONFIG.footerLinks.length > 0 ? 10 : 0,
+                    maxWidth: 800,
+                    color: COLORS.neutral80,
+                    textAlign: "center",
+                    p: {
+                        margin: 0,
+                    },
+                    ul: {
+                        listStyleType: "none",
+                        margin: "0 auto",
+                        padding: 2,
+                    },
+                }}>
+                    <RenderMarkdown>{markdownText}</RenderMarkdown>
+                </div>
+            )}
         </footer>
-    );
+    </>;
 };

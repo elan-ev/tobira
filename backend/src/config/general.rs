@@ -50,6 +50,7 @@ pub(crate) struct GeneralConfig {
     /// be specified with only the shown string. To add custom ones, you need
     /// to define a label and a link. The link is either the same for every language
     /// or can be specified for each language in the same manner as the label.
+    /// To leave this empty and only use the markdown footer below, set this to `[]`.
     /// Example:
     ///
     /// ```
@@ -59,8 +60,43 @@ pub(crate) struct GeneralConfig {
     ///     "about",
     /// ]
     /// ```
+    ///
+    /// Example (empty):
+    ///
+    /// ```
+    /// footer_links = []
+    /// ```
     #[config(default = ["about", "graphiql"])]
     pub footer_links: Vec<FooterLink>,
+
+    /// Optional markdown footer content. Will be rendered below the footer links or on its own.
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// footer_markdown.default = """
+    /// Tobira is the university video portal for recorded lectures,
+    /// seminars, and academic events.
+    ///
+    /// This footer supports markdown, so you can add links and formatting:
+    ///
+    /// - [Support](https://example.edu/support)
+    /// - [Contact](mailto:help@example.edu)
+    /// - **Important:** Only authorized users may access this portal.
+    /// """
+    /// ```
+    ///
+    /// Example with translated markdown:
+    ///
+    /// ```
+    /// footer_markdown.default = """
+    /// Tobira is the university video portal.
+    /// """
+    /// footer_markdown.de = """
+    /// Tobira ist das universitäre Portal für Videoaufzeichnungen.
+    /// """
+    /// ```
+    pub footer_markdown: Option<TranslatedString>,
 
     /// Additional metadata that is shown below a video. Example:
     ///
