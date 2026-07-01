@@ -75,7 +75,7 @@ import { formatDuration, TrackInfo } from "../ui/Video";
 import { ellipsisOverflowCss } from "../ui";
 import { realmBreadcrumbs } from "../util/realm";
 import { COLORS } from "../color";
-import { preciseDateTime, preferredLocaleForLang, PrettyDate } from "../ui/time";
+import { PrettyDate, semiPreciseDateTime } from "../ui/time";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 import { CollapsibleDescription } from "../ui/metadata";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
@@ -1185,11 +1185,10 @@ type VideoDateProps = {
 };
 
 const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
     const { created, updated, startTime, endTime, hasEnded, hasStarted } = getEventTimeInfo(event);
 
-    const locale = preferredLocaleForLang(i18n.language);
     const prettyDateProps = event.isLive && hasEnded
         ? { date: endTime, prefixKind: "end" as const }
         : { date: startTime ?? created };
@@ -1226,7 +1225,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
         <tbody>
             {fields.map(({ label, date }, i) => <tr key={i}>
                 <td css={{ fontStyle: "italic", textAlign: "right" }}>{label}</td>
-                <td css={{ paddingLeft: 12 }}>{preciseDateTime(date, locale)}</td>
+                <td css={{ paddingLeft: 12 }}>{semiPreciseDateTime(date)}</td>
             </tr>)}
         </tbody>
     </table>;
