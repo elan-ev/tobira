@@ -1187,22 +1187,44 @@ type VideoDateProps = {
 const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
     const { t, i18n } = useTranslation();
 
-    const { created, updated, startTime, endTime, hasEnded } = getEventTimeInfo(event);
+    const { created, updated, startTime, endTime, hasEnded, hasStarted } = getEventTimeInfo(event);
 
     const locale = preferredLocaleForLang(i18n.language);
     const prettyDateProps = event.isLive && hasEnded
         ? { date: endTime, prefixKind: "end" as const }
         : { date: startTime ?? created };
-    const fields: [string, Date | null][] = [
-        [t("video.started"), startTime],
-        [t("video.ended"), endTime],
-        [t("video.created"), created],
-        [t("manage.table.updated"), updated],
+
+    // Decide what dates to show in the detail view. This is a bit of a mess
+    // because the dates supplied by Opencast are really weird.
+    const differs = (a: Date, b: Date) => Math.abs(a.getTime() - b.getTime()) > 1000 * 30;
+    const fields: { label: string, date: Date }[] = [
+        { label: t("manage.table.updated"), date: updated },
     ];
+    if (startTime && !differs(startTime, created)) {
+        fields.push({
+            label: hasStarted ? `${t("video.created")}/${t("video.started")}` : t("video.starts"),
+            date: created,
+        });
+    } else {
+        fields.push({ label: t("video.created"), date: created });
+        if (startTime) {
+            fields.push({
+                label: hasStarted ? t("video.started") : t("video.starts"),
+                date: startTime,
+            });
+        }
+    }
+    if (endTime && differs(endTime, startTime ?? created)) {
+        fields.push({
+            label: hasEnded ? t("video.ended") : t("video.ending"),
+            date: endTime,
+        });
+    }
+    fields.sort((a, b) => a.date.getTime() - b.date.getTime());
 
     const tooltip = <table css={{}}>
         <tbody>
-            {fields.map(([label, date], i) => date && <tr key={i}>
+            {fields.map(({ label, date }, i) => <tr key={i}>
                 <td css={{ fontStyle: "italic", textAlign: "right" }}>{label}</td>
                 <td css={{ paddingLeft: 12 }}>{preciseDateTime(date, locale)}</td>
             </tr>)}
