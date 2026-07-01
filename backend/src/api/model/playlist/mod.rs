@@ -8,6 +8,7 @@ use crate::{
         err::{self, ApiResult},
         model::{
             acl::{self, Acl},
+            event::{Missing, VideoListEntry},
             realm::Realm,
             shared::{
                 define_sort_column_and_order,
@@ -27,6 +28,7 @@ use crate::{
         Node,
         NodeValue,
     },
+    auth::AuthContext,
     db::util::{impl_from_db, select},
     model::{Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
@@ -53,26 +55,13 @@ pub(crate) struct AuthorizedPlaylist {
     description: Option<String>,
     creator: String,
     updated: DateTime<Utc>,
+    is_fav: LazyLoad<bool>,
     num_entries: LazyLoad<u32>,
     thumbnail_stack: LazyLoad<ThumbnailStack>,
 
     pub(crate) read_roles: Vec<String>,
     write_roles: Vec<String>,
 }
-
-
-#[derive(juniper::GraphQLUnion)]
-#[graphql(Context = Context)]
-pub(crate) enum VideoListEntry {
-    Event(AuthorizedEvent),
-    NotAllowed(NotAllowed),
-    Missing(Missing),
-}
-
-/// The data referred to by a playlist entry was not found.
-pub(crate) struct Missing;
-crate::api::util::impl_object_with_dummy_field!(Missing);
-
 
 impl_from_db!(
     AuthorizedPlaylist,
@@ -92,6 +81,7 @@ impl_from_db!(
             read_roles: row.read_roles(),
             write_roles: row.write_roles(),
             updated: row.updated(),
+            is_fav: LazyLoad::NotLoaded,
             num_entries: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
         }
@@ -120,20 +110,28 @@ impl Playlist {
         id: &(dyn ToSql + Sync),
         context: &Context,
     ) -> ApiResult<Option<Self>> {
-        let selection = AuthorizedPlaylist::select();
+        let (selection, mapping) = select!(
+            playlist: AuthorizedPlaylist,
+            is_fav: "exists(select from favorites where playlist = $1 and username = $2)",
+        );
         let query = format!("select {selection} from playlists where {col} = $1");
         context.db
-            .query_opt(&query, &[id])
+            .query_opt(&query, &[id, &context.auth.state.username()])
             .await?
             .map(|row| {
-                let playlist = AuthorizedPlaylist::from_row_start(&row);
-                if context.auth.overlaps_roles(&playlist.read_roles) {
-                    Playlist::Playlist(playlist)
-                } else {
-                    Playlist::NotAllowed(NotAllowed)
-                }
+                let mut playlist = AuthorizedPlaylist::from_row(&row, mapping.playlist);
+                playlist.is_fav = LazyLoad::Loaded(mapping.is_fav.of(&row));
+                Self::check_auth(playlist, &context.auth)
             })
             .pipe(Ok)
+    }
+
+    pub(crate) fn check_auth(playlist: AuthorizedPlaylist, auth: &AuthContext) -> Self {
+        if auth.overlaps_roles(&playlist.read_roles) {
+            Self::Playlist(playlist)
+        } else {
+            Self::NotAllowed(NotAllowed)
+        }
     }
 
     async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<AuthorizedPlaylist> {
@@ -223,6 +221,12 @@ impl AuthorizedPlaylist {
 
     fn updated(&self) -> DateTime<Utc> {
         self.updated
+    }
+
+    /// Returns `true` iff this playlist is a favorite of the current user. Note:
+    /// this is lazily loaded and only available in certain contexts.
+    fn is_fav(&self) -> bool {
+        self.is_fav.unwrap()
     }
 
     /// Returns the number of entries in this playlist. Note: this is lazily loaded
@@ -378,4 +382,3 @@ define_sort_column_and_order!(
     };
     pub struct PlaylistsSortOrder
 );
-

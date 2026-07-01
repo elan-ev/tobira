@@ -467,6 +467,11 @@ type AuthorizedPlaylist implements Node {
   creator: String!
   updated: DateTime!
   """
+    Returns `true` iff this playlist is a favorite of the current user. Note:
+    this is lazily loaded and only available in certain contexts.
+  """
+  isFav: Boolean!
+  """
     Returns the number of entries in this playlist. Note: this is lazily loaded
     and only available in certain contexts (e.g., playlist listings).
   """
@@ -526,6 +531,27 @@ type EventSearchResults {
   totalHits: Int!
   "How long searching took in ms."
   duration: Int!
+}
+
+type FavFeedConnection {
+  pageInfo: PageInfo!
+  items: [FavFeedItem!]!
+  totalCount: Int!
+}
+
+type FavFeedItem {
+  event: Event!
+  """
+    The favorite series that caused this event to appear in the feed. It's
+    the event's series or `null`.
+  """
+  favSeries: Series
+  "All favorite playlists that caused this event to appear in the feed."
+  favPlaylists: [AuthorizedPlaylist!]!
+}
+
+type InaccessibleFavoriteItem {
+  id: ID!
 }
 
 """
@@ -721,6 +747,17 @@ type Mutation {
     and adds a block with the given series at the leaf.
   """
   mountSeries(series: NewSeries!, parentRealmPath: String!, newRealms: [RealmSpecifier!]! = []): Realm!
+  """
+    Adds the item referred to by `id`. Must be a series or playlist.
+    Mutation is idempotent. Returns `true` if the item was not a favorite
+    before already.
+  """
+  addFavorite(id: ID!): Boolean!
+  """
+    Removes an item from the users favorites. Returns whether the item
+    existed as favorite before.
+  """
+  removeFavorite(id: ID!): Boolean!
 }
 
 type NotAllowed {
@@ -1105,6 +1142,11 @@ type Series implements Node {
   updated: DateTime
   metadata: ExtraMetadata
   """
+    Returns `true` iff this series is a favorite of the current user. Note:
+    this is lazily loaded and only available in certain contexts.
+  """
+  isFav: Boolean!
+  """
     Returns creators extracted from the series metadata.
     Looks for `creator` or `createdBy` in the dcterms namespace.
   """
@@ -1284,6 +1326,13 @@ type User {
     on the "my playlists" page.
   """
   myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
+  "Returns all items that the user has marked as favorite."
+  myFavorites: [FavoriteItem!]!
+  """
+    Returns the latest videos (by `created` date) from items that the user
+    added as favorite.
+  """
+  favoritesFeed(offset: Int! = 0, limit: Int!): FavFeedConnection!
 }
 
 type UserInfo {
@@ -1313,6 +1362,8 @@ type VideoBlock implements Block {
 union Event = AuthorizedEvent | NotAllowed
 
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
+
+union FavoriteItem = Series | AuthorizedPlaylist | InaccessibleFavoriteItem
 
 union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 

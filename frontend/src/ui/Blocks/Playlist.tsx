@@ -13,8 +13,7 @@ import {
 } from "./__generated__/PlaylistBlockPlaylistData.graphql";
 import { ManagePlaylistDetailsRoute } from "../../routes/manage/Playlist/PlaylistDetails";
 import { keyOfId } from "../../util";
-import { VideoListBlock, VideoListBlockContainer, Order } from "./VideoList";
-import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
+import { VideoListBlock, VideoListBlockContainer, Order, VideoListLayout } from "./VideoList";
 import { DirectPlaylistRoute, PlaylistRoute } from "../../routes/Playlist";
 
 
@@ -46,6 +45,7 @@ const playlistFragment = graphql`
             description
             creator
             canWrite
+            isFav
             entries {
                 __typename
                 ... on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
@@ -117,7 +117,8 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
 
     return <VideoListBlock
         displayOptions={{
-            initialLayout: props.layoutParam ?? props.layout,
+            initialLayout: props.layoutParam
+                ?? (props.layout === "%future added value" ? "GALLERY" : props.layout),
             initialOrder: props.orderParam
                 ?? (props.order === "%future added value" ? undefined : props.order)
                 ?? "ORIGINAL",
@@ -132,6 +133,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         activeEventId={props.activeEventId}
         realmPath={props.realmPath}
         listId={playlist.id}
+        isFav={playlist.isFav}
         listEntries={playlist.entries}
         editMode={props.editMode ?? false}
         shareInfo={{
