@@ -15,7 +15,7 @@ import { DirectSeriesRoute } from "../../Series";
 import { ReturnLink, ManageNav, SharedManageNavProps } from "../Shared/Nav";
 import { COLORS } from "../../../color";
 import { ThumbnailStack } from "../../../ui/ThumbnailStack";
-import { ThumbnailItemState } from "../../../ui/Video";
+import { ThumbnailItemState } from "../../../ui/Thumbnail";
 import { MovingTruck } from "../../../ui/Waiting";
 import { ManageRoute } from "../Shared/Details";
 import { NotAuthorized } from "../../../ui/error";

@@ -13,7 +13,7 @@ import {
 import { makeRoute } from "../../../rauta";
 import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
-import { Thumbnail } from "../../../ui/Video";
+import { Thumbnail } from "../../../ui/Thumbnail";
 import { keyOfId, translatedConfig } from "../../../util";
 import {
     createQueryParamsParser, ManageItems, ListItem,

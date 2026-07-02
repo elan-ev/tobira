@@ -40,7 +40,7 @@ import { SeriesSortColumn } from "../Series/__generated__/SeriesManageQuery.grap
 import { useNotification } from "../../../ui/NotificationContext";
 import { floatingMenuProps, OcEntity, visuallyHiddenStyle } from "../../../util";
 import { isSynced } from "../../../util";
-import { ThumbnailItemState } from "../../../ui/Video";
+import { ThumbnailItemState } from "../../../ui/Thumbnail";
 import { SearchInput } from "../../../layout/header/Search";
 import { PlaylistsSortColumn } from "../Playlist/__generated__/PlaylistsManageQuery.graphql";
 import { BREAKPOINT_MEDIUM, BREAKPOINT_SMALL } from "../../../GlobalStyle";
@@ -1591,4 +1591,3 @@ const ShrinkWrapContainer: React.FC<ShrinkWrapContainerProps> = ({
         </div>
     );
 };
-

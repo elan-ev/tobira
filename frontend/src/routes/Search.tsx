@@ -43,7 +43,8 @@ import {
 import { RouterControl, makeRoute } from "../rauta";
 import { loadQuery } from "../relay";
 import { Link, useRouter } from "../router";
-import { Thumbnail, formatDuration } from "../ui/Video";
+import { Thumbnail } from "../ui/Thumbnail";
+import { formatDuration } from "../ui/Video";
 import { DateAndCreators, SmallDescription } from "../ui/metadata";
 import { Breadcrumbs, BreadcrumbsContainer, BreadcrumbSeparator } from "../ui/Breadcrumbs";
 import { MissingRealmName } from "./util";
