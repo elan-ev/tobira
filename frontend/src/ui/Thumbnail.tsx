@@ -1,4 +1,4 @@
-import { PropsWithChildren, useState } from "react";
+import { PropsWithChildren, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuVolume2 } from "react-icons/lu";
 import { screenWidthAtMost, useColorScheme } from "@opencast/appkit";
@@ -223,22 +223,14 @@ export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps>
     accessRoles,
     children,
     ...rest
-}) => {
-    const isDark = useColorScheme().scheme === "dark";
-
-    return <div {...rest} css={{
+}) => (
+    <div {...rest} css={{
         position: "relative",
         transition: "0.2s box-shadow",
         overflow: "visible",
         height: "fit-content",
         borderRadius: 8,
         aspectRatio: "16 / 9",
-        ...isDark && {
-            img: {
-                filter: "brightness(90%)",
-                transition: "0.1s filter",
-            },
-        },
     }}>
         <div css={{
             position: "absolute",
@@ -262,8 +254,8 @@ export const ThumbnailOverlayContainer: React.FC<ThumbnailOverlayContainerProps>
         }}>
             <AccessIcon item={accessRoles} />
         </div>}
-    </div>;
-};
+    </div>
+);
 
 const ActiveIndicator = () => (
     <div css={{
@@ -279,13 +271,28 @@ const ActiveIndicator = () => (
 
 export const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
     const { t } = useTranslation();
-    const [loadError, setLoadError] = useState(false);
+    const { isDark } = useColorScheme();
 
-    return loadError
+    const DEFAULT_TRANSITION_TIME = 250;
+
+    type State = "loading" | "error" | "loaded";
+    const [loadState, setLoadState] = useState<State>("loading");
+    const ref = useRef<HTMLImageElement>(null);
+    const [transitionTime, setTransitionTime] = useState(DEFAULT_TRANSITION_TIME);
+    const timingRef = useRef<number>(performance.now());
+    useEffect(() => {
+        timingRef.current = performance.now();
+    }, [src]);
+
+    const fullSize = {
+        height: "100%",
+        width: "100%",
+    };
+
+    const inner = loadState === "error"
         ? <div css={{
+            ...fullSize,
             backgroundColor: COLORS.neutral60,
-            aspectRatio: "16 / 9",
-            width: "100%",
             display: "flex",
             flexDirection: "column",
             gap: 8,
@@ -303,17 +310,31 @@ export const ThumbnailImg: React.FC<{ src: string; alt: string }> = ({ src, alt 
             {t("general.failed-to-load-thumbnail")}
         </div>
         : <img
-            {...{ src, alt }}
-            onError={() => setLoadError(true)}
+            {...{ src, alt, ref }}
+            onLoad={() => {
+                setLoadState("loaded");
+                const loadTime = Math.round(performance.now() - timingRef.current);
+                setTransitionTime(Math.min(DEFAULT_TRANSITION_TIME, Math.max(50, loadTime)));
+            }}
+            onError={() => setLoadState("error")}
             loading="lazy"
             width={16}
             height={9}
             css={{
+                ...fullSize,
                 display: "block",
-                width: "100%",
-                height: "100%",
                 objectFit: "contain",
                 backgroundColor: "black",
+                opacity: loadState === "loading" ? 0 : 1,
+                transition: `opacity ${transitionTime}ms ease-out`,
+                ...isDark && {
+                    filter: "brightness(90%)",
+                },
             }}
         />;
+
+    return <div css={{
+        backgroundColor: COLORS.neutral05,
+        ...fullSize,
+    }}>{inner}</div>;
 };
