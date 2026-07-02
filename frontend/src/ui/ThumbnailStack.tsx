@@ -8,7 +8,7 @@ import {
     ThumbnailOverlay,
     ThumbnailOverlayContainer,
     ThumbnailReplacement,
-} from "./Video";
+} from "./Thumbnail";
 import { COLORS } from "../color";
 import { AccessRoles } from "../util";
 

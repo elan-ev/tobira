@@ -8,7 +8,7 @@ import { loadQuery } from "../../../relay";
 import { NotAuthorized } from "../../../ui/error";
 import { NotFound } from "../../NotFound";
 import { b64regex } from "../../util";
-import { Thumbnail } from "../../../ui/Video";
+import { Thumbnail } from "../../../ui/Thumbnail";
 import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.graphql";
 import { eventId, keyOfId } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";

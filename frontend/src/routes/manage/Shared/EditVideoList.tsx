@@ -40,7 +40,7 @@ import { displayCommitError } from "../Realm/util";
 import { EventSelector } from "../../../ui/EventSelector";
 import { currentRef, floatingMenuProps, Inertable, keyOfId } from "../../../util";
 import { ellipsisOverflowCss, focusStyle } from "../../../ui";
-import { Thumbnail } from "../../../ui/Video";
+import { Thumbnail } from "../../../ui/Thumbnail";
 import { Link } from "../../../router";
 import { DirectVideoRoute } from "../../Video";
 import { useNavBlocker } from "../../util";
