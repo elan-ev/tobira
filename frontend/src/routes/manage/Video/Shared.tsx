@@ -13,7 +13,6 @@ import { SharedVideoManageQuery } from "./__generated__/SharedVideoManageQuery.g
 import { eventId, keyOfId } from "../../../util";
 import { DirectVideoRoute, VideoRoute } from "../../Video";
 import { ManageVideosRoute } from ".";
-import CONFIG from "../../../config";
 import { ReturnLink, ManageNav } from "../Shared/Nav";
 import { ManageRoute } from "../Shared/Details";
 
@@ -150,19 +149,16 @@ const ManageVideoNav: React.FC<ManageVideoNavProps> = ({ event, active }) => {
             body: <><LuPenLine />{t("video.details")}</>,
         },
         {
+            url: `/~manage/videos/${id}/access`,
+            page: "acl",
+            body: <><LuShieldCheck />{t("acl.title")}</>,
+        },
+        {
             url: `/~manage/videos/${id}/technical-details`,
             page: "technical-details",
             body: <><LuInfo />{t("manage.video.technical-details.title")}</>,
         },
     ];
-
-    if (CONFIG.allowAclEdit) {
-        navEntries.splice(1, 0, {
-            url: `/~manage/videos/${id}/access`,
-            page: "acl",
-            body: <><LuShieldCheck />{t("acl.title")}</>,
-        });
-    }
 
     const link = event.hostRealms.length === 1
         ? VideoRoute.url({ realmPath: event.hostRealms[0].path, videoID: id })

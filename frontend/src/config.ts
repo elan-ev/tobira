@@ -27,7 +27,6 @@ type Config = {
     initialConsent: InitialConsent | null;
     showDownloadButton: boolean;
     usersSearchable: boolean;
-    allowAclEdit: boolean;
     lockAclToSeries: boolean;
     allowSeriesEventRemoval: boolean;
     globalBanner: null | {

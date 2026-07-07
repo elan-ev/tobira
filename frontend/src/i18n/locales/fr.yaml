@@ -360,7 +360,6 @@ acl:
   title: Droits d'accès
   authorized-groups: Groupes autorisés
   authorized-users: Utilisateurs autorisés
-  editing-disabled: Le changement des droits d'accès est désactivé.
   locked-to-series: >
     Les autorisations de cette vidéo sont déterminées par sa <1>série</1> et ne
     peuvent donc pas être modifiées.

@@ -341,7 +341,6 @@ fn frontend_config(config: &Config) -> serde_json::Value {
         "initialConsent": config.general.initial_consent,
         "showDownloadButton": config.general.show_download_button,
         "usersSearchable": config.general.users_searchable,
-        "allowAclEdit": config.general.allow_acl_edit,
         "lockAclToSeries": config.general.lock_acl_to_series,
         "allowSeriesEventRemoval": config.general.allow_series_event_removal,
         "footerLinks": config.general.footer_links,

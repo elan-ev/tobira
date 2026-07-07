@@ -12,7 +12,6 @@ import { keyOfId, playlistId } from "../../../util";
 import { b64regex } from "../../util";
 import { NotFound } from "../../NotFound";
 import { NotAuthorized } from "../../../ui/error";
-import CONFIG from "../../../config";
 import { DirectPlaylistRoute } from "../../Playlist";
 import { COLORS } from "../../../color";
 import { SharedPlaylistManageQuery } from "./__generated__/SharedPlaylistManageQuery.graphql";
@@ -138,15 +137,12 @@ const ManagePlaylistNav: React.FC<ManagePlaylistNavProps> = ({ playlist, active 
             page: "details",
             body: <><LuPenLine />{t("manage.playlist.details.title")}</>,
         },
-    ];
-
-    if (CONFIG.allowAclEdit) {
-        navEntries.splice(1, 0, {
+        {
             url: `/~manage/playlists/${id}/access`,
             page: "acl",
             body: <><LuShieldCheck />{t("acl.title")}</>,
-        });
-    }
+        },
+    ];
 
     const link = DirectPlaylistRoute.url({ playlistId: id });
     const title = playlist.title;

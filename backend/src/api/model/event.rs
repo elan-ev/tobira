@@ -663,10 +663,6 @@ impl AuthorizedEvent {
     }
 
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<AuthorizedEvent> {
-        if !context.config.general.allow_acl_edit {
-            return Err(err::not_authorized!("editing ACLs is not allowed"));
-        }
-
         let event = Self::load_for_mutation(id, context).await?;
         event.require_idle(context).await?;
 
