@@ -307,6 +307,10 @@ search:
 
 upload:
   title: Importer une vidéo
+  no-writable-series-blocked: > #verify
+    L’importation nécessite une série. Vous n’avez accès en écriture à aucune série et vous ne pouvez pas en créer.
+  create-series-first: > #verify
+    L’importation nécessite une série. Veuillez en créer une ci-dessous pour continuer.
   drop-to-upload: Ajouter un fichier vidéo à importer par Drag-and-Drop
   not-authorized: Vous n’avez pas l’autorisation d’importer des vidéos.
   specified-series-not-found: La série spécifiée n'a pas été trouvée.
