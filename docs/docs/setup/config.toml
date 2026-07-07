@@ -387,8 +387,8 @@
 
 # The role granting permission to use the Opencast Editor from Tobira.
 #
-# Default value: "ROLE_TOBIRA_EDITOR"
-#editor = "ROLE_TOBIRA_EDITOR"
+# Default value: "ROLE_USER"
+#editor = "ROLE_USER"
 
 # The role granting permission to create one's own "user page".
 #

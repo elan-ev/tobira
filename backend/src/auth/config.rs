@@ -360,7 +360,7 @@ pub(crate) struct RoleConfig {
     pub(crate) studio: String,
 
     /// The role granting permission to use the Opencast Editor from Tobira.
-    #[config(default = "ROLE_TOBIRA_EDITOR")]
+    #[config(default = "ROLE_USER")]
     pub(crate) editor: String,
 
     /// The role granting permission to create one's own "user page".
