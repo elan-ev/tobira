@@ -196,7 +196,7 @@ type AclSelectProps = SelectProps & {
 
 /** One of the two columns for either users or groups. */
 const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const user = useUser();
     const { t, i18n } = useTranslation();
     const { change, knownGroups, groupDag, permissionLevels, ownerDisplayName } = useAclContext();
@@ -647,7 +647,7 @@ const UnchangeableAllActions: React.FC<{ permission?: PermissionLevel }> = ({ pe
 };
 
 const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const ref = useRef<FloatingHandle>(null);
     const { t } = useTranslation();
     const { change, permissionLevels, itemType } = useAclContext();
@@ -741,7 +741,7 @@ const ActionMenuItem: React.FC<ActionMenuItemProps> = (
     { label, description, onClick, close, disabled },
 ) => {
     const ref = useRef<HTMLButtonElement>(null);
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return (
         <li css={{

@@ -379,7 +379,7 @@ type VideoListBlockContainerProps = {
 export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = ({
     title, buttons, metadata, children,
 }) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return (
         <div css={{
@@ -592,7 +592,7 @@ type ListProps = {
 
 const List: React.FC<ListProps> = ({ type, close }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const {
         layoutState, setLayoutState, eventOrder, setEventOrder, allowOriginalOrder,
     } = useLayoutOrderContext();
@@ -697,7 +697,7 @@ type MenuItemProps = {
 export const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
     Icon, label, onClick, close, disabled, className,
 }, ref) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return (
         <li {...{ className }} css={{

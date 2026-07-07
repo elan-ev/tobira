@@ -38,7 +38,7 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
 
 export const Thumbnail: React.FC<ThumbnailProps> = ({ event, active, ...rest }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
     const deletionIsPending = event.tobiraDeletionTimestamp != null;
 

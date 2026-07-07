@@ -28,7 +28,7 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
     className,
     accessRoles,
 }) => {
-    const isDarkScheme = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return (
         <div {...{ className }} css={{
@@ -98,7 +98,7 @@ export const ThumbnailStack: React.FC<ThumbnailStackProps> = ({
                 <div key={"dummy" + idx}>
                     <DummySeriesStackThumbnail
                         accessRoles={accessRoles && idx === 0 ? accessRoles : undefined}
-                        {...{ isDarkScheme }}
+                        isDarkScheme={isDark}
                     />
                 </div>
             ))}
@@ -163,7 +163,7 @@ type SeriesThumbnailProps = {
 
 const SeriesThumbnail: React.FC<SeriesThumbnailProps> = ({ info, title, accessRoles }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     let inner;
     if (info.url != null) {

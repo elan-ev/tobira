@@ -90,7 +90,7 @@ export const SearchableSelect = <T, >({
     ...props
 }: SearchableSelectProps<T>) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const ref = useRef<SelectInstance<T>>(null);
 
     return <AsyncSelect

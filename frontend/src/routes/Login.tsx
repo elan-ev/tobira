@@ -213,7 +213,7 @@ export const AuthenticationForm: React.FC<AuthenticationFormProps> = ({
     children,
 }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
     const userId = watch("userid", "");
     const password = watch("password", "");
@@ -315,7 +315,7 @@ type FieldProps = {
 };
 
 const Field: React.FC<FieldProps> = ({ isEmpty, children }) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const raisedStyle = {
         top: 0,
         left: 8,

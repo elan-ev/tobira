@@ -10,15 +10,17 @@ import { COLORS } from "../color";
 
 export const SIDE_BOX_BORDER_RADIUS = 8;
 
-export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => (
-    <div css={{
+export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { isDark } = useColorScheme();
+
+    return <div css={{
         backgroundColor: COLORS.neutral10,
         borderRadius: SIDE_BOX_BORDER_RADIUS,
         overflow: "hidden",
         ":not(:first-child)": { marginTop: 26 },
-        ...useColorScheme().scheme === "dark" && darkModeBoxShadow,
-    }}>{children}</div>
-);
+        ...isDark && darkModeBoxShadow,
+    }}>{children}</div>;
+};
 
 type LinkListProps = {
     items: JSX.Element[];
@@ -27,6 +29,8 @@ type LinkListProps = {
 
 /** A box with light grey background containing a list of items */
 export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => {
+    const { isDark } = useColorScheme();
+
     const itemStyle = {
         backgroundColor: COLORS.neutral10,
         borderBottom: `2px solid ${COLORS.neutral05}`,
@@ -37,30 +41,33 @@ export const LinkList: React.FC<LinkListProps> = ({ items, ...rest }) => {
         },
     };
 
-    return <ul
-        css={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            "& a, & form button": {
-                ...focusStyle({ inset: true }),
-                ...useColorScheme().scheme === "dark" && { color: COLORS.primary1 },
-            },
-            [screenWidthAbove(NAV_BREAKPOINT)]: {
-                "& > li:last-child": {
-                    "> a, > form button": {
-                        borderRadius: `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
+    return (
+        <ul
+            css={{
+                listStyle: "none",
+                margin: 0,
+                padding: 0,
+                "& a, & form button": {
+                    ...focusStyle({ inset: true }),
+                    ...isDark && { color: COLORS.primary1 },
+                },
+                [screenWidthAbove(NAV_BREAKPOINT)]: {
+                    "& > li:last-child": {
+                        "> a, > form button": {
+                            borderRadius:
+                                `0 0 ${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px`,
+                        },
+                    },
+                    "&:first-child > li:first-child > a": {
+                        borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
                     },
                 },
-                "&:first-child > li:first-child > a": {
-                    borderRadius: `${SIDE_BOX_BORDER_RADIUS}px ${SIDE_BOX_BORDER_RADIUS}px 0 0`,
-                },
-            },
-        }}
-        {...rest}
-    >
-        {items.map((child, i) => <li css={itemStyle} key={i}>{child}</li>)}
-    </ul>;
+            }}
+            {...rest}
+        >
+            {items.map((child, i) => <li css={itemStyle} key={i}>{child}</li>)}
+        </ul>
+    );
 };
 
 
@@ -117,7 +124,7 @@ export const LinkWithIcon: React.FC<LinkWithIconProps> = ({
     close,
     ...rest
 }) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const style = linkWithIconStyle(isDark, iconPos, active);
 
     return active
