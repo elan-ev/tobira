@@ -278,8 +278,8 @@
 # yet to generally recommend turning this on. When you do, please report
 # any problems or weird behaviors to us!
 #
-# Default value: false
-#auth_static_files = false
+# Default value: true
+#auth_static_files = true
 
 # Determines whether or not Tobira users are getting pre-authenticated against
 # Opencast when they visit external links like the ones to Opencast Studio

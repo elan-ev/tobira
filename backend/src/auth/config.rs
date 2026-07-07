@@ -43,7 +43,7 @@ pub(crate) struct AuthConfig {
     /// Experimental: this should work fine, but we don't have enough experience
     /// yet to generally recommend turning this on. When you do, please report
     /// any problems or weird behaviors to us!
-    #[config(default = false)]
+    #[config(default = true)]
     pub(crate) auth_static_files: bool,
 
     /// Determines whether or not Tobira users are getting pre-authenticated against
