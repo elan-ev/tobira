@@ -180,7 +180,7 @@ type ChildEntryProps = {
 
 const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChildren }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return (
         <li css={{

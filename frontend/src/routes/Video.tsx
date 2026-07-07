@@ -671,7 +671,7 @@ export const CREDENTIALS_STORAGE_KEY = "tobira-video-credentials-";
 
 const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refetch }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const user = useUser();
     const [authState, setAuthState] = useState<AuthenticationFormState>("idle");
     const [authError, setAuthError] = useState<string | null>(null);
@@ -852,7 +852,7 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
 
 const AuthenticationFormText: React.FC = () => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return <div css={{
         textAlign: "left",
@@ -1004,7 +1004,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
 const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const { t } = useTranslation();
     const ref = useRef(null);
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return (
         <FloatingContainer

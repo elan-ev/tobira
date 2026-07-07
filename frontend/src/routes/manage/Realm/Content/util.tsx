@@ -7,8 +7,10 @@ import { COLORS } from "../../../../color";
 
 type ButtonProps = React.ComponentProps<"button">;
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => (
-    <button
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+    const { isDark } = useColorScheme();
+
+    return <button
         ref={ref}
         type="button"
         css={{
@@ -26,7 +28,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
                 cursor: "pointer",
                 "&:hover, &:focus": {
                     backgroundColor: COLORS.neutral10,
-                    ...useColorScheme().scheme === "dark" && {
+                    ...isDark && {
                         backgroundColor: COLORS.neutral15,
                         color: COLORS.neutral80,
                     },
@@ -35,8 +37,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, r
             },
         }}
         {...props}
-    />
-));
+    />;
+});
 
 type ButtonGroupProps = React.ComponentProps<"div">;
 

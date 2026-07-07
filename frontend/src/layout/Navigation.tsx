@@ -107,7 +107,7 @@ type NavProps = {
  * TODO: docs
  */
 export const Nav: React.FC<NavProps> = ({ items }) => {
-    const isDarkMode = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     const menu = useMenu();
     const closeBurger = () => menu.state === "burger" && menu.close();
@@ -135,7 +135,8 @@ export const Nav: React.FC<NavProps> = ({ items }) => {
                     },
                 }}>
                     <NavItem
-                        {...{ item, isDarkMode }}
+                        {...{ item }}
+                        isDarkMode={isDark}
                         onLinkClick={item.closeBurgerOnClick ? closeBurger : undefined}
                     />
                 </li>

@@ -284,7 +284,7 @@ const DateFilterMenu: React.FC<DateFilterMenuProps> = ({
     close,
 }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const itemProps = useFloatingItemProps();
 
     const inputStyle = {
@@ -550,7 +550,7 @@ type FilterMenuProps = {
 const FilterMenu: React.FC<FilterMenuProps> = ({
     vars, options, filterKey, current, close, label,
 }) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const router = useRouter();
     const itemProps = useFloatingItemProps();
 
@@ -703,7 +703,7 @@ type SortingMenuProps = {
 
 const SortingMenu: React.FC<SortingMenuProps> = ({ close, vars, sortOptions }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const itemId = useId();
     const router = useRouter();
     const itemProps = useFloatingItemProps();
@@ -899,7 +899,7 @@ type GenericListItemProps<T extends ListItemProps> = {
 };
 
 export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericListItemProps<T>) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const { t } = useTranslation();
     const deletionTimestamp = item.tobiraDeletionTimestamp;
     const createdTimestamp = props.created;
@@ -1229,7 +1229,7 @@ type PendingDescriptionProps = {
 const StatusPendingDescription: React.FC<PendingDescriptionProps> = ({
     action, itemType, hasFailed, actionDate,
 }) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const { t, i18n } = useTranslation();
 
     // TODO: Reevaluate use of prettyDate here. The recent-ish changes to that function

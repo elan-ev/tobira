@@ -420,6 +420,8 @@ type SearchResultsProps = {
 };
 
 const SearchResults: React.FC<SearchResultsProps> = ({ items }) => {
+    const { isDark } = useColorScheme();
+
     // Make search results navigatable by arrow keys. For this we don't use any
     // react state, but DOM methods directly. This is way easier in this case
     // to properly deal with changing focus due to use of the tab-key for
@@ -466,9 +468,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ items }) => {
             listStyle: "none",
             padding: 0,
             // A warm grey for highlighting matches.
-            "--highlight-color": useColorScheme().scheme === "dark"
-                ? COLORS.neutral25
-                : COLORS.neutral20,
+            "--highlight-color": isDark ? COLORS.neutral25 : COLORS.neutral20,
         }}>
             {items.map(item => matchTag(item, "__typename", {
                 "SearchEvent": item => <SearchEvent key={item.id} {...item} />,

@@ -95,7 +95,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     const { t, i18n } = useTranslation();
     const user = useUser();
     const menu = useMenu();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     const entries: [NonNullable<ManageNavProps["active"]>, string, ReactElement][] = [];
 

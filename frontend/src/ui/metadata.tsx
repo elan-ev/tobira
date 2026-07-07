@@ -125,7 +125,7 @@ export const SmallDescription: React.FC<SmallDescriptionProps> = ({
     withoutPlaceholder = false,
 }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const sharedStyle = {
         fontSize: 13,
         marginTop: 4,

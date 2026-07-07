@@ -282,7 +282,7 @@ type AddVideoMenuProps = {
 
 const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlaylist }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const [buttonIsActive, setButtonIsActive] = useState(false);
     const floatingRef = useRef<FloatingHandle>(null);
 
@@ -371,7 +371,7 @@ const EventEntry: React.FC<EventEntryProps> = ({
     event, index, totalEvents, onChange, listId, onSeriesChange, onMove, isPlaylistEntry,
 }) => {
     const { t, i18n } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     const moveButtonStyle = css({
         display: "flex",
@@ -636,7 +636,7 @@ type SwitchSeriesMenuProps = {
 
 const SwitchSeriesMenu: React.FC<SwitchSeriesMenuProps> = ({ event, onSeriesChange, listId }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const floatingRef = useRef<FloatingHandle>(null);
     const [buttonIsActive, setButtonIsActive] = useState(false);
 
