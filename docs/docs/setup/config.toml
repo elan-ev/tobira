@@ -272,8 +272,8 @@
 # Opencast when they visit external links like the ones to Opencast Studio
 # or the Editor. If you have an SSO-solution, you don't need this.
 #
-# Default value: false
-#pre_auth_external_links = false
+# Default value: true
+#pre_auth_external_links = true
 
 
 # Tobira's built-in session management. Only relevant if `auth.source = "tobira-session"`.

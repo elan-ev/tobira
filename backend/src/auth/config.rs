@@ -49,7 +49,7 @@ pub(crate) struct AuthConfig {
     /// Determines whether or not Tobira users are getting pre-authenticated against
     /// Opencast when they visit external links like the ones to Opencast Studio
     /// or the Editor. If you have an SSO-solution, you don't need this.
-    #[config(default = false)]
+    #[config(default = true)]
     pub(crate) pre_auth_external_links: bool,
 
     /// Tobira's built-in session management. Only relevant if `auth.source = "tobira-session"`.
