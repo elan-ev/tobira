@@ -122,9 +122,6 @@ impl JwtContext {
         #[derive(Serialize)]
         struct UserInfo<'a> {
             sub: &'a str,
-            // TODO: this is just for backwards compatibility and should be
-            // removed in the future.
-            username: &'a str,
             name: &'a str,
             #[serde(skip_serializing_if = "Option::is_none")]
             email: Option<&'a str>,
@@ -141,7 +138,6 @@ impl JwtContext {
         self.generate(Payload {
             user: UserInfo {
                 sub: &user.username,
-                username: &user.username,
                 name: &user.display_name,
                 email: user.email.as_deref(),
             },
