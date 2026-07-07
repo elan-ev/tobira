@@ -341,8 +341,8 @@
 #
 # Valid values: "ES256", "ES384", "ED25519"
 #
-# Default value: "ES384"
-#signing_algorithm = "ES384"
+# Default value: "ED25519"
+#signing_algorithm = "ED25519"
 
 # Path to the secret signing key. The key has to be PEM encoded. If not
 # specified, a key is generated everytime Tobira is started. The randomly

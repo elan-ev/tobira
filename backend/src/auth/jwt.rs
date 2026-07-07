@@ -16,7 +16,7 @@ pub(crate) struct JwtConfig {
     /// Signing algorithm for JWTs.
     ///
     /// Valid values: "ES256", "ES384", "ED25519"
-    #[config(default = "ES384")]
+    #[config(default = "ED25519")]
     signing_algorithm: Algorithm,
 
     /// Path to the secret signing key. The key has to be PEM encoded. If not
