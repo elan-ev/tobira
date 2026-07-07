@@ -114,20 +114,12 @@
 
     - name: Download latest DB dump
       become: true
-      get_url:
-        url: 'https://github.com/elan-ev/tobira/raw/db-dumps/db-dump-latest.xz'
-        dest: /opt/tobira/{{ id }}/db-dump.pgc.xz
-        owner: root
-        group: root
-        mode: '0755'
-
-    - name: Decompress DB dump
-      become: true
-      shell: xz -d db-dump.pgc.xz
+      shell: |
+        curl -fSL 'https://github.com/elan-ev/tobira/raw/db-dumps/db-dump-latest.xz' \
+        | xz -d > db-dump.pgc && chmod 0644 db-dump.pgc
       args:
         chdir: /opt/tobira/{{ id }}/
         creates: /opt/tobira/{{ id }}/db-dump.pgc
-        removes: /opt/tobira/{{ id }}/db-dump.pgc.xz
 
     - name: Restore DB dump
       become: true
