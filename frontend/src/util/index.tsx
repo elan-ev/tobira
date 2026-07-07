@@ -18,7 +18,7 @@ import { TimeUnit } from "../ui/Input";
 import { CREDENTIALS_STORAGE_KEY } from "../routes/Video";
 import { COLORS } from "../color";
 import { Caption } from "../ui/player";
-import { thumbnailOverlayStyles } from "../ui/Video";
+import { thumbnailOverlayStyles } from "../ui/Thumbnail";
 
 
 /**

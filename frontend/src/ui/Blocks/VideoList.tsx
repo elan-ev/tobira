@@ -31,10 +31,10 @@ import { PlaylistBlockPlaylistData$data } from "./__generated__/PlaylistBlockPla
 import { floatingMenuProps, keyOfId } from "../../util";
 import { Link } from "../../router";
 import SeriesIcon from "../../icons/series.svg";
+import { isPastLiveEvent, isUpcomingLiveEvent } from "../Video";
 import {
-    BaseThumbnailReplacement, isPastLiveEvent, isUpcomingLiveEvent, Thumbnail,
-    ThumbnailOverlayContainer,
-} from "../Video";
+    BaseThumbnailReplacement, Thumbnail, ThumbnailOverlayContainer,
+} from "../Thumbnail";
 import { PrettyDate } from "../time";
 import { CollapsibleDescription, DateAndCreators, SmallDescription } from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
