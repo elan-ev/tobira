@@ -3,13 +3,14 @@ use chrono::{DateTime, Utc};
 use deadpool_postgres::GenericClient;
 use anyhow::{Error, Result};
 use futures::TryStreamExt;
+use hyper::{header, StatusCode};
 use ogrim::xml;
-use tokio_postgres::{Client, Row, RowStream};
+use tokio_postgres::{types::ToSql, Row, RowStream};
 
 use crate::{
     auth::{AuthState, HasRoles},
-    util::HttpHost,
-    db::{DbConnection, types::EventTrack, util::{FromDb, dbargs, impl_from_db, select}},
+    util::{ByteBody, HttpHost},
+    db::{Db, DbConnection, types::EventTrack, util::{FromDb, dbargs, impl_from_db, select}},
     http::{Context, Response, response::{self, bad_request, internal_server_error, not_found}},
     model::{ExtraMetadata, Key},
     prelude::*,
@@ -60,7 +61,7 @@ pub(crate) async fn generate_series_feed(
     // Load series data
     let (selection, mapping) = select!(title, description, metadata);
     let query = format!("select {selection} from series where id = $1");
-    let row = load_item(&db, &query, series_id).await?;
+    let row = load_item(db, &query, series_id).await?;
     let metadata = mapping.metadata.of(&row);
     let info = FeedInfo {
         title: mapping.title.of(&row),
@@ -93,7 +94,7 @@ pub(crate) async fn generate_playlist_feed(
     // Load playlist data
     let (selection, mapping) = select!(title, description, read_roles, creator);
     let query = format!("select {selection} from playlists where id = $1");
-    let row = load_item(&db, &query, playlist_id).await?;
+    let row = load_item(db, &query, playlist_id).await?;
     let read_roles = mapping.read_roles.of::<Vec<String>>(&row);
     if !auth.overlaps_roles(&read_roles, &context.config.auth) {
         return Err(crate::http::response::forbidden())
@@ -119,15 +120,68 @@ pub(crate) async fn generate_playlist_feed(
     generate_feed(context, format!("~rss/playlist/{id}"), info, events).await
 }
 
-async fn load_item(db: &Client, query: &str, key: Key) -> Result<Row, Response> {
-    match db.query_opt(query, &[&key]).await {
-        Ok(Some(row)) => Ok(row),
-        Ok(None) => Err(not_found()),
-        Err(e) => {
-            error!("DB error querying data for RSS: {e}");
-            Err(internal_server_error())
+/// RSS resources that share canonical-ID resolution and redirect handling.
+#[derive(Clone, Copy)]
+pub(crate) enum RssResource {
+    Series,
+    Playlist,
+}
+
+impl RssResource {
+    fn table_name(self) -> &'static str {
+        match self {
+            Self::Series => "series",
+            Self::Playlist => "playlists",
         }
     }
+
+    pub(crate) fn rss_prefix(self) -> &'static str {
+        match self {
+            Self::Series => "/~rss/series/",
+            Self::Playlist => "/~rss/playlist/"
+        }
+    }
+}
+
+pub(crate) async fn redirect_opencast_id(
+    db: &DbConnection,
+    resource: RssResource,
+    id: &str,
+) -> Result<Option<Response>, Response> {
+    let Some(opencast_id) = id.strip_prefix(':') else {
+        return Ok(None);
+    };
+
+    let query_by_opencast_id = format!("select id from {} where opencast_id = $1", resource.table_name());
+    let row = query_opt_or_internal_error(db, &query_by_opencast_id, &[&opencast_id]).await?;
+    let key: Key = row.map(|r| r.get(0)).ok_or_else(not_found)?;
+
+    let mut buf = [0; 11];
+    let location = format!("{}{}", resource.rss_prefix(), key.to_base64(&mut buf));
+    let response = Response::builder()
+        .status(StatusCode::PERMANENT_REDIRECT)
+        .header(header::LOCATION, location)
+        .body(ByteBody::empty())
+        .unwrap();
+
+    Ok(Some(response))
+}
+
+async fn query_opt_or_internal_error(
+    db: &Db,
+    query: &str,
+    params: &[&(dyn ToSql + Sync)],
+) -> Result<Option<Row>, Response> {
+    db.query_opt(query, params).await.map_err(|e| {
+        error!("DB error querying data for RSS: {e}");
+        internal_server_error()
+    })
+}
+
+async fn load_item(db: &Db, query: &str, key: Key) -> Result<Row, Response> {
+    query_opt_or_internal_error(db, query, &[&key])
+        .await?
+        .ok_or_else(not_found)
 }
 
 

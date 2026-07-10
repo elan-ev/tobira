@@ -177,8 +177,14 @@ async fn handle_rss_request(req: Request<Incoming>, ctx: &Arc<Context>) -> Resul
 
     let path = req.uri().path();
     let rss_content = if let Some(series_id) = path.strip_prefix("/~rss/series/") {
+        if let Some(redirect) = rss::redirect_opencast_id(&db, rss::RssResource::Series, series_id).await? {
+            return Ok(redirect);
+        }
         rss::generate_series_feed(&ctx, &auth, &db, series_id).await?
     } else if let Some(playlist_id) = path.strip_prefix("/~rss/playlist/") {
+        if let Some(redirect) = rss::redirect_opencast_id(&db, rss::RssResource::Playlist, playlist_id).await? {
+            return Ok(redirect);
+        }
         rss::generate_playlist_feed(&ctx, &auth, &db, playlist_id).await?
     } else {
         return Ok(response::not_found());
