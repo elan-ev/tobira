@@ -157,6 +157,17 @@ export const preciseDateTime = (date: Date, locale: string): string => {
     return `${year}-${month}-${day} ${hour}:${minute}:${second} (${weekday})`;
 };
 
+export const semiPreciseDateTime = (date: Date): string => {
+    const pad2 = (n: number) => String(n).padStart(2, "0");
+    const year = date.getFullYear();
+    const month = pad2(date.getMonth() + 1);
+    const day = pad2(date.getDate());
+    const hour = pad2(date.getHours());
+    const minute = pad2(date.getMinutes());
+
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+};
+
 /**
  * Returns the browser-preferred locale (potentially with region) for the given
  * language.

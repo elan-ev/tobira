@@ -156,6 +156,7 @@ video:
   upcoming: Upcoming
   ended: Ended
   ended-at: Ended {{datetime}}
+  ending: Ending
   license: License
   source: Source
   stream-ended: This stream has ended.

@@ -158,6 +158,7 @@ video:
   upcoming: Anstehend
   ended: Beendet
   ended-at: Beendet {{datetime}}
+  ending: Endet
   license: Lizenz
   source: Quelle
   stream-ended: Dieser Stream ist beendet.
