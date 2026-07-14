@@ -478,16 +478,14 @@ impl Event {
             )),
         }
     }
-}
 
-impl AuthorizedEvent {
     /// Loads the event with the specified ID.
-    pub(crate) async fn load(id: impl OcItemId, context: &Context) -> ApiResult<Option<Event>> {
+    pub(crate) async fn load(id: impl OcItemId, context: &Context) -> ApiResult<Option<Self>> {
         let Some(id_arg) = id.arg(Id::EVENT_KIND) else {
             return Ok(None);
         };
 
-        let selection = Self::select();
+        let selection = AuthorizedEvent::select();
         let col = id.column();
         let query = format!("select {selection} from events \
             left join series on series.id = events.series \
@@ -496,8 +494,8 @@ impl AuthorizedEvent {
             .query_opt(&query, &[&id_arg])
             .await?
             .map(|row| {
-                let event = Self::from_row_start(&row);
-                Event::check_auth(event, &context.auth)
+                let event = AuthorizedEvent::from_row_start(&row);
+                Self::check_auth(event, &context.auth)
             })
             .pipe(Ok)
     }
@@ -506,7 +504,7 @@ impl AuthorizedEvent {
         series_key: Key,
         context: &Context,
     ) -> ApiResult<Vec<VideoListEntry>> {
-        let selection = Self::select();
+        let selection = AuthorizedEvent::select();
         let query = format!(
             "select {selection} from series \
                 inner join events on events.series = series.id \
@@ -514,7 +512,7 @@ impl AuthorizedEvent {
         );
         context.db
             .query_mapped(&query, dbargs![&series_key], |row| {
-                let event = Self::from_row_start(&row);
+                let event = AuthorizedEvent::from_row_start(&row);
                 if !event.can_be_previewed(&context.auth) {
                     return VideoListEntry::NotAllowed(NotAllowed);
                 }
@@ -524,7 +522,9 @@ impl AuthorizedEvent {
             .await?
             .pipe(Ok)
     }
+}
 
+impl AuthorizedEvent {
     fn can_be_previewed(&self, context: &AuthContext) -> bool {
         context.overlaps_roles(&self.preview_roles)
             || context.overlaps_roles(&self.read_roles)
@@ -538,7 +538,7 @@ impl AuthorizedEvent {
         id: impl OcItemId,
         context: &Context,
     ) -> ApiResult<AuthorizedEvent> {
-        let event = Self::load(id, context)
+        let event = Event::load(id, context)
             .await?
             .ok_or_else(|| err::invalid_input!(key = "event.not-found", "event not found"))?
             .into_result()?;
@@ -598,7 +598,7 @@ impl AuthorizedEvent {
             &acl.write_roles,
         ]).await?;
 
-        let event = Self::load(event.opencast_id, context)
+        let event = Event::load(event.opencast_id, context)
             .await?
             .unwrap()
             .into_result()?;

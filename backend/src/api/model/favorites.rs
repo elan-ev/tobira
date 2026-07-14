@@ -94,7 +94,7 @@ pub async fn add_favorite(id: Id, context: &Context) -> ApiResult<bool> {
 
 
     if let Some(event_key) = event_id {
-        let event = AuthorizedEvent::load(event_key, context).await?;
+        let event = Event::load(event_key, context).await?;
         if let Some(Event::NotAllowed(_)) = event {
             return Err(not_authorized!("not allowed to read event"));
         }

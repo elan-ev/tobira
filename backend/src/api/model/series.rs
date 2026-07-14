@@ -10,7 +10,7 @@ use crate::{
         err::{self, ApiResult, invalid_input},
         model::{
             acl::{self, Acl},
-            event::{AuthorizedEvent},
+            event::{AuthorizedEvent, Event},
             realm::Realm,
             shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input},
         },
@@ -804,7 +804,7 @@ impl Series {
     }
 
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
-        AuthorizedEvent::load_for_series(self.key, context).await
+        Event::load_for_series(self.key, context).await
     }
 
     /// Returns `true` if the realm has a series block with this series.
