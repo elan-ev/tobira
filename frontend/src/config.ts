@@ -38,6 +38,7 @@ type Config = {
     };
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
+    footerMarkdown: TranslatedString | null;
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
     paellaSettingsIcon: string;
     paellaThemeJson: string;
