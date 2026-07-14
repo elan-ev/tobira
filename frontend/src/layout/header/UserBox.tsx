@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     LuTriangleAlert, LuLogIn, LuMoon, LuSun, LuFolder, LuFilm,
-    LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
+    LuUpload, LuVideo, LuLogOut, LuUserCheck,
     LuCirclePlus,
     LuGauge,
 } from "react-icons/lu";
@@ -199,6 +199,7 @@ type LoggedInProps = {
 /** User-related UI in header when the user IS logged in. */
 const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
     const { t } = useTranslation();
+    const { isDark } = useColorScheme();
 
     type LogoutState = "idle" | "pending" | "error";
     const [logoutState, setLogoutState] = useState<LogoutState>("idle");
@@ -340,16 +341,34 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
         items,
     };
 
+    // TODO
+    const initials = user.displayName.split(" ").map(s => s.charAt(0)).slice(0, 2).join("");
+    const hash = (str: string) => {
+        let hash = 0x811c9dc5; // FNV-1a offset basis
+
+        for (let i = 0; i < str.length; i++) {
+            hash ^= str.charCodeAt(i);
+            hash = Math.imul(hash, 0x01000193); // FNV prime
+        }
+
+        // Convert unsigned 32-bit int to [0, 1)
+        return (hash >>> 0) / 0x100000000;
+    };
+    const hue = hash(user.username);
+
     return <WithHeaderMenu menu={menuProps}>
-        <div css={{ position: "relative" }}>
+        <div css={{ position: "relative", height: "100%" }}>
             <ProtoButton title={t("user.settings")} css={{
                 display: "flex",
                 alignItems: "center",
-                backgroundColor: COLORS.neutral05,
-                border: `1px solid ${COLORS.neutral40}`,
-                gap: 12,
-                borderRadius: 8,
-                padding: "8px 10px 8px 16px",
+                justifyContent: "center",
+                backgroundColor: `lch(${isDark ? 60 : 40} 30 ${hue * 360})`,
+                color: `${COLORS.neutral05} !important`,
+                fontSize: 22,
+                fontWeight: "bold",
+                borderRadius: "50%",
+                height: 48,
+                aspectRatio: "1/1",
                 cursor: "pointer",
                 ":hover": {
                     borderColor: COLORS.neutral25,
@@ -358,19 +377,8 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
                 },
                 ":focus-visible": { borderColor: COLORS.focus },
                 ...focusStyle({ offset: -1 }),
-                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                    display: "none",
-                },
             }}>
-                <span css={{
-                    maxWidth: "clamp(170px, 12vw, 230px)",
-                    whiteSpace: "nowrap",
-                    textOverflow: "ellipsis",
-                    overflow: "hidden",
-                }}>
-                    {user.displayName}
-                </span>
-                <LuChevronDown size={20}/>
+                {initials}
             </ProtoButton>
             {/* Show icon on mobile devices. */}
             <ActionIcon
