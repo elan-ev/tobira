@@ -177,7 +177,7 @@ impl SeriesBlock {
     async fn series(&self, context: &Context) -> ApiResult<Option<Series>> {
         match self.series {
             None => Ok(None),
-            Some(series_id) => Series::load_by_id(series_id, context).await,
+            Some(series_id) => Series::load(series_id, context).await,
         }
     }
 
@@ -227,7 +227,7 @@ impl VideoBlock {
     async fn event(&self, context: &Context) -> ApiResult<Option<Event>> {
         match self.event {
             None => Ok(None),
-            Some(event_id) => Ok(AuthorizedEvent::load_by_id(event_id, context).await?),
+            Some(event_id) => Ok(AuthorizedEvent::load(event_id, context).await?),
         }
     }
 
@@ -271,7 +271,7 @@ impl PlaylistBlock {
         match self.playlist {
             None => Ok(None),
             // `unwrap` is okay here because of our foreign key constraint
-            Some(playlist_id) => Ok(Some(Playlist::load_by_id(playlist_id, context).await?.unwrap())),
+            Some(playlist_id) => Ok(Some(Playlist::load(playlist_id, context).await?.unwrap())),
         }
     }
 
