@@ -3,7 +3,7 @@ import { keyframes } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 import { currentRef, match, screenWidthAtMost } from "@opencast/appkit";
 
-import { Header } from "./header";
+import { Header, HEADER_THIN_HEIGHT } from "./header";
 import { BREAKPOINT as NAV_BREAKPOINT, NavItems } from "./Navigation";
 import { useMenu } from "./MenuState";
 import { Footer } from "./Footer";
@@ -104,7 +104,9 @@ const Main: React.FC<{ children: ReactNode }> = ({ children }) => (
  * parts of the nav that were hidden before, the nav immediately scrolls.
  */
 const StickyNav: React.FC<React.PropsWithChildren> = ({ children }) => {
-    const VIEWPORT_MARGIN = 16;
+    const VIEWPORT_MARGIN_TOP = HEADER_THIN_HEIGHT + 16;
+    const VIEWPORT_MARGIN_BOTTOM = 16;
+    const VIEWPORT_MARGIN = VIEWPORT_MARGIN_TOP + VIEWPORT_MARGIN_BOTTOM;
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const stickyBoxRef = useRef<HTMLDivElement | null>(null);
@@ -120,7 +122,7 @@ const StickyNav: React.FC<React.PropsWithChildren> = ({ children }) => {
 
         // If the nav fits the viewport, we don't set anything. The static CSS
         // properties set in the JSX can deal with that.
-        const fitsViewport = window.innerHeight >= stickyBox.scrollHeight + 2 * VIEWPORT_MARGIN;
+        const fitsViewport = window.innerHeight >= stickyBox.scrollHeight + VIEWPORT_MARGIN;
         if (fitsViewport) {
             // Reset everything this function might have set.
             ["margin-top", "margin-bottom", "top", "bottom"]
@@ -154,7 +156,7 @@ const StickyNav: React.FC<React.PropsWithChildren> = ({ children }) => {
         // margins.
         const posInContainer = stickyBox.offsetTop - container.offsetTop;
         const marginBottom = container.offsetHeight - posInContainer - stickyBox.offsetHeight;
-        const pos = `calc(100vh - ${stickyBox.scrollHeight}px - ${VIEWPORT_MARGIN}px)`;
+        const pos = `calc(100vh - ${stickyBox.scrollHeight}px - ${VIEWPORT_MARGIN_TOP}px)`;
         match(direction, {
             "down": () => {
                 stickyBox.style.top = pos;
@@ -226,7 +228,7 @@ const StickyNav: React.FC<React.PropsWithChildren> = ({ children }) => {
         <div ref={stickyBoxRef} css={{
             width: "100%",
             position: "sticky",
-            top: VIEWPORT_MARGIN,
+            top: VIEWPORT_MARGIN_TOP,
         }}>
             {children}
         </div>

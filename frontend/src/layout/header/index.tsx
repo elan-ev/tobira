@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { LuArrowLeft, LuMenu, LuX } from "react-icons/lu";
 import { HiOutlineSearch } from "react-icons/hi";
 import { useTranslation } from "react-i18next";
@@ -19,6 +19,8 @@ type Props = {
     loginMode?: boolean;
 };
 
+export const HEADER_THIN_HEIGHT = 64;
+
 export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false }) => {
     const menu = useMenu();
     const content = match(menu.state, {
@@ -27,20 +29,40 @@ export const Header: React.FC<Props> = ({ hideNavIcon = false, loginMode = false
         "burger": () => <OpenMenuMode />,
     });
 
+    const thinRatioOf = (scrollY: number) => Math.min(1, scrollY / HEADER_THIN_HEIGHT);
+    const [thinRatio, setThinRatio] = useState(thinRatioOf(window.scrollY));
+    useEffect(() => {
+        const callback = () => setThinRatio(thinRatioOf(window.scrollY));
+        window.addEventListener("scroll", callback);
+        return () => window.removeEventListener("scroll", callback);
+    }, []);
+
     return <>
-        <header css={{
-            margin: OUTER_CONTAINER_MARGIN,
+        <div css={{
             height: "var(--header-height)",
-            display: "flex",
-            padding: `${HEADER_BASE_PADDING}px 16px`,
-            paddingLeft: 0,
-            alignItems: "center",
-            justifyContent: "space-between",
-            backgroundColor: COLORS.neutral05,
+            marginBottom: 16,
+            zIndex: 1500,
         }}>
-            {loginMode ? <LoginMode /> : content}
-        </header>
-        <div css={{ margin: "0 0 16px 0 ", height: 2, backgroundColor: COLORS.neutral15 }} />
+            <div css={{
+                position: "fixed",
+                width: "100%",
+                backgroundColor: `rgb(from ${COLORS.neutral15} r g b / 60%)`,
+                backdropFilter: "blur(16px)",
+            }}>
+                <header css={{
+                    margin: OUTER_CONTAINER_MARGIN,
+                    height: `calc(${thinRatio} * ${HEADER_THIN_HEIGHT}px `
+                        + `+ ${1 - thinRatio} * var(--header-height))`,
+                    display: "flex",
+                    padding: `${HEADER_BASE_PADDING}px 16px`,
+                    paddingLeft: 0,
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                }}>
+                    {loginMode ? <LoginMode /> : content}
+                </header>
+            </div>
+        </div>
     </>;
 };
 
