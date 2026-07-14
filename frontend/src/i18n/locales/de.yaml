@@ -353,7 +353,6 @@ acl:
   title: Zugriffsrechte
   authorized-groups: Autorisierte Gruppen
   authorized-users: Autorisierte Personen
-  editing-disabled: Bearbeitung der Zugangsberechtigungen ist deaktiviert.
   locked-to-series: >
     Die Berechtigungen dieses Videos werden durch seine <1>Serie</1> bestimmt und können daher nicht bearbeitet werden.
   users-no-options:

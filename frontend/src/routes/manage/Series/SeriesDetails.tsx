@@ -110,7 +110,7 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
         rssUrl: `/~rss/series/${seriesKey}`,
     };
 
-    const disableDelete = !CONFIG.allowSeriesEventRemoval && series.entries.length > 0;
+    const disableDelete = CONFIG.behavior.disallowEventsWithoutSeries && series.entries.length > 0;
 
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <VideoListShareButton {...shareInfo} css={{ height: 40, borderRadius: 8 }} />

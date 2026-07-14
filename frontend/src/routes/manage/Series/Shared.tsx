@@ -8,7 +8,6 @@ import { loadQuery } from "../../../relay";
 import { NotFound } from "../../NotFound";
 import { b64regex } from "../../util";
 import { seriesId, keyOfId, isSynced } from "../../../util";
-import CONFIG from "../../../config";
 import { ManageSeriesRoute, SingleSeries } from ".";
 import { SharedSeriesManageQuery } from "./__generated__/SharedSeriesManageQuery.graphql";
 import { DirectSeriesRoute } from "../../Series";
@@ -130,15 +129,12 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
             page: "details",
             body: <><LuPenLine />{t("manage.series.details.title")}</>,
         },
-    ];
-
-    if (CONFIG.allowAclEdit) {
-        navEntries.splice(1, 0, {
+        {
             url: `/~manage/series/${id}/access`,
             page: "acl",
             body: <><LuShieldCheck />{t("acl.title")}</>,
-        });
-    }
+        },
+    ];
 
     const link = DirectSeriesRoute.url({ seriesId: id });
     const title = series.title;

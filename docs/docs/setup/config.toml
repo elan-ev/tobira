@@ -124,19 +124,6 @@
 # Default value: false
 #users_searchable = false
 
-# This allows users to edit the ACL of events and series they have write access for.
-# Doing so will update these in Opencast and start the configured republish metadata workflow
-# for events to propagate the changes to other publications as well (series however
-# do not need the extra workflow for this to happen).
-# Instead of waiting for the workflow, Tobira will immediately store the updated ACL in its
-# database.
-#
-# Note that this might lead to situations where the ACL in Tobira is different
-# from that in other publications if the propagation from Opencast fails.
-#
-# Default value: true
-#allow_acl_edit = true
-
 # Activating this will disable ACL editing for events that are part of a series.
 # For the uploader, this means that the ACL of the series will be used.
 #
@@ -151,14 +138,16 @@
 # Default value: true
 #explicit_rss_content = true
 
-# Whether users can remove events from a series they have write access for.
-# Should to be disabled (i.e. set to `false`) when the connected Opencast requires
-# events to always be part of a series, as removing wouldn't work in that case.
+# Set to `true` if all events should be part of a series.
 #
-# Disabling this will also prevent series from being deleted as long as they contain any event.
+# If `true`, users must chose a series when uploading videos, and can not
+# perform actions that would leave an event without series. This also
+# includes deleting a non-empty series. Note that events without series
+# might still exist if they are created that way in Opencast. Tobira will
+# still display those as usual.
 #
-# Default value: true
-#allow_series_event_removal = true
+# Default value: false
+#disallow_events_without_series = false
 
 
 [general.global_banner]
@@ -278,15 +267,15 @@
 # yet to generally recommend turning this on. When you do, please report
 # any problems or weird behaviors to us!
 #
-# Default value: false
-#auth_static_files = false
+# Default value: true
+#auth_static_files = true
 
 # Determines whether or not Tobira users are getting pre-authenticated against
 # Opencast when they visit external links like the ones to Opencast Studio
 # or the Editor. If you have an SSO-solution, you don't need this.
 #
-# Default value: false
-#pre_auth_external_links = false
+# Default value: true
+#pre_auth_external_links = true
 
 
 # Tobira's built-in session management. Only relevant if `auth.source = "tobira-session"`.
@@ -341,8 +330,8 @@
 #
 # Valid values: "ES256", "ES384", "ED25519"
 #
-# Default value: "ES384"
-#signing_algorithm = "ES384"
+# Default value: "ED25519"
+#signing_algorithm = "ED25519"
 
 # Path to the secret signing key. The key has to be PEM encoded. If not
 # specified, a key is generated everytime Tobira is started. The randomly
@@ -400,8 +389,8 @@
 
 # The role granting permission to use the Opencast Editor from Tobira.
 #
-# Default value: "ROLE_TOBIRA_EDITOR"
-#editor = "ROLE_TOBIRA_EDITOR"
+# Default value: "ROLE_USER"
+#editor = "ROLE_USER"
 
 # The role granting permission to create one's own "user page".
 #
@@ -437,43 +426,6 @@
 # Tenant specific admin role that has the same permission level
 # as ROLE_ADMIN for that tenant.
 #tenant_admin =
-
-
-[log]
-# Specifies what log messages to emit, based on the module path and log level.
-#
-# This is a map where the key specifies a module path prefix, and the
-# value specifies a minimum log level. For each log message, the map
-# entry with the longest prefix matching the log's module path is chosen.
-# If no such entry exists, the log is not emitted. Otherwise, that
-# entry's level is used to check whether the log message should be
-# emitted.
-#
-# Take the following example: the following config only allows ≥"info"
-# logs from Tobira generally, but also ≥"trace" messages from the `db`
-# submodule. But it completely disables all logs from `tobira::db::tx`.
-# Finally, it also enabled ≥"debug" messages from one of Tobira's
-# dependencies, the HTTP library `hyper`.
-#
-#    [log]
-#    filters.tobira = "info"
-#    filters."tobira::db" = "trace"
-#    filters."tobira::db::tx" = "off"
-#    filters.hyper = "debug"
-#
-# Default value: { tobira = "debug" }
-#filters = { tobira = "debug" }
-
-# If this is set, log messages are also written to this file. The string
-# `${cmd}` in this value is replaced by the subcommand name of the Tobira
-# process, e.g. `serve`, `worker` or `other` (for less important
-# commands). Example: "/var/log/tobira-${cmd}.log".
-#file =
-
-# If this is set to `false`, log messages are not written to stdout.
-#
-# Default value: true
-#stdout = true
 
 
 [opencast]
@@ -706,11 +658,6 @@
 
 
 [upload]
-# Whether specifying a series is required when uploading.
-#
-# Default value: false
-#require_series = false
-
 # Specify workflow to start after ingesting. If unset, Tobira does not
 # send any workflow ID, meaning Opencast will choose its default.
 #workflow =
@@ -774,3 +721,40 @@
 #
 # Default value: "{}"
 #paella_plugin_config = "{}"
+
+
+[log]
+# Specifies what log messages to emit, based on the module path and log level.
+#
+# This is a map where the key specifies a module path prefix, and the
+# value specifies a minimum log level. For each log message, the map
+# entry with the longest prefix matching the log's module path is chosen.
+# If no such entry exists, the log is not emitted. Otherwise, that
+# entry's level is used to check whether the log message should be
+# emitted.
+#
+# Take the following example: the following config only allows ≥"info"
+# logs from Tobira generally, but also ≥"trace" messages from the `db`
+# submodule. But it completely disables all logs from `tobira::db::tx`.
+# Finally, it also enabled ≥"debug" messages from one of Tobira's
+# dependencies, the HTTP library `hyper`.
+#
+#    [log]
+#    filters.tobira = "info"
+#    filters."tobira::db" = "trace"
+#    filters."tobira::db::tx" = "off"
+#    filters.hyper = "debug"
+#
+# Default value: { tobira = "debug" }
+#filters = { tobira = "debug" }
+
+# If this is set, log messages are also written to this file. The string
+# `${cmd}` in this value is replaced by the subcommand name of the Tobira
+# process, e.g. `serve`, `worker` or `other` (for less important
+# commands). Example: "/var/log/tobira-${cmd}.log".
+#file =
+
+# If this is set to `false`, log messages are not written to stdout.
+#
+# Default value: true
+#stdout = true

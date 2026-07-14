@@ -359,7 +359,6 @@ acl:
   title: Politica di accesso
   authorized-groups: Gruppi autorizzati
   authorized-users: Utenti autorizzati
-  editing-disabled: La modifica dei criteri di accesso è disabilitata.
   locked-to-series: >
     La politica di accesso di questo video è determinata dalla sua <1>serie</1>
     e non può essere modificata.

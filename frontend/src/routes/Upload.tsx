@@ -136,7 +136,7 @@ const Upload: React.FC<Props> = ({ uploadQueryData, seriesUrlParamSet }) => {
     />;
 
     const userCanUpload = isRealUser(user) && user.canUpload;
-    const noWritableSeries = CONFIG.upload.requireSeries
+    const noWritableSeries = CONFIG.behavior.disallowEventsWithoutSeries
         && (uploadQueryData.writableSeries.items?.length ?? 0) === 0
         && !preselectedSeries;
 
@@ -923,7 +923,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
             },
         },
         rules: {
-            required: CONFIG.upload.requireSeries
+            required: CONFIG.behavior.disallowEventsWithoutSeries
                 ? t("manage.metadata-form.errors.field-required")
                 : false,
         },
@@ -941,7 +941,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
             <InputContainer css={{ maxWidth: 750 }}>
                 <label htmlFor={seriesFieldId}>
                     {t("series.singular")}
-                    {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
+                    {CONFIG.behavior.disallowEventsWithoutSeries && <FieldIsRequiredNote />}
                     <WithTooltip
                         tooltip={t("upload.metadata.note-writable-series")}
                         tooltipCss={{ width: 400 }}
@@ -966,7 +966,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
                             id: data?.id,
                         })}
                         onBlur={seriesField.onBlur}
-                        required={CONFIG.upload.requireSeries}
+                        required={CONFIG.behavior.disallowEventsWithoutSeries}
                         defaultValue={preselectedSeries ?? undefined}
                     />
                 </Inertable>

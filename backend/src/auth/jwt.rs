@@ -16,7 +16,7 @@ pub(crate) struct JwtConfig {
     /// Signing algorithm for JWTs.
     ///
     /// Valid values: "ES256", "ES384", "ED25519"
-    #[config(default = "ES384")]
+    #[config(default = "ED25519")]
     signing_algorithm: Algorithm,
 
     /// Path to the secret signing key. The key has to be PEM encoded. If not
@@ -122,9 +122,6 @@ impl JwtContext {
         #[derive(Serialize)]
         struct UserInfo<'a> {
             sub: &'a str,
-            // TODO: this is just for backwards compatibility and should be
-            // removed in the future.
-            username: &'a str,
             name: &'a str,
             #[serde(skip_serializing_if = "Option::is_none")]
             email: Option<&'a str>,
@@ -141,7 +138,6 @@ impl JwtContext {
         self.generate(Payload {
             user: UserInfo {
                 sub: &user.username,
-                username: &user.username,
                 name: &user.display_name,
                 email: user.email.as_deref(),
             },

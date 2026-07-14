@@ -348,7 +348,6 @@ acl:
   title: Access policy
   authorized-groups: Authorized groups
   authorized-users: Authorized users
-  editing-disabled: Access policy editing is disabled.
   locked-to-series: The access policy of this video is determined by its <1>series</1> and can't be edited.
   users-no-options:
     initial-searchable: Type to search for users by name (or enter exact email/username)
