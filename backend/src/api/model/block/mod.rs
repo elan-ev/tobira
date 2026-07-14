@@ -7,7 +7,7 @@ use crate::{
     api::{
         err::{ApiError, ApiResult},
         model::{
-            event::{AuthorizedEvent, Event},
+            event::Event,
             playlist::Playlist,
             realm::Realm,
             series::Series
@@ -227,7 +227,7 @@ impl VideoBlock {
     async fn event(&self, context: &Context) -> ApiResult<Option<Event>> {
         match self.event {
             None => Ok(None),
-            Some(event_id) => Ok(AuthorizedEvent::load(event_id, context).await?),
+            Some(event_id) => Ok(Event::load(event_id, context).await?),
         }
     }
 
