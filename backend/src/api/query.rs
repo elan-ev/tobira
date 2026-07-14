@@ -12,7 +12,7 @@ use super::{
     model::{
         self,
         admin::AdminInfo,
-        event::{AuthorizedEvent, Event},
+        event::Event,
         known_roles::{self, KnownUsersSearchOutcome},
         playlist::Playlist,
         realm::Realm,
@@ -61,12 +61,12 @@ impl Query {
 
     /// Returns an event by its Opencast ID.
     async fn event_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Event>> {
-        AuthorizedEvent::load(OpencastId(id), context).await
+        Event::load(OpencastId(id), context).await
     }
 
     /// Returns an event by its ID.
     async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
-        AuthorizedEvent::load(id, context).await
+        Event::load(id, context).await
     }
 
     /// Returns a series by its Opencast ID.
@@ -121,7 +121,7 @@ impl Query {
         match id.kind() {
             Id::REALM_KIND => Ok(Realm::load_by_id(id, context).await?.map(NodeValue::from)),
             Id::SERIES_KIND => Ok(Series::load(id, context).await?.map(NodeValue::from)),
-            Id::EVENT_KIND => AuthorizedEvent::load(id, context).await?
+            Id::EVENT_KIND => Event::load(id, context).await?
                 .map(|e| e.into_result().map(NodeValue::from))
                 .transpose(),
             _ => Ok(None),
