@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
-use postgres_types::ToSql;
 use juniper::{
     graphql_object,
     GraphQLInputObject,
@@ -21,7 +20,7 @@ use crate::{
             series::Series,
             shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input},
         },
-        util::LazyLoad,
+        util::{OcItemId, LazyLoad},
     },
     auth::AuthContext,
     db::{
@@ -356,7 +355,7 @@ impl AuthorizedEvent {
                 }))
             } else {
                 // We need to load the series as fields were requested that were not preloaded.
-                Ok(Series::load_by_key(series.key, context).await?)
+                Ok(Series::load(series.key, context).await?)
             }
         } else {
             Ok(None)
@@ -481,28 +480,19 @@ impl Event {
 }
 
 impl AuthorizedEvent {
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
-        match id.key_for(Id::EVENT_KIND) {
-            None => return Ok(None),
-            Some(key) => Self::load_by_any_id_impl("id", &key, context).await,
-        }
-    }
+    /// Loads the event with the specified ID.
+    pub(crate) async fn load(id: impl OcItemId, context: &Context) -> ApiResult<Option<Event>> {
+        let Some(id_arg) = id.arg(Id::EVENT_KIND) else {
+            return Ok(None);
+        };
 
-    pub(crate) async fn load_by_opencast_id(oc_id: OpencastId, context: &Context) -> ApiResult<Option<Event>> {
-        Self::load_by_any_id_impl("opencast_id", &oc_id, context).await
-    }
-
-    pub(crate) async fn load_by_any_id_impl(
-        col: &str,
-        id: &(dyn ToSql + Sync),
-        context: &Context,
-    ) -> ApiResult<Option<Event>> {
         let selection = Self::select();
+        let col = id.column();
         let query = format!("select {selection} from events \
             left join series on series.id = events.series \
             where events.{col} = $1");
         context.db
-            .query_opt(&query, &[id])
+            .query_opt(&query, &[&id_arg])
             .await?
             .map(|row| {
                 let event = Self::from_row_start(&row);
@@ -544,12 +534,12 @@ impl AuthorizedEvent {
     }
 
     pub (crate) async fn load_for_mutation(
-        id: Id,
+        id: impl OcItemId,
         context: &Context,
     ) -> ApiResult<AuthorizedEvent> {
-        let event = Self::load_by_id(id, context)
+        let event = Self::load(id, context)
             .await?
-            .ok_or_else(||  err::invalid_input!(key = "event.not-found", "event not found"))?
+            .ok_or_else(|| err::invalid_input!(key = "event.not-found", "event not found"))?
             .into_result()?;
 
         if !context.auth.overlaps_roles(&event.write_roles) {
@@ -607,7 +597,7 @@ impl AuthorizedEvent {
             &acl.write_roles,
         ]).await?;
 
-        let event = Self::load_by_opencast_id(event.opencast_id, context)
+        let event = Self::load(event.opencast_id, context)
             .await?
             .unwrap()
             .into_result()?;
