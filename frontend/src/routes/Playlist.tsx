@@ -240,8 +240,8 @@ const fragment = graphql`
             entries {
                 __typename
                 ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
-                ...on Missing { dummy }
-                ...on NotAllowed { dummy }
+                ...on Missing { __typename }
+                ...on NotAllowed { __typename }
             }
         }
         ... PlaylistBlockPlaylistData

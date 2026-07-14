@@ -36,7 +36,21 @@ pub(crate) trait Node {
 /// allowed to access some data.
 ///
 /// This is used instead of GraphQL errors in places where we easily want to
-/// deal with the "not allowed" case.
-pub(crate) struct NotAllowed;
+/// deal with the "not allowed" case. When used in a video list context,
+/// `opencast_id` is set to identify which entry is not allowed.
+pub(crate) struct NotAllowed {
+    pub(crate) opencast_id: Option<String>,
+}
 
-super::util::impl_object_with_dummy_field!(NotAllowed);
+#[juniper::graphql_object(Context = Context)]
+impl NotAllowed {
+    /// Unused dummy field for this marker type. GraphQL requires all objects to
+    /// have at least one field. Always returns `null`.
+    fn dummy() -> Option<bool> {
+        None
+    }
+
+    fn opencast_id(&self) -> &str {
+        self.opencast_id.as_deref().unwrap_or_default()
+    }
+}
