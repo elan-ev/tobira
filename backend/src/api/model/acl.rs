@@ -65,7 +65,10 @@ where
     I::IntoIter: ExactSizeIterator,
 {
     // First: load labels for roles from the DB. For that we use the `users`
-    // and `known_groups` table.
+    // and `known_groups` table. The join on `users` is case-insensitive
+    // because the casing of usernames (and thus user roles) can change in
+    // Opencast, so an ACL role might not exactly match `users.user_role`.
+    // Failure to find a matching user just means no friendly label; the role still works.
     let (selection, mapping) = select!(
         role: "roles.role",
         actions,
@@ -86,10 +89,11 @@ where
             from raw_roles
             group by role
         )
-        select {selection}
+        select distinct on (roles.role) {selection}
         from roles
-        left join users on users.user_role = role
-        left join known_groups on known_groups.role = roles.role\
+        left join users on lower(users.user_role) = lower(roles.role)
+        left join known_groups on known_groups.role = roles.role
+        order by roles.role, users.username\
     ");
 
     context.db.query_mapped(&sql, params, |row| {

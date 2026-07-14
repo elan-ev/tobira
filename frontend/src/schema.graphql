@@ -731,6 +731,17 @@ type NotAllowed {
   dummy: Boolean
 }
 
+"""
+  User information exposed to Opencast.
+  Unlike `KnownUser`, this includes username and email.
+"""
+type OpencastKnownUser {
+  username: String!
+  displayName: String!
+  email: String
+  userRole: String!
+}
+
 type PageInfo {
   hasNextPage: Boolean!
   hasPrevPage: Boolean!
@@ -850,6 +861,22 @@ type Query {
   searchKnownUsers(query: String!): KnownUsersSearchOutcome!
   "Returns all known groups selectable in the ACL UI."
   knownGroups: [KnownGroup!]!
+  """
+    Looks up a single known user by exact username.
+    Returns username, display name, email, and user role.
+  """
+  knownUserByUsername(username: String!): OpencastKnownUser
+  """
+    Searches for known users by partial match on username, display name,
+    email, or user role. Returns username, display name, email, and user
+    role.
+
+    `query` may be `null` or an empty string, in which case all users are
+    returned (paginated). `limit` is clamped to `[1, 1000]`. `offset` is
+    clamped to be non-negative. Results are ordered by username so that
+    pagination via `limit`/`offset` is stable.
+  """
+  findKnownUsers(query: String, limit: Int!, offset: Int!): [OpencastKnownUser!]!
   "Returns information for the admin dashboard."
   adminDashboardInfo: AdminInfo
 }
