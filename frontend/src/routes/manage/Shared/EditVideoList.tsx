@@ -167,7 +167,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
             {description && <p css={{ marginBottom: 8, maxWidth: 750, fontSize: 14 }}>
                 {description}
             </p>}
-            {!CONFIG.allowSeriesEventRemoval && <Card kind="info">
+            {CONFIG.behavior.disallowEventsWithoutSeries && <Card kind="info">
                 {t("manage.video-list.removing-disabled")}
             </Card>}
         </VideoListMenu>
@@ -577,7 +577,8 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                 <div>
                                     <Button
                                         disabled={!isPlaylistEntry && (
-                                            !event.canWrite || !CONFIG.allowSeriesEventRemoval
+                                            !event.canWrite
+                                                || CONFIG.behavior.disallowEventsWithoutSeries
                                         )}
                                         kind="danger"
                                         css={buttonStyle}

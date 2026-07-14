@@ -123,13 +123,15 @@ pub(crate) struct GeneralConfig {
     #[config(default = true)]
     pub explicit_rss_content: bool,
 
-    /// Whether users can remove events from a series they have write access for.
-    /// Should to be disabled (i.e. set to `false`) when the connected Opencast requires
-    /// events to always be part of a series, as removing wouldn't work in that case.
+    /// Set to `true` if all events should be part of a series.
     ///
-    /// Disabling this will also prevent series from being deleted as long as they contain any event.
-    #[config(default = true)]
-    pub allow_series_event_removal: bool,
+    /// If `true`, users must chose a series when uploading videos, and can not
+    /// perform actions that would leave an event without series. This also
+    /// includes deleting a non-empty series. Note that events without series
+    /// might still exist if they are created that way in Opencast. Tobira will
+    /// still display those as usual.
+    #[config(default = false)]
+    pub disallow_events_without_series: bool,
 
     #[config(nested)]
     pub global_banner: GlobalBannerConfig,

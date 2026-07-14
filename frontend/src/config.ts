@@ -28,12 +28,14 @@ type Config = {
     showDownloadButton: boolean;
     usersSearchable: boolean;
     lockAclToSeries: boolean;
-    allowSeriesEventRemoval: boolean;
     globalBanner: null | {
         text: TranslatedString,
         color: "neutral" | "primary" | "danger",
         icon: "warning" | "info",
     },
+    behavior: {
+        disallowEventsWithoutSeries: boolean;
+    };
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
@@ -102,7 +104,6 @@ type VersionInfo = {
 };
 
 type UploadConfig = {
-    requireSeries: boolean;
     workflow: string | null;
     thumbnailSubtype: string,
     thumbnailWorkflowProperty: string,

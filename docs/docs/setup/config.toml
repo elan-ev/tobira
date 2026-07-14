@@ -138,14 +138,16 @@
 # Default value: true
 #explicit_rss_content = true
 
-# Whether users can remove events from a series they have write access for.
-# Should to be disabled (i.e. set to `false`) when the connected Opencast requires
-# events to always be part of a series, as removing wouldn't work in that case.
+# Set to `true` if all events should be part of a series.
 #
-# Disabling this will also prevent series from being deleted as long as they contain any event.
+# If `true`, users must chose a series when uploading videos, and can not
+# perform actions that would leave an event without series. This also
+# includes deleting a non-empty series. Note that events without series
+# might still exist if they are created that way in Opencast. Tobira will
+# still display those as usual.
 #
-# Default value: true
-#allow_series_event_removal = true
+# Default value: false
+#disallow_events_without_series = false
 
 
 [general.global_banner]
@@ -656,11 +658,6 @@
 
 
 [upload]
-# Whether specifying a series is required when uploading.
-#
-# Default value: false
-#require_series = false
-
 # Specify workflow to start after ingesting. If unset, Tobira does not
 # send any workflow ID, meaning Opencast will choose its default.
 #workflow =
