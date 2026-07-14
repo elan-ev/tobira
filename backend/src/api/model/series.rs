@@ -2,7 +2,6 @@ use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
-use postgres_types::ToSql;
 use serde_json::json;
 
 use crate::{
@@ -15,7 +14,7 @@ use crate::{
             realm::Realm,
             shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input},
         },
-        util::LazyLoad,
+        util::{OcItemId, LazyLoad},
     },
     db::util::{impl_from_db, select},
     model::{
@@ -111,34 +110,19 @@ impl_from_db!(
 );
 
 impl Series {
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
-        if let Some(key) = id.key_for(Id::SERIES_KIND) {
-            Self::load_by_key(key, context).await
-        } else {
-            Ok(None)
-        }
-    }
+    pub async fn load(id: impl OcItemId, context: &Context) -> ApiResult<Option<Self>> {
+        let Some(id_arg) = id.arg(Id::SERIES_KIND) else {
+            return Ok(None);
+        };
 
-    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("id", &key, context).await
-    }
-
-    pub(crate) async fn load_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("opencast_id", &id, context).await
-    }
-
-    async fn load_by_any_id(
-        col: &str,
-        id: &(dyn ToSql + Sync),
-        context: &Context,
-    ) -> ApiResult<Option<Self>> {
         let (selection, mapping) = select!(
             series: Series,
             is_fav: "exists(select from favorites where series = $1 and username = $2)",
         );
+        let col = id.column();
         let query = format!("select {selection} from series where {col} = $1");
         context.db
-            .query_opt(&query, &[id, &context.auth.state.username()])
+            .query_opt(&query, &[&id_arg, &context.auth.state.username()])
             .await?
             .map(|row| {
                 let mut series = Self::from_row(&row, mapping.series);
@@ -149,7 +133,7 @@ impl Series {
     }
 
     async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<Series> {
-        let series = Self::load_by_id(id, context)
+        let series = Self::load(id, context)
             .await?
             .ok_or_else(|| err::invalid_input!(key = "series.not-found", "series {id} not found"))?;
 
@@ -252,7 +236,7 @@ impl Series {
     ) -> ApiResult<Realm> {
         context.require_trusted_external_auth()?;
 
-        let series = Self::load_by_opencast_id(series_oc_id, context)
+        let series = Self::load(series_oc_id, context)
             .await?
             .ok_or_else(|| invalid_input!("`seriesId` does not refer to a valid series"))?;
 
@@ -297,7 +281,7 @@ impl Series {
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
         context.require_trusted_external_auth()?;
 
-        let series = Self::load_by_opencast_id(series_oc_id, context)
+        let series = Self::load(series_oc_id, context)
             .await?
             .ok_or_else(|| invalid_input!("`seriesId` does not refer to a valid series"))?;
 

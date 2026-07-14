@@ -94,14 +94,14 @@ pub async fn add_favorite(id: Id, context: &Context) -> ApiResult<bool> {
 
 
     if let Some(event_key) = event_id {
-        let event = AuthorizedEvent::load_by_key(event_key, context).await?;
+        let event = AuthorizedEvent::load(event_key, context).await?;
         if let Some(Event::NotAllowed(_)) = event {
             return Err(not_authorized!("not allowed to read event"));
         }
     }
 
     if let Some(playlist_key) = playlist_id {
-        let playlist = Playlist::load_by_key(playlist_key, context).await?;
+        let playlist = Playlist::load(playlist_key, context).await?;
         if let Some(Playlist::NotAllowed(_)) = playlist {
             return Err(not_authorized!("not allowed to read playlist"));
         }
