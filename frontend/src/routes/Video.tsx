@@ -1,5 +1,4 @@
 import React, {
-    ReactNode,
     useEffect,
     useRef,
     useState,
@@ -46,7 +45,7 @@ import {
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../GlobalStyle";
 import { LinkButton } from "../ui/LinkButton";
 import CONFIG from "../config";
-import { Link, useRouter } from "../router";
+import { useRouter } from "../router";
 import { isRealUser, useUser } from "../User";
 import { b64regex, checkRealmPath } from "./util";
 import { NotAuthorized } from "../ui/error";
@@ -68,13 +67,13 @@ import {
     PlaylistBlockPlaylistData$key,
 } from "../ui/Blocks/__generated__/PlaylistBlockPlaylistData.graphql";
 import { getEventTimeInfo } from "../util/video";
-import { formatDuration, TrackInfo } from "../ui/Video";
+import { TrackInfo } from "../ui/Video";
 import { ellipsisOverflowCss } from "../ui";
 import { realmBreadcrumbs } from "../util/realm";
 import { COLORS } from "../color";
 import { preciseDateTime, preferredLocaleForLang, PrettyDate } from "../ui/time";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
-import { CollapsibleDescription } from "../ui/metadata";
+import { MetadataSection } from "../ui/metadata";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
 import { EmbedVideoRoute } from "./Embed";
 import { ManageVideoDetailsRoute } from "./manage/Video/VideoDetails";
@@ -93,8 +92,6 @@ import { usePlayerGroupContext } from "../ui/player/PlayerGroupContext";
 import { isSpaceOnInteractiveElement } from "../ui/player/PlayerShortcuts";
 import { VideoListLayout } from "../ui/Blocks/__generated__/SeriesBlockData.graphql";
 import { LIST_ORDERS, Order } from "../ui/Blocks/VideoList";
-
-import { createAutoTimestampProcessor, getMetadataPairs } from "../ui/metadata";
 
 // ===========================================================================================
 // ===== Route definitions
@@ -896,13 +893,6 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
     const user = useUser();
     const { paella, playerIsLoaded } = usePlayerContext();
 
-    const autoTimestampProcessor = createAutoTimestampProcessor({
-        duration: event.syncedData.duration,
-        onTimestampClick: timestamp => {
-            paella.current?.player.videoContainer.setCurrentTime(timestamp);
-        },
-    });
-
     const shrinkOnMobile = {
         [screenWidthAtMost(BREAKPOINT_SMALL)]: {
             padding: "5px 10px",
@@ -953,32 +943,23 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                 />
             </section>
         </div>
-        <div css={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 16,
-            "> div": {
-                backgroundColor: COLORS.neutral10,
-                borderRadius: 8,
-                [screenWidthAtMost(BREAKPOINT_MEDIUM)]: {
-                    overflowWrap: "anywhere",
-                },
-            },
-        }}>
-            <CollapsibleDescription
-                type="video"
-                description={event.description}
-                creators={event.creators}
-                bottomPadding={40}
-                textProcessor={autoTimestampProcessor}
-            />
-            <div css={{ flex: "1 200px", alignSelf: "flex-start", padding: "20px 22px" }}>
-                <MetadataTable {...{ event, realmPath }} />
-            </div>
-        </div>
+        <MetadataSection
+            event={event}
+            valueStyle="line-break"
+            seriesLink={getSeriesLink(event.series, realmPath)}
+        />
     </>;
 };
 
+export const getSeriesLink = (
+    series: { id: string; title: string } | null | undefined,
+    realmPath: string | null,
+): { title: string; url: string } | undefined => series ? {
+    title: series.title,
+    url: realmPath == null
+        ? DirectSeriesRoute.url({ seriesId: series.id })
+        : SeriesRoute.url({ seriesId: series.id, realmPath }),
+} : undefined;
 
 const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const { t } = useTranslation();
@@ -1196,59 +1177,3 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
     );
 };
 
-type MetadataTableProps = {
-    event: Event;
-    realmPath: string | null;
-};
-
-const MetadataTable = React.forwardRef<HTMLDListElement, MetadataTableProps>(({
-    event, realmPath,
-}, ref) => {
-    const { t, i18n } = useTranslation();
-    const pairs: [string, ReactNode][] = [];
-
-    if (event.series) {
-        const seriesId = event.series.id;
-        const target = realmPath == null
-            ? DirectSeriesRoute.url({ seriesId })
-            : SeriesRoute.url({ seriesId, realmPath });
-        pairs.push([
-            t("video.part-of-series"),
-            // eslint-disable-next-line react/jsx-key
-            <Link to={target}>
-                {event.series.title}
-            </Link>,
-        ]);
-    }
-
-    pairs.push(...getMetadataPairs(event, t, i18n, "line-break"));
-
-    if (event.syncedData?.duration && !event.isLive) {
-        pairs.push([
-            t("video.duration"),
-            formatDuration(event.syncedData.duration),
-        ]);
-    }
-
-    return (
-        <dl ref={ref} css={{
-            display: "grid",
-            gridTemplateColumns: "max-content 1fr",
-            columnGap: 8,
-            rowGap: 6,
-            fontSize: 14,
-            lineHeight: 1.3,
-            "& > dt::after": {
-                content: "':'",
-            },
-            "& > dd": {
-                color: COLORS.neutral60,
-            },
-        }}>
-            {pairs.map(([label, value], i) => <React.Fragment key={i}>
-                <dt>{label}</dt>
-                <dd>{value}</dd>
-            </React.Fragment>)}
-        </dl>
-    );
-});
