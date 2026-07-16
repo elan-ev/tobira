@@ -15,6 +15,7 @@ export type Block =
         query: string;
         showTitle?: boolean;
         showLink?: boolean;
+        showMetadata?: boolean;
     }
     | {
         type: "series";
@@ -76,7 +77,11 @@ export const addBlock = async (page: Page, pos: number, block: Block) => {
             await titleCheckbox.setChecked(block.showTitle ?? true);
             const linkCheckbox = page.getByLabel("Show link to video page");
             await expect(linkCheckbox).toBeChecked();
-            await linkCheckbox.setChecked(block.showTitle ?? true);
+            await linkCheckbox.setChecked(block.showLink ?? true);
+
+            const metadataCheckbox = page.getByLabel("Show description and metadata");
+            await expect(metadataCheckbox).not.toBeChecked();
+            await metadataCheckbox.setChecked(block.showMetadata ?? false);
 
             await saveButton.click();
             break;
