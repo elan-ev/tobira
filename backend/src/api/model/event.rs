@@ -25,7 +25,7 @@ use crate::{
     auth::AuthContext,
     db::{
         types::{Credentials, EventCaption, EventSegment, EventTrack},
-        util::impl_from_db,
+        util::{impl_from_db, select},
     },
     model::{AclItem, EventState, ExtraMetadata, Key, OpencastId, SeriesState},
     prelude::*,
@@ -63,6 +63,7 @@ pub(crate) struct AuthorizedEvent {
     pub(crate) write_roles: Vec<String>,
     pub(crate) preview_roles: Vec<String>,
     pub(crate) credentials: Option<Credentials>,
+    pub(crate) is_bookmark: LazyLoad<bool>,
 
     pub(crate) synced_data: Option<SyncedEventData>,
     pub(crate) authorized_data: Option<AuthorizedEventData>,
@@ -129,6 +130,7 @@ impl_from_db!(
             preview_roles: row.preview_roles::<Vec<String>>(),
             credentials: row.credentials(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
+            is_bookmark: LazyLoad::NotLoaded,
             synced_data: match row.state::<EventState>() {
                 EventState::Ready => Some(SyncedEventData {
                     updated: row.updated(),
@@ -261,6 +263,12 @@ impl AuthorizedEvent {
     /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
     fn preview_roles(&self) -> &[String] {
         &self.preview_roles
+    }
+
+    /// Returns `true` iff this event is bookmarked by the current user. Note:
+    /// this is lazily loaded and only available in certain contexts.
+    fn is_bookmark(&self) -> bool {
+        self.is_bookmark.unwrap()
     }
 
     fn synced_data(&self) -> &Option<SyncedEventData> {
@@ -485,16 +493,20 @@ impl Event {
             return Ok(None);
         };
 
-        let selection = AuthorizedEvent::select();
+        let (selection, mapping) = select!(
+            event: AuthorizedEvent,
+            is_bookmark: "exists(select from bookmarks where event = $1 and username = $2)",
+        );
         let col = id.column();
         let query = format!("select {selection} from events \
             left join series on series.id = events.series \
             where events.{col} = $1");
         context.db
-            .query_opt(&query, &[&id_arg])
+            .query_opt(&query, &[&id_arg, &context.auth.state.username()])
             .await?
             .map(|row| {
-                let event = AuthorizedEvent::from_row_start(&row);
+                let mut event = AuthorizedEvent::from_row(&row, mapping.event);
+                event.is_bookmark = LazyLoad::Loaded(mapping.is_bookmark.of(&row));
                 Self::check_auth(event, &context.auth)
             })
             .pipe(Ok)

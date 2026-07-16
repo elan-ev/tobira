@@ -415,6 +415,11 @@ type AuthorizedEvent implements Node {
   writeRoles: [String!]!
   "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
   previewRoles: [String!]!
+  """
+    Returns `true` iff this event is bookmarked by the current user. Note:
+    this is lazily loaded and only available in certain contexts.
+  """
+  isBookmark: Boolean!
   syncedData: SyncedEventData
   "Returns the authorized event data if the user has read access or is authenticated for the event."
   authorizedData(user: String, password: String): AuthorizedEventData
