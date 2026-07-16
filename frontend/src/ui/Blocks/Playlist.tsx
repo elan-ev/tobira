@@ -45,7 +45,7 @@ const playlistFragment = graphql`
             description
             creator
             canWrite
-            isFav
+            isBookmark
             entries {
                 __typename
                 ... on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
@@ -133,7 +133,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         activeEventId={props.activeEventId}
         realmPath={props.realmPath}
         listId={playlist.id}
-        isFav={playlist.isFav}
+        isBookmark={playlist.isBookmark}
         listEntries={playlist.entries}
         editMode={props.editMode ?? false}
         shareInfo={{

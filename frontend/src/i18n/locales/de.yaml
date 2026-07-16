@@ -237,13 +237,13 @@ share:
   set-time-label: 'Videostartzeit einstellen. Aktuell: {{time}}.'
   set-time-unit: '{{unit}} einstellen'
 
-fav:
-  main-label: Favoriten
-  add: Favoriten hinzufügen
-  remove: Favoriten entfernen
-  manage: Favoriten verwalten
-  failed-to-add: Favoriten hinzufügen fehlgeschlagen
-  failed-to-remove: Favoriten entfernen fehlgeschlagen
+bookmark:
+  main-label: Lesezeichen
+  add: Lesezeichen hinzufügen
+  remove: Lesezeichen entfernen
+  manage: Lesezeichen verwalten
+  failed-to-add: Lesezeichen hinzufügen fehlgeschlagen
+  failed-to-remove: Lesezeichen entfernen fehlgeschlagen
   inaccessible: Unzugänglich (keine Leseberechtigung)
   feed-title: Neuste Videos
   show-all: Alle anzeigen

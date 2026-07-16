@@ -38,7 +38,7 @@ import { ModalHandle } from "../../ui/Modal";
 import { AdminDashboardRoute } from "../../routes/manage/admin";
 import { ManagePlaylistsRoute } from "../../routes/manage/Playlist";
 import { CreatePlaylistRoute } from "../../routes/manage/Playlist/Create";
-import { FavoritesRoute } from "../../routes/Favorites";
+import { BookmarksRoute } from "../../routes/Bookmarks";
 
 
 
@@ -240,8 +240,8 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
     const items: HeaderMenuProps["items"] = [
         {
             icon: <LuStar />,
-            wrapper: <Link to={FavoritesRoute.url({})} />,
-            children: t("fav.main-label"),
+            wrapper: <Link to={BookmarksRoute.url({})} />,
+            children: t("bookmark.main-label"),
             css: { minWidth: 200 },
         },
         {

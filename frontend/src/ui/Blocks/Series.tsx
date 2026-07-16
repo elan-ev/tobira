@@ -48,7 +48,7 @@ const seriesFragment = graphql`
         description
         state
         metadata
-        isFav
+        isBookmark
         canWrite
         entries {
             __typename
@@ -127,7 +127,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
             allowOriginalOrder: false,
         }}
         listId={series.id}
-        isFav={series.isFav}
+        isBookmark={series.isBookmark}
         metadata={{
             title: props.title ?? (props.showTitle ? series.title : undefined),
             description: (props.showMetadata && series.description) || undefined,

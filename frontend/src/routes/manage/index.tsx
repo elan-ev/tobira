@@ -32,7 +32,7 @@ import { ManageSeriesRoute } from "./Series";
 import { CreateSeriesRoute } from "./Series/Create";
 import { ManagePlaylistsRoute } from "./Playlist";
 import { CreatePlaylistRoute } from "./Playlist/Create";
-import { FavoritesManageRoute } from "./Favorites";
+import { BookmarksManageRoute } from "./Bookmarks";
 
 
 const PATH = "/~manage" as const;
@@ -89,7 +89,7 @@ type ManageNavProps = {
         | typeof CreateSeriesRoute.url
         | typeof ManagePlaylistsRoute.url
         | typeof CreatePlaylistRoute.url
-        | typeof FavoritesManageRoute.url
+        | typeof BookmarksManageRoute.url
         | `/@${string}`
         | "STUDIO";
 };
@@ -138,7 +138,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     }
     if (isRealUser(user)) {
         entries.push(
-            [FavoritesManageRoute.url, t("fav.main-label"), <LuStar />],
+            [BookmarksManageRoute.url, t("bookmark.main-label"), <LuStar />],
         );
     }
     /* eslint-enable react/jsx-key */
