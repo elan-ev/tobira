@@ -8,10 +8,10 @@ import { loadQuery } from "../../relay";
 import { makeRoute } from "../../rauta";
 import { PageTitle } from "../../layout/header/ui";
 import { Breadcrumbs } from "../../ui/Breadcrumbs";
-import { ManageNav, ManageRoute } from "../manage";
+import { ManageNav, ManageRoute } from ".";
 import {
-    FavoritesManageQuery, FavoritesManageQuery$data,
-} from "./__generated__/FavoritesManageQuery.graphql";
+    BookmarksManageQuery, BookmarksManageQuery$data,
+} from "./__generated__/BookmarksManageQuery.graphql";
 import { NotAuthorized } from "../../ui/error";
 import SeriesIcon from "../../icons/series.svg";
 import PlaylistIcon from "../../icons/playlist.svg";
@@ -24,21 +24,21 @@ import { Creators } from "../../ui/Video";
 import { DateAndCreators } from "../../ui/metadata";
 
 
-export const PATH = "/~manage/favorites" as const;
-export const FavoritesManageRoute = makeRoute({
+export const PATH = "/~manage/bookmarks" as const;
+export const BookmarksManageRoute = makeRoute({
     url: PATH,
     match: url => {
         if (url.pathname !== PATH) {
             return null;
         }
 
-        const queryRef = loadQuery<FavoritesManageQuery>(query, {});
+        const queryRef = loadQuery<BookmarksManageQuery>(query, {});
         return {
             render: () => <RootLoader
                 {...{ query, queryRef }}
                 noindex
                 nav={() => <ManageNav active={PATH} />}
-                render={data => <Favorites queryData={data} />}
+                render={data => <ManageBookmarks queryData={data} />}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -46,14 +46,14 @@ export const FavoritesManageRoute = makeRoute({
 });
 
 const query = graphql`
-    query FavoritesManageQuery {
+    query BookmarksManageQuery {
         ... UserData
         currentUser {
-            myFavorites {
+            myBookmarks {
                 __typename
                 ... on Series { id title creators created }
                 ... on AuthorizedPlaylist { id title creator }
-                ... on InaccessibleFavoriteItem { id }
+                ... on InaccessibleBookmarkItem { id }
             }
         }
     }
@@ -61,10 +61,10 @@ const query = graphql`
 
 
 type Props = {
-    queryData: FavoritesManageQuery$data;
+    queryData: BookmarksManageQuery$data;
 };
 
-const Favorites: React.FC<Props> = ({ queryData }) => {
+const ManageBookmarks: React.FC<Props> = ({ queryData }) => {
     const { t } = useTranslation();
     const user = queryData.currentUser;
     if (!user) {
@@ -77,11 +77,11 @@ const Favorites: React.FC<Props> = ({ queryData }) => {
             display: "flex",
             flexDirection: "column",
         }}>
-            <Breadcrumbs tail={t("fav.main-label")} path={[{
+            <Breadcrumbs tail={t("bookmark.main-label")} path={[{
                 label: t("user.manage"),
                 link: ManageRoute.url,
             }]} />
-            <PageTitle title={t("fav.manage")} />
+            <PageTitle title={t("bookmark.manage")} />
 
             <ul css={{
                 maxWidth: 700,
@@ -92,22 +92,22 @@ const Favorites: React.FC<Props> = ({ queryData }) => {
                 border: `1px solid ${COLORS.neutral20}`,
                 borderRadius: 8,
             }}>
-                {user.myFavorites.map((fav, i) => <ListItem key={i} fav={fav} />)}
+                {user.myBookmarks.map((fav, i) => <ListItem key={i} fav={fav} />)}
             </ul>
         </div>
     );
 };
 
 type ListItemProps = {
-    fav: NonNullable<FavoritesManageQuery$data["currentUser"]>["myFavorites"][number];
+    fav: NonNullable<BookmarksManageQuery$data["currentUser"]>["myBookmarks"][number];
 };
 
 const ListItem: React.FC<ListItemProps> = ({ fav }) => {
     const { t } = useTranslation();
     const [isDeleted, setIsDeleted] = useState(false);
     const [commit, inFlight] = useMutation(graphql`
-        mutation FavoritesRemoveMutation($id: ID!) {
-            removeFavorite(id:$id)
+        mutation BookmarksRemoveMutation($id: ID!) {
+            removeBookmark(id:$id)
         }
     `);
 
@@ -142,7 +142,7 @@ const ListItem: React.FC<ListItemProps> = ({ fav }) => {
                 />
             }
         />,
-        "InaccessibleFavoriteItem": () => <i>{t("fav.inaccessible")}</i>,
+        "InaccessibleBookmarkItem": () => <i>{t("bookmark.inaccessible")}</i>,
     });
 
     const onButtonClick = () => {
@@ -177,7 +177,7 @@ const ListItem: React.FC<ListItemProps> = ({ fav }) => {
 
         <div css={{ flex: "1", minWidth: 0 }}>{body}</div>
 
-        {!isDeleted && <WithTooltip tooltip={t("fav.remove")}>
+        {!isDeleted && <WithTooltip tooltip={t("bookmark.remove")}>
             <ProtoButton onClick={onButtonClick} css={{
                 padding: 8,
                 lineHeight: 1,

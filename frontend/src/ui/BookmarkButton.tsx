@@ -12,41 +12,41 @@ import { graphql, useMutation } from "react-relay";
 import { COLORS } from "../color";
 
 
-export type FavButtonProps = {
+export type BookmarkButtonProps = {
     id: string;
-    isFav: boolean;
+    isBookmark: boolean;
     className?: string;
 };
 
-/** Button to make a series/playlist a favorite or undo that. */
-export const FavButton: React.FC<FavButtonProps> = ({ id, isFav, className }) => {
+/** Button to bookmark an event/series/playlist or undo that. */
+export const BookmarkButton: React.FC<BookmarkButtonProps> = ({ id, isBookmark, className }) => {
     const { t } = useTranslation();
     const user = useUser();
 
 
     const [add, addInFlight] = useMutation(graphql`
-        mutation FavButtonAddMutation($id: ID!) {
-            addFavorite(id:$id)
+        mutation BookmarkButtonAddMutation($id: ID!) {
+            addBookmark(id:$id)
         }
     `);
     const [remove, removeInFlight] = useMutation(graphql`
-        mutation FavButtonRemoveMutation($id: ID!) {
-            removeFavorite(id:$id)
+        mutation BookmarkButtonRemoveMutation($id: ID!) {
+            removeBookmark(id:$id)
         }
     `);
     const inFlight = addInFlight || removeInFlight;
     const [error, setError] = useState<string | null>(null);
 
     const onClick = async () => {
-        const commit = isFav ? remove : add;
+        const commit = isBookmark ? remove : add;
         commit({
             variables: { id },
             onError: e => {
                 // eslint-disable-next-line no-console
-                console.error("Fav commit error: ", e);
-                setError(t(`fav.failed-to-${isFav ? "remove" : "add"}`));
+                console.error("Bookmark commit error: ", e);
+                setError(t(`bookmark.failed-to-${isBookmark ? "remove" : "add"}`));
             },
-            updater: store => store.get(id)?.setValue(!isFav, "isFav"),
+            updater: store => store.get(id)?.setValue(!isBookmark, "isBookmark"),
         });
     };
 
@@ -54,7 +54,7 @@ export const FavButton: React.FC<FavButtonProps> = ({ id, isFav, className }) =>
         return null;
     }
 
-    const actionLabel = isFav ? t("fav.remove") : t("fav.add");
+    const actionLabel = isBookmark ? t("bookmark.remove") : t("bookmark.add");
     const label = error ?? actionLabel;
 
     return (
@@ -72,7 +72,7 @@ export const FavButton: React.FC<FavButtonProps> = ({ id, isFav, className }) =>
                     if (error) {
                         return <LuTriangleAlert css={{ color: COLORS.danger1 }} />;
                     }
-                    return <LuStar css={{ fill: isFav ? "currentColor" : "none" }} />;
+                    return <LuStar css={{ fill: isBookmark ? "currentColor" : "none" }} />;
                 })()}
             </Button>
         </WithTooltip>

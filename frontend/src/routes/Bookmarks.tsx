@@ -7,7 +7,7 @@ import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
 import { PageTitle } from "../layout/header/ui";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
-import { FavoritesQuery, FavoritesQuery$data } from "./__generated__/FavoritesQuery.graphql";
+import { BookmarksQuery, BookmarksQuery$data } from "./__generated__/BookmarksQuery.graphql";
 import { RealmNav } from "../layout/Navigation";
 import { NotAuthorized } from "../ui/error";
 import { matchTag, unreachable } from "@opencast/appkit";
@@ -16,7 +16,7 @@ import { DirectSeriesRoute } from "./Series";
 import { COLORS } from "../color";
 import { Link } from "../router";
 import { LinkButton } from "../ui/LinkButton";
-import { FavoritesManageRoute } from "./manage/Favorites";
+import { BookmarksManageRoute } from "./manage/Bookmarks";
 import {
     categorizeEvent, LayoutOrderContext, readVideoListEventDataFragment, UpcomingEventsGrid,
     VideoListBlockContainer, VideoListItem, VideoListItems, VideoListLayout, VideoListLayoutMenu,
@@ -27,8 +27,8 @@ import { CollapsibleBlock } from "../ui/CollapsibleBlock";
 
 const ITEMS_PER_PAGE = 24;
 
-export const PATH = "/~favorites" as const;
-export const FavoritesRoute = makeRoute({
+export const PATH = "/~bookmarks" as const;
+export const BookmarksRoute = makeRoute({
     url: ({ page }: { page?: number }) => PATH + (page && page > 1
         ? "?" + new URLSearchParams({ page: page.toString() }).toString()
         : ""),
@@ -41,7 +41,7 @@ export const FavoritesRoute = makeRoute({
             return Number.isInteger(num) && num > 0 ? num : 1;
         })();
 
-        const queryRef = loadQuery<FavoritesQuery>(query, {
+        const queryRef = loadQuery<BookmarksQuery>(query, {
             limit: ITEMS_PER_PAGE,
             offset: (page - 1) * ITEMS_PER_PAGE,
         });
@@ -50,7 +50,7 @@ export const FavoritesRoute = makeRoute({
                 {...{ query, queryRef }}
                 noindex
                 nav={data => <RealmNav fragRef={data.realm} />}
-                render={data => <Favorites queryData={data} page={page} />}
+                render={data => <Bookmarks queryData={data} page={page} />}
             />,
             dispose: () => queryRef.dispose(),
         };
@@ -58,19 +58,19 @@ export const FavoritesRoute = makeRoute({
 });
 
 const query = graphql`
-    query FavoritesQuery($offset:Int!, $limit: Int!) {
+    query BookmarksQuery($offset:Int!, $limit: Int!) {
         ... UserData
         realm: rootRealm {
             ... NavigationData
         }
         currentUser {
-            myFavorites {
+            myBookmarks {
                 __typename
                 ... on Series { id title creators created }
                 ... on AuthorizedPlaylist { id title creator }
-                ... on InaccessibleFavoriteItem { id }
+                ... on InaccessibleBookmarkItem { id }
             }
-            favoritesFeed(offset:$offset, limit: $limit) {
+            bookmarkFeed(offset:$offset, limit: $limit) {
                 totalCount
                 items {
                     event {
@@ -88,11 +88,11 @@ const query = graphql`
 
 
 type Props = {
-    queryData: FavoritesQuery$data;
+    queryData: BookmarksQuery$data;
     page: number;
 };
 
-const Favorites: React.FC<Props> = ({ queryData, page }) => {
+const Bookmarks: React.FC<Props> = ({ queryData, page }) => {
     const { t } = useTranslation();
     const user = queryData.currentUser;
     if (!user) {
@@ -114,26 +114,26 @@ const Favorites: React.FC<Props> = ({ queryData, page }) => {
                 <div>
                     <Breadcrumbs
                         path={[]}
-                        tail={t("fav.main-label")}
+                        tail={t("bookmark.main-label")}
                     />
-                    <PageTitle title={t("fav.main-label")} />
+                    <PageTitle title={t("bookmark.main-label")} />
                 </div>
                 <div>
-                    <LinkButton to={FavoritesManageRoute.url}>{t("fav.manage")}</LinkButton>
+                    <LinkButton to={BookmarksManageRoute.url}>{t("bookmark.manage")}</LinkButton>
                 </div>
             </div>
 
-            <QuickLinks favs={user.myFavorites} />
-            <Feed feed={user.favoritesFeed} page={page} />
+            <QuickLinks bookmarks={user.myBookmarks} />
+            <Feed feed={user.bookmarkFeed} page={page} />
         </div>
     );
 };
 
 type QuickLinksProps = {
-    favs: NonNullable<FavoritesQuery$data["currentUser"]>["myFavorites"];
+    bookmarks: NonNullable<BookmarksQuery$data["currentUser"]>["myBookmarks"];
 };
 
-const QuickLinks: React.FC<QuickLinksProps> = ({ favs }) => {
+const QuickLinks: React.FC<QuickLinksProps> = ({ bookmarks }) => {
     const { t } = useTranslation();
 
     // TODO: we might want to deal with items with the same title and year at some point.
@@ -141,7 +141,7 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ favs }) => {
     return (
         <CollapsibleBlock
             maxHeight={160}
-            buttonLabel={expanded => expanded ? t("fav.show-fewer") : t("fav.show-all")}
+            buttonLabel={expanded => expanded ? t("bookmark.show-fewer") : t("bookmark.show-all")}
         >
             <ul css={{
                 fontSize: 14,
@@ -152,12 +152,14 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ favs }) => {
                 padding: 12,
                 margin: 0,
             }}>
-                {favs.map(fav => {
-                    if (fav.__typename !== "AuthorizedPlaylist" && fav.__typename !== "Series") {
+                {bookmarks.map(bookmark => {
+                    const isVideoList = bookmark.__typename === "AuthorizedPlaylist"
+                        || bookmark.__typename === "Series";
+                    if (!isVideoList) {
                         return null;
                     }
 
-                    const { link, extraInfo } = matchTag(fav, "__typename", {
+                    const { link, extraInfo } = matchTag(bookmark, "__typename", {
                         "AuthorizedPlaylist": playlist => ({
                             link: DirectPlaylistRoute.url({ playlistId: playlist.id }),
                             extraInfo: null,
@@ -170,7 +172,7 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ favs }) => {
                         }),
                     });
 
-                    return <li key={fav.id} css={{ display: "block" }}>
+                    return <li key={bookmark.id} css={{ display: "block" }}>
                         <Link to={link} css={{
                             display: "flex",
                             gap: 8,
@@ -187,7 +189,7 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ favs }) => {
                                 color: COLORS.neutral70,
                             },
                         }}>
-                            {fav.title}
+                            {bookmark.title}
                             {extraInfo && <span css={{
                                 color: COLORS.neutral70,
                             }}>{"("}{extraInfo}{")"}</span>}
@@ -200,7 +202,7 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ favs }) => {
 };
 
 type FeedProps = {
-    feed: NonNullable<FavoritesQuery$data["currentUser"]>["favoritesFeed"];
+    feed: NonNullable<BookmarksQuery$data["currentUser"]>["bookmarkFeed"];
     page: number,
 };
 
@@ -245,7 +247,7 @@ const Feed: React.FC<FeedProps> = ({ feed, page }) => {
         <LayoutOrderContext.Provider value={layoutOrderContext}>
             <VideoListBlockContainer
                 buttons={<VideoListLayoutMenu />}
-                title={t("fav.feed-title")}
+                title={t("bookmark.feed-title")}
             >
                 {upcomingItems.length > 1 && (
                     <UpcomingEventsGrid count={upcomingItems.length}>
@@ -262,7 +264,7 @@ const Feed: React.FC<FeedProps> = ({ feed, page }) => {
                         currentPage={page}
                         renderControl={({ label, icon, disabled, targetPage }) => <Link
                             css={paginationControlStyles}
-                            to={FavoritesRoute.url({ page: targetPage })}
+                            to={BookmarksRoute.url({ page: targetPage })}
                             aria-label={t(label)}
                             aria-disabled={disabled}
                             tabIndex={disabled ? -1 : 0}
