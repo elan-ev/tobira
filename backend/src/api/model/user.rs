@@ -4,7 +4,7 @@ use crate::{
         err::ApiResult,
         model::{
             event::AuthorizedEvent,
-            favorites::{self, FavFeedItem, FavoriteItem},
+            bookmarks::{self, BookmarkFeedItem, BookmarkItem},
             playlist::{AuthorizedPlaylist, Playlist, PlaylistsSortOrder},
         },
     },
@@ -142,20 +142,20 @@ impl User {
         Playlist::load_writable_for_user(context, order.into(), offset, limit, filter).await
     }
 
-    /// Returns all items that the user has marked as favorite.
-    async fn my_favorites(&self, context: &Context) -> ApiResult<Vec<FavoriteItem>> {
-        favorites::fetch_for_user(context).await
+    /// Returns all bookmarks of the current user.
+    async fn my_bookmarks(&self, context: &Context) -> ApiResult<Vec<BookmarkItem>> {
+        bookmarks::fetch_for_user(context).await
     }
 
     /// Returns the latest videos (by `created` date) from items that the user
-    /// added as favorite.
-    async fn favorites_feed(
+    /// added as bookmark.
+    async fn bookmark_feed(
         &self,
         context: &Context,
         #[graphql(default)]
         offset: i32,
         limit: i32,
-    ) -> ApiResult<Connection<FavFeedItem>> {
-        favorites::feed(context, offset, limit).await
+    ) -> ApiResult<Connection<BookmarkFeedItem>> {
+        bookmarks::feed(context, offset, limit).await
     }
 }

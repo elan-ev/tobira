@@ -467,10 +467,10 @@ type AuthorizedPlaylist implements Node {
   creator: String!
   updated: DateTime!
   """
-    Returns `true` iff this playlist is a favorite of the current user. Note:
+    Returns `true` iff this playlist is a bookmark of the current user. Note:
     this is lazily loaded and only available in certain contexts.
   """
-  isFav: Boolean!
+  isBookmark: Boolean!
   """
     Returns the number of entries in this playlist. Note: this is lazily loaded
     and only available in certain contexts (e.g., playlist listings).
@@ -496,6 +496,23 @@ type AuthorizedPlaylist implements Node {
   writeRoles: [String!]!
   "Whether the current user has write access to this playlist."
   canWrite: Boolean!
+}
+
+type BookmarkFeedConnection {
+  pageInfo: PageInfo!
+  items: [BookmarkFeedItem!]!
+  totalCount: Int!
+}
+
+type BookmarkFeedItem {
+  event: Event!
+  """
+    The series bookmark that caused this event to appear in the feed. It's
+    the event's series or `null`.
+  """
+  seriesBookmark: Series
+  "All playlist bookmarks that caused this event to appear in the feed."
+  playlistBookmarks: [AuthorizedPlaylist!]!
 }
 
 type Caption {
@@ -533,24 +550,7 @@ type EventSearchResults {
   duration: Int!
 }
 
-type FavFeedConnection {
-  pageInfo: PageInfo!
-  items: [FavFeedItem!]!
-  totalCount: Int!
-}
-
-type FavFeedItem {
-  event: Event!
-  """
-    The favorite series that caused this event to appear in the feed. It's
-    the event's series or `null`.
-  """
-  favSeries: Series
-  "All favorite playlists that caused this event to appear in the feed."
-  favPlaylists: [AuthorizedPlaylist!]!
-}
-
-type InaccessibleFavoriteItem {
+type InaccessibleBookmarkItem {
   id: ID!
 }
 
@@ -748,16 +748,16 @@ type Mutation {
   """
   mountSeries(series: NewSeries!, parentRealmPath: String!, newRealms: [RealmSpecifier!]! = []): Realm!
   """
-    Adds the item referred to by `id`. Must be a series or playlist.
-    Mutation is idempotent. Returns `true` if the item was not a favorite
-    before already.
+    Bookmarks the item referred to by `id`. Must be an event, series or
+    playlist. Mutation is idempotent. Returns `true` if the item was not a
+    bookmark before already.
   """
-  addFavorite(id: ID!): Boolean!
+  addBookmark(id: ID!): Boolean!
   """
-    Removes an item from the users favorites. Returns whether the item
-    existed as favorite before.
+    Removes an item from the user's bookmarks. Returns whether the item
+    existed as bookmark before.
   """
-  removeFavorite(id: ID!): Boolean!
+  removeBookmark(id: ID!): Boolean!
 }
 
 type NotAllowed {
@@ -1142,10 +1142,10 @@ type Series implements Node {
   updated: DateTime
   metadata: ExtraMetadata
   """
-    Returns `true` iff this series is a favorite of the current user. Note:
+    Returns `true` iff this series is a bookmark of the current user. Note:
     this is lazily loaded and only available in certain contexts.
   """
-  isFav: Boolean!
+  isBookmark: Boolean!
   """
     Returns creators extracted from the series metadata.
     Looks for `creator` or `createdBy` in the dcterms namespace.
@@ -1326,13 +1326,13 @@ type User {
     on the "my playlists" page.
   """
   myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
-  "Returns all items that the user has marked as favorite."
-  myFavorites: [FavoriteItem!]!
+  "Returns all bookmarks of the current user."
+  myBookmarks: [BookmarkItem!]!
   """
     Returns the latest videos (by `created` date) from items that the user
-    added as favorite.
+    added as bookmark.
   """
-  favoritesFeed(offset: Int! = 0, limit: Int!): FavFeedConnection!
+  bookmarkFeed(offset: Int! = 0, limit: Int!): BookmarkFeedConnection!
 }
 
 type UserInfo {
@@ -1359,11 +1359,11 @@ type VideoBlock implements Block {
   realm: Realm!
 }
 
+union BookmarkItem = AuthorizedEvent | Series | AuthorizedPlaylist | InaccessibleBookmarkItem
+
 union Event = AuthorizedEvent | NotAllowed
 
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
-
-union FavoriteItem = AuthorizedEvent | Series | AuthorizedPlaylist | InaccessibleFavoriteItem
 
 union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 
