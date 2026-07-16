@@ -73,7 +73,7 @@ import { realmBreadcrumbs } from "../util/realm";
 import { COLORS } from "../color";
 import { preciseDateTime, preferredLocaleForLang, PrettyDate } from "../ui/time";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
-import { MetadataSection } from "../ui/metadata";
+import { MetadataSection, MetadataSectionSeriesLink } from "../ui/metadata";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
 import { EmbedVideoRoute } from "./Embed";
 import { ManageVideoDetailsRoute } from "./manage/Video/VideoDetails";
@@ -954,7 +954,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
 export const getSeriesLink = (
     series: { id: string; title: string } | null | undefined,
     realmPath: string | null,
-): { title: string; url: string } | undefined => series ? {
+): MetadataSectionSeriesLink | undefined => series ? {
     title: series.title,
     url: realmPath == null
         ? DirectSeriesRoute.url({ seriesId: series.id })

@@ -522,24 +522,28 @@ const renderMetadataValues = (
             {i > 0 && <br />}
             {translateMetadataValue(label, value, t)}
         </Fragment>);
+    } else {
+        return values.length > 1
+            ? <ul css={{
+                listStyle: "none",
+                display: "inline-flex",
+                flexWrap: "wrap",
+                margin: 0,
+                padding: 0,
+                "& > li:not(:last-child)::after": {
+                    content: "'•'",
+                    padding: "0 6px",
+                    color: COLORS.neutral40,
+                },
+            }}>
+                {values.map((value, i) => (
+                    <li key={i}>{translateMetadataValue(label, value, t)}</li>
+                ))}
+            </ul>
+            : values.length === 1
+                ? translateMetadataValue(label, values[0], t)
+                : null;
     }
-
-    return values.length > 1
-        ? <ul css={{
-            listStyle: "none",
-            display: "inline-flex",
-            flexWrap: "wrap",
-            margin: 0,
-            padding: 0,
-            "& > li:not(:last-child)::after": {
-                content: "'•'",
-                padding: "0 6px",
-                color: COLORS.neutral40,
-            },
-        }}>
-            {values.map((value, i) => <li key={i}>{translateMetadataValue(label, value, t)}</li>)}
-        </ul>
-        : translateMetadataValue(label, values[0], t);
 };
 
 export const getMetadataPairs = (
