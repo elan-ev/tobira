@@ -643,6 +643,8 @@ type Mutation {
   renameRealm(id: ID!, name: UpdatedRealmName!): Realm!
   "Changes the moderator and/or admin roles of a realm."
   updatePermissions(id: ID!, permissions: UpdatedPermissions!): Realm!
+  "Sets whether a page is visible at all and/or listed in the navigation menu."
+  setRealmVisibility(id: ID!, visible: Boolean, showInMenu: Boolean): Realm!
   "Updates a realm's data."
   updateRealm(id: ID!, set: UpdateRealm!): Realm!
   "Remove a realm from the tree."
@@ -897,6 +899,18 @@ type Realm implements Node {
     `null` is returned.
   """
   ownerDisplayName: String
+  """
+    Whether the page is visible to users. When the page is hidden, only users with
+    permission to manage it can view or access it. Hidden pages are excluded from
+    navigation and page hierarchies and cannot be reached through their URL.
+  """
+  visible: Boolean!
+  """
+    Whether the page is included in navigation menus. Pages that are not included
+    remain accessible and continue to appear in other contexts where appropriate,
+    such as direct navigation or links.
+  """
+  showInMenu: Boolean!
   "Info about the navigation UI for this realm."
   nav: RealmNav!
   """
@@ -976,6 +990,8 @@ type RealmNavItem {
   name: String
   path: String!
   hasChildren: Boolean!
+  visible: Boolean!
+  showInMenu: Boolean!
 }
 
 type RemovedBlock {

@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { LuChevronRight } from "react-icons/lu";
+import { LuChevronRight, LuEyeOff, LuOctagonMinus } from "react-icons/lu";
 import { graphql, useFragment } from "react-relay";
 
 import type { NavigationData$key } from "./__generated__/NavigationData.graphql";
@@ -12,7 +12,7 @@ import {
 import { MissingRealmName, sortRealms } from "../routes/util";
 import { COLORS } from "../color";
 import { Link } from "../router";
-import { match, screenWidthAbove, useColorScheme } from "@opencast/appkit";
+import { screenWidthAbove, useColorScheme } from "@opencast/appkit";
 import { css } from "@emotion/react";
 import { useMenu } from "./MenuState";
 
@@ -39,8 +39,8 @@ export const RealmNav: React.FC<Props> = ({ fragRef }) => {
                 name
                 path
                 nav {
-                    header { name path }
-                    list { name path hasChildren }
+                    header { name path visible }
+                    list { name path hasChildren visible showInMenu }
                     listOrder
                 }
             }
@@ -66,17 +66,30 @@ export const RealmNav: React.FC<Props> = ({ fragRef }) => {
         link: item.path || "/",
     });
 
+    const hiddenIcon = <span css={{ display: "flex" }} title={t("realm.hidden-tooltip")}>
+        <LuOctagonMinus />
+    </span>;
+    const hiddenFromMenuIcon = (
+        <span css={{ display: "flex" }} title={t("realm.hidden-from-menu-tooltip")}>
+            <LuEyeOff />
+        </span>
+    );
+
     return <Nav items={[
         // Header
         ...nav.header.map((item, i) => ({
             ...shared(item),
             indent: i,
+            stateIcon: !item.visible && hiddenIcon,
         } satisfies NavItem)),
 
         // Main list
         ...sortRealms(nav.list, nav.listOrder, i18n.language).map(item => ({
             ...shared(item),
             indent: nav.header.length,
+            stateIcon: !item.visible
+                ? hiddenIcon
+                : !item.showInMenu && hiddenFromMenuIcon,
             icon: item.hasChildren ? {
                 icon: <LuChevronRight />,
                 position: "right",
@@ -96,6 +109,7 @@ type NavItem = {
         position: "left" | "right";
         icon: ReactNode;
     };
+    stateIcon?: ReactNode;
     closeBurgerOnClick?: boolean;
 };
 
@@ -168,16 +182,14 @@ const NavItem: React.FC<NavItemProps> = ({ item, isDarkMode, onLinkClick }) => {
         position: "relative",
         display: "flex",
         alignItems: "center",
-        justifyContent: match(item.icon?.position ?? "none", {
-            "left": () => "flex-start",
-            "right": () => "space-between",
-            "none": () => "flex-start",
-        }),
         gap: 12,
     }}>
         {item.icon && item.icon.position === "left" && item.icon.icon}
+        {item.stateIcon}
         <span css={ellipsisOverflowCss(2)}>{item.label}</span>
-        {item.icon && item.icon.position === "right" && item.icon.icon}
+        {item.icon && item.icon.position === "right" && (
+            <span css={{ display: "flex", marginLeft: "auto" }}>{item.icon.icon}</span>
+        )}
     </div>;
 
     if (item.active) {
