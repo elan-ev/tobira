@@ -383,4 +383,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     48: "user-session-timestamp-fix",
     49: "bookmarks",
     50: "group-permissions",
+    51: "realm-visibility",
 ];
