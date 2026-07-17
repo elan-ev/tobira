@@ -206,6 +206,16 @@ impl Mutation {
         Realm::update_permissions(id, permissions, context).await
     }
 
+    /// Sets whether a page is visible at all and/or listed in the navigation menu.
+    async fn set_realm_visibility(
+        id: Id,
+        visible: Option<bool>,
+        show_in_menu: Option<bool>,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        Realm::set_visibility(id, visible, show_in_menu, context).await
+    }
+
     /// Updates a realm's data.
     async fn update_realm(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
         Realm::update(id, set, context).await

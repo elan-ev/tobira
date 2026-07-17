@@ -271,6 +271,47 @@ impl Realm {
     }
 
 
+    pub(crate) async fn set_visibility(
+        id: Id,
+        visible: Option<bool>,
+        show_in_menu: Option<bool>,
+        context: &Context,
+    ) -> ApiResult<Realm> {
+        let Some(realm) = Self::load_by_id(id, context).await? else {
+            return Err(invalid_input!("`id` does not refer to an existing realm"));
+        };
+        realm.require_moderator_rights(context)?;
+
+        if visible == Some(false) && realm.is_main_root() {
+            return Err(invalid_input!(
+                key = "realm.cannot-hide-main-root",
+                "the main root realm (homepage) cannot be hidden",
+            ));
+        }
+
+        let db = &context.db;
+        db.execute(
+            "update realms set \
+                visible = coalesce($2, visible), \
+                show_in_menu = coalesce($3, show_in_menu) \
+                where id = $1",
+            &[&realm.key, &visible, &show_in_menu],
+        ).await?;
+
+        Self::load_by_key(realm.key, context).await.map(Option::unwrap).inspect_(|new| {
+            info!(
+                "Updated visibility of realm {:?} ({}): visible {:?} -> {:?}, \
+                show_in_menu {:?} -> {:?}",
+                realm.key,
+                realm.full_path,
+                realm.visible,
+                new.visible,
+                realm.show_in_menu,
+                new.show_in_menu,
+            );
+        })
+    }
+
     pub(crate) async fn update(id: Id, set: UpdateRealm, context: &Context) -> ApiResult<Realm> {
         // TODO: validate input
 

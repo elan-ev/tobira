@@ -268,6 +268,11 @@ realm:
   edit-page-content: Seiteninhalt bearbeiten
   add-sub-page: Unterseite hinzufügen
   missing-name: Fehlender Name
+  hidden-tooltip: >
+    Verborgene Seite. Nur Benutzer mit Bearbeitungsberechtigung können sie sehen.
+  hidden-from-menu-tooltip: >
+    Diese Seite ist im Menü ausgeblendet,
+    kann aber weiterhin über einen direkten Link aufgerufen werden.
   user-realm:
     my-page: Meine Seite
     note-label: Nutzerseite
@@ -681,6 +686,22 @@ manage:
       no-name: Keinen Namen anzeigen
       no-blocks: Auf dieser Seite befinden sich keine verknüpfbaren Videos/Serien.
       rename-failed: Änderung des Namen fehlgeschlagen.
+    visibility:
+      heading: Sichtbarkeit
+      visible: Seite sichtbar
+      visible-description: >
+        Wenn deaktiviert, sind diese Seite und ihr Inhalt für alle vollständig
+        verborgen und nicht erreichbar – auch nicht über einen direkten Link –
+        außer für Nutzer:innen, die diese Seite bearbeiten dürfen.
+      show-in-menu: In Navigationsmenü anzeigen
+      show-in-menu-description: >
+        Wenn deaktiviert, wird diese Seite nicht unter ihren Geschwister- bzw.
+        Unterseiten im Navigationsmenü aufgeführt, bleibt aber über einen
+        direkten Link erreichbar.
+      root-note: >
+        Die Startseite ist immer sichtbar und wird immer im Navigationsmenü
+        angezeigt; dies kann nicht geändert werden.
+      failed: Änderung der Sichtbarkeit fehlgeschlagen.
     children:
       heading: Reihenfolge Unterseiten
       sort-alphabetically-asc: Alphabetisch aufsteigend sortieren
@@ -822,6 +843,7 @@ api-remote-errors:
     path-collision: Eine Seite mit diesem Pfad existiert bereits.
     no-moderator-rights: Sie haben nicht die Berechtigung, diese Seite zu bearbeiten.
     no-page-admin-rights: Sie haben nicht die Berechtigung, diese Aktion durchzuführen.
+    cannot-hide-main-root: Die Startseite kann nicht verborgen werden.
     cannot-create-user-realm: Sie haben nicht die Berechtigung, eine persönliche Seite anzulegen.
     user-realm-already-exists: Ihre persönliche Seite existiert bereits.
     handle-not-valid-as-path: >

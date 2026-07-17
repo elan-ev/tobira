@@ -45,7 +45,7 @@ impl Query {
     /// Returns the realm with the specific ID or `None` if the ID does not
     /// refer to a realm.
     async fn realm_by_id(id: Id, context: &Context) -> ApiResult<Option<Realm>> {
-        Realm::load_by_id(id, context).await
+        Ok(Realm::load_by_id(id, context).await?.filter(|r| r.is_visible_to_current_user(context)))
     }
 
     /// Returns the realm with the given path or `null` if the path does not
@@ -56,7 +56,7 @@ impl Query {
     /// to start with `"/"`. Paths starting with `"/@"` are considered user
     /// root realms.
     async fn realm_by_path(path: String, context: &Context) -> ApiResult<Option<Realm>> {
-        Realm::load_by_path(path, context).await
+        Ok(Realm::load_by_path(path, context).await?.filter(|r| r.is_visible_to_current_user(context)))
     }
 
     /// Returns an event by its Opencast ID.
@@ -119,7 +119,11 @@ impl Query {
     /// Retrieve a node by globally unique ID. Mostly useful for relay.
     async fn node(id: Id, context: &Context) -> ApiResult<Option<NodeValue>> {
         match id.kind() {
-            Id::REALM_KIND => Ok(Realm::load_by_id(id, context).await?.map(NodeValue::from)),
+            Id::REALM_KIND => Ok(
+                Realm::load_by_id(id, context).await?
+                    .filter(|r| r.is_visible_to_current_user(context))
+                    .map(NodeValue::from)
+            ),
             Id::SERIES_KIND => Ok(Series::load_by_id(id, context).await?.map(NodeValue::from)),
             Id::EVENT_KIND => AuthorizedEvent::load_by_id(id, context).await?
                 .map(|e| e.into_result().map(NodeValue::from))

@@ -265,6 +265,8 @@ realm:
   edit-page-content: Edit page content
   add-sub-page: Add subpage
   missing-name: Missing name
+  hidden-tooltip: Hidden page. Only users with permission to edit can see it.
+  hidden-from-menu-tooltip: This page is hidden from the menu but can still be accessed via a direct link.
   user-realm:
     my-page: My page
     note-label: User page
@@ -646,6 +648,21 @@ manage:
       no-name: Omit name
       no-blocks: There are no linkable video/series on this page.
       rename-failed: Failed to change the name.
+    visibility:
+      heading: Visibility
+      visible: Page visible
+      visible-description: >
+        If disabled, this page and its content are completely hidden and
+        inaccessible to everyone except users who can edit this page — even
+        via direct link.
+      show-in-menu: Show in navigation menu
+      show-in-menu-description: >
+        If disabled, this page is not listed among its sibling/child pages
+        in the navigation menu, but remains reachable via direct link.
+      root-note: >
+        The homepage is always visible and always shown in the navigation
+        menu; this cannot be changed.
+      failed: Changing the page's visibility failed.
     children:
       heading: Order of subpages
       sort-alphabetically-asc: Sort alphabetically ascending
@@ -780,6 +797,7 @@ api-remote-errors:
     path-collision: A page with this path already exists.
     no-moderator-rights: You are not allowed to modify this page.
     no-page-admin-rights: You are not allowed to perform this action.
+    cannot-hide-main-root: The homepage cannot be hidden.
     cannot-create-user-realm: You are not allowed to create your own page.
     user-realm-already-exists: Your own page already exists.
     handle-not-valid-as-path: >
