@@ -22,6 +22,12 @@ pub(crate) struct Realm {
     /// itself. It starts with a direct child of the root and ends with the
     /// parent of `self`.
     pub(crate) ancestor_names: Vec<Option<String>>,
+
+    /// Whether this realm is visible to everyone. Used to filter search
+    /// results so that realms hidden from the current user don't appear.
+    pub(crate) visible: bool,
+    /// Roles allowed to moderate this realm.
+    pub(crate) flattened_moderator_roles: Vec<String>,
 }
 
 impl IndexItem for Realm {
@@ -34,7 +40,10 @@ impl IndexItem for Realm {
 impl_from_db!(
     Realm,
     select: {
-        search_realms.{ id, name, full_path, ancestor_names, is_root, is_user_realm },
+        search_realms.{
+            id, name, full_path, ancestor_names, is_root, is_user_realm,
+            visible, flattened_moderator_roles,
+        },
     },
     |row| {
         Self {
@@ -44,6 +53,8 @@ impl_from_db!(
             ancestor_names: row.ancestor_names(),
             is_root: row.is_root(),
             is_user_realm: row.is_user_realm(),
+            visible: row.visible(),
+            flattened_moderator_roles: util::encode_acl(&row.flattened_moderator_roles::<Vec<String>>()),
         }
     }
 );
@@ -73,7 +84,7 @@ impl Realm {
 pub(super) async fn prepare_index(index: &Index) -> Result<()> {
     util::lazy_set_special_attributes(index, "realm", FieldAbilities {
         searchable: &["name"],
-        filterable: &["is_root", "is_user_realm"],
+        filterable: &["is_root", "is_user_realm", "visible", "flattened_moderator_roles"],
         sortable: &[],
     }).await
 }
