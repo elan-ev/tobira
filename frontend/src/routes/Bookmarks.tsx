@@ -10,7 +10,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { BookmarksQuery, BookmarksQuery$data } from "./__generated__/BookmarksQuery.graphql";
 import { RealmNav } from "../layout/Navigation";
 import { NotAuthorized } from "../ui/error";
-import { matchTag, unreachable } from "@opencast/appkit";
+import { Card, matchTag, unreachable } from "@opencast/appkit";
 import { DirectPlaylistRoute } from "./Playlist";
 import { DirectSeriesRoute } from "./Series";
 import { COLORS } from "../color";
@@ -99,6 +99,9 @@ const Bookmarks: React.FC<Props> = ({ queryData, page }) => {
         return <NotAuthorized />;
     }
 
+    const hasBookmarks = user.myBookmarks
+        .some(bm => bm.__typename === "AuthorizedPlaylist" || bm.__typename === "Series");
+
     return (
         <div css={{
             height: "100%",
@@ -123,8 +126,12 @@ const Bookmarks: React.FC<Props> = ({ queryData, page }) => {
                 </div>
             </div>
 
-            <QuickLinks bookmarks={user.myBookmarks} />
-            <Feed feed={user.bookmarkFeed} page={page} />
+            {!hasBookmarks && <Card kind="info">
+                {t("bookmark.no-bookmarks-yet")}
+            </Card>}
+
+            {hasBookmarks && <QuickLinks bookmarks={user.myBookmarks} />}
+            {hasBookmarks && <Feed feed={user.bookmarkFeed} page={page} />}
         </div>
     );
 };
@@ -200,6 +207,7 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ bookmarks }) => {
         </CollapsibleBlock>
     );
 };
+
 
 type FeedProps = {
     feed: NonNullable<BookmarksQuery$data["currentUser"]>["bookmarkFeed"];

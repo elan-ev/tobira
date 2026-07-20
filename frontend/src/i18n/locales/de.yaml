@@ -243,6 +243,7 @@ bookmark:
   add: Lesezeichen hinzufügen
   remove: Lesezeichen entfernen
   manage: Lesezeichen verwalten
+  no-bookmarks-yet: Sie haben noch keine Lesezeichen.
   failed-to-add: Lesezeichen hinzufügen fehlgeschlagen
   failed-to-remove: Lesezeichen entfernen fehlgeschlagen
   inaccessible: Unzugänglich (keine Leseberechtigung)
