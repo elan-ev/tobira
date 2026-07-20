@@ -239,9 +239,11 @@ bookmark:
   add: Add bookmark
   remove: Remove bookmark
   manage: Manage bookmarks
+  no-bookmarks-yet: You haven't bookmarked anything yet.
   failed-to-add: Failed to add bookmark
   failed-to-remove: Failed to remove bookmark
   inaccessible: Inaccessible (not allowed to see)
+  videos-title: Bookmarked videos
   feed-title: Latest videos
   feed-description: Videos from all your bookmarked series and playlist.
   show-all: Show all

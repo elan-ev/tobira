@@ -10,7 +10,7 @@ import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { BookmarksQuery, BookmarksQuery$data } from "./__generated__/BookmarksQuery.graphql";
 import { RealmNav } from "../layout/Navigation";
 import { NotAuthorized } from "../ui/error";
-import { matchTag, unreachable } from "@opencast/appkit";
+import { Card, matchTag, unreachable } from "@opencast/appkit";
 import { DirectPlaylistRoute } from "./Playlist";
 import { DirectSeriesRoute } from "./Series";
 import { COLORS } from "../color";
@@ -66,7 +66,11 @@ const query = graphql`
         currentUser {
             myBookmarks {
                 __typename
-                ... on Series { id title creators created }
+                ... on AuthorizedEvent {
+                    id
+                    ...VideoListEventData @arguments(includeSeries: true)
+                }
+                ... on Series { id title creators seriesCreated: created }
                 ... on AuthorizedPlaylist { id title creator }
                 ... on InaccessibleBookmarkItem { id }
             }
@@ -99,6 +103,11 @@ const Bookmarks: React.FC<Props> = ({ queryData, page }) => {
         return <NotAuthorized />;
     }
 
+    const hasVideoBookmarks = user.myBookmarks
+        .some(bm => bm.__typename === "AuthorizedEvent");
+    const hasVideoListBookmarks = user.myBookmarks
+        .some(bm => bm.__typename === "AuthorizedPlaylist" || bm.__typename === "Series");
+
     return (
         <div css={{
             height: "100%",
@@ -123,8 +132,13 @@ const Bookmarks: React.FC<Props> = ({ queryData, page }) => {
                 </div>
             </div>
 
-            <QuickLinks bookmarks={user.myBookmarks} />
-            <Feed feed={user.bookmarkFeed} page={page} />
+            {!hasVideoListBookmarks && !hasVideoBookmarks && <Card kind="info">
+                {t("bookmark.no-bookmarks-yet")}
+            </Card>}
+
+            {hasVideoListBookmarks && <QuickLinks bookmarks={user.myBookmarks} />}
+            {hasVideoBookmarks && <BookmarkedVideos bookmarks={user.myBookmarks} />}
+            {hasVideoListBookmarks && <Feed feed={user.bookmarkFeed} page={page} />}
         </div>
     );
 };
@@ -166,8 +180,8 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ bookmarks }) => {
                         }),
                         "Series": series => ({
                             link: DirectSeriesRoute.url({ seriesId: series.id }),
-                            extraInfo: series.created
-                                ? new Date(series.created).getFullYear()
+                            extraInfo: series.seriesCreated
+                                ? new Date(series.seriesCreated).getFullYear()
                                 : null,
                         }),
                     });
@@ -198,6 +212,53 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ bookmarks }) => {
                 })}
             </ul>
         </CollapsibleBlock>
+    );
+};
+
+
+type BookmarkedVideosProps = {
+    bookmarks: NonNullable<BookmarksQuery$data["currentUser"]>["myBookmarks"];
+};
+
+const BookmarkedVideos: React.FC<BookmarkedVideosProps> = ({ bookmarks }) => {
+    const { t } = useTranslation();
+
+    const items = bookmarks.map(bookmark => {
+        if (bookmark.__typename === "AuthorizedEvent") {
+            return readVideoListEventDataFragment(bookmark);
+        }
+        return null;
+    }).filter(bm => bm != null);
+
+    const [layoutState, setLayoutState] = useState<VideoListLayout>("SLIDER");
+    const layoutOrderContext: LayoutOrderContext = {
+        allowOriginalOrder: true,
+        eventOrder: "ORIGINAL",
+        setEventOrder: () => {},
+        layoutState,
+        setLayoutState,
+    };
+
+    const renderEvents = (items: VideoListItem[]) => <VideoListItems
+        items={items.map(item => ({ item, active: false }))}
+        itemsPerPage={100}
+        showSeries={true}
+        itemLink={key => `/!v/${key}`}
+    />;
+
+    return (
+        <LayoutOrderContext.Provider value={layoutOrderContext}>
+            <VideoListBlockContainer
+                buttons={<VideoListLayoutMenu />}
+                title={t("bookmark.videos-title")}
+            >
+                {items.length === 0 && (
+                    <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
+                )}
+
+                {renderEvents(items)}
+            </VideoListBlockContainer>
+        </LayoutOrderContext.Provider>
     );
 };
 
