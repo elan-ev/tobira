@@ -248,6 +248,9 @@ const Feed: React.FC<FeedProps> = ({ feed, page }) => {
             <VideoListBlockContainer
                 buttons={<VideoListLayoutMenu />}
                 title={t("bookmark.feed-title")}
+                metadata={<div css={{ fontSize: 14, padding: "0 12px" }}>
+                    {t("bookmark.feed-description")}
+                </div>}
             >
                 {upcomingItems.length > 1 && (
                     <UpcomingEventsGrid count={upcomingItems.length}>

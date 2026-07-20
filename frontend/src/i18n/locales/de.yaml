@@ -247,6 +247,7 @@ bookmark:
   failed-to-remove: Lesezeichen entfernen fehlgeschlagen
   inaccessible: Unzugänglich (keine Leseberechtigung)
   feed-title: Neuste Videos
+  feed-description: Videos aller Serien und Playlists, für die Sie Lesezeichen haben.
   show-all: Alle anzeigen
   show-fewer: Weniger anzeigen
 
