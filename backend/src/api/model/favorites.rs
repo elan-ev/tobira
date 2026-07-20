@@ -24,6 +24,7 @@ use crate::{
 #[derive(GraphQLUnion)]
 #[graphql(Context = Context)]
 pub(crate) enum FavoriteItem {
+    Event(AuthorizedEvent),
     Series(Series),
     Playlist(AuthorizedPlaylist),
     Inaccessible(InaccessibleFavoriteItem),
@@ -38,19 +39,33 @@ pub async fn fetch_for_user(context: &Context) -> ApiResult<Vec<FavoriteItem>> {
     let user = context.require_user()?;
 
     let (selection, mapping) = db::util::select!(
-        is_series: "series is not null",
-        is_playlist: "playlist is not null",
+        is_event: "favorites.event is not null",
+        is_series: "favorites.series is not null",
+        is_playlist: "favorites.playlist is not null",
+        event: AuthorizedEvent from <AuthorizedEvent as FromDb>::select()
+            .with_renamed_table("series", "event_series"),
         series: Series,
         playlist: AuthorizedPlaylist,
     );
     let sql = format!("select {selection} from favorites
+        left join events on events.id = favorites.event
+        left join series as event_series on event_series.id = events.series
         left join series on series.id = favorites.series
         left join playlists on playlists.id = favorites.playlist
         where username = $1
         order by favorites.created desc"
     );
     context.db.query_mapped(&sql, dbargs![&user.username], |row| {
-        if mapping.is_series.of(&row) {
+        if mapping.is_event.of(&row) {
+            let event = AuthorizedEvent::from_row(&row, mapping.event);
+            let id = Id::event(event.key);
+            match Event::check_auth(event, &context.auth) {
+                Event::Event(e) => FavoriteItem::Event(e),
+                Event::NotAllowed(_) => FavoriteItem::Inaccessible(InaccessibleFavoriteItem {
+                    id
+                }),
+            }
+        } else if mapping.is_series.of(&row) {
             FavoriteItem::Series(Series::from_row(&row, mapping.series))
         } else if mapping.is_playlist.of(&row) {
             let playlist = AuthorizedPlaylist::from_row(&row, mapping.playlist);
@@ -70,10 +85,19 @@ pub async fn fetch_for_user(context: &Context) -> ApiResult<Vec<FavoriteItem>> {
 pub async fn add_favorite(id: Id, context: &Context) -> ApiResult<bool> {
     let user = context.require_user()?;
 
+    let event_id = id.key_for(Id::EVENT_KIND);
     let series_id = id.key_for(Id::SERIES_KIND);
     let playlist_id = id.key_for(Id::PLAYLIST_KIND);
-    if [series_id, playlist_id].iter().all(|id| id.is_none()) {
+    if [event_id, series_id, playlist_id].iter().all(|id| id.is_none()) {
         return Err(invalid_input!("this type of item cannot be added as favorite"));
+    }
+
+
+    if let Some(event_key) = event_id {
+        let event = AuthorizedEvent::load_by_key(event_key, context).await?;
+        if let Some(Event::NotAllowed(_)) = event {
+            return Err(not_authorized!("not allowed to read event"));
+        }
     }
 
     if let Some(playlist_key) = playlist_id {
@@ -83,11 +107,12 @@ pub async fn add_favorite(id: Id, context: &Context) -> ApiResult<bool> {
         }
     }
 
-    let sql = "insert into favorites (username, series, playlist)
-        values ($1, $2, $3)
+    let sql = "insert into favorites (username, event, series, playlist)
+        values ($1, $2, $3, $4)
         on conflict do nothing";
-    let res = context.db.execute(sql, &[&user.username, &series_id, &playlist_id]).await;
+    let res = context.db.execute(sql, &[&user.username, &event_id, &series_id, &playlist_id]).await;
     let affected = map_db_err!(res, {
+        if constraint == "favorites_event_fkey" => invalid_input!("event does not exist"),
         if constraint == "favorites_series_fkey" => invalid_input!("series does not exist"),
         if constraint == "favorites_playlist_fkey" => invalid_input!("playlist does not exist"),
     })?;
@@ -98,13 +123,16 @@ pub async fn add_favorite(id: Id, context: &Context) -> ApiResult<bool> {
 pub async fn remove_favorite(id: Id, context: &Context) -> ApiResult<bool> {
     let user = context.require_user()?;
 
+    let event_id = id.key_for(Id::EVENT_KIND);
     let series_id = id.key_for(Id::SERIES_KIND);
     let playlist_id = id.key_for(Id::PLAYLIST_KIND);
     let sql = "delete from favorites
         where username = $1
-        and series is not distinct from $2
-        and playlist is not distinct from $3";
-    let affected = context.db.execute(sql, &[&user.username, &series_id, &playlist_id]).await?;
+        and event is not distinct from $2
+        and series is not distinct from $3
+        and playlist is not distinct from $4";
+    let affected = context.db.execute(sql, &[&user.username, &event_id, &series_id, &playlist_id])
+        .await?;
 
     Ok(affected == 1)
 }

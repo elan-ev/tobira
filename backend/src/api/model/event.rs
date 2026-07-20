@@ -489,6 +489,10 @@ impl AuthorizedEvent {
         }
     }
 
+    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Event>> {
+        Self::load_by_any_id_impl("id", &key, context).await
+    }
+
     pub(crate) async fn load_by_opencast_id(oc_id: OpencastId, context: &Context) -> ApiResult<Option<Event>> {
         Self::load_by_any_id_impl("opencast_id", &oc_id, context).await
     }

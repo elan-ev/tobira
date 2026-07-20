@@ -1363,7 +1363,7 @@ union Event = AuthorizedEvent | NotAllowed
 
 union EventSearchOutcome = SearchUnavailable | EventSearchResults
 
-union FavoriteItem = Series | AuthorizedPlaylist | InaccessibleFavoriteItem
+union FavoriteItem = AuthorizedEvent | Series | AuthorizedPlaylist | InaccessibleFavoriteItem
 
 union KnownUsersSearchOutcome = SearchUnavailable | KnownUserSearchResults
 
