@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LuStar, LuTriangleAlert } from "react-icons/lu";
+import { LuBookmark, LuTriangleAlert } from "react-icons/lu";
 import {
     Button,
     Spinner,
@@ -80,7 +80,7 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
                     if (error) {
                         return <LuTriangleAlert css={{ color: COLORS.danger1 }} />;
                     }
-                    return <LuStar css={{ fill: isBookmark ? "currentColor" : "none" }} />;
+                    return <LuBookmark css={{ fill: isBookmark ? "currentColor" : "none" }} />;
                 })()}
             </Button>
         </WithTooltip>

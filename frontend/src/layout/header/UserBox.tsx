@@ -5,7 +5,7 @@ import {
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
     LuCirclePlus,
     LuGauge,
-    LuStar,
+    LuBookmark,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
@@ -239,7 +239,7 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
     const indent = { paddingLeft: 30 };
     const items: HeaderMenuProps["items"] = [
         {
-            icon: <LuStar />,
+            icon: <LuBookmark />,
             wrapper: <Link to={BookmarksRoute.url({})} />,
             children: t("bookmark.main-label"),
             css: { minWidth: 200 },

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineFire } from "react-icons/hi";
 import {
     LuFilm, LuLayoutTemplate, LuCirclePlus, LuUpload, LuVideo,
-    LuStar,
+    LuBookmark,
 } from "react-icons/lu";
 import { graphql } from "react-relay";
 import { useColorScheme } from "@opencast/appkit";
@@ -138,7 +138,7 @@ export const ManageNav: React.FC<ManageNavProps> = ({ active }) => {
     }
     if (isRealUser(user)) {
         entries.push(
-            [BookmarksManageRoute.url, t("bookmark.main-label"), <LuStar />],
+            [BookmarksManageRoute.url, t("bookmark.main-label"), <LuBookmark />],
         );
     }
     /* eslint-enable react/jsx-key */
