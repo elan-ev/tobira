@@ -243,6 +243,7 @@ bookmark:
   failed-to-remove: Failed to remove bookmark
   inaccessible: Inaccessible (not allowed to see)
   feed-title: Latest videos
+  feed-description: Videos from all your bookmarked series and playlist.
   show-all: Show all
   show-fewer: Show fewer
 
