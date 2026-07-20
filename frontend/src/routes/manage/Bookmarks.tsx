@@ -15,13 +15,14 @@ import {
 import { NotAuthorized } from "../../ui/error";
 import SeriesIcon from "../../icons/series.svg";
 import PlaylistIcon from "../../icons/playlist.svg";
-import { LuStarOff } from "react-icons/lu";
+import { LuStarOff, LuVideo } from "react-icons/lu";
 import { Link } from "../../router";
 import { DirectPlaylistRoute } from "../Playlist";
 import { DirectSeriesRoute } from "../Series";
 import { COLORS } from "../../color";
 import { Creators } from "../../ui/Video";
 import { DateAndCreators } from "../../ui/metadata";
+import { DirectVideoRoute } from "../Video";
 
 
 export const PATH = "/~manage/bookmarks" as const;
@@ -51,6 +52,7 @@ const query = graphql`
         currentUser {
             myBookmarks {
                 __typename
+                ... on AuthorizedEvent { id title creators createdEvent: created }
                 ... on Series { id title creators created }
                 ... on AuthorizedPlaylist { id title creator }
                 ... on InaccessibleBookmarkItem { id }
@@ -121,6 +123,18 @@ const ListItem: React.FC<ListItemProps> = ({ fav }) => {
     } as const;
 
     const body = matchTag(fav, "__typename", {
+        "AuthorizedEvent": event => <VideoListItem
+            icon={<LuVideo />}
+            link={DirectVideoRoute.url({ videoId: event.id })}
+            title={event.title}
+            type={t("video.singular")}
+            details={<DateAndCreators
+                timestamp={event.createdEvent ?? undefined}
+                creators={[...event.creators]}
+                isLive={false}
+                css={creatorsCss}
+            />}
+        />,
         "AuthorizedPlaylist": playlist => <VideoListItem
             icon={<PlaylistIcon />}
             link={DirectPlaylistRoute.url({ playlistId: playlist.id })}
