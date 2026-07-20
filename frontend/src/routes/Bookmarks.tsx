@@ -255,6 +255,10 @@ const Feed: React.FC<FeedProps> = ({ feed, page }) => {
                     </UpcomingEventsGrid>
                 )}
 
+                {items.length === 0 && (
+                    <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
+                )}
+
                 {renderEvents(mainItems)}
 
                 <div css={{ marginTop: 16 }}>
