@@ -15,7 +15,7 @@ import {
 import { NotAuthorized } from "../../ui/error";
 import SeriesIcon from "../../icons/series.svg";
 import PlaylistIcon from "../../icons/playlist.svg";
-import { LuStarOff } from "react-icons/lu";
+import { LucideBookmarkOff } from "lucide-react";
 import { Link } from "../../router";
 import { DirectPlaylistRoute } from "../Playlist";
 import { DirectSeriesRoute } from "../Series";
@@ -184,7 +184,7 @@ const ListItem: React.FC<ListItemProps> = ({ fav }) => {
                 borderRadius: 4,
                 ":hover": { backgroundColor: COLORS.neutral30 },
             }}>
-                {inFlight ? <Spinner size={22} /> : <LuStarOff size={22} />}
+                {inFlight ? <Spinner size={22} /> : <LucideBookmarkOff size={22} />}
             </ProtoButton>
         </WithTooltip>}
     </li>;
