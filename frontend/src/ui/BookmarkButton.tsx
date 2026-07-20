@@ -15,11 +15,17 @@ import { COLORS } from "../color";
 export type BookmarkButtonProps = {
     id: string;
     isBookmark: boolean;
+    small?: boolean,
     className?: string;
 };
 
 /** Button to bookmark an event/series/playlist or undo that. */
-export const BookmarkButton: React.FC<BookmarkButtonProps> = ({ id, isBookmark, className }) => {
+export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
+    id,
+    isBookmark,
+    small = false,
+    className,
+}) => {
     const { t } = useTranslation();
     const user = useUser();
 
@@ -60,9 +66,11 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({ id, isBookmark, 
     return (
         <WithTooltip tooltip={label}>
             <Button aria-label={label} {...{ className, onClick }} css={{
-                height: 31,
-                borderRadius: 4,
-                padding: 12,
+                height: small ? 31 : 40,
+                ...small && {
+                    borderRadius: 4,
+                    padding: "0 12px",
+                },
                 svg: { fontSize: 16 },
             }}>
                 {(() => {

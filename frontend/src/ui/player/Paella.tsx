@@ -185,7 +185,22 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 paellaSnapshot.player.unload();
             });
         };
-    }, [event, t]);
+    }, [
+        // Not all fields of event are important for the effect, e.g. it should
+        // not rerun if `isBookmark` changes.
+        t,
+        event.opencastId,
+        event.title,
+        event.description,
+        event.series?.title,
+        event.series?.opencastId,
+        event.creators,
+        event.metadata.dcterms?.license,
+        event.metadata.dcterms?.spatial,
+        event.isLive,
+        event.authorizedData,
+        event.syncedData,
+    ]);
 
     // This is `neutral10` in dark mode. We hard code this here as it's really
     // not important that an adjusted neutral tone is reflected in the player.

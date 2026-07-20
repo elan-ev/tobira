@@ -208,7 +208,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
                 kind={shareInfo.kind}
                 link={linkToManagePage}
             />}
-            {isRealUser(user) && <BookmarkButton id={listId} isBookmark={isBookmark} />}
+            {isRealUser(user) && <BookmarkButton id={listId} isBookmark={isBookmark} small />}
             <VideoListShareButton {...shareInfo} hideLabel />
         </div>
         {items.length > 0 && <div>

@@ -95,6 +95,7 @@ import { SHORTCUTS, useShortcut } from "../ui/Shortcuts";
 import { usePlayerGroupContext } from "../ui/player/PlayerGroupContext";
 import { isSpaceOnInteractiveElement } from "../ui/player/PlayerShortcuts";
 import { LIST_ORDERS, Order, VideoListLayout } from "../ui/Blocks/VideoList";
+import { BookmarkButton } from "../ui/BookmarkButton";
 
 
 // ===========================================================================================
@@ -457,6 +458,7 @@ const eventFragment = graphql`
             creators
             created
             isLive
+            isBookmark
             opencastId
             metadata
             canWrite
@@ -959,6 +961,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                         {t("user.manage")}
                     </LinkButton>
                 )}
+                <BookmarkButton id={event.id} isBookmark={event.isBookmark} />
                 {CONFIG.showDownloadButton && event.authorizedData && (
                     <DownloadButton event={event} />
                 )}
