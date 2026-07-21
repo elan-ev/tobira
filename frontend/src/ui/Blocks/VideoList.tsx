@@ -109,7 +109,7 @@ export type VideoListDisplayOptions = {
 };
 
 export type VideoListBlockProps = {
-    listId?: string;
+    listId: string;
     realmPath: string | null;
     activeEventId?: string;
     displayOptions: VideoListDisplayOptions;
@@ -747,7 +747,7 @@ export const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
 type ViewProps = {
     basePath: string;
     showSeries?: boolean;
-    listId?: string;
+    listId: string;
     items: {
         item: VideoListItem;
         active: boolean;
@@ -1099,7 +1099,7 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
 type ItemProps = {
     basePath: string;
     item: VideoListItem;
-    listId?: string;
+    listId: string;
     active: boolean;
     showDescription?: boolean;
     dateAndCreatorOneLine?: boolean;
@@ -1295,9 +1295,9 @@ const Item: React.FC<ItemProps> = ({
         },
     } as const;
 
-    const inPlaylist = listId?.substring(0, 2) === "pl";
+    const inPlaylist = listId.substring(0, 2) === "pl";
     const params = new URLSearchParams();
-    if (listId) {
+    if (inPlaylist) {
         params.set("list", keyOfId(listId));
     }
     if (layoutState !== "GALLERY") {
