@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use hyper::StatusCode;
-use postgres_types::ToSql;
 use juniper::{
     graphql_object,
     GraphQLInputObject,
@@ -13,31 +12,28 @@ use sha1::{Sha1, Digest};
 
 use crate::{
     api::{
-        common::NotAllowed,
+        Context, Id, Node, NodeValue, common::NotAllowed,
         err::{self, ApiResult},
         model::{
             acl::{self, Acl},
             realm::Realm,
             series::Series,
-            shared::{ToSqlColumn, SortDirection, SearchFilter, convert_acl_input}
+            shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input},
         },
-        Context,
-        Id,
-        Node,
-        NodeValue,
-        util::LazyLoad,
+        util::{OcItemId, LazyLoad},
     },
+    auth::AuthContext,
     db::{
         types::{Credentials, EventCaption, EventSegment, EventTrack},
         util::impl_from_db,
     },
-    model::{AclItem, ExtraMetadata, EventState, Key, OpencastId, SeriesState},
+    model::{AclItem, EventState, ExtraMetadata, Key, OpencastId, SeriesState},
     prelude::*,
-    sync::client::{AclInput, OpencastItem}
+    sync::client::{AclInput, OpencastItem},
 };
 
 use super::{
-    playlist::{AuthorizedPlaylist, Playlist, VideoListEntry},
+    playlist::{AuthorizedPlaylist, Playlist},
     shared::{
         define_sort_column_and_order,
         load_writable_for_user,
@@ -359,7 +355,7 @@ impl AuthorizedEvent {
                 }))
             } else {
                 // We need to load the series as fields were requested that were not preloaded.
-                Ok(Series::load_by_key(series.key, context).await?)
+                Ok(Series::load(series.key, context).await?)
             }
         } else {
             Ok(None)
@@ -371,11 +367,7 @@ impl AuthorizedEvent {
         let query = format!("select {selection} from playlists where array[$1] <@ event_entry_ids(entries)");
         let playlists = context.db.query_mapped(&query, &[&self.opencast_id], |row| {
             let playlist = AuthorizedPlaylist::from_row_start(&row);
-            if context.auth.overlaps_roles(&playlist.read_roles) {
-                Playlist::Playlist(playlist)
-            } else {
-                Playlist::NotAllowed(NotAllowed)
-            }
+            Playlist::check_auth(playlist, &context.auth)
         }).await?;
 
         Ok(playlists.into_iter().collect())
@@ -455,7 +447,27 @@ pub(crate) enum Event {
     NotAllowed(NotAllowed),
 }
 
+#[derive(juniper::GraphQLUnion)]
+#[graphql(Context = Context)]
+pub(crate) enum VideoListEntry {
+    Event(AuthorizedEvent),
+    NotAllowed(NotAllowed),
+    Missing(Missing),
+}
+
+/// The data referred to by a playlist entry was not found.
+pub(crate) struct Missing;
+crate::api::util::impl_object_with_dummy_field!(Missing);
+
 impl Event {
+    pub(crate) fn check_auth(event: AuthorizedEvent, auth: &AuthContext) -> Self {
+        if event.can_be_previewed(auth) {
+            Self::Event(event)
+        } else {
+            Self::NotAllowed(NotAllowed)
+        }
+    }
+
     pub(crate) fn into_result(self) -> ApiResult<AuthorizedEvent> {
         match self {
             Self::Event(e) => Ok(e),
@@ -465,39 +477,24 @@ impl Event {
             )),
         }
     }
-}
 
-impl AuthorizedEvent {
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
-        match id.key_for(Id::EVENT_KIND) {
-            None => return Ok(None),
-            Some(key) => Self::load_by_any_id_impl("id", &key, context).await,
-        }
-    }
+    /// Loads the event with the specified ID.
+    pub(crate) async fn load(id: impl OcItemId, context: &Context) -> ApiResult<Option<Self>> {
+        let Some(id_arg) = id.arg(Id::EVENT_KIND) else {
+            return Ok(None);
+        };
 
-    pub(crate) async fn load_by_opencast_id(oc_id: OpencastId, context: &Context) -> ApiResult<Option<Event>> {
-        Self::load_by_any_id_impl("opencast_id", &oc_id, context).await
-    }
-
-    pub(crate) async fn load_by_any_id_impl(
-        col: &str,
-        id: &(dyn ToSql + Sync),
-        context: &Context,
-    ) -> ApiResult<Option<Event>> {
-        let selection = Self::select();
+        let selection = AuthorizedEvent::select();
+        let col = id.column();
         let query = format!("select {selection} from events \
             left join series on series.id = events.series \
             where events.{col} = $1");
         context.db
-            .query_opt(&query, &[id])
+            .query_opt(&query, &[&id_arg])
             .await?
             .map(|row| {
-                let event = Self::from_row_start(&row);
-                if event.can_be_previewed(context) {
-                    Event::Event(event)
-                } else {
-                    Event::NotAllowed(NotAllowed)
-                }
+                let event = AuthorizedEvent::from_row_start(&row);
+                Self::check_auth(event, &context.auth)
             })
             .pipe(Ok)
     }
@@ -506,7 +503,7 @@ impl AuthorizedEvent {
         series_key: Key,
         context: &Context,
     ) -> ApiResult<Vec<VideoListEntry>> {
-        let selection = Self::select();
+        let selection = AuthorizedEvent::select();
         let query = format!(
             "select {selection} from series \
                 inner join events on events.series = series.id \
@@ -514,8 +511,8 @@ impl AuthorizedEvent {
         );
         context.db
             .query_mapped(&query, dbargs![&series_key], |row| {
-                let event = Self::from_row_start(&row);
-                if !event.can_be_previewed(context) {
+                let event = AuthorizedEvent::from_row_start(&row);
+                if !event.can_be_previewed(&context.auth) {
                     return VideoListEntry::NotAllowed(NotAllowed);
                 }
 
@@ -524,10 +521,12 @@ impl AuthorizedEvent {
             .await?
             .pipe(Ok)
     }
+}
 
-    fn can_be_previewed(&self, context: &Context) -> bool {
-        context.auth.overlaps_roles(&self.preview_roles)
-            || context.auth.overlaps_roles(&self.read_roles)
+impl AuthorizedEvent {
+    fn can_be_previewed(&self, context: &AuthContext) -> bool {
+        context.overlaps_roles(&self.preview_roles)
+            || context.overlaps_roles(&self.read_roles)
     }
 
     fn series_key(&self) -> Option<Key> {
@@ -535,12 +534,12 @@ impl AuthorizedEvent {
     }
 
     pub (crate) async fn load_for_mutation(
-        id: Id,
+        id: impl OcItemId,
         context: &Context,
     ) -> ApiResult<AuthorizedEvent> {
-        let event = Self::load_by_id(id, context)
+        let event = Event::load(id, context)
             .await?
-            .ok_or_else(||  err::invalid_input!(key = "event.not-found", "event not found"))?
+            .ok_or_else(|| err::invalid_input!(key = "event.not-found", "event not found"))?
             .into_result()?;
 
         if !context.auth.overlaps_roles(&event.write_roles) {
@@ -598,7 +597,7 @@ impl AuthorizedEvent {
             &acl.write_roles,
         ]).await?;
 
-        let event = Self::load_by_opencast_id(event.opencast_id, context)
+        let event = Event::load(event.opencast_id, context)
             .await?
             .unwrap()
             .into_result()?;

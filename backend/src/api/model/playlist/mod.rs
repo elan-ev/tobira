@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
-use postgres_types::ToSql;
 
 use crate::{
     api::{
@@ -8,6 +7,7 @@ use crate::{
         err::{self, ApiResult},
         model::{
             acl::{self, Acl},
+            event::{Missing, VideoListEntry},
             realm::Realm,
             shared::{
                 define_sort_column_and_order,
@@ -21,12 +21,13 @@ use crate::{
                 ToSqlColumn,
             },
         },
-        util::LazyLoad,
+        util::{OcItemId, LazyLoad},
         Context,
         Id,
         Node,
         NodeValue,
     },
+    auth::AuthContext,
     db::util::{impl_from_db, select},
     model::{Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
@@ -60,20 +61,6 @@ pub(crate) struct AuthorizedPlaylist {
     write_roles: Vec<String>,
 }
 
-
-#[derive(juniper::GraphQLUnion)]
-#[graphql(Context = Context)]
-pub(crate) enum VideoListEntry {
-    Event(AuthorizedEvent),
-    NotAllowed(NotAllowed),
-    Missing(Missing),
-}
-
-/// The data referred to by a playlist entry was not found.
-pub(crate) struct Missing;
-crate::api::util::impl_object_with_dummy_field!(Missing);
-
-
 impl_from_db!(
     AuthorizedPlaylist,
     select: {
@@ -99,45 +86,35 @@ impl_from_db!(
 );
 
 impl Playlist {
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
-        if let Some(key) = id.key_for(Id::PLAYLIST_KIND) {
-            Self::load_by_key(key, context).await
-        } else {
-            Ok(None)
-        }
-    }
+    /// Loads the playlist with the specified ID.
+    pub(crate) async fn load(id: impl OcItemId, context: &Context) -> ApiResult<Option<Self>> {
+        let Some(id_arg) = id.arg(Id::PLAYLIST_KIND) else {
+            return Ok(None);
+        };
 
-    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("id", &key, context).await
-    }
-
-    pub(crate) async fn load_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("opencast_id", &id, context).await
-    }
-
-    async fn load_by_any_id(
-        col: &str,
-        id: &(dyn ToSql + Sync),
-        context: &Context,
-    ) -> ApiResult<Option<Self>> {
         let selection = AuthorizedPlaylist::select();
+        let col = id.column();
         let query = format!("select {selection} from playlists where {col} = $1");
         context.db
-            .query_opt(&query, &[id])
+            .query_opt(&query, &[&id_arg])
             .await?
             .map(|row| {
                 let playlist = AuthorizedPlaylist::from_row_start(&row);
-                if context.auth.overlaps_roles(&playlist.read_roles) {
-                    Playlist::Playlist(playlist)
-                } else {
-                    Playlist::NotAllowed(NotAllowed)
-                }
+                Self::check_auth(playlist, &context.auth)
             })
             .pipe(Ok)
     }
 
-    async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<AuthorizedPlaylist> {
-        let playlist = Playlist::load_by_id(id, context)
+    pub(crate) fn check_auth(playlist: AuthorizedPlaylist, auth: &AuthContext) -> Self {
+        if auth.overlaps_roles(&playlist.read_roles) {
+            Self::Playlist(playlist)
+        } else {
+            Self::NotAllowed(NotAllowed)
+        }
+    }
+
+    async fn load_for_mutation(id: impl OcItemId, context: &Context) -> ApiResult<AuthorizedPlaylist> {
+        let playlist = Self::load(id, context)
             .await?
             .ok_or_else(|| err::invalid_input!(key = "playlist.not-found", "playlist not found"))?
             .into_result()?;
@@ -378,4 +355,3 @@ define_sort_column_and_order!(
     };
     pub struct PlaylistsSortOrder
 );
-

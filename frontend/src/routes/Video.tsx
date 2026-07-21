@@ -94,8 +94,7 @@ import { QrCodeButton, ShareButton } from "../ui/ShareButton";
 import { SHORTCUTS, useShortcut } from "../ui/Shortcuts";
 import { usePlayerGroupContext } from "../ui/player/PlayerGroupContext";
 import { isSpaceOnInteractiveElement } from "../ui/player/PlayerShortcuts";
-import { VideoListLayout } from "../ui/Blocks/__generated__/SeriesBlockData.graphql";
-import { LIST_ORDERS, Order } from "../ui/Blocks/VideoList";
+import { LIST_ORDERS, Order, VideoListLayout } from "../ui/Blocks/VideoList";
 
 
 // ===========================================================================================
