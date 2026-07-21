@@ -173,9 +173,8 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ bookmarks }) => {
                 display: "flex",
                 flexWrap: "wrap",
                 gap: "10px 8px",
-                borderLeft: `3px solid ${COLORS.neutral20}`,
-                padding: 12,
                 margin: 0,
+                padding: 0,
             }}>
                 {bookmarks.map(bookmark => {
                     const isVideoList = bookmark.__typename === "AuthorizedPlaylist"
