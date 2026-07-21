@@ -1,11 +1,12 @@
 use crate::{
     api::{
+        Context,
         err::ApiResult,
         model::{
             event::AuthorizedEvent,
+            bookmarks::{self, BookmarkFeedItem, BookmarkItem},
             playlist::{AuthorizedPlaylist, Playlist, PlaylistsSortOrder},
         },
-        Context,
     },
     auth::User,
     prelude::*,
@@ -139,5 +140,22 @@ impl User {
         filter: Option<SearchFilter>,
     ) -> ApiResult<Connection<AuthorizedPlaylist>> {
         Playlist::load_writable_for_user(context, order.into(), offset, limit, filter).await
+    }
+
+    /// Returns all bookmarks of the current user.
+    async fn my_bookmarks(&self, context: &Context) -> ApiResult<Vec<BookmarkItem>> {
+        bookmarks::fetch_for_user(context).await
+    }
+
+    /// Returns the latest videos (by `created` date) from items that the user
+    /// added as bookmark.
+    async fn bookmark_feed(
+        &self,
+        context: &Context,
+        #[graphql(default)]
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<Connection<BookmarkFeedItem>> {
+        bookmarks::feed(context, offset, limit).await
     }
 }

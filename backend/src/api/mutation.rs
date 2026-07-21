@@ -391,4 +391,17 @@ impl Mutation {
     ) -> ApiResult<Realm> {
         Series::mount(series, parent_realm_path, new_realms, context).await
     }
+
+    /// Bookmarks the item referred to by `id`. Must be an event, series or
+    /// playlist. Mutation is idempotent. Returns `true` if the item was not a
+    /// bookmark before already.
+    async fn add_bookmark(id: Id, context: &Context) -> ApiResult<bool> {
+        super::model::bookmarks::add_bookmark(id, context).await
+    }
+
+    /// Removes an item from the user's bookmarks. Returns whether the item
+    /// existed as bookmark before.
+    async fn remove_bookmark(id: Id, context: &Context) -> ApiResult<bool> {
+        super::model::bookmarks::remove_bookmark(id, context).await
+    }
 }

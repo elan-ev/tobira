@@ -12,7 +12,7 @@ use super::{
     model::{
         self,
         admin::AdminInfo,
-        event::{AuthorizedEvent, Event},
+        event::Event,
         known_roles::{self, KnownUsersSearchOutcome},
         playlist::Playlist,
         realm::Realm,
@@ -61,32 +61,32 @@ impl Query {
 
     /// Returns an event by its Opencast ID.
     async fn event_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Event>> {
-        AuthorizedEvent::load_by_opencast_id(OpencastId(id), context).await
+        Event::load(OpencastId(id), context).await
     }
 
     /// Returns an event by its ID.
     async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
-        AuthorizedEvent::load_by_id(id, context).await
+        Event::load(id, context).await
     }
 
     /// Returns a series by its Opencast ID.
     async fn series_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Series>> {
-        Series::load_by_opencast_id(OpencastId(id), context).await
+        Series::load(OpencastId(id), context).await
     }
 
     /// Returns a series by its ID.
     async fn series_by_id(id: Id, context: &Context) -> ApiResult<Option<Series>> {
-        Series::load_by_id(id, context).await
+        Series::load(id, context).await
     }
 
     /// Returns a playlist by its Opencast ID.
     async fn playlist_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Playlist>> {
-        Playlist::load_by_opencast_id(OpencastId(id), context).await
+        Playlist::load(OpencastId(id), context).await
     }
 
     /// Returns a playlist by its ID.
     async fn playlist_by_id(id: Id, context: &Context) -> ApiResult<Option<Playlist>> {
-        Playlist::load_by_id(id, context).await
+        Playlist::load(id, context).await
     }
 
     /// Returns the current user.
@@ -120,8 +120,8 @@ impl Query {
     async fn node(id: Id, context: &Context) -> ApiResult<Option<NodeValue>> {
         match id.kind() {
             Id::REALM_KIND => Ok(Realm::load_by_id(id, context).await?.map(NodeValue::from)),
-            Id::SERIES_KIND => Ok(Series::load_by_id(id, context).await?.map(NodeValue::from)),
-            Id::EVENT_KIND => AuthorizedEvent::load_by_id(id, context).await?
+            Id::SERIES_KIND => Ok(Series::load(id, context).await?.map(NodeValue::from)),
+            Id::EVENT_KIND => Event::load(id, context).await?
                 .map(|e| e.into_result().map(NodeValue::from))
                 .transpose(),
             _ => Ok(None),

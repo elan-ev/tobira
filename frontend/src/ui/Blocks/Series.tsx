@@ -11,8 +11,7 @@ import {
     SeriesBlockSeriesData$data,
     SeriesBlockSeriesData$key,
 } from "./__generated__/SeriesBlockSeriesData.graphql";
-import { VideoListBlock, VideoListBlockContainer, Order } from "./VideoList";
-import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
+import { VideoListBlock, VideoListBlockContainer, Order, VideoListLayout } from "./VideoList";
 import { ManageSeriesDetailsRoute } from "../../routes/manage/Series/SeriesDetails";
 import { DirectSeriesRoute, SeriesRoute } from "../../routes/Series";
 import { MovingTruck } from "../Waiting";
@@ -49,6 +48,7 @@ const seriesFragment = graphql`
         description
         state
         metadata
+        isBookmark
         canWrite
         entries {
             __typename
@@ -119,12 +119,15 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
     const seriesKey = keyOfId(series.id);
     return <VideoListBlock
         displayOptions={{
-            initialLayout: props.layoutParam ?? props.layout,
+            initialLayout: props.layoutParam
+                ?? (props.layout === "%future added value" ? "GALLERY" : props.layout),
             initialOrder: props.orderParam
                 ?? (props.order === "%future added value" ? undefined : props.order)
                 ?? "NEW_TO_OLD",
             allowOriginalOrder: false,
         }}
+        listId={series.id}
+        isBookmark={series.isBookmark}
         metadata={{
             title: props.title ?? (props.showTitle ? series.title : undefined),
             description: (props.showMetadata && series.description) || undefined,

@@ -2,7 +2,6 @@ use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
-use postgres_types::ToSql;
 use serde_json::json;
 
 use crate::{
@@ -11,11 +10,11 @@ use crate::{
         err::{self, ApiResult, invalid_input},
         model::{
             acl::{self, Acl},
-            event::{AuthorizedEvent},
+            event::{AuthorizedEvent, Event},
             realm::Realm,
             shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input},
         },
-        util::LazyLoad,
+        util::{OcItemId, LazyLoad},
     },
     db::util::{impl_from_db, select},
     model::{
@@ -41,7 +40,7 @@ use super::{
         VideoListOrder,
         mutations::DisplayOptions,
     },
-    playlist::VideoListEntry,
+    event::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
     shared::{
         define_sort_column_and_order,
@@ -69,6 +68,7 @@ pub(crate) struct Series {
     #[allow(dead_code)]
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
+    pub(crate) is_bookmark: LazyLoad<bool>,
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<ThumbnailStack>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
@@ -102,6 +102,7 @@ impl_from_db!(
             write_roles: row.write_roles(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             description: row.description(),
+            is_bookmark: LazyLoad::NotLoaded,
             num_videos: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
         }
@@ -109,38 +110,30 @@ impl_from_db!(
 );
 
 impl Series {
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
-        if let Some(key) = id.key_for(Id::SERIES_KIND) {
-            Self::load_by_key(key, context).await
-        } else {
-            Ok(None)
-        }
-    }
+    pub async fn load(id: impl OcItemId, context: &Context) -> ApiResult<Option<Self>> {
+        let Some(id_arg) = id.arg(Id::SERIES_KIND) else {
+            return Ok(None);
+        };
 
-    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("id", &key, context).await
-    }
-
-    pub(crate) async fn load_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("opencast_id", &id, context).await
-    }
-
-    async fn load_by_any_id(
-        col: &str,
-        id: &(dyn ToSql + Sync),
-        context: &Context,
-    ) -> ApiResult<Option<Self>> {
-        let selection = Self::select();
+        let (selection, mapping) = select!(
+            series: Series,
+            is_bookmark: "exists(select from bookmarks where series = $1 and username = $2)",
+        );
+        let col = id.column();
         let query = format!("select {selection} from series where {col} = $1");
         context.db
-            .query_opt(&query, &[id])
+            .query_opt(&query, &[&id_arg, &context.auth.state.username()])
             .await?
-            .map(|row| Self::from_row_start(&row))
+            .map(|row| {
+                let mut series = Self::from_row(&row, mapping.series);
+                series.is_bookmark = LazyLoad::Loaded(mapping.is_bookmark.of(&row));
+                series
+            })
             .pipe(Ok)
     }
 
     async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<Series> {
-        let series = Self::load_by_id(id, context)
+        let series = Self::load(id, context)
             .await?
             .ok_or_else(|| err::invalid_input!(key = "series.not-found", "series {id} not found"))?;
 
@@ -243,7 +236,7 @@ impl Series {
     ) -> ApiResult<Realm> {
         context.require_trusted_external_auth()?;
 
-        let series = Self::load_by_opencast_id(series_oc_id, context)
+        let series = Self::load(series_oc_id, context)
             .await?
             .ok_or_else(|| invalid_input!("`seriesId` does not refer to a valid series"))?;
 
@@ -288,7 +281,7 @@ impl Series {
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
         context.require_trusted_external_auth()?;
 
-        let series = Self::load_by_opencast_id(series_oc_id, context)
+        let series = Self::load(series_oc_id, context)
             .await?
             .ok_or_else(|| invalid_input!("`seriesId` does not refer to a valid series"))?;
 
@@ -718,6 +711,12 @@ impl Series {
         &self.metadata
     }
 
+    /// Returns `true` iff this series is a bookmark of the current user. Note:
+    /// this is lazily loaded and only available in certain contexts.
+    fn is_bookmark(&self) -> bool {
+        self.is_bookmark.unwrap()
+    }
+
     /// Returns creators extracted from the series metadata.
     /// Looks for `creator` or `createdBy` in the dcterms namespace.
     fn creators(&self) -> Vec<String> {
@@ -801,7 +800,7 @@ impl Series {
     }
 
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
-        AuthorizedEvent::load_for_series(self.key, context).await
+        Event::load_for_series(self.key, context).await
     }
 
     /// Returns `true` if the realm has a series block with this series.

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     api::err::{ApiError, ApiErrorKind, not_authorized},
-    auth::{AuthContext, AuthState, JwtContext},
+    auth::{AuthContext, AuthState, JwtContext, User},
     config::Config,
     db::Transaction,
     search,
@@ -44,6 +44,13 @@ impl Context {
             msg: "user is not logged in".into(),
             kind: ApiErrorKind::NotAuthorized,
             key: Some("mutation.not-logged-in"),
+        }
+    }
+
+    pub fn require_user(&self) -> Result<&User, ApiError> {
+        match &self.auth.state {
+            AuthState::User(user) => Ok(user),
+            _ => Err(self.not_logged_in_error()),
         }
     }
 

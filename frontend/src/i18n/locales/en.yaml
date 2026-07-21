@@ -235,6 +235,24 @@ share:
   set-time-label: 'Set video start time. Current time: {{time}}.'
   set-time-unit: Set {{unit}}
 
+bookmark:
+  main-label: Bookmarks
+  add: Add bookmark
+  remove: Remove bookmark
+  manage: Manage bookmarks
+  no-feed-bookmarks-yet: You haven't bookmarked any series or playlist yet.
+  no-video-bookmarks-yet: You haven't bookmarked any video yet.
+  failed-to-add: Failed to add bookmark
+  failed-to-remove: Failed to remove bookmark
+  inaccessible: Inaccessible (not allowed to see)
+  videos-title: Bookmarked videos
+  feed-title: Latest videos
+  feed-description: Videos from all your bookmarked series and playlist.
+  show-all: Show all
+  show-fewer: Show fewer
+  tab-feed: Feed
+  tab-videos: Videos
+
 video-list-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"
   unauthorized: Missing permissions
