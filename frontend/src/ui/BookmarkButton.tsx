@@ -52,7 +52,10 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
                 console.error("Bookmark commit error: ", e);
                 setError(t(`bookmark.failed-to-${isBookmark ? "remove" : "add"}`));
             },
-            updater: store => store.get(id)?.setValue(!isBookmark, "isBookmark"),
+            updater: store => {
+                store.get(id)?.setValue(!isBookmark, "isBookmark");
+                store.invalidateStore();
+            },
         });
     };
 
