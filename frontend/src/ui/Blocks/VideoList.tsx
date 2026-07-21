@@ -942,6 +942,7 @@ const ListView: React.FC<ViewProps> = ({ basePath, items, showSeries, listId }) 
                     [screenWidthAbove(VIDEO_GRID_BREAKPOINT)]: {
                         display: "flex",
                         gap: 16,
+                        alignItems: "flex-start",
                         "> div:nth-of-type(1)": { flex: "0 0 240px" },
                         "> :last-child": {
                             marginTop: 0,
