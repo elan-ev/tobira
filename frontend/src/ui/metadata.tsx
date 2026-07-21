@@ -1,4 +1,5 @@
 import {
+    Fragment,
     PropsWithChildren,
     ReactNode,
     forwardRef,
@@ -183,7 +184,9 @@ export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
         const paragraph = (s: string) => {
             const fragments = makeAutoLink(s);
             return fragments.map((frag, i) => frag.type === "text"
-                ? (textProcessor ? textProcessor(frag.value) : frag.value)
+                ? <Fragment key={i}>
+                    {textProcessor ? textProcessor(frag.value) : frag.value}
+                </Fragment>
                 : <Link key={i} to={frag.url}>{frag.text}</Link>);
         };
 
@@ -197,7 +200,7 @@ export const Description = forwardRef<HTMLDivElement, DescriptionProps>(
             }}>
                 {paragraphs.map((s, i) => i % 2 === 0
                     ? <p key={i}>{paragraph(s)}</p>
-                    : s.slice(2))}
+                    : <Fragment key={i}>{s.slice(2)}</Fragment>)}
             </div>
         );
     },
