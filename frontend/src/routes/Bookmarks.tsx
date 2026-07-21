@@ -5,12 +5,10 @@ import { graphql } from "react-relay";
 import { RootLoader } from "../layout/Root";
 import { loadQuery } from "../relay";
 import { makeRoute } from "../rauta";
-import { PageTitle } from "../layout/header/ui";
-import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { BookmarksQuery, BookmarksQuery$data } from "./__generated__/BookmarksQuery.graphql";
 import { RealmNav } from "../layout/Navigation";
 import { NotAuthorized } from "../ui/error";
-import { Card, matchTag, unreachable } from "@opencast/appkit";
+import { Card, match, matchTag, unreachable } from "@opencast/appkit";
 import { DirectPlaylistRoute } from "./Playlist";
 import { DirectSeriesRoute } from "./Series";
 import { COLORS } from "../color";
@@ -23,6 +21,9 @@ import {
 } from "../ui/Blocks/VideoList";
 import { paginationControlStyles, PaginationNav } from "../ui/PaginationNav";
 import { CollapsibleBlock } from "../ui/CollapsibleBlock";
+import { LuBookmark } from "react-icons/lu";
+import { useTitle } from "../util";
+import { Tab, Tabs } from "../ui/Tabs";
 
 
 const ITEMS_PER_PAGE = 24;
@@ -98,6 +99,11 @@ type Props = {
 
 const Bookmarks: React.FC<Props> = ({ queryData, page }) => {
     const { t } = useTranslation();
+    const [activeTab, setActiveTab] = useState<"feed" | "videos">("feed");
+
+    const title = t("bookmark.main-label");
+    useTitle(title);
+
     const user = queryData.currentUser;
     if (!user) {
         return <NotAuthorized />;
@@ -115,30 +121,35 @@ const Bookmarks: React.FC<Props> = ({ queryData, page }) => {
             flexDirection: "column",
         }}>
             <div css={{
-                marginBottom: 12,
                 display: "flex",
                 justifyContent: "space-between",
                 flexWrap: "wrap",
             }}>
-                <div>
-                    <Breadcrumbs
-                        path={[]}
-                        tail={t("bookmark.main-label")}
-                    />
-                    <PageTitle title={t("bookmark.main-label")} />
-                </div>
+                <h1 css={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <LuBookmark />
+                    {title}
+                </h1>
                 <div>
                     <LinkButton to={BookmarksManageRoute.url}>{t("bookmark.manage")}</LinkButton>
                 </div>
             </div>
 
-            {!hasVideoListBookmarks && !hasVideoBookmarks && <Card kind="info">
-                {t("bookmark.no-bookmarks-yet")}
-            </Card>}
+            <Tabs active={activeTab}>
+                <Tab name="feed" onClick={setActiveTab}>{t("bookmark.tab-feed")}</Tab>
+                <Tab name="videos" onClick={setActiveTab}>{t("bookmark.tab-videos")}</Tab>
+            </Tabs>
 
-            {hasVideoListBookmarks && <QuickLinks bookmarks={user.myBookmarks} />}
-            {hasVideoBookmarks && <BookmarkedVideos bookmarks={user.myBookmarks} />}
-            {hasVideoListBookmarks && <Feed feed={user.bookmarkFeed} page={page} />}
+            {match(activeTab, {
+                "feed": () => hasVideoListBookmarks
+                    ? <>
+                        <QuickLinks bookmarks={user.myBookmarks} />
+                        <Feed feed={user.bookmarkFeed} page={page} />
+                    </>
+                    : <Card kind="info">{t("bookmark.no-feed-bookmarks-yet")}</Card>,
+                "videos": () => hasVideoBookmarks
+                    ? <BookmarkedVideos bookmarks={user.myBookmarks} />
+                    : <Card kind="info">{t("bookmark.no-video-bookmarks-yet")}</Card>,
+            })}
         </div>
     );
 };
@@ -230,7 +241,7 @@ const BookmarkedVideos: React.FC<BookmarkedVideosProps> = ({ bookmarks }) => {
         return null;
     }).filter(bm => bm != null);
 
-    const [layoutState, setLayoutState] = useState<VideoListLayout>("SLIDER");
+    const [layoutState, setLayoutState] = useState<VideoListLayout>("GALLERY");
     const layoutOrderContext: LayoutOrderContext = {
         allowOriginalOrder: true,
         eventOrder: "ORIGINAL",

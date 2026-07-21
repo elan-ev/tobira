@@ -239,7 +239,8 @@ bookmark:
   add: Add bookmark
   remove: Remove bookmark
   manage: Manage bookmarks
-  no-bookmarks-yet: You haven't bookmarked anything yet.
+  no-feed-bookmarks-yet: You haven't bookmarked any series or playlist yet.
+  no-video-bookmarks-yet: You haven't bookmarked any video yet.
   failed-to-add: Failed to add bookmark
   failed-to-remove: Failed to remove bookmark
   inaccessible: Inaccessible (not allowed to see)
@@ -248,6 +249,8 @@ bookmark:
   feed-description: Videos from all your bookmarked series and playlist.
   show-all: Show all
   show-fewer: Show fewer
+  tab-feed: Feed
+  tab-videos: Videos
 
 video-list-block:
   upcoming-live-streams: "Upcoming live streams ({{count}})"

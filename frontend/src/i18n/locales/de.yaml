@@ -242,15 +242,18 @@ bookmark:
   add: Lesezeichen hinzufügen
   remove: Lesezeichen entfernen
   manage: Lesezeichen verwalten
-  no-bookmarks-yet: Sie haben noch keine Lesezeichen.
+  no-feed-bookmarks-yet: Sie haben noch keine Serien/Playlisten-Lesezeichen hinzugefügt.
+  no-video-bookmarks-yet: Sie haben noch keine Video-Lesezeichen hinzugefügt.
   failed-to-add: Lesezeichen hinzufügen fehlgeschlagen
   failed-to-remove: Lesezeichen entfernen fehlgeschlagen
   inaccessible: Unzugänglich (keine Leseberechtigung)
   videos-title: Video-Lesezeichen
   feed-title: Neuste Videos
-  feed-description: Videos allen Serien und Playlists, für die Sie Lesezeichen haben.
+  feed-description: Videos aller Serien und Playlists, für die Sie Lesezeichen haben.
   show-all: Alle anzeigen
   show-fewer: Weniger anzeigen
+  tab-feed: Feed
+  tab-videos: Videos
 
 video-list-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
