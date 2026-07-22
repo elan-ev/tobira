@@ -1,23 +1,27 @@
 name: Admin UI API Check
 on:
-  pull_request_target:
+  pull_request:
     paths:
-    - "backend/**"
+    - "frontend/schema.graphql"
     - ".github/workflows/check-admin-ui-api.yml"
+    - ".github/workflows/check-admin-ui-api/rule.js"
+    - ".github/workflows/check-admin-ui-api/onComplete.js"
 
 jobs:
   main:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-      contents: read
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+
+      - name: Cache NPM packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('.github/workflows/check-admin-ui-api.yml') }}
 
       - name: Install GraphQL Inspector
         run: |
@@ -34,38 +38,4 @@ jobs:
             --rule .github/workflows/check-admin-ui-api/rule.js \
             --onComplete .github/workflows/check-admin-ui-api/onComplete.js \
             git:${{ github.event.pull_request.base.sha }}:frontend/src/schema.graphql \
-            git:${{ github.event.pull_request.head.sha }}:frontend/src/schema.graphql \
-            | tee >( \
-              grep -v ^::set-output \
-              | sed -e 's/\[\(log\|success\|info\|error\|warn\)\] //' \
-              > diff \
-            )
-
-      - name: Read diff output
-        id: diff_output
-        uses: juliangruber/read-file-action@v1
-        with:
-          path: diff
-          trim: true
-        if: steps.graphql_inspector.outputs.changes == 'true'
-
-      - name: Hide previous comments made by this workflow
-        uses: int128/hide-comment-action@v1
-        with:
-          # We have to specify an empty author-filter here so that this step doesn't try to remove
-          # the deployment comments we create in another step (or any other comments by github-actions
-          # for that matter).
-          authors:
-          starts-with: "<!-- admin-ui-api-check -->"
-
-      - name: Add a comment when there are relevant changes
-        uses: int128/comment-action@v1
-        with:
-          post: |
-            <!-- admin-ui-api-check -->
-            🚨🚨🚨 This PR changes APIs used by the Opencast Admin UI integration 🚨🚨🚨
-
-            ```
-            ${{ steps.diff_output.outputs.content }}
-            ```
-        if: steps.graphql_inspector.outputs.changes == 'true'
+            git:${{ github.event.pull_request.head.sha }}:frontend/src/schema.graphql
