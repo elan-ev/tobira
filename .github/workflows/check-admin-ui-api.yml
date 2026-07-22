@@ -2,8 +2,10 @@ name: Admin UI API Check
 on:
   pull_request_target:
     paths:
-    - "backend/**"
+    - "frontend/schema.graphql"
     - ".github/workflows/check-admin-ui-api.yml"
+    - ".github/workflows/check-admin-ui-api/rule.js"
+    - ".github/workflows/check-admin-ui-api/onComplete.js"
 
 jobs:
   main:
