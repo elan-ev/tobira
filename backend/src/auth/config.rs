@@ -72,6 +72,12 @@ pub(crate) struct AuthConfig {
 
     #[config(nested)]
     pub(crate) oidc: OidcConfig,
+
+    // Read by the LTI launch handler (follow-up MR); wired in now so `[auth.lti]`
+    // parses and shows up in the generated config template.
+    #[allow(dead_code)]
+    #[config(nested)]
+    pub(crate) lti: LtiConfig,
 }
 
 impl AuthConfig {
@@ -478,5 +484,127 @@ impl OidcConfig {
         }
 
         Ok(())
+    }
+}
+
+
+/// LTI 1.3 configuration. Tobira can act as an LTI 1.3 tool that LMS platforms
+/// (e.g. Moodle, Canvas) launch. LTI runs *alongside* the normal login, not as a
+/// replacement for it. See `docs/docs/dev/rfc-lti-1.3.md`.
+#[derive(Debug, Clone, confique::Config)]
+#[config(validate = Self::validate)]
+pub(crate) struct LtiConfig {
+    /// If `true`, the LTI launch endpoints are enabled.
+    #[config(default = false)]
+    pub(crate) enabled: bool,
+
+    /// Registered LTI platforms, one table entry per platform/deployment:
+    ///
+    ///     [[auth.lti.platforms]]
+    ///     issuer = "https://moodle.example.org"
+    ///     client_id = "AbCd1234"
+    ///     deployment_id = "1"
+    ///     auth_login_url = "https://moodle.example.org/mod/lti/auth.php"
+    ///     keyset_url = "https://moodle.example.org/mod/lti/certs.php"
+    #[config(default = [])]
+    pub(crate) platforms: Vec<LtiPlatform>,
+}
+
+impl LtiConfig {
+    fn validate(&self) -> Result<()> {
+        if self.enabled {
+            anyhow::ensure!(
+                !self.platforms.is_empty(),
+                "auth.lti.enabled = true, but no '[[auth.lti.platforms]]' are configured",
+            );
+        }
+
+        // Platform URLs must be secure (https) and fragment-free, like all other
+        // externally-facing URLs in Tobira.
+        for platform in &self.platforms {
+            platform.auth_login_url.ensure_secure_no_fragment()?;
+            platform.keyset_url.ensure_secure_no_fragment()?;
+        }
+
+        Ok(())
+    }
+
+    /// Looks up a registered platform by the `(issuer, client_id)` pair, which
+    /// uniquely identifies an LTI registration. Returns `None` if no such
+    /// platform is configured. The LTI launch handler uses this to resolve the
+    /// platform a launch originated from.
+    #[allow(dead_code)] // Consumed by the LTI launch handler (follow-up MR); covered by tests.
+    pub(crate) fn find_platform(&self, issuer: &str, client_id: &str) -> Option<&LtiPlatform> {
+        self.platforms.iter()
+            .find(|p| p.issuer == issuer && p.client_id == client_id)
+    }
+}
+
+/// A single registered LTI platform (i.e. an LMS).
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
+pub(crate) struct LtiPlatform {
+    /// The platform's issuer identifier; compared **verbatim** against the `iss`
+    /// claim of launches. LTI issuers are exact-match identifiers, not URLs we
+    /// dereference, so this is a plain string (no URL normalization).
+    pub(crate) issuer: String,
+
+    /// The client ID Tobira is registered under with this platform; matches the
+    /// `aud`/`azp` claim of launches.
+    pub(crate) client_id: String,
+
+    /// The deployment ID; matches the platform's `deployment_id` claim.
+    pub(crate) deployment_id: String,
+
+    /// The platform's OIDC authorization endpoint that the login initiation
+    /// redirects to.
+    pub(crate) auth_login_url: HttpUrl,
+
+    /// The platform's JWKS URL, used to verify incoming launch tokens.
+    pub(crate) keyset_url: HttpUrl,
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn platform(issuer: &str, client_id: &str) -> LtiPlatform {
+        LtiPlatform {
+            issuer: issuer.into(),
+            client_id: client_id.into(),
+            deployment_id: "1".into(),
+            auth_login_url: "https://lms.example.org/auth".parse().unwrap(),
+            keyset_url: "https://lms.example.org/jwks".parse().unwrap(),
+        }
+    }
+
+    fn lti_config(enabled: bool, platforms: Vec<LtiPlatform>) -> LtiConfig {
+        LtiConfig { enabled, platforms }
+    }
+
+    #[test]
+    fn find_platform_matches_on_issuer_and_client_id() {
+        let cfg = lti_config(true, vec![
+            platform("https://moodle.example.org", "client-a"),
+            platform("https://canvas.example.org", "client-b"),
+        ]);
+
+        assert_eq!(
+            cfg.find_platform("https://canvas.example.org", "client-b")
+                .map(|p| p.client_id.as_str()),
+            Some("client-b"),
+        );
+        // Right issuer but wrong client ID must not match.
+        assert!(cfg.find_platform("https://moodle.example.org", "client-b").is_none());
+        // Unknown issuer must not match.
+        assert!(cfg.find_platform("https://unknown.example.org", "client-a").is_none());
+    }
+
+    #[test]
+    fn validate_requires_platforms_when_enabled() {
+        assert!(lti_config(true, vec![]).validate().is_err());
+        assert!(lti_config(false, vec![]).validate().is_ok());
+        assert!(lti_config(true, vec![platform("https://moodle.example.org", "c")])
+            .validate().is_ok());
     }
 }
