@@ -12,6 +12,7 @@ use super::User;
 pub struct Caches {
     pub(crate) user: UserCache,
     pub(crate) callback: AuthCallbackCache,
+    pub(crate) lti_login: LtiNonceStore,
 }
 
 impl Caches {
@@ -19,6 +20,7 @@ impl Caches {
         Self {
             user: UserCache::new(),
             callback: AuthCallbackCache::new(),
+            lti_login: LtiNonceStore::new(),
         }
     }
 
@@ -69,12 +71,19 @@ impl Caches {
             } else {
                 None
             };
+            let next_lti_action = cleanup(
+                now,
+                &self.lti_login.0,
+                LTI_LOGIN_TTL,
+                |v| v.created,
+            ).await;
 
             // We will wait until the next entry in the hashmap gets stale, but
             // at least 30s to not do cleanup too often. In case there are no
             // entries currently, it will also retry in 30s. But we will wait
             // at most as long as we would do for an empty cache.
-            let next_action = [next_user_action, next_callback_action].into_iter()
+            let next_action = [next_user_action, next_callback_action, next_lti_action]
+                .into_iter()
                 .filter_map(|x| x)
                 .min();
             let wait_duration = std::cmp::min(
@@ -276,5 +285,81 @@ impl AuthCallbackCache {
                 user,
                 timestamp: Instant::now(),
             });
+    }
+}
+
+
+/// How long an issued LTI login `state`/`nonce` stays valid before it is
+/// cleaned up. LTI launches follow their login initiation within seconds, so
+/// this is deliberately short.
+const LTI_LOGIN_TTL: Duration = Duration::from_secs(60 * 5);
+
+/// What an LTI login initiation (`/~lti/login`) remembers so the subsequent
+/// launch (`/~lti/launch`) can verify it. Keyed by the OIDC `state` value.
+///
+/// A server-side store is used instead of a cookie because an LTI launch is a
+/// cross-site `form_post`: with `SameSite=Lax` a state cookie would not be sent
+/// back on that POST.
+// Fields are read by the LTI launch handler (follow-up MR).
+#[allow(dead_code)]
+pub(crate) struct LtiLoginState {
+    /// The `nonce` we issued; the launch's ID token must echo it exactly.
+    pub(crate) nonce: String,
+
+    /// Where to send the user after a successful launch (`target_link_uri`).
+    pub(crate) target_link_uri: String,
+
+    created: Instant,
+}
+
+/// Short-lived, one-time-use store of issued LTI login states, living in
+/// [`Caches`] so it shares the periodic cleanup task.
+pub(crate) struct LtiNonceStore(HashMap<String, LtiLoginState>);
+
+impl LtiNonceStore {
+    fn new() -> Self {
+        Self(HashMap::new())
+    }
+
+    /// Remembers a `state -> {nonce, target_link_uri}` mapping. Called by the
+    /// login initiation.
+    pub(crate) async fn insert(&self, state: String, nonce: String, target_link_uri: String) {
+        let _ = self.0.insert_async(state, LtiLoginState {
+            nonce,
+            target_link_uri,
+            created: Instant::now(),
+        }).await;
+    }
+
+    /// Consumes the entry issued for `state`, returning it at most once
+    /// (one-time use → replay protection). Returns `None` if it was never
+    /// issued, already used, or has expired. Called by the launch handler.
+    #[allow(dead_code)] // Consumed by the LTI launch handler (follow-up MR).
+    pub(crate) async fn take(&self, state: &str) -> Option<LtiLoginState> {
+        self.0.remove_async(state).await
+            .map(|(_, v)| v)
+            .filter(|v| v.created.elapsed() <= LTI_LOGIN_TTL)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn lti_nonce_store_is_one_time_use() {
+        let store = LtiNonceStore::new();
+        store.insert("state-1".into(), "nonce-1".into(), "https://tobira/x".into()).await;
+
+        // Unknown state → None.
+        assert!(store.take("nope").await.is_none());
+
+        // Known state → the issued nonce.
+        let taken = store.take("state-1").await;
+        assert_eq!(taken.as_ref().map(|s| s.nonce.as_str()), Some("nonce-1"));
+
+        // Taking the same state again → None (one-time use, i.e. replay protection).
+        assert!(store.take("state-1").await.is_none());
     }
 }

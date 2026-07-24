@@ -73,9 +73,6 @@ pub(crate) struct AuthConfig {
     #[config(nested)]
     pub(crate) oidc: OidcConfig,
 
-    // Read by the LTI launch handler (follow-up MR); wired in now so `[auth.lti]`
-    // parses and shows up in the generated config template.
-    #[allow(dead_code)]
     #[config(nested)]
     pub(crate) lti: LtiConfig,
 }
@@ -533,10 +530,15 @@ impl LtiConfig {
     /// uniquely identifies an LTI registration. Returns `None` if no such
     /// platform is configured. The LTI launch handler uses this to resolve the
     /// platform a launch originated from.
-    #[allow(dead_code)] // Consumed by the LTI launch handler (follow-up MR); covered by tests.
     pub(crate) fn find_platform(&self, issuer: &str, client_id: &str) -> Option<&LtiPlatform> {
         self.platforms.iter()
             .find(|p| p.issuer == issuer && p.client_id == client_id)
+    }
+
+    /// Looks up a platform by issuer alone — used when the login initiation does
+    /// not carry a `client_id`. Returns the first platform with that issuer.
+    pub(crate) fn find_platform_by_issuer(&self, issuer: &str) -> Option<&LtiPlatform> {
+        self.platforms.iter().find(|p| p.issuer == issuer)
     }
 }
 

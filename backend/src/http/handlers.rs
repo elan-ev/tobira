@@ -64,6 +64,10 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
             register_req!(HttpReqCategory::Logout);
             auth::handle_delete_session(req, &ctx).await
         },
+        "/~lti/login" if method == Method::POST => {
+            register_req!(HttpReqCategory::Other);
+            auth::lti::handle_login(req, &ctx).await
+        },
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
@@ -148,6 +152,13 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
         "/~oidc/callback" => {
             register_req!(HttpReqCategory::Other);
             auth::oidc::handle_callback(req, &ctx).await
+        }
+
+        // LTI 1.3 third-party-initiated login. May arrive as GET or POST; the
+        // POST variant is matched in the POST section above.
+        "/~lti/login" => {
+            register_req!(HttpReqCategory::Other);
+            auth::lti::handle_login(req, &ctx).await
         }
 
         // Currently we just reply with our `index.html` to everything else.
