@@ -68,6 +68,10 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
             register_req!(HttpReqCategory::Other);
             auth::lti::handle_login(req, &ctx).await
         },
+        "/~lti/launch" if method == Method::POST => {
+            register_req!(HttpReqCategory::Other);
+            auth::lti::handle_launch(req, &ctx).await
+        },
 
         // From this point on, we only support GET and HEAD requests. All others
         // will result in 404.
