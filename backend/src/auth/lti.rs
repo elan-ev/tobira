@@ -234,9 +234,16 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
         Err(response) => return response,
     };
 
-    // Redirect to the launch target. Only allow targets within our own Tobira
-    // instance to avoid turning the launch into an open redirect.
-    let target = safe_target(&login.target_link_uri, ctx);
+    // Decide where to land: a Tobira series page if the placement carries a
+    // `series` custom parameter (an Opencast series ID), otherwise the
+    // platform's target_link_uri. Both are kept within Tobira (no open redirect).
+    let target = match claims.custom.as_ref()
+        .and_then(|custom| custom.get("series"))
+        .and_then(|series| series.as_str())
+    {
+        Some(series) => series_landing(&ctx.config.general.tobira_url.to_string(), series),
+        None => safe_target(&login.target_link_uri, ctx),
+    };
     Response::builder()
         .status(StatusCode::FOUND)
         .header(header::LOCATION, target)
@@ -271,6 +278,12 @@ fn safe_target(target: &str, ctx: &Context) -> String {
     }
 }
 
+/// Builds the URL of a Tobira series page from an Opencast series ID, using
+/// Tobira's direct series route (`/!s/:<opencast-id>`).
+fn series_landing(base: &str, opencast_series_id: &str) -> String {
+    format!("{base}/!s/:{opencast_series_id}")
+}
+
 /// The subset of LTI 1.3 launch claims we read. Only the fields needed for the
 /// MVP (verification + identity) are modelled.
 #[derive(Deserialize)]
@@ -288,6 +301,11 @@ struct LtiClaims {
 
     #[serde(rename = "https://purl.imsglobal.org/spec/lti/claim/deployment_id")]
     deployment_id: String,
+
+    /// Custom parameters configured for this placement in the platform. The MVP
+    /// reads `custom["series"]` (an Opencast series ID) to land on that series.
+    #[serde(rename = "https://purl.imsglobal.org/spec/lti/claim/custom")]
+    custom: Option<BTreeMap<String, serde_json::Value>>,
 }
 
 /// A JSON value that may be a single item or an array of them (e.g. `aud`).
@@ -422,5 +440,13 @@ mod tests {
         assert!(jwk["n"].as_str().unwrap().len() > 300);
         assert!(!jwk["e"].as_str().unwrap().is_empty());
         assert!(!jwk["kid"].as_str().unwrap().is_empty());
+    }
+
+    #[test]
+    fn series_landing_uses_direct_opencast_route() {
+        assert_eq!(
+            series_landing("https://tobira.example.org", "abc-123"),
+            "https://tobira.example.org/!s/:abc-123",
+        );
     }
 }
