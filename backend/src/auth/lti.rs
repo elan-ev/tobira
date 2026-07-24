@@ -8,8 +8,10 @@
 
 use std::{borrow::Cow, collections::BTreeMap};
 
+use aws_lc_rs::{digest, rsa::{KeyPair, KeySize}, signature::KeyPair as _};
 use base64::{Engine, prelude::BASE64_URL_SAFE_NO_PAD};
 use hyper::{Method, Request, StatusCode, Uri, body::Incoming, header};
+use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
 
@@ -333,5 +335,92 @@ impl<H> jwtea::Validator<H, LtiClaims> for LtiLaunchValidator<'_> {
             return Err(jwtea::Error::ValidationError("'azp' does not match client ID".into()));
         }
         Ok(())
+    }
+}
+
+
+/// The tool's RSA key pair for LTI, plus its public JWKS document.
+///
+/// LTI tools sign the Deep Linking response and service `client_assertion`s
+/// with RSA (RS256); platforms fetch the tool's public key from `/~lti/jwks`
+/// and also require it during tool registration. `jwtea` only *verifies*, so
+/// the signing/keyset side uses `aws-lc-rs` directly.
+///
+/// For now the key is generated once per process. A configurable persistent key
+/// (PEM) is a later enhancement — platforms re-fetch the keyset, so a fresh key
+/// across restarts is still valid, it just invalidates in-flight signed
+/// messages (of which the MVP has none).
+struct LtiToolKey {
+    /// Kept for signing the Deep Linking response / NRPS `client_assertion`
+    /// (added with those features).
+    #[allow(dead_code)]
+    keypair: KeyPair,
+
+    /// The public JWKS document served at `/~lti/jwks`.
+    jwks: String,
+}
+
+impl LtiToolKey {
+    fn generate() -> Self {
+        let keypair = KeyPair::generate(KeySize::Rsa2048)
+            .expect("failed to generate LTI tool RSA key");
+        let public = keypair.public_key();
+
+        // JWK RSA components: base64url(big-endian modulus / exponent).
+        let n = BASE64_URL_SAFE_NO_PAD.encode(public.modulus().big_endian_without_leading_zero());
+        let e = BASE64_URL_SAFE_NO_PAD.encode(public.exponent().big_endian_without_leading_zero());
+        // A stable key id derived from the public key.
+        let kid = BASE64_URL_SAFE_NO_PAD.encode(
+            digest::digest(&digest::SHA256, public.as_ref()).as_ref(),
+        );
+
+        let jwks = serde_json::json!({
+            "keys": [{
+                "kty": "RSA",
+                "use": "sig",
+                "alg": "RS256",
+                "kid": kid,
+                "n": n,
+                "e": e,
+            }],
+        }).to_string();
+
+        Self { keypair, jwks }
+    }
+}
+
+static LTI_TOOL_KEY: Lazy<LtiToolKey> = Lazy::new(LtiToolKey::generate);
+
+/// Handles `GET /~lti/jwks`: serves the tool's public keys (JWKS) so platforms
+/// can register Tobira and verify JWTs it signs (Deep Linking response, service
+/// grants). Only served when LTI is enabled.
+pub(crate) async fn handle_jwks(ctx: &Context) -> Response {
+    if !ctx.config.auth.lti.enabled {
+        return http::response::not_found();
+    }
+    Response::builder()
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(ByteBody::new(LTI_TOOL_KEY.jwks.clone().into()))
+        .unwrap()
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tool_jwks_has_one_rsa_signing_key() {
+        let key = LtiToolKey::generate();
+        let doc: serde_json::Value = serde_json::from_str(&key.jwks).unwrap();
+        let jwk = &doc["keys"][0];
+
+        assert_eq!(jwk["kty"], "RSA");
+        assert_eq!(jwk["use"], "sig");
+        assert_eq!(jwk["alg"], "RS256");
+        // 2048-bit modulus, base64url-encoded, is well over 300 chars.
+        assert!(jwk["n"].as_str().unwrap().len() > 300);
+        assert!(!jwk["e"].as_str().unwrap().is_empty());
+        assert!(!jwk["kid"].as_str().unwrap().is_empty());
     }
 }

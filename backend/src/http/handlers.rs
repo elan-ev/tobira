@@ -164,6 +164,10 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
             register_req!(HttpReqCategory::Other);
             auth::lti::handle_login(req, &ctx).await
         }
+        "/~lti/jwks" => {
+            register_req!(HttpReqCategory::Other);
+            auth::lti::handle_jwks(&ctx).await
+        }
 
         // Currently we just reply with our `index.html` to everything else.
         // That's of course not optimal because for many paths, our frontend

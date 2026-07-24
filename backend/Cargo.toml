@@ -19,7 +19,7 @@ embed-in-debug = ["reinda/always-prod"]
 [dependencies]
 ahash = "0.8"
 anyhow = { version = "1.0.71", features = ["backtrace"] }
-aws-lc-rs = { version = "1.13.3", default-features = false, features = ["aws-lc-sys"] }
+aws-lc-rs = { version = "1.13.3", default-features = false, features = ["aws-lc-sys", "ring-io"] }
 base64 = "0.22.1"
 bstr = "1.4.0"
 bunt = "0.2.7"
