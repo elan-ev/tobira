@@ -35,6 +35,8 @@ You can chose between three options here, configured as `auth.source`:
 - [**`"trust-auth-headers"`**](./user/trust-auth-headers): Tobira just checks a few fixed headers of the incoming request, which directly specify how the request is authenticated.
   This assumes some auth logic in front of Tobira, i.e. in your reverse proxy.
 
+Additionally, when using `"tobira-session"`, sessions can be created from an **[LTI 1.3 launch](./user/lti)** by an LMS (Moodle, Canvas, …), on top of the options above.
+
 What to chose? `"tobira-session"` is likely the fastest (in terms of processing time) and easiest to set up, but comes with limitations:
 Tobira only gets new data about a user at login, and it's impossible to implement SSO with this.
 If you can't use the built-in session management, use `"callback:..."`, which gives you full flexibility.
