@@ -199,13 +199,14 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
         return http::response::bad_request("LTI launch: deployment_id mismatch");
     }
 
+    debug!("LTI launch claims: {claims:#?}");
+
     // ----- Build the user and create a session ----------------------------------------------
-    // Roles come from Opencast, exactly like the OIDC login (#1706). The
-    // username is derived from the launch (`preferred_username`, else `sub`).
+    // Roles come from Opencast, exactly like the OIDC login (#1706).
     // NOTE: how the launch identity maps to an Opencast username is an open
     // design question (see docs/docs/dev/rfc-lti-1.3.md, OQ8) — this is the
     // provisional MVP mapping.
-    let username = claims.preferred_username.clone().unwrap_or_else(|| claims.sub.clone());
+    let username = resolve_username(&claims);
     let oc_user = match super::opencast::user_from_info_me(
         AuthMode::Sudo { as_user: &username },
         ctx,
@@ -252,6 +253,26 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
         .unwrap()
 }
 
+/// Determines the Opencast username from the launch claims.
+///
+/// Platforms differ in what identity they expose: Canvas sends
+/// `preferred_username`, while Moodle sends none of it — its `sub` is an opaque
+/// internal ID that Opencast does not know. Such platforms can supply the
+/// username explicitly via a `username` custom parameter (in Moodle:
+/// `username=$User.username`), which therefore takes precedence.
+fn resolve_username(claims: &LtiClaims) -> String {
+    let from_custom = claims.custom.as_ref()
+        .and_then(|custom| custom.get("username"))
+        .and_then(|username| username.as_str())
+        .filter(|username| !username.is_empty());
+
+    match (from_custom, &claims.preferred_username) {
+        (Some(username), _) => username.to_owned(),
+        (None, Some(username)) => username.clone(),
+        (None, None) => claims.sub.clone(),
+    }
+}
+
 /// Fetches and parses the platform's JWKS into verifying keys. Keys we do not
 /// understand are skipped.
 async fn fetch_platform_jwks(
@@ -286,7 +307,7 @@ fn series_landing(base: &str, opencast_series_id: &str) -> String {
 
 /// The subset of LTI 1.3 launch claims we read. Only the fields needed for the
 /// MVP (verification + identity) are modelled.
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 struct LtiClaims {
     iss: String,
     aud: MaybeArray<String>,
@@ -309,7 +330,7 @@ struct LtiClaims {
 }
 
 /// A JSON value that may be a single item or an array of them (e.g. `aud`).
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(untagged)]
 enum MaybeArray<T> {
     Single(T),
@@ -448,5 +469,51 @@ mod tests {
             series_landing("https://tobira.example.org", "abc-123"),
             "https://tobira.example.org/!s/:abc-123",
         );
+    }
+
+    /// Builds claims from the given user-identifying fields, filling in the
+    /// rest with values a launch would always carry.
+    fn claims_with(extra: serde_json::Value) -> LtiClaims {
+        let mut json = serde_json::json!({
+            "iss": "https://moodle.example.org",
+            "aud": "client-a",
+            "sub": "3",
+            "https://purl.imsglobal.org/spec/lti/claim/deployment_id": "1",
+        });
+        let (serde_json::Value::Object(base), serde_json::Value::Object(extra))
+            = (&mut json, extra) else { panic!("expected JSON objects") };
+        base.extend(extra);
+
+        serde_json::from_value(json).expect("claims should deserialize")
+    }
+
+    #[test]
+    fn username_falls_back_to_sub_without_better_claims() {
+        // Moodle sends neither `preferred_username` nor a custom parameter, so
+        // we are left with the opaque `sub`.
+        assert_eq!(resolve_username(&claims_with(serde_json::json!({}))), "3");
+    }
+
+    #[test]
+    fn username_uses_preferred_username_when_present() {
+        assert_eq!(
+            resolve_username(&claims_with(serde_json::json!({
+                "preferred_username": "rrolf",
+            }))),
+            "rrolf",
+        );
+    }
+
+    #[test]
+    fn username_custom_parameter_wins_and_empty_is_ignored() {
+        let custom = |username| serde_json::json!({
+            "preferred_username": "from-claim",
+            "https://purl.imsglobal.org/spec/lti/claim/custom": { "username": username },
+        });
+
+        // An explicitly configured custom parameter takes precedence.
+        assert_eq!(resolve_username(&claims_with(custom("from-custom"))), "from-custom");
+        // An unsubstituted or blank value must not shadow the standard claim.
+        assert_eq!(resolve_username(&claims_with(custom(""))), "from-claim");
     }
 }
