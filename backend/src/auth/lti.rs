@@ -290,13 +290,26 @@ async fn fetch_platform_jwks(
 /// Returns `target` if it points within our own Tobira instance, otherwise the
 /// Tobira base URL. Prevents the launch from being abused as an open redirect.
 fn safe_target(target: &str, ctx: &Context) -> String {
-    let base = ctx.config.general.tobira_url.to_string();
-    if target.starts_with(&base) {
-        target.to_owned()
-    } else {
+    resolve_target(target, &ctx.config.general.tobira_url.to_string())
+}
+
+/// Picks a safe in-Tobira redirect target for a launch, defaulting to `base`
+/// (the start page). Two things it guards against:
+///
+/// - **Open redirects:** a `target_link_uri` outside Tobira is discarded.
+/// - **Bouncing into our own endpoints:** platforms commonly use the tool URL
+///   as the default `target_link_uri`, which for us is `/~lti/launch` — a
+///   POST-only endpoint that a browser GET would 404 on. Any `/~lti/` target
+///   therefore falls back to the start page.
+fn resolve_target(target: &str, base: &str) -> String {
+    let Some(path) = target.strip_prefix(base) else {
         warn!("LTI launch: target_link_uri '{target}' is outside Tobira; using base URL");
-        base
+        return base.to_owned();
+    };
+    if path.starts_with("/~lti/") {
+        return base.to_owned();
     }
+    target.to_owned()
 }
 
 /// Builds the URL of a Tobira series page from an Opencast series ID, using
@@ -501,6 +514,22 @@ mod tests {
                 "preferred_username": "rrolf",
             }))),
             "rrolf",
+        );
+    }
+
+    #[test]
+    fn resolve_target_lands_on_start_page_for_lti_endpoints_and_open_redirects() {
+        let base = "https://tobira.example.org";
+
+        // Moodle's default `target_link_uri` is the tool URL (`/~lti/launch`),
+        // which must not be handed back to the browser.
+        assert_eq!(resolve_target("https://tobira.example.org/~lti/launch", base), base);
+        // Anything outside Tobira is refused (no open redirect).
+        assert_eq!(resolve_target("https://evil.example.org/phish", base), base);
+        // A real in-Tobira page is kept.
+        assert_eq!(
+            resolve_target("https://tobira.example.org/!s/:abc-123", base),
+            "https://tobira.example.org/!s/:abc-123",
         );
     }
 
