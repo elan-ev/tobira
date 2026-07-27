@@ -117,17 +117,26 @@ impl AuthConfig {
                 'auth.callback.relevant_cookies'. But it is set.");
         }
 
-        let session_sources_defined = false
+        // Session sources configured via the built-in `[auth.session]` handlers.
+        // These are mutually exclusive with a non-`tobira-session` auth source.
+        let session_handlers_defined = false
             || self.session.from_login_credentials != LoginCredentialsHandler::None
             || self.session.from_session_endpoint != SessionEndpointHandler::None;
+        // OIDC and LTI also create Tobira sessions (both call
+        // `create_session_with_cookies`), so enabling either is another valid
+        // way to create sessions when `auth.source = "tobira-session"`.
+        let can_create_sessions = session_handlers_defined
+            || self.oidc.enabled
+            || self.lti.enabled;
         if self.source == AuthSource::TobiraSession {
-            if !session_sources_defined {
+            if !can_create_sessions {
                 bail!("'auth.source' is 'tobira-session', but no way to create \
-                    sessions is configured: set 'auth.session.from_login_credentials' \
-                    or 'auth.session.from_session_endpoint'");
+                    sessions is configured: enable 'auth.oidc' or 'auth.lti', or set \
+                    'auth.session.from_login_credentials' or \
+                    'auth.session.from_session_endpoint'");
             }
         } else {
-            if session_sources_defined {
+            if session_handlers_defined {
                 bail!("'auth.source' is not 'tobira-session', but \
                     'auth.session.from_login_credentials' or \
                     'auth.session.from_session_endpoint' is set.");
@@ -608,5 +617,35 @@ mod tests {
         assert!(lti_config(false, vec![]).validate().is_ok());
         assert!(lti_config(true, vec![platform("https://moodle.example.org", "c")])
             .validate().is_ok());
+    }
+
+    /// A full `AuthConfig` with every field at its default value.
+    fn default_auth_config() -> AuthConfig {
+        use confique::{Config, Layer};
+        let layer = <<AuthConfig as Config>::Layer as Layer>::default_values();
+        AuthConfig::from_layer(layer).expect("default AuthConfig should be valid")
+    }
+
+    #[test]
+    fn tobira_session_needs_a_session_source() {
+        // `tobira-session` without any way to create sessions must be rejected.
+        let mut cfg = default_auth_config();
+        cfg.source = AuthSource::TobiraSession;
+        assert!(cfg.validate().is_err());
+    }
+
+    #[test]
+    fn oidc_and_lti_count_as_session_sources() {
+        // Enabling OIDC alone is a valid way to create sessions.
+        let mut cfg = default_auth_config();
+        cfg.source = AuthSource::TobiraSession;
+        cfg.oidc.enabled = true;
+        assert!(cfg.validate().is_ok());
+
+        // Enabling LTI alone is a valid way to create sessions.
+        let mut cfg = default_auth_config();
+        cfg.source = AuthSource::TobiraSession;
+        cfg.lti.enabled = true;
+        assert!(cfg.validate().is_ok());
     }
 }
