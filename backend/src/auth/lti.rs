@@ -16,7 +16,7 @@ use secrecy::ExposeSecret;
 use serde::Deserialize;
 
 use crate::{
-    auth::{User, config::LtiPlatform},
+    auth::{User, config::{LtiPlatform, LtiUsernameSource}},
     http::{self, Context, Response},
     prelude::*,
     sync::client::AuthMode,
@@ -34,6 +34,9 @@ use crate::{
 /// authorization endpoint. The platform then POSTs the signed launch
 /// (`id_token`) back to `/~lti/launch` (handled in a follow-up).
 pub(crate) async fn handle_login(req: Request<Incoming>, ctx: &Context) -> Response {
+    if !ctx.config.auth.lti.enabled {
+        return http::response::not_found();
+    }
     let raw = match read_raw_params(req).await {
         Ok(raw) => raw,
         Err(response) => return response,
@@ -134,6 +137,10 @@ fn random_token() -> String {
 /// build a Tobira user and create a session, then redirect to the
 /// `target_link_uri`.
 pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Response {
+    if !ctx.config.auth.lti.enabled {
+        return http::response::not_found();
+    }
+
     // ----- Read the form_post body: `id_token` + `state` ------------------------------------
     let body = match download_body(req.into_body()).await {
         Ok(body) => body,
@@ -178,7 +185,11 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
         client_id: &platform.client_id,
     };
     let claims = match raw
-        .decode::<(), LtiClaims, _>(keys.as_slice(), &validator, |_header, payload| payload.extra_fields)
+        .decode::<(), LtiClaims, _>(
+            keys.as_slice(),
+            &validator,
+            |_header, payload| payload.extra_fields,
+        )
         .await
     {
         Ok(claims) => claims,
@@ -202,11 +213,16 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
     debug!("LTI launch claims: {claims:#?}");
 
     // ----- Build the user and create a session ----------------------------------------------
-    // Roles come from Opencast, exactly like the OIDC login (#1706).
-    // NOTE: how the launch identity maps to an Opencast username is an open
-    // design question (see docs/docs/dev/rfc-lti-1.3.md, OQ8) — this is the
-    // provisional MVP mapping.
-    let username = resolve_username(&claims);
+    // Roles come from Opencast, exactly like the OIDC login (#1706). The
+    // username comes from the claim the platform is configured to use; see the
+    // `username_source` config and RFC OQ8.
+    let Some(username) = resolve_username(&claims, platform.username_source) else {
+        warn!(
+            "LTI launch: no username in launch (username_source = {:?})",
+            platform.username_source,
+        );
+        return http::response::bad_request("LTI launch: no username provided by platform");
+    };
     let oc_user = match super::opencast::user_from_info_me(
         AuthMode::Sudo { as_user: &username },
         ctx,
@@ -245,31 +261,38 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
         Some(series) => series_landing(&ctx.config.general.tobira_url.to_string(), series),
         None => safe_target(&login.target_link_uri, ctx),
     };
+    // `target` is constrained to our own origin, but a `series` custom parameter
+    // could still carry characters that are invalid in a header; fall back to the
+    // base URL rather than panic when building the response.
+    let location = header::HeaderValue::from_str(&target).unwrap_or_else(|_| {
+        header::HeaderValue::from_str(&ctx.config.general.tobira_url.to_string())
+            .expect("tobira_url is a valid header value")
+    });
     Response::builder()
         .status(StatusCode::FOUND)
-        .header(header::LOCATION, target)
+        .header(header::LOCATION, location)
         .header(header::SET_COOKIE, cookie.to_string())
         .body(ByteBody::empty())
         .unwrap()
 }
 
-/// Determines the Opencast username from the launch claims.
+/// Determines the Opencast username from the launch claims, using the source
+/// the platform is configured with. Returns `None` if that claim is absent, so
+/// the caller can reject the launch instead of guessing an identity.
 ///
-/// Platforms differ in what identity they expose: Canvas sends
-/// `preferred_username`, while Moodle sends none of it — its `sub` is an opaque
-/// internal ID that Opencast does not know. Such platforms can supply the
-/// username explicitly via a `username` custom parameter (in Moodle:
-/// `username=$User.username`), which therefore takes precedence.
-fn resolve_username(claims: &LtiClaims) -> String {
-    let from_custom = claims.custom.as_ref()
-        .and_then(|custom| custom.get("username"))
-        .and_then(|username| username.as_str())
-        .filter(|username| !username.is_empty());
-
-    match (from_custom, &claims.preferred_username) {
-        (Some(username), _) => username.to_owned(),
-        (None, Some(username)) => username.clone(),
-        (None, None) => claims.sub.clone(),
+/// The source is an admin decision per platform: Canvas sends a trustworthy
+/// `preferred_username` (the safe default), while Moodle sends none and needs
+/// `Custom` (a `username` custom parameter). `Custom` trusts whoever configures
+/// the launch — see the `username_source` docs.
+fn resolve_username(claims: &LtiClaims, source: LtiUsernameSource) -> Option<String> {
+    match source {
+        LtiUsernameSource::PreferredUsername => claims.preferred_username.clone(),
+        LtiUsernameSource::Sub => Some(claims.sub.clone()),
+        LtiUsernameSource::Custom => claims.custom.as_ref()
+            .and_then(|custom| custom.get("username"))
+            .and_then(|username| username.as_str())
+            .filter(|username| !username.is_empty())
+            .map(str::to_owned),
     }
 }
 
@@ -281,6 +304,9 @@ async fn fetch_platform_jwks(
 ) -> Result<Vec<jwtea::VerifyingKey>> {
     let uri = platform.keyset_url.as_str().parse::<Uri>().context("invalid keyset URL")?;
     let response = ctx.http_client.get(uri).await?;
+    if !response.status().is_success() {
+        bail!("platform JWKS endpoint returned status {}", response.status());
+    }
     let body = download_body(response.into_body()).await?;
     let jwks: jwtea::Jwks = serde_json::from_slice(&body)
         .context("could not parse platform JWKS")?;
@@ -294,22 +320,26 @@ fn safe_target(target: &str, ctx: &Context) -> String {
 }
 
 /// Picks a safe in-Tobira redirect target for a launch, defaulting to `base`
-/// (the start page). Two things it guards against:
+/// (the start page). It guards against three things:
 ///
-/// - **Open redirects:** a `target_link_uri` outside Tobira is discarded.
-/// - **Bouncing into our own endpoints:** platforms commonly use the tool URL
-///   as the default `target_link_uri`, which for us is `/~lti/launch` — a
-///   POST-only endpoint that a browser GET would 404 on. Any `/~lti/` target
-///   therefore falls back to the start page.
+/// - **Open redirects:** the target must be `base` followed by a path starting
+///   with `/`. A bare string prefix is not enough — `https://<base>.evil.com/…`
+///   also starts with `base` — so the boundary `/` is what makes this safe.
+/// - **Bouncing into our own endpoints:** platforms commonly default
+///   `target_link_uri` to the tool URL, which for us is `/~lti/launch` — a
+///   POST-only endpoint that a browser GET would 404 on. `/~lti/` targets
+///   therefore fall back to the start page (this is the normal case).
+/// - **Header injection:** control characters are rejected, so the result is
+///   always a valid `Location` header value.
 fn resolve_target(target: &str, base: &str) -> String {
-    let Some(path) = target.strip_prefix(base) else {
-        warn!("LTI launch: target_link_uri '{target}' is outside Tobira; using base URL");
-        return base.to_owned();
-    };
-    if path.starts_with("/~lti/") {
-        return base.to_owned();
+    match target.strip_prefix(base).filter(|path| path.starts_with('/')) {
+        Some(path) if path.starts_with("/~lti/") => base.to_owned(),
+        Some(path) if !path.bytes().any(|b| b.is_ascii_control()) => target.to_owned(),
+        _ => {
+            warn!("LTI launch: unusable target_link_uri; falling back to the start page");
+            base.to_owned()
+        }
     }
-    target.to_owned()
 }
 
 /// Builds the URL of a Tobira series page from an Opencast series ID, using
@@ -501,19 +531,28 @@ mod tests {
     }
 
     #[test]
-    fn username_falls_back_to_sub_without_better_claims() {
-        // Moodle sends neither `preferred_username` nor a custom parameter, so
-        // we are left with the opaque `sub`.
-        assert_eq!(resolve_username(&claims_with(serde_json::json!({}))), "3");
+    fn username_default_source_uses_preferred_username() {
+        use LtiUsernameSource::PreferredUsername;
+        // Present → used.
+        assert_eq!(
+            resolve_username(
+                &claims_with(serde_json::json!({ "preferred_username": "rrolf" })),
+                PreferredUsername,
+            ),
+            Some("rrolf".to_owned()),
+        );
+        // Absent → None (the launch is rejected rather than guessing an identity).
+        assert_eq!(
+            resolve_username(&claims_with(serde_json::json!({})), PreferredUsername),
+            None,
+        );
     }
 
     #[test]
-    fn username_uses_preferred_username_when_present() {
+    fn username_sub_source_uses_subject() {
         assert_eq!(
-            resolve_username(&claims_with(serde_json::json!({
-                "preferred_username": "rrolf",
-            }))),
-            "rrolf",
+            resolve_username(&claims_with(serde_json::json!({})), LtiUsernameSource::Sub),
+            Some("3".to_owned()),
         );
     }
 
@@ -526,6 +565,11 @@ mod tests {
         assert_eq!(resolve_target("https://tobira.example.org/~lti/launch", base), base);
         // Anything outside Tobira is refused (no open redirect).
         assert_eq!(resolve_target("https://evil.example.org/phish", base), base);
+        // A host that merely *starts with* the base must not pass: without the
+        // path boundary this would be an open redirect.
+        assert_eq!(resolve_target("https://tobira.example.org.evil.com/phish", base), base);
+        // Control characters (header injection) are rejected.
+        assert_eq!(resolve_target("https://tobira.example.org/a\r\nb", base), base);
         // A real in-Tobira page is kept.
         assert_eq!(
             resolve_target("https://tobira.example.org/!s/:abc-123", base),
@@ -534,15 +578,21 @@ mod tests {
     }
 
     #[test]
-    fn username_custom_parameter_wins_and_empty_is_ignored() {
-        let custom = |username| serde_json::json!({
+    fn username_custom_source_reads_custom_parameter_only() {
+        use LtiUsernameSource::Custom;
+        let with_custom = |username| claims_with(serde_json::json!({
+            // A `preferred_username` must NOT be used when the source is Custom.
             "preferred_username": "from-claim",
             "https://purl.imsglobal.org/spec/lti/claim/custom": { "username": username },
-        });
+        }));
 
-        // An explicitly configured custom parameter takes precedence.
-        assert_eq!(resolve_username(&claims_with(custom("from-custom"))), "from-custom");
-        // An unsubstituted or blank value must not shadow the standard claim.
-        assert_eq!(resolve_username(&claims_with(custom(""))), "from-claim");
+        assert_eq!(
+            resolve_username(&with_custom("from-custom"), Custom),
+            Some("from-custom".to_owned()),
+        );
+        // A blank (e.g. unsubstituted) value yields None, not the standard claim.
+        assert_eq!(resolve_username(&with_custom(""), Custom), None);
+        // No custom parameter at all → None.
+        assert_eq!(resolve_username(&claims_with(serde_json::json!({})), Custom), None);
     }
 }

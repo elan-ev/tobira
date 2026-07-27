@@ -477,6 +477,9 @@
 #     deployment_id = "1"
 #     auth_login_url = "https://moodle.example.org/mod/lti/auth.php"
 #     keyset_url = "https://moodle.example.org/mod/lti/certs.php"
+#     # Moodle sends no `preferred_username`; take it from a custom parameter
+#     # (`username=$User.username`). See `username_source` for the caveat.
+#     username_source = "custom"
 #
 # Default value: []
 #platforms = []

@@ -65,20 +65,26 @@ user (via `/info/me.json`, impersonating the user with the `[sync]` admin creden
 exactly like a normal login. **The user must exist in Opencast**, otherwise the launch is
 rejected (`user … is not known to Opencast`).
 
-The username Tobira uses to look the user up is taken from the launch, in this order:
+Which launch claim provides that username is an **admin decision per platform**, set with
+`username_source` on the platform entry:
 
-1. the `username` **custom parameter**, if set (see below),
-2. the `preferred_username` claim,
-3. the `sub` claim (fallback).
+| `username_source` | Uses | When |
+| --- | --- | --- |
+| `"preferred-username"` (default) | the `preferred_username` claim | Platforms that assert it, e.g. **Canvas** — works out of the box. |
+| `"custom"` | the `username` **custom parameter** | Platforms that send no usable `preferred_username`, e.g. **Moodle** (see [Moodle setup](#moodle)). |
+| `"sub"` | the raw `sub` claim | Rarely useful — `sub` is usually an opaque platform ID. |
 
-This matters because platforms differ:
+If the configured claim is absent, the launch is **rejected** rather than falling back to
+a guessed identity. The resulting username must match a user Opencast knows.
 
-- **Canvas** sends `preferred_username`, so it works out of the box.
-- **Moodle** sends neither a login name via `preferred_username` nor a usable `sub` (its
-  `sub` is an opaque internal ID). You **must** supply the username via a custom parameter
-  (see [Moodle setup](#moodle)).
-
-The resulting username must match a user Opencast knows.
+:::warning
+`username_source = "custom"` trusts the `username` custom parameter to assert the user's
+identity. In most LMS, custom parameters can be set **per placement, by instructors** — so
+only enable `"custom"` for platforms where you accept that whoever configures a launch can
+choose the asserted username. Where possible, pin the custom parameter at the tool level
+(admin) to the substitution value `$User.username`. The default `"preferred-username"`
+does not have this concern, because that claim is asserted by the platform.
+:::
 
 
 ## Configuration
@@ -95,10 +101,12 @@ client_id = "AbCd1234"
 deployment_id = "1"
 auth_login_url = "https://moodle.example.org/mod/lti/auth.php"
 keyset_url = "https://moodle.example.org/mod/lti/certs.php"
+username_source = "custom"   # Moodle only; see "Users and roles". Omit for Canvas etc.
 ```
 
-All values come from the tool registration in the LMS, which labels them differently than
-the LTI spec terms used here:
+The first five values come from the tool registration in the LMS, which labels them
+differently than the LTI spec terms used here (`username_source` is Tobira-only, see
+[Users and roles](#users-and-roles)):
 
 | Config field | Moodle label | Canvas label |
 | --- | --- | --- |
@@ -140,10 +148,10 @@ configure a tool manually*, LTI version **LTI 1.3**:
   ```
   username=$User.username
   ```
-  Required — Moodle sends no usable username otherwise (see
-  [Users and roles](#users-and-roles)). Moodle substitutes `$User.username` at launch time.
-  There is no Privacy setting that shares the login name; the substitution variable is the
-  supported way. Add `series=<opencast-series-id>` on a separate line to land on a series.
+  Required together with `username_source = "custom"` on the platform (see
+  [Users and roles](#users-and-roles)) — Moodle sends no usable username otherwise. Moodle
+  substitutes `$User.username` at launch time; there is no Privacy setting that shares the
+  login name. Add `series=<opencast-series-id>` on a separate line to land on a series.
 - **Default launch container:** **New window** (not an iframe).
 
 Every URL must use the **exact** public host of your Tobira — a wrong subdomain fails

@@ -521,6 +521,9 @@ pub(crate) struct LtiConfig {
     ///     deployment_id = "1"
     ///     auth_login_url = "https://moodle.example.org/mod/lti/auth.php"
     ///     keyset_url = "https://moodle.example.org/mod/lti/certs.php"
+    ///     # Moodle sends no `preferred_username`; take it from a custom parameter
+    ///     # (`username=$User.username`). See `username_source` for the caveat.
+    ///     username_source = "custom"
     #[config(default = [])]
     pub(crate) platforms: Vec<LtiPlatform>,
 }
@@ -587,6 +590,33 @@ pub(crate) struct LtiPlatform {
     /// The platform's JWKS URL, used to verify incoming launch tokens. LMS
     /// label: "Public keyset URL"; for Moodle this is `.../mod/lti/certs.php`.
     pub(crate) keyset_url: HttpUrl,
+
+    /// Which launch claim provides the Opencast username. Defaults to the
+    /// platform-asserted `preferred_username` (`"preferred-username"`).
+    ///
+    /// Set this to `"custom"` only for platforms that do not send a usable
+    /// `preferred_username` (e.g. Moodle), where the username has to be passed
+    /// via a `username` custom parameter (`username=$User.username`). Be aware
+    /// that custom parameters can be set per placement, often by instructors —
+    /// so `"custom"` trusts whoever configures the launch to assert the
+    /// identity. Only enable it for platforms where that is acceptable.
+    ///
+    /// `"sub"` uses the raw subject claim (rarely a valid Opencast username).
+    #[serde(default)]
+    pub(crate) username_source: LtiUsernameSource,
+}
+
+/// Which launch claim a platform's Opencast username is taken from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum LtiUsernameSource {
+    /// The `preferred_username` claim (safe default: platform-asserted).
+    #[default]
+    PreferredUsername,
+    /// The raw `sub` claim.
+    Sub,
+    /// The `username` custom parameter. See the caveat on `username_source`.
+    Custom,
 }
 
 
@@ -601,6 +631,7 @@ mod tests {
             deployment_id: "1".into(),
             auth_login_url: "https://lms.example.org/auth".parse().unwrap(),
             keyset_url: "https://lms.example.org/jwks".parse().unwrap(),
+            username_source: LtiUsernameSource::default(),
         }
     }
 
