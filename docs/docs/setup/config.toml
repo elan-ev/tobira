@@ -460,7 +460,16 @@
 # Default value: false
 #enabled = false
 
-# Registered LTI platforms, one table entry per platform/deployment:
+# Registered LTI platforms, one table entry per platform/deployment. All
+# values come from the tool registration in your LMS, which labels them
+# differently than the spec terms used here (Moodle labels shown; Canvas
+# calls `issuer` "Issuer"):
+#
+#     issuer         ->  "Platform ID"
+#     client_id      ->  "Client ID"
+#     deployment_id  ->  "Deployment ID"
+#     auth_login_url ->  "Authentication request URL"
+#     keyset_url     ->  "Public keyset URL"
 #
 #     [[auth.lti.platforms]]
 #     issuer = "https://moodle.example.org"

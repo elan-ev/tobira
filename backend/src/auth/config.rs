@@ -504,7 +504,16 @@ pub(crate) struct LtiConfig {
     #[config(default = false)]
     pub(crate) enabled: bool,
 
-    /// Registered LTI platforms, one table entry per platform/deployment:
+    /// Registered LTI platforms, one table entry per platform/deployment. All
+    /// values come from the tool registration in your LMS, which labels them
+    /// differently than the spec terms used here (Moodle labels shown; Canvas
+    /// calls `issuer` "Issuer"):
+    ///
+    ///     issuer         ->  "Platform ID"
+    ///     client_id      ->  "Client ID"
+    ///     deployment_id  ->  "Deployment ID"
+    ///     auth_login_url ->  "Authentication request URL"
+    ///     keyset_url     ->  "Public keyset URL"
     ///
     ///     [[auth.lti.platforms]]
     ///     issuer = "https://moodle.example.org"
@@ -557,20 +566,26 @@ pub(crate) struct LtiPlatform {
     /// The platform's issuer identifier; compared **verbatim** against the `iss`
     /// claim of launches. LTI issuers are exact-match identifiers, not URLs we
     /// dereference, so this is a plain string (no URL normalization).
+    ///
+    /// In the LMS this is the field labelled "Platform ID" (Moodle) or
+    /// "Issuer" (Canvas).
     pub(crate) issuer: String,
 
     /// The client ID Tobira is registered under with this platform; matches the
-    /// `aud`/`azp` claim of launches.
+    /// `aud`/`azp` claim of launches. LMS label: "Client ID".
     pub(crate) client_id: String,
 
     /// The deployment ID; matches the platform's `deployment_id` claim.
+    /// LMS label: "Deployment ID".
     pub(crate) deployment_id: String,
 
     /// The platform's OIDC authorization endpoint that the login initiation
-    /// redirects to.
+    /// redirects to. LMS label: "Authentication request URL" (Moodle) /
+    /// "OpenID Connect Authentication URL"; for Moodle this is `.../mod/lti/auth.php`.
     pub(crate) auth_login_url: HttpUrl,
 
-    /// The platform's JWKS URL, used to verify incoming launch tokens.
+    /// The platform's JWKS URL, used to verify incoming launch tokens. LMS
+    /// label: "Public keyset URL"; for Moodle this is `.../mod/lti/certs.php`.
     pub(crate) keyset_url: HttpUrl,
 }
 
