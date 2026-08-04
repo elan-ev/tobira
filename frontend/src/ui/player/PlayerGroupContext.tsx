@@ -1,4 +1,4 @@
-import { Paella } from "paella-core";
+import { Paella } from "@asicupv/paella-core";
 import React, {
     createContext,
     useContext,

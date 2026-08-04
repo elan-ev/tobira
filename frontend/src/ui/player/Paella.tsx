@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
-import { Config, Manifest, Paella, Source, Stream } from "paella-core";
-import getBasicPluginsContext from "paella-basic-plugins";
-import getZoomPluginContext from "paella-zoom-plugin";
-import getMP4MultiQualityContext from "paella-mp4multiquality-plugin";
-import getUserTrackingPluginsContext from "paella-user-tracking";
-import getSlidePluginsContext from "paella-slide-plugins";
-import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
+import { Manifest, Paella, Source, Stream } from "@asicupv/paella-core";
+import { basicPlugins } from "@asicupv/paella-basic-plugins";
+import { zoomPlugins } from "@asicupv/paella-zoom-plugin";
+import { userTrackingPlugins } from "@asicupv/paella-user-tracking";
+import { videoPlugins } from "@asicupv/paella-video-plugins";
+import { slidePlugins } from "@asicupv/paella-slide-plugins";
+import { Global } from "@emotion/react";
 
 import { isHlsTrack, PlayerEvent, Track } from ".";
 import { SPEEDS, TRANSLATIONS } from "./consts";
@@ -74,7 +74,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 metadata: {
                     title: event.title,
                     duration: fixedDuration,
-                    preview: event.syncedData.thumbnail,
+                    preview: event.syncedData.thumbnail ?? undefined,
 
                     // These are not strictly necessary for Paella to know, but can be used by
                     // plugins, like the Matomo plugin. It is not well defined what to pass how,
@@ -87,6 +87,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     license: event.metadata.dcterms?.license,
                     location: event.metadata.dcterms?.spatial,
                     isLive: event.isLive, // Not passed by the OC integration, but useful.
+                    timelineMarks: "frameList",
                 },
                 streams: Object.entries(tracksByKind).map(([key, tracks]) => ({
                     content: key,
@@ -94,22 +95,26 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 })),
                 captions: captionsWithLabels(event.authorizedData.captions, t).map(
                     ({ label, caption }) => ({
+                        id: caption.uri,
                         format: "vtt",
                         url: caption.uri,
-                        lang: caption.lang ?? undefined,
+                        lang: caption.lang ?? "",
                         text: label,
                     }),
                 ),
-                frameList: event.authorizedData.segments.map(segment => {
-                    const time = segment.startTime / 1000;
-                    return {
-                        id: "frame_" + time,
-                        mimetype: "image/jpeg",
-                        time,
-                        url: segment.uri,
-                        thumb: segment.uri,
-                    };
-                }),
+                frameList: {
+                    targetContent: "presentation",
+                    frames: event.authorizedData.segments.map(segment => {
+                        const time = segment.startTime / 1000;
+                        return {
+                            id: "frame_" + time,
+                            mimetype: "image/jpeg",
+                            time,
+                            url: segment.uri,
+                            thumb: segment.uri,
+                        };
+                    }),
+                },
             };
 
             // If there are no presenter tracks (and there is more than one
@@ -124,29 +129,26 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             }
 
             const player = new Paella(ref.current, {
-                // Paella has a weird API unfortunately. It by default loads two
-                // files via `fetch`. But we can provide that data immediately
-                // since we just derive it from our GraphQL data. So we
-                // override all functions (which Paella luckily allows) to do
-                // nothing except immediately return the data.
-                loadConfig: async () => PAELLA_CONFIG as Config,
+                // Paella 8 fetches its configuration and the video manifest by
+                // default. We have both already (they are derived from our
+                // GraphQL data) so these hand them over directly and Paella
+                // makes no request of its own.
+                loadConfig: async () => PAELLA_CONFIG,
                 getVideoId: async () => event.opencastId,
-                getManifestUrl: async () => "dummy-url",
-                getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async () => manifest,
-                loadDictionaries: (player: Paella) => {
+                loadDictionaries: async (player: Paella) => {
                     Object.entries(TRANSLATIONS).forEach(([lang, dict]) => {
                         player.addDictionary(lang, dict);
                     });
                     player.setLanguage(i18n.language);
                 },
                 configResourcesUrl: "/~assets/paella",
-                customPluginContext: [
-                    getBasicPluginsContext(),
-                    getZoomPluginContext(),
-                    getUserTrackingPluginsContext(),
-                    getMP4MultiQualityContext(),
-                    getSlidePluginsContext(),
+                plugins: [
+                    ...basicPlugins,
+                    ...zoomPlugins,
+                    ...userTrackingPlugins,
+                    ...videoPlugins,
+                    ...slidePlugins,
                 ],
             });
 
@@ -156,7 +158,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 register(player);
                 const time = new URL(window.location.href).searchParams.get("t");
                 if (!event.isLive && time) {
-                    player.videoContainer.setCurrentTime(timeStringToSeconds(time));
+                    player.videoContainer?.setCurrentTime(timeStringToSeconds(time));
                 }
             });
 
@@ -164,7 +166,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 setActivePlayer(player);
                 players.forEach((playerInstance: Paella) => {
                     if (playerInstance && playerInstance !== player) {
-                        playerInstance.videoContainer.pause();
+                        playerInstance.videoContainer?.pause();
                     }
                 });
             });

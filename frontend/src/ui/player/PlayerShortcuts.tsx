@@ -1,4 +1,4 @@
-import { Paella } from "paella-core";
+import { Paella } from "@asicupv/paella-core";
 import { HotkeyCallback, Options } from "react-hotkeys-hook";
 import { useCallback } from "react";
 
