@@ -475,14 +475,16 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
 }) => {
     const { t } = useTranslation();
 
+    const directLinkUrl = document.location.origin + shareUrl;
     const rssLinkUrl = document.location.origin + rssUrl;
+
     const tabs = {
         "main": {
             label: t("share.link"),
             Icon: LuLink,
             render: () => <>
-                <CopyableInput label={t("share.copy-link")} value={shareUrl} />
-                <QrCodeButton label={t("share.link")} target={shareUrl} />
+                <CopyableInput label={t("share.copy-link")} value={directLinkUrl} />
+                <QrCodeButton label={t("share.link")} target={directLinkUrl} />
             </>,
         },
         "rss": {

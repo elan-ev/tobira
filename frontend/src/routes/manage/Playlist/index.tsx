@@ -120,7 +120,7 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
         creators: [item.creator],
     }}
     specificMetadata={[<EntryCount key="count" count={item.numEntries} />]}
-    directUrl={new URL(DirectPlaylistRoute.url({ playlistId: item.id }), document.baseURI).href}
+    directUrl={DirectPlaylistRoute.url({ playlistId: item.id })}
     renderShareButton={url => <VideoListShareButton
         kind="playlist"
         shareUrl={url}

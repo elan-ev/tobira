@@ -117,7 +117,7 @@ const SeriesItem: React.FC<{ item: SingleSeries }> = ({ item }) => <ListItem
         creators: [...item.creators],
     }}
     specificMetadata={[<EntryCount key="count" count={item.numVideos} />]}
-    directUrl={new URL(DirectSeriesRoute.url({ seriesId: item.id }), document.baseURI).href}
+    directUrl={DirectSeriesRoute.url({ seriesId: item.id })}
     renderShareButton={url => <VideoListShareButton
         kind="series"
         shareUrl={url}
