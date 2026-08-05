@@ -1,6 +1,6 @@
 name: Check external API contracts
 on:
-  pull_request_target:
+  pull_request:
     paths:
     - "frontend/src/schema.graphql"
     - ".github/workflows/check-api-contracts.yml"
@@ -9,64 +9,15 @@ on:
 jobs:
   main:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-      contents: read
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-
-      - name: Install GraphQL Inspector
-        run: |
-          npm install \
-            @graphql-inspector/ci@3.4.0 \
-            @graphql-inspector/diff-command@3.4.0 \
-            @graphql-inspector/graphql-loader@3.4.0 \
-            @graphql-inspector/git-loader@3.4.0
+          fetch-depth: 2
 
       - name: Check for changes to the APIs external applications use
-        id: graphql_inspector
         run: |
-          npx graphql-inspector diff \
-            --rule .github/workflows/check-api-contracts/rule.js \
-            --onComplete .github/workflows/check-api-contracts/onComplete.js \
-            git:${{ github.event.pull_request.base.sha }}:frontend/src/schema.graphql \
-            git:${{ github.event.pull_request.head.sha }}:frontend/src/schema.graphql \
-            | tee >( \
-              grep -v ^::set-output \
-              | sed -e 's/\[\(log\|success\|info\|error\|warn\)\] //' \
-              > diff \
-            )
-
-      - name: Read diff output
-        id: diff_output
-        uses: juliangruber/read-file-action@v1
-        with:
-          path: diff
-          trim: true
-        if: steps.graphql_inspector.outputs.changes == 'true'
-
-      - name: Hide previous comments made by this workflow
-        uses: int128/hide-comment-action@v1
-        with:
-          # We have to specify an empty author-filter here so that this step doesn't try to remove
-          # the deployment comments we create in another step (or any other comments by github-actions
-          # for that matter).
-          authors:
-          starts-with: "<!-- external-api-contracts-check -->"
-
-      - name: Add a comment when there are relevant changes
-        uses: int128/comment-action@v1
-        with:
-          post: |
-            <!-- external-api-contracts-check -->
-            🚨🚨🚨 This PR changes APIs used by external applications 🚨🚨🚨
-
-            ```
-            ${{ steps.diff_output.outputs.content }}
-            ```
-        if: steps.graphql_inspector.outputs.changes == 'true'
+          npx --yes @graphql-inspector/cli@4.0.3 diff \
+            "git:${{ github.event.pull_request.base.sha }}:frontend/src/schema.graphql" \
+            "git:${{ github.event.pull_request.head.sha }}:frontend/src/schema.graphql" \
+            --rule ./.github/workflows/check-api-contracts/rule.js
