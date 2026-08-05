@@ -2,8 +2,9 @@ name: Check external API contracts
 on:
   pull_request_target:
     paths:
-    - "backend/**"
+    - "frontend/src/schema.graphql"
     - ".github/workflows/check-api-contracts.yml"
+    - ".github/workflows/check-api-contracts/rule.js"
 
 jobs:
   main:
