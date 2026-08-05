@@ -1,9 +1,9 @@
-name: Admin UI API Check
+name: Check external API contracts
 on:
   pull_request_target:
     paths:
     - "backend/**"
-    - ".github/workflows/check-admin-ui-api.yml"
+    - ".github/workflows/check-api-contracts.yml"
 
 jobs:
   main:
@@ -27,12 +27,12 @@ jobs:
             @graphql-inspector/graphql-loader@3.4.0 \
             @graphql-inspector/git-loader@3.4.0
 
-      - name: Check for changes to the APIs the admin UI integration uses
+      - name: Check for changes to the APIs external applications use
         id: graphql_inspector
         run: |
           npx graphql-inspector diff \
-            --rule .github/workflows/check-admin-ui-api/rule.js \
-            --onComplete .github/workflows/check-admin-ui-api/onComplete.js \
+            --rule .github/workflows/check-api-contracts/rule.js \
+            --onComplete .github/workflows/check-api-contracts/onComplete.js \
             git:${{ github.event.pull_request.base.sha }}:frontend/src/schema.graphql \
             git:${{ github.event.pull_request.head.sha }}:frontend/src/schema.graphql \
             | tee >( \
@@ -56,14 +56,14 @@ jobs:
           # the deployment comments we create in another step (or any other comments by github-actions
           # for that matter).
           authors:
-          starts-with: "<!-- admin-ui-api-check -->"
+          starts-with: "<!-- external-api-contracts-check -->"
 
       - name: Add a comment when there are relevant changes
         uses: int128/comment-action@v1
         with:
           post: |
-            <!-- admin-ui-api-check -->
-            🚨🚨🚨 This PR changes APIs used by the Opencast Admin UI integration 🚨🚨🚨
+            <!-- external-api-contracts-check -->
+            🚨🚨🚨 This PR changes APIs used by external applications 🚨🚨🚨
 
             ```
             ${{ steps.diff_output.outputs.content }}
