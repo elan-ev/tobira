@@ -733,6 +733,7 @@ manage:
           monospace: Monospace
           link: Link
           quote: Quote
+          line-break: Line break
           code-block: Code block
           external-image: External image
           hr: Separator
