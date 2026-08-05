@@ -81,9 +81,7 @@ impl AuthConfig {
                 That makes no sense.");
         }
 
-        if self.logout_link.is_none()
-            && matches!(self.source, AuthSource::Callback(_) | AuthSource::TrustAuthHeaders)
-        {
+        if self.logout_link.is_none() && matches!(self.source, AuthSource::Callback(_)) {
             bail!("'auth.logout_link' is not set, but 'auth.source' is '{}'. That \
                 would mean the logout button does nothing. You have to set a logout link.",
                 self.source.label(),
@@ -199,7 +197,6 @@ pub(crate) enum AuthSource {
     None,
     TobiraSession,
     Callback(CallbackUri),
-    TrustAuthHeaders,
 }
 
 impl TryFrom<String> for AuthSource {
@@ -208,8 +205,6 @@ impl TryFrom<String> for AuthSource {
     fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
         if value == "none" {
             Ok(Self::None)
-        } else if value == "trust-auth-headers" {
-            Ok(Self::TrustAuthHeaders)
         } else if value == "tobira-session" {
             Ok(Self::TobiraSession)
         } else if let Some(url) = value.strip_prefix("callback:") {
@@ -226,7 +221,6 @@ impl AuthSource {
             Self::None => "none",
             Self::TobiraSession => "tobira-session",
             Self::Callback(_) => "callback",
-            Self::TrustAuthHeaders => "trust-auth-headers",
         }
     }
 }
@@ -270,7 +264,6 @@ impl LoginCredentialsHandler {
 pub(crate) enum SessionEndpointHandler {
     None,
     Callback(CallbackUri),
-    TrustAuthHeaders,
 }
 
 impl TryFrom<String> for SessionEndpointHandler {
@@ -279,8 +272,6 @@ impl TryFrom<String> for SessionEndpointHandler {
     fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
         if value == "none" {
             Ok(Self::None)
-        } else if value == "trust-auth-headers" {
-            Ok(Self::TrustAuthHeaders)
         } else if let Some(url) = value.strip_prefix("callback:") {
             Ok(Self::Callback(CallbackUri::parse(url)?))
         } else {
@@ -294,7 +285,6 @@ impl SessionEndpointHandler {
         match self {
             Self::None => "none",
             Self::Callback(_) => "login-callback",
-            Self::TrustAuthHeaders => "trust-auth-headers",
         }
     }
 }

@@ -219,13 +219,7 @@ Deno.serve({ port: 9090 }, request => {
 });
 ```
 
-You might be asking: if the `shibauthorizer` already has the user data in nginx, i.e. before the request reaches Tobira, why do we pass it through Tobira to the callback?
-Good question, and you can actually move your auth logic into the reverse proxy by using `auth.source = "trust-auth-header"`.
-However, that has a few disadvantages:
-for one, most web servers limit the size of HTTP headers fairly agressively, which leads to problems when your user has lots of roles.
-Further, putting that logic into a web server config is quite the adventure.
-
-Finally, you should configure your nginx in a way that `shibauthorizer` is not run for routes that don't need authentication.
+You should configure your nginx in a way that `shibauthorizer` is not run for routes that don't need authentication.
 For Tobira, everything starting with `/~assets` never needs authentication.
 But Tobira itself can decide much more precisely when a request needs to be authenticated, meaning that your callback (your auth logic) is just called when actually necessary.
 

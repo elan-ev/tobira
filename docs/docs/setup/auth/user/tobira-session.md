@@ -113,7 +113,6 @@ The authentication can be done via different means, configured as `auth.session.
 
 - **`"none"`**: no authentication, will thus always return 401.
 - [**`"callback:..."`**](./callback)
-- [**`"trust-auth-headers"`**](./trust-auth-headers)
 
 The last two methods work exactly like configuring those as `auth.source`.
 So see those docs for more information.
@@ -187,55 +186,15 @@ reserved_paths = ["/myOwnLogin"] # To prevent creating pages with conflicting pa
 
 [auth]
 source = "tobira-session"
-session.from_session_endpoint = "trust-auth-headers"
+session.from_session_endpoint = "callback:http://localhost:7007"
 login_link = "/myOwnLogin"
 ```
 
 When a Tobira user clicks on the login button, they are sent to `/myOwnLogin`.
 You have to serve your login page there and somehow handle logins.
-Once you determined a login request valid, you create a Tobira session by sending `POST /~session` with auth headers containing user information.
+Once you determined a login request valid, you create a Tobira session by making the users browser send `POST /~session`, with user information for your callback.
 Tobira replies with a `Set-Cookie` header, which you have to forward to your user.
 Finally, your login page can redirect the user back to Tobira again, where they will be logged in.
-
-
-### Intercept login attempts
-
-:::info
-In most cases, this use case is much better served via [`auth.session.from_login_credentials = "login-callback:..."`](#mode-login-callback).
-This example is only included to show all the options.
-:::
-
-One possible setup looks like this:
-
-- Set `auth.session.from_session_endpoint = "trust-auth-headers"`
-- Your reverse proxy intercepts `POST /~login` requests, reads their login credentials.
-- The credentials are checked somehow, determining if a user session should be created.
-- If login credentials are incorrect: your reverse proxy replies 403 as expected by Tobira's login page.
-- If login credentials are correct:
-    - Your reverse proxy sends `POST /~session` with auth headers containing user information.
-    - Tobira replies with a `Set-Cookie` header, which your reverse proxy forwards to the user with a "204 No Content" response, as expected by the login page.
-
-This is shown in this diagram:
-
-
-```
-┌──────┐    GET /~login     ┌─────────┐                     GET /~login                     ┌────────┐
-│      │ -----------------> │         │ --------------------------------------------------> │        │
-│      │ <----------------- │         │ <-------------------------------------------------- │        │
-│      │        200         │         │                        200                          │        │
-│      │                    │         │                                                     │        │
-│      │    POST /~login    │         │    POST /~login    ┌────────┐                       │        │
-│      │ -----------------> │         │ -----------------> │        │                       │        │
-│ User │ <----------------- │ reverse │ <----------------- │        │                       │ Tobira │
-│      │        403         │  proxy  │        403         │        │                       │        │
-│      │                    │         │                    │  auth  │                       │        │
-│      │    POST /~login    │         │    POST /~login    │ server │  POST /~session + AH  │        │
-│      │ -----------------> │         │ -----------------> │        │ --------------------> │        │
-│      │ <----------------- │         │ <----------------- │        │ <-------------------- │        │
-│      │  204 + Set-Cookie  │         │  204 + Set-Cookie  │        │    204 + Set-Cookie   │        │
-│      │                    │         │                    │        │                       │        │
-└──────┘                    └─────────┘                    └────────┘                       └────────┘
-```
 
 ### Shibboleth
 
