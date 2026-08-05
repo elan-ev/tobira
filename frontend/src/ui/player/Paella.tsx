@@ -184,7 +184,13 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             unregister(paellaSnapshot.player);
             paella.current = undefined;
             paellaSnapshot.loadPromise.then(() => {
-                paellaSnapshot.player.unload();
+                // Hacky workaround alert:
+                // The `setTimeout` seems to be necessary in dev (sth sth StrictMode)
+                // since Paella 8's `loadManifest` resolves slightly too early.
+                // Unloading immediately after loading causes incomplete plugin data,
+                // which then throws errors in console.
+                // Deferring by a task lets that data load completely first.
+                setTimeout(() => paellaSnapshot.player.unload());
             });
         };
     }, [event, t]);
