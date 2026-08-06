@@ -245,72 +245,49 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     // not important that an adjusted neutral tone is reflected in the player.
     // We just want to override the default dark blue.
     const toolbarBg = "#1e1e1e";
-    const colors = {
+    const overrides = {
         "--main-bg-color": toolbarBg,
-        "--main-bg-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
-        "--secondary-bg-color": "#2e2e2e",
-        "--secondary-bg-color-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
+        "--main-fg-color": "#F9FAFB",
+        "--playback-bar-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
+        "--playback-bar-gradient-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
+        "--playback-bar-backdrop-filter": "unset",
+        "--playback-bar-backdrop-filter-hover": "unset",
+        "--button-color": "#F9FAFB",
+        "--icon-color": "#F9FAFB",
         "--highlight-bg-color": "#444",
         "--highlight-bg-color-hover": "#444",
-        "--highlight-bg-color-progress-indicator": "var(--color-player-accent-light)",
-        "--volume-slider-fill-color": "var(--color-player-accent-light)",
-        "--volume-slider-empty-color": "#555",
+        "--progress-indicator-elapsed-color": "var(--color-player-accent-light)",
+        "--progress-indicator-remaining-color": "#555",
         "--video-container-background-color": "#000",
         "--base-video-rect-background-color": "#000",
+
+        "--button-fixed-height": "40px",
+        "--button-fixed-width": "40px",
+        "--canvas-button-gap": "4px",
+        "--canvas-button-height": "unset",
+        "--canvas-button-container-padding": "8px",
+
+        // Progress bar
+        "--slide-marker-gap": "2px",
+        "--handler-size": "16px",
+        // This applies on hover:
+        "--progress-indicator-slide-marker-height": "10px",
+
+        // Pop-up menus
+        "--popup-wrapper-padding": "5px",
+        "--popup-border-radius": "3px",
+        "--popup-box-shadow": `0 0 4px 0 ${toolbarBg}`,
+        "--popup-padding": "0px 10px",
+        "--popup-menu-item-height": "40px",
+        "--popup-menu-item-font-size": "16px",
     };
 
     return <>
         <Global styles={[
             ...PAELLA_PACKAGE_STYLES,
             {
-                "body > .popup-container": colors,
                 "body:has(.paella-fallback-fullscreen)": {
                     overflow: "hidden",
-                },
-                ".popup-container": {
-                    zIndex: 500050,
-                    "& .button-group": {
-                        "& .button-plugin-wrapper:hover, button:hover": {
-                            backgroundColor: "var(--highlight-bg-color-hover)",
-                        },
-                    },
-                    '& button[name="es.upv.paella.qualitySelector"] div': {
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        i: {
-                            display: "none",
-                        },
-                        span: {
-                            color: "var(--main-fg-color)",
-                            backgroundColor: "var(--main-bg-color)",
-                            border: "2px solid var(--main-fg-color)",
-                            borderRadius: 3,
-                            margin: "0 !important",
-                            fontSize: "10px !important",
-                            fontWeight: "bold",
-                            padding: "2px 3px",
-                        },
-                    },
-                    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                        "& .popup-content": {
-                            transform: "scale(0.9)",
-                            padding: "4px 0",
-                        },
-                    },
-                },
-                ".paella-fallback-fullscreen": {
-                    position: "fixed !important" as "fixed",
-                    inset: "0 !important",
-                    zIndex: "499 !important",
-                },
-                [`.${UI_HIDDEN_CLASS}`]: {
-                    "& .playback-bar, & .button-area": {
-                        display: "none !important",
-                    },
-                },
-                [`body:has(.${UI_HIDDEN_CLASS}) > .popup-container`]: {
-                    display: "none !important",
                 },
             },
         ]} />
@@ -332,7 +309,22 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 top: "unset",
                 fontFamily: "unset",
 
-                ...colors,
+                ...overrides,
+
+                // The old paella version had this internally and it prevents a thin line above
+                // the player in preview state on very specific screen widths
+                // (starting from 328px and then in increments of 16px).
+                // I don't wanna spend time investigating this further, so I'd rather just add these
+                // overrides.
+                ".video-container": {
+                    position: "absolute",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                },
+
+                ".landscape-container": {
+                    gap: 7,
+                },
 
                 // Buttons inside video containers
                 "& .video-canvas": {
@@ -344,11 +336,15 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     "div, div img": {
                         height: "inherit",
                     },
-                    "div img": {
+                    "img": {
                         display: "block",
-                        margin: "0 auto",
-                        width: "unset !important",
+                        width: "100% !important",
+                        height: "100% !important",
+                        objectFit: "cover",
                     },
+                },
+                "& .button-area svg": {
+                    fill: "var(--button-color)",
                 },
                 "@container video-canvas (width < 400px)": {
                     "& .button-area": {
@@ -361,29 +357,57 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     },
                 },
 
+                // Control bar elements
                 "& .playback-bar": {
                     transition: "background 0.08s",
+                    // Default appears to be "hidden",
+                    // which actually hides the slide previews as well.
+                    overflow: "visible",
                 },
-                "& .progress-indicator-remaining": {
-                    backgroundColor: "#9e9e9e !important",
-                },
-                "& .progress-indicator-content": {
-                    opacity: "unset",
+                "& .playback-bar-container, & .pop-up-wrapper": {
+                    minHeight: 0,
                 },
 
-                '& div[name="es.upv.paella.customTimeProgressIndicator"]': {
+                "& .timeline-preview p": {
+                    // Otherwise our global override would make the timestamps invisible.
+                    color: "inherit",
+                },
+
+                "& .playback-bar button i svg": {
+                    fill: "var(--main-fg-color)",
+                    color: "var(--main-fg-color)",
+                },
+                '& div[name="es.upv.paella.currentTimeLabel"]': {
                     fontWeight: "bold",
+                    padding: "3px 5px 2px 5px",
+                    span: {
+                        fontSize: 12,
+                    },
                 },
 
-                '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
+                '& button[name="es.upv.paella.playbackRateButton"]': {
+                    fontSize: 12,
+                    padding: "0 9px",
+                    paddingTop: 1,
+                    minWidth: "unset !important",
+                },
+
+                '& button[name="es.upv.paella.playPauseButton"] i': {
+                    height: "unset",
+                },
+
+
+                '& button[name="es.upv.paella.backwardButtonPlugin"] i': {
                     marginTop: "-7px !important",
+                    height: "unset",
                     "svg text": {
                         transform: "translate(0px, -1px)",
                         fontFamily: "var(--main-font) !important",
                     },
                 },
-                '& button[name="es.upv.paella.forwardButtonPlugin"] div': {
+                '& button[name="es.upv.paella.forwardButtonPlugin"] i': {
                     marginTop: "-7px !important",
+                    height: "unset",
                     "svg text": {
                         transform: "translate(2px, -1px)",
                         fontFamily: "var(--main-font) !important",
@@ -405,8 +429,42 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     },
                 },
 
+                "& .progress-indicator": {
+                    boxSizing: "border-box",
+                    padding: 0,
+                    // From `paella-skins`. Paella sizes this from the handler
+                    // and slide markers, which makes for a very thin hit area,
+                    // and lets it span the full width.
+                    height: 26,
+                    width: "calc(100% - 30px)",
+                    marginLeft: 15,
+                },
+
+                "& .playback-bar nav": {
+                    padding: "3.5px 9px",
+                },
+
                 ":hover .preview-play-icon, .loader-container i": {
                     opacity: "1 !important",
+                },
+
+                // Several of our icons (the layout and captions ones, for
+                // example) have no `fill` of their own and rely on being
+                // colored from the outside, which Paella only does in the
+                // playback bar. In a menu they would render black on black.
+                // Icons that bring their own `fill` (usually `none`, being
+                // stroke-only) have to be left alone.
+                "& .pop-up-content .menu-icon svg:not([fill])": {
+                    fill: "var(--icon-color)",
+                },
+
+                [`&.${UI_HIDDEN_CLASS} .playback-bar, &.${UI_HIDDEN_CLASS} .button-area`]: {
+                    display: "none !important",
+                },
+                "&.paella-fallback-fullscreen": {
+                    position: "fixed !important" as "fixed",
+                    inset: "0 !important",
+                    zIndex: "499 !important",
                 },
 
                 [screenWidthAtMost(600)]: {
@@ -434,32 +492,23 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     // css workaround. This way, the time is only circumcised in portrait mode
                     // but still fully visible in landscape.
                     // Does not account for videos lengths >= 100h.
-                    '& div[name="es.upv.paella.customTimeProgressIndicator"]': {
+                    '& div[name="es.upv.paella.currentTimeLabel"]': {
                         width: event.syncedData.duration < 3600000 ? "5ch" : "8ch",
                         overflowY: "hidden",
-                    },
-
-                    // The slider is hidden by paella magic on mobile devices, but not on
-                    // very narrow desktop windows. At least sometimes. The behavior appears
-                    // to be inconsistent. We shrink it a little, just in case it does decide
-                    // to show up and mess with the layout. The positioning rules are needed
-                    // to prevent unexplainable layout shifts.
-                    "& .volume-slider": {
-                        width: 70,
-                        transform: "scale(0.9)",
-
-                        position: "absolute",
-                        bottom: 0.5,
-                        margin: "0 -1px",
                     },
                 },
 
                 [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                    "& .pop-up .pop-up-content": {
+                        transform: "scale(0.9)",
+                        padding: "4px 0",
+                    },
+
                     // On iOS, the volume button itself is completely hidden, but I think
                     // that having at the least the option to mute a video is a good thing,
                     // so we keep it on other devices. But just in case, this forces the slider
                     // to hide, mainly to prevent the inconsistent behavior mentioned above.
-                    "& .volume-slider": {
+                    "& input[type=range].isu": {
                         display: "none !important",
                     },
                 },
@@ -639,10 +688,10 @@ const PAELLA_CONFIG = {
             order: 0,
             tabIndex: 1,
         },
-        "es.upv.paella.customTimeProgressIndicator": {
+        "es.upv.paella.currentTimeLabel": {
             enabled: true,
             textSize: "large",
-            showTotal: true,
+            showTotalTime: true,
             order: 1,
         },
         "es.upv.paella.backwardButtonPlugin": {
