@@ -13,7 +13,7 @@ import zoomPluginStyles from "@asicupv/paella-zoom-plugin/paella-zoom-plugin.css
 import { css, Global } from "@emotion/react";
 import { screenWidthAtMost } from "@opencast/appkit";
 
-import { isHlsTrack, PlayerEvent, Track } from ".";
+import { getPlayerAspectRatio, isHlsTrack, PlayerEvent, Track } from ".";
 import { SPEEDS, TRANSLATIONS } from "./consts";
 import { captionsWithLabels, timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
@@ -241,6 +241,8 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
         };
     }, [event, t]);
 
+    const aspectRatio = getPlayerAspectRatio(event.authorizedData.tracks);
+
     // This is `neutral10` in dark mode. We hard code this here as it's really
     // not important that an adjusted neutral tone is reflected in the player.
     // We just want to override the default dark blue.
@@ -333,8 +335,21 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 },
                 "& .preview-container": {
                     backgroundColor: "#000 !important",
-                    "div, div img": {
-                        height: "inherit",
+                    // The preview should occupy exactly the box that the video
+                    // occupies once it is loaded, i.e. the video's aspect ratio
+                    // fitted into the container. We cannot rely on the
+                    // thumbnail's own aspect ratio for that, so
+                    // instead we size this box via the video's aspect ratio
+                    // (`height: 100%` plus `aspect-ratio`; the container is
+                    // never narrower than the video, so the width always fits)
+                    // and let `object-fit: cover` crop whatever bars the
+                    // thumbnail brings along.
+                    "> .preview-image-container": {
+                        display: "block",
+                        height: "100%",
+                        width: "auto",
+                        aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
+                        flexShrink: 0,
                     },
                     "img": {
                         display: "block",
@@ -395,7 +410,6 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 '& button[name="es.upv.paella.playPauseButton"] i': {
                     height: "unset",
                 },
-
 
                 '& button[name="es.upv.paella.backwardButtonPlugin"] i': {
                     marginTop: "-7px !important",
