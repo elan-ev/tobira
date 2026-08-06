@@ -19,6 +19,7 @@ import { IconType } from "react-icons";
 import {
     LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
     LuRss, LuLink, LuSettings,
+    LuFilm,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
@@ -219,6 +220,10 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
             {metadata.timestamp && <BadgeItem>
                 <DateBadge date={new Date(metadata.timestamp)} isLive={false} />
             </BadgeItem>}
+            <BadgeItem>
+                <LuFilm />
+                {t("manage.video-list.no-of-videos", { count: items.length })}
+            </BadgeItem>
             {metadata.creators && metadata.creators.length > 0 && <BadgeItem>
                 <CreatorsBadge creators={metadata.creators} />
             </BadgeItem>}
