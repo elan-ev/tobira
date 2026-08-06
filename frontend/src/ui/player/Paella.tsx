@@ -732,7 +732,7 @@ const PAELLA_CONFIG = {
             // These cannot be changed dynamically, but using translations here will
             // at least work for users that don't usually switch their language.
             description: i18n.t("player.options.title"),
-            icon: CONFIG.paellaSettingsIcon.replace(/^\/~assets\/paella/, ""),
+            icon: CONFIG.paellaSettingsIcon,
             order: 6,
             side: "right",
             tabIndex: 6,
