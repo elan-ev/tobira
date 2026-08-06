@@ -771,6 +771,7 @@ manage:
           monospace: Monospace
           link: Link
           quote: Zitat
+          line-break: Zeilenumbruch
           code-block: Codeblock
           external-image: Externes Bild
           hr: Trennlinie

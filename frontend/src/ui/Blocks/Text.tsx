@@ -38,7 +38,7 @@ type Props = {
 // - headings (if we allow them, we need to map `#` to h2 or h3 so that they
 //   don't interfere with other headings on the page.)
 const ALLOWED_MARKDOWN_TAGS = [
-    "p", "blockquote", "pre", "ul", "ol", "li", "a", "em", "strong", "code", "hr", "img",
+    "p", "blockquote", "pre", "ul", "ol", "li", "a", "em", "strong", "code", "hr", "img", "br",
 ];
 
 const CODE_BACKGROUND_COLOR = COLORS.neutral10;
