@@ -206,6 +206,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 if (!event.isLive && time) {
                     player.videoContainer?.setCurrentTime(timeStringToSeconds(time));
                 }
+                writeSkipIntervalIntoIcons(player);
             });
 
             player.bindEvent("paella:play", () => {
@@ -617,7 +618,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     </>;
 };
 
+
 export const UI_HIDDEN_CLASS = "paella-ui-hidden";
+
 const installUiActivityHandlers = (player: Paella) => {
     const container = player.containerElement;
     const onActivity = () => {
@@ -633,6 +636,15 @@ const installUiActivityHandlers = (player: Paella) => {
     events.forEach(e => container.addEventListener(e, onActivity));
 
     return () => events.forEach(e => container.removeEventListener(e, onActivity));
+};
+
+// Filling that in is really the button plugins' job, but I fail to understand
+// why that isn't working (I assume it's because the plugins are outdated).
+// So, another hacky workaround it is.
+const writeSkipIntervalIntoIcons = (player: Paella) => {
+    player.containerElement.querySelectorAll(".time-text").forEach(el => {
+        el.textContent = String(SKIP_INTERVAL);
+    });
 };
 
 
