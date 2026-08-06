@@ -187,7 +187,12 @@ Common failures and their log lines:
 ## Known limitations
 
 - **New window only** — iframe embedding needs `SameSite=None` / Storage Access work.
-- **Tool key is process-ephemeral** — regenerated on restart. Fine for launches (the LMS
-  refetches `/~lti/jwks`); a configurable persistent key is a later addition.
+- **Tool key is process-ephemeral** — regenerated on every start, and each Tobira process
+  serves its own key, so behind a load balancer `/~lti/jwks` answers with a different key
+  set depending on which process replies. That is harmless for launches, because nothing
+  currently signs with this key — Tobira only *verifies* the platform's tokens, and the
+  keyset is served purely so the LMS registration form can be completed. A configurable
+  persistent key becomes necessary once Tobira signs anything itself (Deep Linking
+  responses, NRPS service calls).
 - **No Deep Linking, NRPS or Dynamic Registration yet** — platforms must be registered
   manually, and landing is via the `series` custom parameter or `target_link_uri`.
