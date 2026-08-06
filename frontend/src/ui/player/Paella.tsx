@@ -250,6 +250,16 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     const overrides = {
         "--main-bg-color": toolbarBg,
         "--main-fg-color": "#F9FAFB",
+
+        // From `paella-skins`. Only used for the layout buttons of dual stream
+        // videos, hence the odd blue-grey.
+        "--main-bg-color-hover": "#1F2937",
+
+        // From `paella-skins`. Paella references this for `:focus-visible`
+        // outlines, but never defines it. Without it the outline falls back to
+        // the text color.
+        "--main-outline-color": "#f200f2",
+
         "--playback-bar-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
         "--playback-bar-gradient-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
         "--playback-bar-backdrop-filter": "unset",
@@ -361,6 +371,24 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 "& .button-area svg": {
                     fill: "var(--button-color)",
                 },
+                // From `paella-skins`.
+                "& .video-canvas .button-area button": {
+                    backgroundColor: "var(--highlight-bg-color-hover)",
+                    boxSizing: "border-box",
+                    width: 32,
+                    height: 32,
+                    padding: 4,
+                },
+                // From `paella-skins`.
+                "& button": {
+                    cursor: "pointer",
+                },
+                // From `paella-skins`. Buttons that are faded out should be
+                // fully visible while focused. Paella draws the outline itself,
+                // but does nothing about the opacity.
+                "& button:focus-visible": {
+                    opacity: 1,
+                },
                 "@container video-canvas (width < 400px)": {
                     "& .button-area": {
                         padding: "2px !important",
@@ -375,10 +403,21 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 // Control bar elements
                 "& .playback-bar": {
                     transition: "background 0.08s",
+                    // From `paella-skins`.
+                    userSelect: "none",
+
                     // Default appears to be "hidden",
                     // which actually hides the slide previews as well.
                     overflow: "visible",
                 },
+
+                // From `paella-skins`.
+                "& .playback-bar .button-plugins": {
+                    height: "calc(var(--button-fixed-height) - 1px)",
+                    boxSizing: "content-box",
+                    padding: 4,
+                },
+
                 "& .playback-bar-container, & .pop-up-wrapper": {
                     minHeight: 0,
                 },
@@ -386,6 +425,11 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 "& .timeline-preview p": {
                     // Otherwise our global override would make the timestamps invisible.
                     color: "inherit",
+                },
+
+                // From `paella-skins`.
+                "& .playback-bar button": {
+                    fontWeight: "bold",
                 },
 
                 "& .playback-bar button i svg": {
@@ -443,6 +487,20 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     },
                 },
 
+                // From `paella-skins`. Paella gives the `<i>` a fixed pixel size
+                // and spins it; this scales it with the player and spins the
+                // icon inside instead, so that a non-square icon doesn't wobble.
+                "& .loader-container i": {
+                    width: "21%",
+                    height: "unset",
+                    aspectRatio: "1",
+                    animation: "unset",
+
+                    "svg": {
+                        animation: "spin 1s linear infinite",
+                    },
+                },
+
                 "& .progress-indicator": {
                     boxSizing: "border-box",
                     padding: 0,
@@ -461,6 +519,27 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 ":hover .preview-play-icon, .loader-container i": {
                     opacity: "1 !important",
                 },
+
+                // Captions. All of these are from `paella-skins`.
+                "& .captions-canvas": {
+                    "& .text-container": {
+                        backgroundColor:
+                            "color-mix(in srgb, var(--main-bg-color) 70%, transparent)",
+                        left: "15%",
+                        right: "15%",
+                        width: "unset",
+                    },
+                    "&.visible-ui .text-container": {
+                        bottom: 75,
+                    },
+                    // Paella's own sizes are a good deal larger than what we want.
+                    "&.size-s .text-container": { fontSize: 12, padding: 2 },
+                    "&.size-m .text-container": { fontSize: 15, padding: 3 },
+                    "&.size-l .text-container": { fontSize: 20, padding: 4 },
+                    "&.size-xl .text-container": { fontSize: 25, padding: 5 },
+                    "&.size-xxl .text-container": { fontSize: 30, padding: 6 },
+                },
+
 
                 // Several of our icons (the layout and captions ones, for
                 // example) have no `fill` of their own and rely on being
