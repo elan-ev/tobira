@@ -12,11 +12,35 @@ export const isSpaceOnInteractiveElement = (e: KeyboardEvent): boolean => (
     && (e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement)
 );
 
+/**
+ * Helper type that denotes a player that has finished loading.
+ * `videoContainer` and `captionsCanvas` only exist from that point on,
+ * which is also when a player is registered as a potential active player,
+ * so every shortcut below can rely on them.
+ */
+export type LoadedPaella = Paella & {
+    videoContainer: NonNullable<Paella["videoContainer"]>;
+    captionsCanvas: NonNullable<Paella["captionsCanvas"]>;
+};
+
+export const isLoaded = (player: Paella | null | undefined): player is LoadedPaella =>
+    player != null && player.videoContainer != null && player.captionsCanvas != null;
+
 type PlayerShortcuts = {
-    callback: (activePlayer: Paella) => HotkeyCallback;
+    callback: (activePlayer: LoadedPaella) => HotkeyCallback;
     options?: Options,
 }
 type PlayerAction = keyof typeof SHORTCUTS["player"];
+
+// The volume to restore when unmuting via the shortcut. Paella 8
+// removed this prop anymore. It does have a private substitute which tracks
+// this, which we could use in theory. But that relies on
+// the action handler and some wrangling to target the right plugin.
+// This local map on the other hand isn't coupled to the plugin and
+// works better as a drop in replacement of our paella 7 code.
+const lastVolume = new WeakMap<Paella, number>();
+
+
 export const SHORTCUT_ACTIONS = {
     play: {
         callback: player => async () => {
@@ -40,10 +64,10 @@ export const SHORTCUT_ACTIONS = {
             const vol = await player.videoContainer.volume();
             let newVol = 0;
             if (vol > 0) {
-                player.videoContainer.lastVolume = vol;
+                lastVolume.set(player, vol);
                 newVol = 0;
             } else {
-                newVol = player.videoContainer.lastVolume || 1;
+                newVol = lastVolume.get(player) || 1;
             }
             await player.videoContainer.setVolume(newVol);
         },
@@ -125,7 +149,7 @@ export const usePlayerShortcuts = (activePlayer: React.MutableRefObject<Paella |
     for (const [key, shortcut] of Object.entries(SHORTCUTS.player)) {
         const action = SHORTCUT_ACTIONS[key as PlayerAction];
         const hotkeyCallback: HotkeyCallback = useCallback(() => {
-            if (activePlayer.current) {
+            if (isLoaded(activePlayer.current)) {
                 const playerCallback = action.callback(activePlayer.current);
                 playerCallback();
             }
@@ -152,7 +176,7 @@ export const usePlayerShortcuts = (activePlayer: React.MutableRefObject<Paella |
 };
 
 export const jumpFrame = async (
-    player: Paella,
+    player: LoadedPaella,
     direction: 1 | -1,
 ): Promise<void> => {
     if (await player.videoContainer.paused()) {
@@ -163,7 +187,7 @@ export const jumpFrame = async (
 };
 
 export const adjustSpeed = async (
-    player: Paella,
+    player: LoadedPaella,
     direction: 1 | -1,
 ): Promise<void> => {
     const currentSpeed = await player.videoContainer.playbackRate();
