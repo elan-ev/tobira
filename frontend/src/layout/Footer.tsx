@@ -19,7 +19,6 @@ export const Footer: React.FC = () => {
         <footer css={{
             padding: 16,
             fontSize: 14,
-            textAlign: "center",
             borderTop: `1px solid ${COLORS.neutral15}`,
         }}>
             {CONFIG.footerLinks.length > 0 && (
@@ -71,15 +70,10 @@ export const Footer: React.FC = () => {
                     marginTop: CONFIG.footerLinks.length > 0 ? 10 : 0,
                     maxWidth: 800,
                     color: COLORS.neutral80,
-                    textAlign: "center",
-                    p: {
-                        margin: 0,
-                    },
-                    ul: {
-                        listStyleType: "none",
-                        margin: "0 auto",
-                        padding: 2,
-                    },
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
                 }}>
                     <RenderMarkdown>{markdownText}</RenderMarkdown>
                 </div>
