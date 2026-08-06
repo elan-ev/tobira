@@ -6,7 +6,12 @@ import { zoomPlugins } from "@asicupv/paella-zoom-plugin";
 import { userTrackingPlugins } from "@asicupv/paella-user-tracking";
 import { videoPlugins } from "@asicupv/paella-video-plugins";
 import { slidePlugins } from "@asicupv/paella-slide-plugins";
-import { Global } from "@emotion/react";
+import coreStyles from "@asicupv/paella-core/paella-core.css";
+import basicPluginStyles from "@asicupv/paella-basic-plugins/paella-basic-plugins.css";
+import slidePluginStyles from "@asicupv/paella-slide-plugins/paella-slide-plugins.css";
+import zoomPluginStyles from "@asicupv/paella-zoom-plugin/paella-zoom-plugin.css";
+import { css, Global } from "@emotion/react";
+import { screenWidthAtMost } from "@opencast/appkit";
 
 import { isHlsTrack, PlayerEvent, Track } from ".";
 import { SPEEDS, TRANSLATIONS } from "./consts";
@@ -16,7 +21,6 @@ import { usePlayerGroupContext } from "./PlayerGroupContext";
 import CONFIG from "../../config";
 import i18n from "../../i18n";
 import { SKIP_INTERVAL } from "./consts";
-import { screenWidthAtMost } from "@opencast/appkit";
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 
 
@@ -29,6 +33,48 @@ export type PaellaState = {
     loadPromise: Promise<void>;
     removeUiHandlers?: () => void;
 };
+
+/**
+ * Wraps Paella's own CSS so that it only applies inside the player.
+ *
+ * We have to load that CSS ourselves since Paella 8 ships it as separate files
+ * instead of putting it into the JS. And sadly we can't just throw it into the
+ * page as is, because a few of its rules aren't limited to the player at all:
+ * it styles every single `svg` (including `pointer-events: none`, which would
+ * break all of our icon buttons), sets a font size on every `button` and `a`,
+ * and puts ~150 variables on `:root`. So everything goes inside
+ * `.player-container`. We use `:where` for that, as it doesn't count towards
+ * specificity, so Paella's rules keep the weight they were written with and our
+ * own overrides below still win.
+ *
+ * The two replacements are a bit annoying:
+ *
+ * - Paella's rules that already talk about `:root` or `.player-container` mean
+ *   *our* wrapper, not something inside it, so those become `&`.
+ * - Selectors starting with a `:` get glued right onto the wrapper instead of
+ *   being nested below it. Paella's `:is(button, a) .button-title-small` would
+ *   turn into `.player-container:is(button, a) ...`, and our player div is
+ *   neither a button nor a link, so that would simply never match anything. The
+ *   `& ` we stick in front makes them descendants again. We only do that at the
+ *   start of a rule, because a `:` after a comma could be either case
+ *   (`:is(a, :hover)` vs `.a, :hover`) — luckily Paella has no selector list
+ *   that starts with a pseudo class.
+ */
+const scopePaellaCss = (packageCss: string) => css`
+    :where(.player-container) {
+        ${packageCss
+        .replaceAll(/:root|\.player-container/gu, "&")
+        .replaceAll(/(^|[{}])\s*(::?[a-zA-Z-])/gu, "$1& $2")}
+    }
+`;
+
+const PAELLA_PACKAGE_STYLES = [
+    coreStyles,
+    basicPluginStyles,
+    slidePluginStyles,
+    zoomPluginStyles,
+].map(scopePaellaCss);
+
 
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     const { t, i18n } = useTranslation();
@@ -214,57 +260,60 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     };
 
     return <>
-        <Global styles={{
-            "body > .popup-container": colors,
-            "body:has(.paella-fallback-fullscreen)": {
-                overflow: "hidden",
-            },
-            ".popup-container": {
-                zIndex: 500050,
-                "& .button-group": {
-                    "& .button-plugin-wrapper:hover, button:hover": {
-                        backgroundColor: "var(--highlight-bg-color-hover)",
+        <Global styles={[
+            ...PAELLA_PACKAGE_STYLES,
+            {
+                "body > .popup-container": colors,
+                "body:has(.paella-fallback-fullscreen)": {
+                    overflow: "hidden",
+                },
+                ".popup-container": {
+                    zIndex: 500050,
+                    "& .button-group": {
+                        "& .button-plugin-wrapper:hover, button:hover": {
+                            backgroundColor: "var(--highlight-bg-color-hover)",
+                        },
+                    },
+                    '& button[name="es.upv.paella.qualitySelector"] div': {
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        i: {
+                            display: "none",
+                        },
+                        span: {
+                            color: "var(--main-fg-color)",
+                            backgroundColor: "var(--main-bg-color)",
+                            border: "2px solid var(--main-fg-color)",
+                            borderRadius: 3,
+                            margin: "0 !important",
+                            fontSize: "10px !important",
+                            fontWeight: "bold",
+                            padding: "2px 3px",
+                        },
+                    },
+                    [screenWidthAtMost(BREAKPOINT_SMALL)]: {
+                        "& .popup-content": {
+                            transform: "scale(0.9)",
+                            padding: "4px 0",
+                        },
                     },
                 },
-                '& button[name="es.upv.paella.qualitySelector"] div': {
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    i: {
-                        display: "none",
-                    },
-                    span: {
-                        color: "var(--main-fg-color)",
-                        backgroundColor: "var(--main-bg-color)",
-                        border: "2px solid var(--main-fg-color)",
-                        borderRadius: 3,
-                        margin: "0 !important",
-                        fontSize: "10px !important",
-                        fontWeight: "bold",
-                        padding: "2px 3px",
+                ".paella-fallback-fullscreen": {
+                    position: "fixed !important" as "fixed",
+                    inset: "0 !important",
+                    zIndex: "499 !important",
+                },
+                [`.${UI_HIDDEN_CLASS}`]: {
+                    "& .playback-bar, & .button-area": {
+                        display: "none !important",
                     },
                 },
-                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                    "& .popup-content": {
-                        transform: "scale(0.9)",
-                        padding: "4px 0",
-                    },
-                },
-            },
-            ".paella-fallback-fullscreen": {
-                position: "fixed !important" as "fixed",
-                inset: "0 !important",
-                zIndex: "499 !important",
-            },
-            [`.${UI_HIDDEN_CLASS}`]: {
-                "& .playback-bar, & .button-area": {
+                [`body:has(.${UI_HIDDEN_CLASS}) > .popup-container`]: {
                     display: "none !important",
                 },
             },
-            [`body:has(.${UI_HIDDEN_CLASS}) > .popup-container`]: {
-                display: "none !important",
-            },
-        }} />
+        ]} />
         <div
             // We use `key` here to force React to re-create this `div` and not
             // reuse the old one. This is useful as Paella's cleanup function
