@@ -74,7 +74,7 @@ export const prettyDate = (
     return [out, kind];
 };
 
-type PrettyDateProps = {
+export type PrettyDateProps = {
     date: Date;
     isLive?: boolean;
     prefixKind?: "start" | "end";
