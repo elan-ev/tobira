@@ -124,7 +124,7 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
     renderShareButton={url => <VideoListShareButton
         kind="playlist"
         shareUrl={url}
-        rssUrl={`/~rss/series/${keyOfId(item.id)}`}
+        rssUrl={`/~rss/playlist/${keyOfId(item.id)}`}
         hideLabel
     />}
 />;
