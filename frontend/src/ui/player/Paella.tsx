@@ -19,6 +19,7 @@ import { captionsWithLabels, timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
 import { installVolumeSlider } from "./volumeSlider";
+import { installSeekBarTapHandler } from "./seekBar";
 import CONFIG from "../../config";
 import i18n from "../../i18n";
 import { SKIP_INTERVAL } from "./consts";
@@ -222,6 +223,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             const removeHandlers = [
                 installUiActivityHandlers(player),
                 installVolumeSlider(player),
+                installSeekBarTapHandler(player),
             ];
 
             const loadPromise = player.skin.loadSkin(CONFIG.paellaThemeJson)
