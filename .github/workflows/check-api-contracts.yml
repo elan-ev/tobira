@@ -1,0 +1,23 @@
+name: Check external API contracts
+on:
+  pull_request:
+    paths:
+    - "frontend/src/schema.graphql"
+    - ".github/workflows/check-api-contracts.yml"
+    - ".github/workflows/check-api-contracts/rule.js"
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes to the APIs external applications use
+        run: |
+          npx --yes @graphql-inspector/cli@4.0.3 diff \
+            "git:${{ github.event.pull_request.base.sha }}:frontend/src/schema.graphql" \
+            "git:${{ github.event.pull_request.head.sha }}:frontend/src/schema.graphql" \
+            --rule ./.github/workflows/check-api-contracts/rule.js
