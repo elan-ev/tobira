@@ -18,6 +18,7 @@ import { SPEEDS, TRANSLATIONS } from "./consts";
 import { captionsWithLabels, timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
+import { installVolumeSlider } from "./volumeSlider";
 import CONFIG from "../../config";
 import i18n from "../../i18n";
 import { SKIP_INTERVAL } from "./consts";
@@ -31,7 +32,7 @@ type PaellaPlayerProps = {
 export type PaellaState = {
     player: Paella;
     loadPromise: Promise<void>;
-    removeUiHandlers?: () => void;
+    removeHandlers?: (() => void)[];
 };
 
 /**
@@ -218,16 +219,19 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 });
             });
 
-            const removeUiHandlers = installUiActivityHandlers(player);
+            const removeHandlers = [
+                installUiActivityHandlers(player),
+                installVolumeSlider(player),
+            ];
 
             const loadPromise = player.skin.loadSkin(CONFIG.paellaThemeJson)
                 .then(() => player.loadManifest());
-            paella.current = { player, loadPromise, removeUiHandlers };
+            paella.current = { player, loadPromise, removeHandlers };
         }
 
         const paellaSnapshot = paella.current;
         return () => {
-            paellaSnapshot.removeUiHandlers?.();
+            paellaSnapshot.removeHandlers?.forEach(remove => remove());
             unregister(paellaSnapshot.player);
             paella.current = undefined;
             paellaSnapshot.loadPromise.then(() => {
@@ -521,6 +525,44 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     opacity: "1 !important",
                 },
 
+                // Volume slider. See `volumeSlider.ts` for the JS side of this
+                // and for why any of it is necessary.
+                "& .volume-button + span": {
+                    display: "flex",
+                    marginLeft: 10,
+                    input: {
+                        width: 100,
+                    },
+                    // Strip the native track and thumb: the track should show
+                    // our gradient and nothing else, to mirror our previous styling.
+                    "input[type=range].isu": {
+                        "::-moz-range-track": { height: 8, border: 0 },
+                        "::-webkit-slider-runnable-track": { height: 8, border: 0 },
+                        "::-moz-range-thumb": { appearance: "none", width: 0, border: 0 },
+                        "::-webkit-slider-thumb": { appearance: "none", width: 0, border: 0 },
+
+                        // Just don't ask, ok...
+                        ":hover": {
+                            display: "flex",
+                        },
+                    },
+                },
+
+                // Keep the slider visible while its button is hovered or
+                // focused. Paella reveals the slider on the button's
+                // `mouseover`/`focus` but re-hides it (adds `.hidden`, i.e.
+                // `display: none`) shortly after the button loses focus — and
+                // it blurs the button on every click. So muting/unmuting made
+                // the already-open slider blink out again. This overrides that
+                // hide while the pointer/focus is still on the control, so the
+                // press no longer flickers the slider. Paella's own
+                // `.side-container.hidden:hover`/`:focus-within` rules still
+                // hide it once the control is left.
+                ["& .volume-button:hover + .side-container, "
+                    + "& .volume-button:focus + .side-container"]: {
+                    display: "flex !important",
+                },
+
                 // Captions. All of these are from `paella-skins`.
                 "& .captions-canvas": {
                     "& .text-container": {
@@ -598,17 +640,19 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                         padding: "4px 0",
                     },
 
-                    // On iOS, the volume button itself is completely hidden, but I think
-                    // that having at the least the option to mute a video is a good thing,
-                    // so we keep it on other devices. But just in case, this forces the slider
-                    // to hide, mainly to prevent the inconsistent behavior mentioned above.
+                    // Volume slider. On iOS, the volume button itself is completely
+                    // hidden, but I think that having at the least the option to mute a
+                    // video is a good thing, so we keep it on other devices. But just in
+                    // case, this forces the slider to hide, mainly to prevent the
+                    // inconsistent behavior mentioned above.
                     "& input[type=range].isu": {
                         display: "none !important",
                     },
                 },
 
                 [screenWidthAtMost(330)]: {
-                    // Below 331px we always hide the button to prevent line breaks.
+                    // Volume slider. Below 331px we always hide the button to
+                    // prevent line breaks.
                     "& .volume-button": {
                         display: "none !important",
                     },
