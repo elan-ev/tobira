@@ -65,13 +65,6 @@ const ROLE_USER: &str = "ROLE_USER";
 
 const SESSION_COOKIE: &str = "tobira-session";
 
-// Auth headers
-const AUTH_HEADER_USERNAME: &str = "x-tobira-username";
-const AUTH_HEADER_DISPLAY_NAME: &str = "x-tobira-user-display-name";
-const AUTH_HEADER_EMAIL: &str = "x-tobira-user-email";
-const AUTH_HEADER_ROLES: &str = "x-tobira-user-roles";
-
-
 
 /// Information about whether or not, and if so how
 /// someone or something talking to Tobira is authenticated
@@ -155,7 +148,6 @@ impl User {
         let mut out = match &ctx.config.auth.source {
             AuthSource::None => None,
             AuthSource::TobiraSession => Self::from_session(headers, db, &ctx.config.auth).await?,
-            AuthSource::TrustAuthHeaders => Self::from_auth_headers(headers, &ctx.config.auth),
             AuthSource::Callback(uri) => {
                 Self::from_auth_callback(headers, uri, ctx).await?
             }
@@ -170,40 +162,6 @@ impl User {
 
 
         Ok(out)
-    }
-
-    /// Handler for `auth.source = "trust-auth-headers"`. Tries to read user
-    /// data auth headers (`x-tobira-username`, ...). If the username or
-    /// display name are not defined, returns `None`.
-    pub(crate) fn from_auth_headers(headers: &HeaderMap, auth_config: &AuthConfig) -> Option<Self> {
-        // Helper function to read and base64 decode a header value.
-        let get_header = |header_name: &str| -> Option<String> {
-            let value = headers.get(header_name)?;
-            let decoded = base64decode(value.as_bytes())
-                .map_err(|e| warn!("header '{}' is set but not valid base64: {}", header_name, e))
-                .ok()?;
-
-            String::from_utf8(decoded)
-                .map_err(|e| warn!("header '{}' is set but decoded base64 is not UTF8: {}", header_name, e))
-                .ok()
-        };
-
-        // Get required headers. If these are not set and valid, we treat it as
-        // if there is no user session.
-        let username = get_header(AUTH_HEADER_USERNAME)?;
-        let display_name = get_header(AUTH_HEADER_DISPLAY_NAME)?;
-        let email = get_header(AUTH_HEADER_EMAIL);
-
-        // Get roles from the user.
-        let roles: HashSet<_> = get_header(AUTH_HEADER_ROLES)?
-            .split(',')
-            .map(|role| role.trim().to_owned())
-            .collect();
-        let user_role = auth_config
-            .find_user_role(&username, roles.iter().map(|s| s.as_str()))?
-            .to_owned();
-
-        Some(Self { username, display_name, email, roles, user_role, user_realm_handle: None })
     }
 
     /// Handler for `auth.source = "tobira-session"`. Tries to load user data
@@ -440,11 +398,6 @@ impl User {
             self.roles.insert(ROLE_USER.into());
         }
     }
-}
-
-// Our base64 decoding with the URL safe character set.
-fn base64decode(input: impl AsRef<[u8]>) -> Result<Vec<u8>, base64::DecodeError> {
-    base64::engine::general_purpose::URL_SAFE.decode(input)
 }
 
 fn base64encode(input: impl AsRef<[u8]>) -> String {

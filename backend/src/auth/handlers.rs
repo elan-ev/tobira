@@ -25,9 +25,6 @@ pub(crate) async fn handle_post_session(
                 'auth.session.from_session_endpoint'");
             return Ok(http::response::not_found());
         }
-        SessionEndpointHandler::TrustAuthHeaders => {
-            User::from_auth_headers(&req.headers(), &ctx.config.auth)
-        }
         SessionEndpointHandler::Callback(callback_url) => {
             User::from_auth_callback(&req.headers(), &callback_url, ctx).await?
         }

@@ -26,19 +26,16 @@ This is a good starting point, so you don't have to completely figure out authen
 ## Options for authenticating incoming requests
 
 When Tobira receives an HTTP request, it has to figure out if it's authenticated, and if so, with what user.
-You can chose between three options here, configured as `auth.source`:
+You can chose between these options, configured as `auth.source`:
 
 - **`"none"`**: all requests are unauthenticated. Not useful in practice, just a safe default.
 - [**`"tobira-session"`**](./user/tobira-session): Tobira uses its own, built-in session management, checking a cookie against the database of known user sessions.
   There are multiple options to create these sessions (i.e. let users login).
 - [**`"callback:..."`**](./user/callback): Tobira forwards the incoming request to a configured callback, the response of which specifies how the request is authenticated.
-- [**`"trust-auth-headers"`**](./user/trust-auth-headers): Tobira just checks a few fixed headers of the incoming request, which directly specify how the request is authenticated.
-  This assumes some auth logic in front of Tobira, i.e. in your reverse proxy.
 
 What to chose? `"tobira-session"` is likely the fastest (in terms of processing time) and easiest to set up, but comes with limitations:
 Tobira only gets new data about a user at login, and it's impossible to implement SSO with this.
 If you can't use the built-in session management, use `"callback:..."`, which gives you full flexibility.
-`"trust-auth-headers"` should be avoided as it has some disadvantages compared to `"callback:..."` (header length limits, easier to configure, ...), but you can still use it if it works well within your system.
 
 :::tip
 
@@ -64,7 +61,6 @@ In most configurations your auth setup is going to have to provide Tobira with c
 - **E-Mail** (optional)
 - **User realm handle** (optional): used in the path of the personal user page, i.e. `/@${user_realm_handle}`.
   By default the username is used, but it can be overwritten with this.
-  This can only be used with callbacks, not via auth headers.
   Must be URL-safe.
 
 
