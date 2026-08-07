@@ -45,9 +45,9 @@ const seriesFragment = graphql`
         id
         title
         created
+        creators
         description
         state
-        metadata
         canWrite
         entries {
             __typename
@@ -103,17 +103,6 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
             </div>
         </VideoListBlockContainer>;
     }
-    const creators = (() => {
-        const raw = series.metadata?.dcterms?.creator;
-
-        if (raw && Array.isArray(raw) && raw.length > 0 && typeof raw[0] === "string") {
-            return raw;
-        } else if (raw && typeof raw === "string") {
-            return [raw];
-        } else {
-            return undefined;
-        }
-    })();
 
     const seriesKey = keyOfId(series.id);
     return <VideoListBlock
@@ -130,7 +119,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
             title: props.title ?? (props.showTitle ? series.title : undefined),
             description: (props.showMetadata && series.description) || undefined,
             timestamp: props.showMetadata ? series.created ?? undefined : undefined,
-            creators: props.showMetadata ? creators : undefined,
+            creators: props.showMetadata ? [...series.creators] : undefined,
             canWrite: series.canWrite,
         }}
         activeEventId={props.activeEventId}

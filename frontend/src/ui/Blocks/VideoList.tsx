@@ -19,6 +19,7 @@ import { IconType } from "react-icons";
 import {
     LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
     LuRss, LuLink, LuSettings,
+    LuFilm,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
@@ -35,7 +36,10 @@ import {
     BaseThumbnailReplacement, Thumbnail, ThumbnailOverlayContainer,
 } from "../Thumbnail";
 import { PrettyDate } from "../time";
-import { CollapsibleDescription, DateAndCreators, SmallDescription } from "../metadata";
+import {
+    BadgeItem, BadgeList, CollapsibleDescription, CreatorsBadge, DateAndCreators, DateBadge,
+    SmallDescription,
+} from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { COLORS } from "../../color";
 import { FloatingBaseMenu } from "../FloatingBaseMenu";
@@ -211,31 +215,25 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         </div>}
     </>;
 
-    let metadataUI = undefined;
-    const hasTimestampOrCreators = metadata.timestamp || ((metadata.creators ?? []).length > 0);
-    if (metadata.description || hasTimestampOrCreators) {
-        metadataUI = <>
-            {hasTimestampOrCreators && <DateAndCreators
-                timestamp={metadata.timestamp}
-                isLive={false}
-                creators={metadata.creators}
-                css={{
-                    margin: "0px 12px",
-                    gap: 16,
-                    "> *": {
-                        padding: "4px 6px",
-                        borderRadius: 4,
-                        background: COLORS.neutral15,
-                    },
-                }}
-            />}
-            {metadata.description && <CollapsibleDescription
-                type="series"
-                bottomPadding={32}
-                description={metadata.description}
-            />}
-        </>;
-    }
+    const metadataUI = <>
+        <BadgeList css={{ margin: "0px 12px" }}>
+            {metadata.timestamp && <BadgeItem>
+                <DateBadge date={new Date(metadata.timestamp)} isLive={false} />
+            </BadgeItem>}
+            <BadgeItem>
+                <LuFilm />
+                {t("manage.video-list.no-of-videos", { count: items.length })}
+            </BadgeItem>
+            {metadata.creators && metadata.creators.length > 0 && <BadgeItem>
+                <CreatorsBadge creators={metadata.creators} />
+            </BadgeItem>}
+        </BadgeList>
+        {metadata.description && <CollapsibleDescription
+            type="series"
+            bottomPadding={32}
+            description={metadata.description}
+        />}
+    </>;
 
     return <LayoutOrderContext.Provider value={layoutOrderContext}>
         <VideoListBlockContainer

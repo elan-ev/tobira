@@ -19,7 +19,7 @@ import { Creators } from "./Video";
 import { Input, TextArea } from "./Input";
 import { Form } from "./Form";
 import { Inertable, OcEntity } from "../util";
-import { PrettyDate } from "./time";
+import { PrettyDate, PrettyDateProps } from "./time";
 import { autoLink as makeAutoLink } from "./text";
 import { Link } from "../router";
 
@@ -62,33 +62,66 @@ export type DateAndCreatorsProps = {
 export const DateAndCreators: React.FC<DateAndCreatorsProps> = ({
     timestamp, isLive, creators, className,
 }) => (
+    <BadgeList {...{ className }}>
+        {timestamp && <DateBadge date={new Date(timestamp)} isLive={isLive} />}
+        {creators && <CreatorsBadge creators={creators} />}
+    </BadgeList>
+);
+
+
+export const DateBadge: React.FC<PrettyDateProps> = props => <>
+    <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
+    <PrettyDate {...props} />
+</>;
+
+export type CreatorsBadgeProps = {
+    creators: (string | JSX.Element)[];
+};
+
+export const CreatorsBadge: React.FC<CreatorsBadgeProps> = ({ creators }) => (
+    <Creators creators={creators} css={{
+        minWidth: 0,
+        fontSize: 12,
+        svg: {
+            fontSize: 15,
+        },
+        ul: {
+            display: "inline-block",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+        },
+        li: {
+            display: "inline",
+        },
+    }} />
+);
+
+export type BadgeListProps = React.PropsWithChildren<{
+    className?: string,
+}>;
+
+export const BadgeList: React.FC<BadgeListProps> = ({ children, className }) => (
     <div {...{ className }} css={{
         display: "inline-flex",
         color: COLORS.neutral80,
         fontSize: 12,
-        gap: 24,
+        gap: 16,
         whiteSpace: "nowrap",
+    }}>{children}</div>
+);
+
+export const BadgeItem: React.FC<React.PropsWithChildren> = ({ children }) => (
+    <div css={{
+        padding: "4px 6px",
+        borderRadius: 4,
+        background: COLORS.neutral15,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        svg: { fontSize: 15, color: COLORS.neutral60 },
     }}>
-        {timestamp && <div css={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
-            <PrettyDate date={new Date(timestamp)} isLive={isLive} />
-        </div>}
-        <Creators creators={creators ?? null} css={{
-            minWidth: 0,
-            fontSize: 12,
-            svg: {
-                fontSize: 15,
-            },
-            ul: {
-                display: "inline-block",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-            },
-            li: {
-                display: "inline",
-            },
-        }} />
+        {children}
     </div>
 );
 
