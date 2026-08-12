@@ -27,7 +27,7 @@ use crate::{
         Node,
         NodeValue,
     },
-    auth::AuthContext,
+    auth::{AuthContext, ROLE_ANONYMOUS},
     db::util::{impl_from_db, select},
     model::{Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
@@ -56,6 +56,7 @@ pub(crate) struct AuthorizedPlaylist {
     updated: DateTime<Utc>,
     num_entries: LazyLoad<u32>,
     thumbnail_stack: LazyLoad<ThumbnailStack>,
+    has_public_videos: LazyLoad<bool>,
 
     pub(crate) read_roles: Vec<String>,
     write_roles: Vec<String>,
@@ -81,6 +82,7 @@ impl_from_db!(
             updated: row.updated(),
             num_entries: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
+            has_public_videos: LazyLoad::NotLoaded,
         }
     },
 );
@@ -92,14 +94,23 @@ impl Playlist {
             return Ok(None);
         };
 
-        let selection = AuthorizedPlaylist::select();
+        let (selection, mapping) = select!(
+            playlist: AuthorizedPlaylist,
+            has_public_videos: "exists(\
+                select from events \
+                where opencast_id = any(event_entry_ids(playlists.entries)) \
+                and 'ROLE_ANONYMOUS' = any(events.read_roles)\
+            )",
+        );
         let col = id.column();
         let query = format!("select {selection} from playlists where {col} = $1");
         context.db
             .query_opt(&query, &[&id_arg])
             .await?
             .map(|row| {
-                let playlist = AuthorizedPlaylist::from_row_start(&row);
+                let mut playlist = AuthorizedPlaylist::from_row(&row, mapping.playlist);
+                playlist.has_public_videos =
+                    LazyLoad::Loaded(mapping.has_public_videos.of::<bool>(&row));
                 Self::check_auth(playlist, &context.auth)
             })
             .pipe(Ok)
@@ -150,6 +161,11 @@ impl Playlist {
                     from unnest(playlists.entries) as playlist_entry \
                 ) \
             )",
+            has_public_videos: "exists(\
+                select from events \
+                where opencast_id = any(event_entry_ids(playlists.entries)) \
+                and 'ROLE_ANONYMOUS' = any(events.read_roles)\
+            )",
         );
         load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
             let mut out = AuthorizedPlaylist::from_row(row, mapping.playlist);
@@ -160,6 +176,7 @@ impl Playlist {
                     .filter_map(|info| ThumbnailInfo::from_search(info, &context))
                     .collect(),
             });
+            out.has_public_videos = LazyLoad::Loaded(mapping.has_public_videos.of::<bool>(row));
             out
         }).await
     }
@@ -238,6 +255,20 @@ impl AuthorizedPlaylist {
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
         acl::load_for(context, &acl::query_for("playlists"), dbargs![&self.key]).await
+    }
+
+    /// Returns whether at least one video in this playlist is public, i.e. accessible to
+    /// anonymous users.
+    /// Note: this is lazily loaded and only available in certain contexts (`load` and
+    /// `load_writable_for_user`).
+    fn has_public_videos(&self) -> bool {
+        self.has_public_videos.unwrap()
+    }
+
+    /// Returns whether this playlist's RSS feed is public (i.e. the playlist itself is
+    /// accessible to anonymous users, and it contains at least one public video).
+    fn has_public_rss_feed(&self) -> bool {
+        self.has_public_videos() && self.read_roles.iter().any(|role| role == ROLE_ANONYMOUS)
     }
 
     /// Returns `true` if the realm has a playlist block with this playlist.

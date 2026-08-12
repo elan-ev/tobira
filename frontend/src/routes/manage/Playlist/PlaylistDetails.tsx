@@ -115,7 +115,7 @@ const PlaylistButtonSection: React.FC<{ playlist: AuthorizedPlaylist }> = ({ pla
     const shareInfo = {
         kind: "playlist" as const,
         shareUrl: `/!p/${playlistKey}`,
-        rssUrl: `/~rss/playlist/${playlistKey}`,
+        rssUrl: playlist.hasPublicRssFeed ? `/~rss/playlist/${playlistKey}` : undefined,
     };
 
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>

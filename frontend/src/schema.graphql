@@ -479,6 +479,18 @@ type AuthorizedPlaylist implements Node {
   thumbnailStack: ThumbnailStack!
   acl: [AclItemWithInfo!]!
   """
+    Returns whether at least one video in this playlist is public, i.e. accessible to
+    anonymous users.
+    Note: this is lazily loaded and only available in certain contexts (`load` and
+    `load_writable_for_user`).
+  """
+  hasPublicVideos: Boolean!
+  """
+    Returns whether this playlist's RSS feed is public (i.e. the playlist itself is
+    accessible to anonymous users, and it contains at least one public video).
+  """
+  hasPublicRssFeed: Boolean!
+  """
     Returns `true` if the realm has a playlist block with this playlist.
     Otherwise, `false` is returned.
   """
@@ -1123,6 +1135,14 @@ type Series implements Node {
   """
   thumbnailStack: ThumbnailStack!
   acl: [AclItemWithInfo!]!
+  """
+    Returns whether at least one video in this series is public, i.e. accessible to
+    anonymous users. This is what determines whether the RSS feed of this series has any
+    content.
+    Note: this is lazily loaded and only available in certain contexts (`load` and
+    `load_writable_for_user`).
+  """
+  hasPublicVideos: Boolean!
   "Whether the current user has write access to this series."
   canWrite: Boolean!
   tobiraDeletionTimestamp: DateTime

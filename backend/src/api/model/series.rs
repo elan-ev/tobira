@@ -70,6 +70,7 @@ pub(crate) struct Series {
     pub(crate) write_roles: Option<Vec<String>>,
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<ThumbnailStack>,
+    pub(crate) has_public_videos: LazyLoad<bool>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
@@ -103,6 +104,7 @@ impl_from_db!(
             description: row.description(),
             num_videos: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
+            has_public_videos: LazyLoad::NotLoaded,
         }
     },
 );
@@ -113,13 +115,23 @@ impl Series {
             return Ok(None);
         };
 
-        let selection = Self::select();
+        let (selection, mapping) = select!(
+            series: Series,
+            has_public_videos: "exists(\
+                select from events \
+                where events.series = series.id and 'ROLE_ANONYMOUS' = any(events.read_roles)\
+            )",
+        );
         let col = id.column();
         let query = format!("select {selection} from series where {col} = $1");
         context.db
             .query_opt(&query, &[&id_arg])
             .await?
-            .map(|row| Self::from_row_start(&row))
+            .map(|row| {
+                let mut series = Series::from_row(&row, mapping.series);
+                series.has_public_videos = LazyLoad::Loaded(mapping.has_public_videos.of::<bool>(&row));
+                series
+            })
             .pipe(Ok)
     }
 
@@ -380,6 +392,10 @@ impl Series {
                 select search_thumbnail_info_for_event(events.*) \
                 from events \
                 where events.series = series.id)",
+            has_public_videos: "exists(\
+                select from events \
+                where events.series = series.id and 'ROLE_ANONYMOUS' = any(events.read_roles)\
+            )",
         );
         load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
             let mut out = Self::from_row(row, mapping.series);
@@ -390,6 +406,7 @@ impl Series {
                     .filter_map(|info| ThumbnailInfo::from_search(info, &context))
                     .collect(),
             });
+            out.has_public_videos = LazyLoad::Loaded(mapping.has_public_videos.of::<bool>(row));
             out
         }).await
     }
@@ -754,6 +771,15 @@ impl Series {
 
     async fn acl(&self, context: &Context) -> ApiResult<Acl> {
         acl::load_for(context, &acl::query_for("series"), dbargs![&self.key]).await
+    }
+
+    /// Returns whether at least one video in this series is public, i.e. accessible to
+    /// anonymous users. This is what determines whether the RSS feed of this series has any
+    /// content.
+    /// Note: this is lazily loaded and only available in certain contexts (`load` and
+    /// `load_writable_for_user`).
+    fn has_public_videos(&self) -> bool {
+        self.has_public_videos.unwrap()
     }
 
     /// Whether the current user has write access to this series.

@@ -86,6 +86,7 @@ const query = graphql`
                     description
                     state
                     numVideos
+                    hasPublicVideos
                     creators
                     thumbnailStack { thumbnails { url live audioOnly state }}
                 }
@@ -121,7 +122,7 @@ const SeriesItem: React.FC<{ item: SingleSeries }> = ({ item }) => <ListItem
     renderShareButton={url => <VideoListShareButton
         kind="series"
         shareUrl={url}
-        rssUrl={`/~rss/series/${keyOfId(item.id)}`}
+        rssUrl={item.hasPublicVideos ? `/~rss/series/${keyOfId(item.id)}` : undefined}
         hideLabel
     />}
 />;
