@@ -61,7 +61,7 @@ pub(crate) fn is_special_eth_role(role: &String, config: &Config) -> bool {
 }
 
 pub(crate) const ROLE_ANONYMOUS: &str = "ROLE_ANONYMOUS";
-const ROLE_USER: &str = "ROLE_USER";
+pub(crate) const ROLE_USER: &str = "ROLE_USER";
 
 const SESSION_COOKIE: &str = "tobira-session";
 

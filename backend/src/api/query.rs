@@ -3,7 +3,7 @@ use juniper::graphql_object;
 
 use crate::{
     auth::{AuthState, User},
-    model::{OpencastId, KnownGroup},
+    model::OpencastId,
 };
 
 use super::{
@@ -13,7 +13,7 @@ use super::{
         self,
         admin::AdminInfo,
         event::Event,
-        known_roles::{self, KnownUsersSearchOutcome},
+        known_roles::{self, KnownGroup, KnownUsersSearchOutcome},
         playlist::Playlist,
         realm::Realm,
         search::{
@@ -196,9 +196,9 @@ impl Query {
         known_roles::search_known_users(query, context).await
     }
 
-    /// Returns all known groups selectable in the ACL UI.
+    /// Returns all known groups selectable in the ACL UI by the current user.
     async fn known_groups(context: &Context) -> ApiResult<Vec<KnownGroup>> {
-        KnownGroup::load_all(context).await.map_err(Into::into)
+        known_roles::known_groups_for_user(context).await
     }
 
     /// Returns information for the admin dashboard.

@@ -8,7 +8,7 @@ use crate::{
     model::KnownGroup,
     config::Config,
     model::TranslatedString,
-    db,
+    db::{self, types::ActionRoleMap},
     prelude::*,
 };
 
@@ -28,7 +28,8 @@ pub(crate) enum Args {
     ///     "ROLE_LECTURER": {
     ///         "label": { "default": "Lecturer", "de": "Vortragende" },
     ///         "implies": ["ROLE_STAFF"],
-    ///         "warnForAction": ["write"]
+    ///         "warnForAction": ["write"],
+    ///         "assignableBy": { "write": ["ROLE_STAFF"] }
     ///     }
     /// }
     ///
@@ -92,7 +93,8 @@ fn print_group(group: &KnownGroup) {
         }
         print!("{}", json!(role));
     }
-    print!(r#"], "warnForAction": {} }}"#, json!(group.warn_for_action));
+    print!(r#"], "warnForAction": {}, "assignableBy": {} }}"#,
+        json!(group.warn_for_action), json!(group.assignable_by.0));
 }
 
 async fn list(tx: Transaction<'_>) -> Result<()> {
@@ -132,19 +134,22 @@ async fn upsert(file: &str, config: &Config, tx: Transaction<'_>) -> Result<()> 
     // Insert into DB
     let len = groups.len();
     for (role, info) in groups {
-        let sql = "insert into known_groups (role, label, implies, sort_key, warn_for_action) \
-            values ($1, $2, $3, $4, $5) \
+        let sql = "insert into known_groups \
+            (role, label, implies, sort_key, warn_for_action, assignable_by) \
+            values ($1, $2, $3, $4, $5, $6) \
             on conflict (role) do update set \
                 label = excluded.label, \
                 implies = excluded.implies, \
                 sort_key = excluded.sort_key, \
-                warn_for_action = excluded.warn_for_action";
+                warn_for_action = excluded.warn_for_action, \
+                assignable_by = excluded.assignable_by";
         tx.execute(sql, &[
             &role,
             &info.label,
             &info.implies,
             &info.sort_key,
             &info.warn_for_action,
+            &info.assignable_by,
         ]).await?;
     }
     tx.commit().await?;
@@ -208,6 +213,7 @@ struct GroupData {
     implies: Vec<Role>,
 
     warn_for_action: Vec<String>,
+    assignable_by: ActionRoleMap,
     sort_key: Option<String>,
 }
 

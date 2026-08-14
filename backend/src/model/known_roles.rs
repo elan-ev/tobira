@@ -1,6 +1,8 @@
+use std::collections::HashSet;
+
 use serde::Deserialize;
 
-use crate::{api::Context, db::util::{impl_from_db}, prelude::*};
+use crate::{api::Context, db::{types::ActionRoleMap, util::{impl_from_db}}, prelude::*};
 
 use super::{TranslatedString};
 
@@ -9,19 +11,20 @@ use super::{TranslatedString};
 
 /// A group selectable in the ACL UI. Basically a mapping from role to a nice
 /// label and info about the relationship to other roles/groups.
-#[derive(juniper::GraphQLObject)]
+#[derive(Debug)]
 pub struct KnownGroup {
     pub role: String,
     pub label: TranslatedString,
     pub implies: Vec<String>,
     pub sort_key: Option<String>,
     pub warn_for_action: Vec<String>,
+    pub assignable_by: ActionRoleMap,
 }
 
 impl_from_db!(
     KnownGroup,
     select: {
-        known_groups.{ role, label, implies, sort_key, warn_for_action },
+        known_groups.{ role, label, implies, sort_key, warn_for_action, assignable_by },
     },
     |row| {
         KnownGroup {
@@ -30,6 +33,7 @@ impl_from_db!(
             implies: row.implies(),
             sort_key: row.sort_key(),
             warn_for_action: row.warn_for_action(),
+            assignable_by: row.assignable_by(),
         }
     },
 );
@@ -40,6 +44,37 @@ impl KnownGroup {
         let query = format!("select {selection} from known_groups");
         context.db.query_mapped(&query, dbargs![], |row| Self::from_row_start(&row)).await
     }
+
+    /// Returns the set of actions that the current user is allowed to hand out for a specific group.
+    pub(crate) fn actions_assignable_by(
+        &self,
+        user_roles: &HashSet<String>,
+        is_admin: bool,
+    ) -> Vec<String> {
+        actions_assignable_by(&self.assignable_by, user_roles, is_admin)
+    }
+}
+
+/// Returns the set of actions that the current user is allowed to hand out for a specific group.
+pub(crate) fn actions_assignable_by(
+    assignable_by: &ActionRoleMap,
+    user_roles: &HashSet<String>,
+    is_admin: bool,
+) -> Vec<String> {
+    let mut candidate_actions: HashSet<&str> = ["read", "write"].into_iter().collect();
+    candidate_actions.extend(assignable_by.0.keys().map(String::as_str));
+
+    let is_allowed_for = |action: &str| {
+        assignable_by.0.get(action)
+            .is_some_and(|roles| roles.iter().any(|role| user_roles.contains(role)))
+    };
+
+    candidate_actions.into_iter()
+        .filter(|action| {
+            is_admin || is_allowed_for(action) || (*action == "read" && is_allowed_for("write"))
+        })
+        .map(str::to_owned)
+        .collect()
 }
 
 

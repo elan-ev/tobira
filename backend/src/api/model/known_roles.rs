@@ -1,14 +1,59 @@
 use meilisearch_sdk::search::{Selectors, MatchingStrategies};
 
 use crate::{
+    HasRoles,
     api::{err::ApiResult, Context},
-    model::KnownUser,
+    model::{self, KnownUser, TranslatedString},
     db::util::select,
     prelude::*,
 };
 use super::search::{handle_search_result, measure_search_duration, SearchResults, SearchUnavailable};
 
 
+
+// ===== Groups ===============================================================
+
+/// A group selectable in the ACL UI, as seen by the current user.
+#[derive(juniper::GraphQLObject)]
+pub(crate) struct KnownGroup {
+    pub role: String,
+    pub label: TranslatedString,
+    pub implies: Vec<String>,
+    pub sort_key: Option<String>,
+
+    /// List of actions that should trigger a warning when assigning this
+    /// group, e.g. because it is unusually large or broad.
+    pub warn_for_action: Vec<String>,
+
+    /// The actions the current user is allowed to assign this group for.
+    pub assignable_actions: Vec<String>,
+}
+
+/// Loads all known groups and actions the current user is allowed to assign for each.
+pub(crate) async fn known_groups_for_user(context: &Context) -> ApiResult<Vec<KnownGroup>> {
+    let user_is_tobira_admin = context.auth.is_tobira_admin(&context.config.auth);
+    let user_roles = context.auth.roles();
+
+    let groups = model::KnownGroup::load_all(context).await?;
+    let out = groups.into_iter()
+        .map(|group| {
+            let assignable_actions = group.actions_assignable_by(user_roles, user_is_tobira_admin);
+            KnownGroup {
+                role: group.role,
+                label: group.label,
+                implies: group.implies,
+                sort_key: group.sort_key,
+                warn_for_action: group.warn_for_action,
+                assignable_actions,
+            }
+        })
+        .collect();
+
+    Ok(out)
+}
+
+
+// ===== Users ===============================================================
 
 #[derive(juniper::GraphQLUnion)]
 #[graphql(Context = Context)]

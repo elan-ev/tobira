@@ -566,16 +566,19 @@ type InaccessibleBookmarkItem {
   id: ID!
 }
 
-"""
-  A group selectable in the ACL UI. Basically a mapping from role to a nice
-  label and info about the relationship to other roles/groups.
-"""
+"A group selectable in the ACL UI, as seen by the current user."
 type KnownGroup {
   role: String!
   label: TranslatedString!
   implies: [String!]!
   sortKey: String
+  """
+    List of actions that should trigger a warning when assigning this
+    group, e.g. because it is unusually large or broad.
+  """
   warnForAction: [String!]!
+  "The actions the current user is allowed to assign this group for."
+  assignableActions: [String!]!
 }
 
 type KnownUser {
@@ -897,7 +900,7 @@ type Query {
     results is limited to some fixed value.
   """
   searchKnownUsers(query: String!): KnownUsersSearchOutcome!
-  "Returns all known groups selectable in the ACL UI."
+  "Returns all known groups selectable in the ACL UI by the current user."
   knownGroups: [KnownGroup!]!
   "Returns information for the admin dashboard."
   adminDashboardInfo: AdminInfo
