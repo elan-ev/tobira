@@ -45,6 +45,18 @@ impl KnownGroup {
         context.db.query_mapped(&query, dbargs![], |row| Self::from_row_start(&row)).await
     }
 
+    /// Loads the known-group rows matching any of the given roles. Roles with
+    /// no matching row are simply absent from the result since they are not
+    /// tracked as known groups.
+    pub(crate) async fn load_by_roles(
+        roles: &[&str],
+        context: &Context,
+    ) -> Result<Vec<Self>, tokio_postgres::Error> {
+        let selection = Self::select();
+        let query = format!("select {selection} from known_groups where role = any($1)");
+        context.db.query_mapped(&query, dbargs![&roles], |row| Self::from_row_start(&row)).await
+    }
+
     /// Returns the set of actions that the current user is allowed to hand out for a specific group.
     pub(crate) fn actions_assignable_by(
         &self,

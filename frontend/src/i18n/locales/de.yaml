@@ -857,3 +857,5 @@ api-remote-errors:
     not-found: "Aktion fehlgeschlagen: Playlist nicht gefunden."
     entry-not-found: Es wurde versucht, unbekannte Einträge hinzuzufügen.
     not-allowed: Sie haben nicht die Berechtigung, diese Playlist-Aktion durchzuführen.
+  acl:
+    assign-not-allowed: Sie sind nicht berechtigt, diese Berechtigung zu vergeben.

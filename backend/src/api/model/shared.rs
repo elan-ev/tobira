@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use chrono::{DateTime, Utc};
 use juniper::{GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use tokio_postgres::Row;
@@ -6,8 +6,8 @@ use tokio_postgres::Row;
 use crate::{
     HasRoles, api::{
         Context,
-        err::{ApiResult, invalid_input},
-    }, dbargs, model::AclItem
+        err::{ApiResult, invalid_input, not_authorized},
+    }, dbargs, model::{AclItem, KnownGroup}
 };
 
 
@@ -364,6 +364,59 @@ pub(crate) fn convert_acl_input(entries: &[AclItem]) -> AclForDB {
         // preview_roles: preview_roles.into_iter().collect(),
         // custom_action_roles,
     }
+}
+
+/// Checks that the current user is allowed to make the ACL change described
+/// by `entries`, i.e. is allowed to grant every newly added role/action
+/// combination.
+///
+/// `previous` holds the item's current roles or `None` when creating a new item
+/// (i.e. nothing granted yet).
+/// Only newly added role/action combinations are checked against each role's
+/// `assignable_by` (as of now, shrinking access is always allowed).
+pub(crate) async fn ensure_acl_assignment_allowed(
+    context: &Context,
+    entries: &[AclItem],
+    previous: Option<(&[String], &[String])>,
+) -> ApiResult<()> {
+    if context.auth.is_tobira_admin(&context.config.auth) {
+        return Ok(());
+    }
+
+    let new_acl = convert_acl_input(entries);
+    let (prev_read, prev_write) = previous.unwrap_or((&[], &[]));
+    // Todo: also check preview roles and custom actions once `convert_acl_input` returns them.
+    let added_read = new_acl.read_roles.iter()
+        .filter(|role| !prev_read.contains(role))
+        .map(|role| (role.as_str(), "read"));
+    let added_write = new_acl.write_roles.iter()
+        .filter(|role| !prev_write.contains(role))
+        .map(|role| (role.as_str(), "write"));
+    let added = added_read.chain(added_write).collect::<Vec<_>>();
+
+    if added.is_empty() {
+        return Ok(());
+    }
+
+    let roles = added.iter().map(|&(role, _)| role).collect::<Vec<_>>();
+    let groups = KnownGroup::load_by_roles(&roles, context).await?;
+    let user_roles = context.auth.roles();
+    // Admins already returned above, so `is_admin: false`.
+    let assignable = groups.iter()
+        .map(|g| (g.role.as_str(), g.actions_assignable_by(user_roles, false)))
+        .collect::<HashMap<_, _>>();
+
+    for (role, action) in added {
+        let Some(actions) = assignable.get(role) else { continue };
+        if !actions.iter().any(|a| a == action) {
+            return Err(not_authorized!(
+                key = "acl.assign-not-allowed",
+                "not allowed to assign group '{role}' for action '{action}'",
+            ));
+        }
+    }
+
+    Ok(())
 }
 
 #[derive(GraphQLInputObject)]

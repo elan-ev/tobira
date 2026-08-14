@@ -12,7 +12,7 @@ use crate::{
             acl::{self, Acl},
             event::{AuthorizedEvent, Event},
             realm::Realm,
-            shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input},
+            shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input, ensure_acl_assignment_allowed},
         },
         util::{OcItemId, LazyLoad},
     },
@@ -203,6 +203,7 @@ impl Series {
         if !context.auth.can_create_series(&context.config.auth) {
             return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
         }
+        ensure_acl_assignment_allowed(context, &acl, None).await?;
         let response = context
             .oc_client
             .create_series(&acl, &metadata.title, metadata.description.as_deref())
@@ -417,6 +418,12 @@ impl Series {
 
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<Series> {
         let series = Self::load_for_mutation(id, context).await?;
+
+        let previous = Some((
+            series.read_roles.as_deref().unwrap_or(&[]),
+            series.write_roles.as_deref().unwrap_or(&[]),
+        ));
+        ensure_acl_assignment_allowed(context, &acl, previous).await?;
 
         info!(
             series_id = %id,

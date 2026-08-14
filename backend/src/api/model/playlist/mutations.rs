@@ -4,7 +4,7 @@ use crate::{
     api::{
         err::{self, ApiResult, ApiError, ApiErrorKind},
         model::{
-            shared::{convert_acl_input, BasicMetadata},
+            shared::{convert_acl_input, ensure_acl_assignment_allowed, BasicMetadata},
         },
         Context,
         Id,
@@ -29,6 +29,7 @@ impl AuthorizedPlaylist {
         if !context.auth.can_create_playlists(&context.config.auth) {
             return Err(err::not_authorized!(key = "playlist.not-allowed", "playlist action not allowed"));
         }
+        ensure_acl_assignment_allowed(context, &acl, None).await?;
 
         let entry_ids = load_entries(entries, context).await?;
 
@@ -82,6 +83,11 @@ impl AuthorizedPlaylist {
     ) -> ApiResult<Self> {
         // `load_for_mutation` handles authorization.
         let playlist = Playlist::load_for_mutation(id, context).await?;
+
+        if let Some(acl) = &acl {
+            let previous = Some((playlist.read_roles.as_slice(), playlist.write_roles.as_slice()));
+            ensure_acl_assignment_allowed(context, acl, previous).await?;
+        }
 
         let mut entry_ids = if let Some(entries) = entries {
             Some(load_entries(entries, context).await?)
