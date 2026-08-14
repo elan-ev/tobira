@@ -1063,6 +1063,12 @@ type RoleInfo {
     Always empty for roles that are not a known group.
   """
   warnForAction: [String!]!
+  """
+    Actions the current user is allowed to assign this role for.
+    `null` if the role is not a known group (like free-text roles added in the ACL selector).
+    In that case the assignment is unrestricted.
+  """
+  assignableActions: [String!]
 }
 
 type SearchEvent implements Node {

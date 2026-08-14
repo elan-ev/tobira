@@ -31,7 +31,7 @@ pub(crate) use self::{
     },
     extra_metadata::ExtraMetadata,
     key::Key,
-    known_roles::{KnownGroup, KnownUser},
+    known_roles::{actions_assignable_by, KnownGroup, KnownUser},
     misc::ByteSpan,
     series::SeriesState,
     translated_string::{LangKey, TranslatedString},
