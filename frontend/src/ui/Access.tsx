@@ -58,6 +58,7 @@ export type RoleInfo = {
     label: TranslatedLabel;
     implies?: readonly string[] | null;
     warnForAction: readonly string[];
+    assignableActions?: readonly string[] | null;
 };
 
 type SelectOption = {
@@ -79,6 +80,7 @@ type AclContext = {
         implies: Set<string>;
         sortKey: string | null;
         warnForAction: readonly string[];
+        assignableActions: readonly string[];
     }>;
     groupDag: GroupDag;
 }
@@ -146,6 +148,7 @@ export const AclSelector: React.FC<AclSelectorProps> = ({
             implies: new Set(g.implies),
             sortKey: g.sortKey ?? null,
             warnForAction: g.warnForAction,
+            assignableActions: g.assignableActions,
         }])),
     };
 
@@ -166,7 +169,7 @@ type RoleKind = "group" | "user";
 
 export const knownRolesFragment = graphql`
     fragment AccessKnownRolesData on Query {
-        knownGroups { role label implies sortKey warnForAction }
+        knownGroups { role label implies sortKey warnForAction assignableActions }
     }
 `;
 
@@ -186,6 +189,9 @@ type Entry = {
 
     /** Actions that should trigger a warning when assigned. Empty for unknown roles. */
     warnForAction: readonly string[];
+
+    /** Actions the current user may assign this role for. `undefined` means unrestricted. */
+    assignableActions?: readonly string[] | null;
 };
 
 type AclSelectProps = SelectProps & {
@@ -210,6 +216,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         actions,
         label: getLabel(role, info?.label, i18n),
         warnForAction: info?.warnForAction ?? [],
+        assignableActions: info?.assignableActions,
     }));
     let groupSelectorEntries: { role: string, label: string, sortKey: string | null }[] = [];
     if (kind === "group") {
@@ -217,11 +224,16 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         entries = groupDag.sort(entries);
 
         // In the group selector, sort groups by the sortKey and then alphabetically.
-        groupSelectorEntries = [...knownGroups.entries()].map(([role, { label, sortKey }]) => ({
-            role,
-            label: getLabel(role, label, i18n),
-            sortKey,
-        }));
+        // Non-assignable roles for any action are not offered. The backend
+        // already filters those out, except for built-in groups. Those are always
+        // sent so that "not configured" can be told apart from "not assignable".
+        groupSelectorEntries = [...knownGroups.entries()]
+            .filter(([, { assignableActions }]) => assignableActions.length > 0)
+            .map(([role, { label, sortKey }]) => ({
+                role,
+                label: getLabel(role, label, i18n),
+                sortKey,
+            }));
         groupSelectorEntries.sort((a, b) => {
             if (a.sortKey === b.sortKey) {
                 return a.label.localeCompare(b.label, i18n.language);
@@ -265,6 +277,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             label: getLabel(role, info?.label, i18n),
             // Don't show any warning on inherited entries as they can't be changed.
             warnForAction: [],
+            assignableActions: info?.assignableActions,
         }));
 
     const showUserEntry = (kind === "user" && ownerDisplayName);
@@ -292,6 +305,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                         label: info?.label ?? { "default": option.label },
                         implies: [...info?.implies ?? new Set()],
                         warnForAction: info?.warnForAction ?? [],
+                        assignableActions: info?.assignableActions,
                     },
                 });
             });
@@ -655,6 +669,17 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const allLabels = Object.keys(permissionLevels.all) as PermissionLevel[];
     const currentActionOption = getActionLabel(item, permissionLevels);
 
+    // Restrict the offered options to the ones the current user is allowed
+    // to assign this role for. `null` or `undefined` means unrestricted.
+    // (This is for entries that are already present in the ACL)
+    const { assignableActions } = item;
+    const allowedLabels = assignableActions == null
+        ? allLabels
+        : allLabels.filter(level => {
+            const actions = permissionLevels.all[level]?.actions;
+            return actions && [...actions].every(action => assignableActions.includes(action));
+        });
+
     const changeOption = (newOption: PermissionLevel) => change(prev => {
         notNullish(prev.get(item.role)).actions
             = notNullish(permissionLevels.all[newOption]).actions;
@@ -715,7 +740,7 @@ const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
                         margin: 0,
                         padding: 0,
                     }}>
-                        {allLabels.map(actionOption => <ActionMenuItem
+                        {allowedLabels.map(actionOption => <ActionMenuItem
                             key={actionOption}
                             disabled={actionOption === currentActionOption}
                             label={t(`acl.table.permissions.${actionOption}`)}
@@ -964,6 +989,7 @@ const insertBuiltinRoleInfo = (
             implies: [],
             label: keyToTranslatedString("acl.groups.everyone"),
             warnForAction: ["write"],
+            assignableActions: ["read"],
             sortKey: "_a",
         };
         knownGroups.push(anonymousInfo);
@@ -975,6 +1001,7 @@ const insertBuiltinRoleInfo = (
             implies: [COMMON_ROLES.ANONYMOUS],
             label: keyToTranslatedString("acl.groups.logged-in-users"),
             warnForAction: ["write"],
+            assignableActions: ["read"],
             sortKey: "_b",
         };
         knownGroups.push(userInfo);

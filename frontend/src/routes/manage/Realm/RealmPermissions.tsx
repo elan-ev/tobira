@@ -17,8 +17,8 @@ import { aclArrayToMap } from "../../util";
 const fragment = graphql`
     fragment RealmPermissionsData on Realm {
         id
-        ownAcl { role actions info { label implies warnForAction } }
-        inheritedAcl { role actions info { label implies warnForAction } }
+        ownAcl { role actions info { label implies warnForAction assignableActions } }
+        inheritedAcl { role actions info { label implies warnForAction assignableActions } }
         ownerDisplayName
         ancestors { ownerDisplayName }
     }
@@ -45,7 +45,7 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
     const [commit, inFlight] = useMutation<RealmPermissionsMutation>(graphql`
         mutation RealmPermissionsMutation($id: ID!, $permissions: UpdatedPermissions!) {
             updatePermissions(id: $id, permissions: $permissions) {
-                ownAcl { role actions info { label implies warnForAction } }
+                ownAcl { role actions info { label implies warnForAction assignableActions } }
                 isCurrentUserPageAdmin
                 canCurrentUserModerate
                 ... GeneralRealmData

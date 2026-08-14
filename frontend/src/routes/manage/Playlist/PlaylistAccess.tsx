@@ -29,7 +29,7 @@ const updatePlaylistAcl = graphql`
     mutation PlaylistAccessAclMutation($id: ID!, $acl: [AclItem!]!) {
         updatePlaylist(id: $id, acl: $acl) {
             ...on AuthorizedPlaylist {
-                acl { role actions info { label implies warnForAction } }
+                acl { role actions info { label implies warnForAction assignableActions } }
             }
         }
     }

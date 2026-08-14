@@ -85,7 +85,7 @@ const query = graphql`
             title
             created
             updated
-            acl { role actions info { label implies warnForAction } }
+            acl { role actions info { label implies warnForAction assignableActions } }
             canWrite
             description
             state
