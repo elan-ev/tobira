@@ -41,9 +41,10 @@ pub(crate) struct RoleInfo {
     /// also has these other roles.
     pub implies: Option<Vec<String>>,
 
-    /// Is `true` if this role represents a large group. Used to warn users
-    /// accidentally giving write access to large groups.
-    pub large: bool,
+    /// List of actions that should trigger a warning when assigning this
+    /// role, e.g. because it represents an unusually large or broad group.
+    /// Always empty for roles that are not a known group.
+    pub warn_for_action: Vec<String>,
 }
 
 pub(crate) fn query_for(table: &str) -> String {
@@ -70,7 +71,7 @@ where
         role: "roles.role",
         actions,
         implies,
-        large: "coalesce(known_groups.large, false)",
+        warn_for_action: "coalesce(known_groups.warn_for_action, '{}')",
         label: "coalesce(
             known_groups.label,
             case when users.display_name is null
@@ -99,7 +100,7 @@ where
             info: mapping.label.of::<Option<_>>(&row).map(|label| RoleInfo {
                 label,
                 implies: mapping.implies.of(&row),
-                large: mapping.large.of(&row),
+                warn_for_action: mapping.warn_for_action.of(&row),
             }),
         }
     }).await.map_err(Into::into)

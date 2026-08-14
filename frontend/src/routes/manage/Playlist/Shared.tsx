@@ -90,7 +90,7 @@ const query = graphql`
                 readRoles
                 writeRoles
                 hasPublicRssFeed
-                acl { role actions info { label implies large } }
+                acl { role actions info { label implies warnForAction } }
                 updated
                 thumbnailStack { thumbnails { url live audioOnly state }}
                 entries {

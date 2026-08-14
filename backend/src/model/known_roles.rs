@@ -15,13 +15,13 @@ pub struct KnownGroup {
     pub label: TranslatedString,
     pub implies: Vec<String>,
     pub sort_key: Option<String>,
-    pub large: bool,
+    pub warn_for_action: Vec<String>,
 }
 
 impl_from_db!(
     KnownGroup,
     select: {
-        known_groups.{ role, label, implies, sort_key, large },
+        known_groups.{ role, label, implies, sort_key, warn_for_action },
     },
     |row| {
         KnownGroup {
@@ -29,7 +29,7 @@ impl_from_db!(
             label: row.label(),
             implies: row.implies(),
             sort_key: row.sort_key(),
-            large: row.large(),
+            warn_for_action: row.warn_for_action(),
         }
     },
 );

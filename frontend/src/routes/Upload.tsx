@@ -95,7 +95,7 @@ const query = graphql`
             description
             created
             canWrite
-            acl { role actions info { label implies large } }
+            acl { role actions info { label implies warnForAction } }
         }
     }
 `;
@@ -823,7 +823,7 @@ const SeriesAclQuery = graphql`
     query UploadSeriesAclQuery($seriesId: String!) {
         series: seriesByOpencastId(id: $seriesId) {
             id
-            acl { role actions info { label implies large } }
+            acl { role actions info { label implies warnForAction } }
         }
     }
 `;

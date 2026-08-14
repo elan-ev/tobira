@@ -28,7 +28,7 @@ pub(crate) enum Args {
     ///     "ROLE_LECTURER": {
     ///         "label": { "default": "Lecturer", "de": "Vortragende" },
     ///         "implies": ["ROLE_STAFF"],
-    ///         "large": true
+    ///         "warnForAction": ["write"]
     ///     }
     /// }
     ///
@@ -92,7 +92,7 @@ fn print_group(group: &KnownGroup) {
         }
         print!("{}", json!(role));
     }
-    print!(r#"], "large": {} }}"#, group.large);
+    print!(r#"], "warnForAction": {} }}"#, json!(group.warn_for_action));
 }
 
 async fn list(tx: Transaction<'_>) -> Result<()> {
@@ -132,14 +132,20 @@ async fn upsert(file: &str, config: &Config, tx: Transaction<'_>) -> Result<()> 
     // Insert into DB
     let len = groups.len();
     for (role, info) in groups {
-        let sql = "insert into known_groups (role, label, implies, sort_key, large) \
+        let sql = "insert into known_groups (role, label, implies, sort_key, warn_for_action) \
             values ($1, $2, $3, $4, $5) \
             on conflict (role) do update set \
                 label = excluded.label, \
                 implies = excluded.implies, \
                 sort_key = excluded.sort_key, \
-                large = excluded.large";
-        tx.execute(sql, &[&role, &info.label, &info.implies, &info.sort_key, &info.large]).await?;
+                warn_for_action = excluded.warn_for_action";
+        tx.execute(sql, &[
+            &role,
+            &info.label,
+            &info.implies,
+            &info.sort_key,
+            &info.warn_for_action,
+        ]).await?;
     }
     tx.commit().await?;
 
@@ -201,7 +207,7 @@ struct GroupData {
     #[serde(default)]
     implies: Vec<Role>,
 
-    large: bool,
+    warn_for_action: Vec<String>,
     sort_key: Option<String>,
 }
 

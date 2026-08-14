@@ -17,7 +17,7 @@ export const defaultAclMap = (user: User): Acl => new Map([
         info: {
             label: { "default": user.displayName },
             implies: null,
-            large: false,
+            warnForAction: [],
         },
     }],
     [COMMON_ROLES.ANONYMOUS, {

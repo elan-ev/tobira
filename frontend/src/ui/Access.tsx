@@ -57,7 +57,7 @@ export type Acl = Map<string, {
 export type RoleInfo = {
     label: TranslatedLabel;
     implies?: readonly string[] | null;
-    large: boolean;
+    warnForAction: readonly string[];
 };
 
 type SelectOption = {
@@ -78,7 +78,7 @@ type AclContext = {
         label: TranslatedLabel;
         implies: Set<string>;
         sortKey: string | null;
-        large: boolean;
+        warnForAction: readonly string[];
     }>;
     groupDag: GroupDag;
 }
@@ -145,7 +145,7 @@ export const AclSelector: React.FC<AclSelectorProps> = ({
             label: g.label,
             implies: new Set(g.implies),
             sortKey: g.sortKey ?? null,
-            large: g.large,
+            warnForAction: g.warnForAction,
         }])),
     };
 
@@ -166,7 +166,7 @@ type RoleKind = "group" | "user";
 
 export const knownRolesFragment = graphql`
     fragment AccessKnownRolesData on Query {
-        knownGroups { role label implies sortKey large }
+        knownGroups { role label implies sortKey warnForAction }
     }
 `;
 
@@ -184,8 +184,8 @@ type Entry = {
      */
     label: string;
 
-    /** Whether this is a large group. `false` for unknown roles. */
-    large: boolean;
+    /** Actions that should trigger a warning when assigned. Empty for unknown roles. */
+    warnForAction: readonly string[];
 };
 
 type AclSelectProps = SelectProps & {
@@ -209,7 +209,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         role,
         actions,
         label: getLabel(role, info?.label, i18n),
-        large: info?.large ?? false,
+        warnForAction: info?.warnForAction ?? [],
     }));
     let groupSelectorEntries: { role: string, label: string, sortKey: string | null }[] = [];
     if (kind === "group") {
@@ -263,7 +263,8 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             role,
             actions,
             label: getLabel(role, info?.label, i18n),
-            large: false, // Don't show any warning on inherited entries as they can't be changed.
+            // Don't show any warning on inherited entries as they can't be changed.
+            warnForAction: [],
         }));
 
     const showUserEntry = (kind === "user" && ownerDisplayName);
@@ -290,7 +291,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                     info: {
                         label: info?.label ?? { "default": option.label },
                         implies: [...info?.implies ?? new Set()],
-                        large: info?.large ?? false,
+                        warnForAction: info?.warnForAction ?? [],
                     },
                 });
             });
@@ -564,7 +565,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
             ? <UnchangeableAllActions permission={getActionLabel(item, permissionLevels)} />
             : <>
                 <ActionsMenu {...{ item, kind }} />
-                {item.large && noteworthyAccessType
+                {noteworthyAccessType && item.warnForAction.includes(noteworthyAccessType)
                     ? <IconWithTooltip
                         mode="warning"
                         tooltip={t("acl.table.permissions.large-group-warning", {
@@ -962,7 +963,7 @@ const insertBuiltinRoleInfo = (
             role: COMMON_ROLES.ANONYMOUS,
             implies: [],
             label: keyToTranslatedString("acl.groups.everyone"),
-            large: true,
+            warnForAction: ["write"],
             sortKey: "_a",
         };
         knownGroups.push(anonymousInfo);
@@ -973,7 +974,7 @@ const insertBuiltinRoleInfo = (
             role: COMMON_ROLES.USER,
             implies: [COMMON_ROLES.ANONYMOUS],
             label: keyToTranslatedString("acl.groups.logged-in-users"),
-            large: true,
+            warnForAction: ["write"],
             sortKey: "_b",
         };
         knownGroups.push(userInfo);

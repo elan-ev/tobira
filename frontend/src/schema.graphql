@@ -575,7 +575,7 @@ type KnownGroup {
   label: TranslatedString!
   implies: [String!]!
   sortKey: String
-  large: Boolean!
+  warnForAction: [String!]!
 }
 
 type KnownUser {
@@ -1055,10 +1055,11 @@ type RoleInfo {
   """
   implies: [String!]
   """
-    Is `true` if this role represents a large group. Used to warn users
-    accidentally giving write access to large groups.
+    List of actions that should trigger a warning when assigning this
+    role, e.g. because it represents an unusually large or broad group.
+    Always empty for roles that are not a known group.
   """
-  large: Boolean!
+  warnForAction: [String!]!
 }
 
 type SearchEvent implements Node {
