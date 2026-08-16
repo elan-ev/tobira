@@ -66,7 +66,7 @@ export const CreateVideoList = <TMutation extends MutationParameters>({
         formState: { errors, isValid, isDirty },
     } = useForm<Metadata>({
         mode: "onChange",
-        defaultValues: { acl: isRealUser(user) ? defaultAclMap(user) : [] },
+        defaultValues: { acl: isRealUser(user) ? defaultAclMap(user, knownRoles) : [] },
     });
 
     if (!isRealUser(user) || !canUserCreateList(user)) {

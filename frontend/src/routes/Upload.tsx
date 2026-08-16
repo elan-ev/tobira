@@ -908,7 +908,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
 
     const formMethods = useForm<Metadata>({
         mode: "onChange",
-        defaultValues: { acl: defaultAclMap(user) },
+        defaultValues: { acl: defaultAclMap(user, knownRoles) },
     });
     const { handleSubmit, control, formState: { isValid, errors } } = formMethods;
 
