@@ -1,6 +1,40 @@
 {
-    "ROLE_STUDENT": { "label": { "default": "Students", "de": "Studierende", "it": "Studenti", "fr": "Étudiants" }, "implies": [], "large": true },
-    "ROLE_STAFF": { "label": { "default": "Staff", "de": "Angestellte", "it": "Personale", "fr": "Personnel" }, "implies": [], "large": true },
-    "ROLE_INSTRUCTOR": { "label": { "default": "Lecturers", "de": "Vortragende", "it": "Docenti", "fr": "Conférenciers" }, "implies": ["ROLE_STAFF"], "large": true },
-    "ROLE_TOBIRA_MODERATOR": { "label": { "default": "Moderators", "de": "Moderierende", "it": "Moderatori", "fr": "Modérateurs" }, "implies": ["ROLE_STAFF"], "large": false }
+    "ROLE_STUDENT": {
+        "label": { "default": "Students", "de": "Studierende", "it": "Studenti", "fr": "Étudiants" },
+        "implies": [],
+        "warnForAction": ["write"],
+        "assignableBy": { "read": ["ROLE_ANONYMOUS"] }
+    },
+    "ROLE_STAFF": {
+        "label": { "default": "Staff", "de": "Angestellte", "it": "Personale", "fr": "Personnel" },
+        "implies": [],
+        "warnForAction": ["write"],
+        "assignableBy": { "write": ["ROLE_STAFF"] }
+    },
+    "ROLE_INSTRUCTOR": {
+        "label": { "default": "Lecturers", "de": "Vortragende", "it": "Docenti", "fr": "Conférenciers" },
+        "implies": ["ROLE_STAFF"],
+        "warnForAction": ["write"],
+        "assignableBy": { "read": ["ROLE_ANONYMOUS"], "write": ["ROLE_STAFF"] }
+    },
+    "ROLE_TOBIRA_MODERATOR": {
+        "label": { "default": "Moderators", "de": "Moderierende", "it": "Moderatori", "fr": "Modérateurs" },
+        "implies": ["ROLE_STAFF"],
+        "warnForAction": [],
+        "assignableBy": {}
+    },
+    "ROLE_ANONYMOUS": {
+        "implies": [],
+        "label": { "default": "Everyone", "de": "Alle" },
+        "warnForAction": ["write"],
+        "assignableBy": { "read": ["ROLE_ANONYMOUS"] },
+        "sortKey": "_a"
+    },
+    "ROLE_USER": {
+        "implies": [],
+        "label": { "default": "Logged in users", "de": "Eingeloggte Nutzende" },
+        "warnForAction": ["write"],
+        "assignableBy": { "read": ["ROLE_ANONYMOUS"] },
+        "sortKey": "_b"
+    }
 }
