@@ -102,12 +102,21 @@ pub(super) async fn start_selection(
     // The cookie is also set here; in an iframe the browser drops it (that is
     // what the handoff is for), but platforms opening a real window get to
     // skip the popup entirely.
-    Response::builder()
+    token_response()
         .status(StatusCode::FOUND)
         .header(header::LOCATION, format!("/~lti/select?s={token}"))
         .header(header::SET_COOKIE, session_cookie.to_string())
         .body(ByteBody::empty())
         .unwrap()
+}
+
+/// A response builder for responses that carry the Deep Linking token (in the
+/// `Location` URL or as page content): the token must not leak via `Referer`
+/// or shared caches.
+fn token_response() -> hyper::http::response::Builder {
+    Response::builder()
+        .header(header::REFERRER_POLICY, "no-referrer")
+        .header(header::CACHE_CONTROL, "no-store")
 }
 
 /// Handles `GET /~lti/select-window`: the one-time handoff that lets the
@@ -133,7 +142,7 @@ pub(crate) async fn handle_select_window(req: Request<Incoming>, ctx: &Context) 
         );
     };
 
-    Response::builder()
+    token_response()
         .status(StatusCode::FOUND)
         .header(header::LOCATION, format!("/~lti/select?s={token}"))
         .header(header::SET_COOKIE, set_cookie)
@@ -236,7 +245,9 @@ async fn resolve_selection(
             &[&key],
         ).await.ok()??;
         Some(DeepLinkSelection {
-            title: row.get::<_, Option<String>>(0)?,
+            // A series still waiting for its sync has no title yet, but is
+            // already pickable — don't fail the whole confirm over the label.
+            title: row.get::<_, Option<String>>(0).unwrap_or_else(|| "Series".into()),
             url: format!("{base}/!s/:{}", row.get::<_, String>(1)),
         })
     } else if let Some(key) = id.key_for(Id::PLAYLIST_KIND) {
@@ -365,7 +376,7 @@ fn auto_submit_page(return_url: &str, jwt: &str) -> Response {
         jwt = html_escape(jwt),
     );
 
-    Response::builder()
+    token_response()
         .header(header::CONTENT_TYPE, "text/html; charset=UTF-8")
         .header("Content-Security-Policy", format!(
             "default-src 'none'; script-src 'nonce-{nonce}'; \

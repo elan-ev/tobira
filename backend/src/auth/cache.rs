@@ -372,6 +372,13 @@ impl LtiNonceStore {
 /// human-speed process, unlike the sub-second login round trip.
 const LTI_DEEP_LINK_TTL: Duration = Duration::from_secs(60 * 30);
 
+/// How long the *window handoff* stays redeemable. Much shorter than the
+/// selection TTL: redeeming turns the URL token into a session cookie, and
+/// the legitimate redemption happens right after the launch (the teacher
+/// clicks the one button in front of them) — so the window in which a leaked
+/// token would be worth anything is kept small.
+const LTI_DEEP_LINK_HANDOFF_TTL: Duration = Duration::from_secs(60 * 5);
+
 /// State of one ongoing Deep Linking selection, from the `LtiDeepLinkingRequest`
 /// launch until the signed response is sent back to the platform.
 pub(crate) struct DeepLinkState {
@@ -428,11 +435,11 @@ impl DeepLinkStore {
     }
 
     /// Redeems the one-time window handoff: returns the session `Set-Cookie`
-    /// exactly once. `None` if the token is unknown, expired, or the handoff
-    /// was already used.
+    /// exactly once. `None` if the token is unknown, the (short) handoff
+    /// window has passed, or the handoff was already used.
     pub(crate) async fn redeem_handoff(&self, token: &str) -> Option<String> {
         self.0.update_async(token, |_, state| {
-            if state.handoff_used || state.created.elapsed() > LTI_DEEP_LINK_TTL {
+            if state.handoff_used || state.created.elapsed() > LTI_DEEP_LINK_HANDOFF_TTL {
                 return None;
             }
             state.handoff_used = true;
