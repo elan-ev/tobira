@@ -382,7 +382,7 @@ acl:
     admin-user: Admin
     unknown-user-note: unknown
     no-entries: No entries
-    subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
+    subset-warning: 'This selection is already included in and overridden by the following group(s): {{groups}}.'
     inherited: 'Inherited permissions:'
     inherited-tooltip: >
       The following permissions were granted in a higher level page and are inherited to all subpages.

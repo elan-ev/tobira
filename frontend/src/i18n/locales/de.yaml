@@ -388,7 +388,7 @@ acl:
     admin-user: Admin
     unknown-user-note: unbekannt
     no-entries: Keine Einträge
-    subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
+    subset-warning: 'Diese Auswahl ist bereits enthalten und wird durch die folgenden Gruppen überschrieben: {{groups}}.'
     inherited: 'Geerbte Berechtigungen:'
     inherited-tooltip: >
       Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden an alle Unterseiten
