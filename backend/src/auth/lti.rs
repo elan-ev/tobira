@@ -11,12 +11,11 @@ use std::{borrow::Cow, collections::BTreeMap};
 use aws_lc_rs::{digest, rsa::{KeyPair, KeySize}, signature::KeyPair as _};
 use base64::{Engine, prelude::BASE64_URL_SAFE_NO_PAD};
 use hyper::{Method, Request, StatusCode, Uri, body::Incoming, header};
-use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
 
 use crate::{
-    auth::{User, config::{LtiPlatform, LtiUsernameSource}},
+    auth::{User, config::{LtiConfig, LtiPlatform, LtiUsernameSource}},
     http::{self, Context, Response},
     prelude::*,
     sync::client::AuthMode,
@@ -474,7 +473,7 @@ impl<H> jwtea::Validator<H, LtiClaims> for LtiLaunchValidator<'_> {
 /// (PEM) is a later enhancement — platforms re-fetch the keyset, so a fresh key
 /// across restarts is still valid, it just invalidates in-flight signed
 /// messages (of which the MVP has none).
-struct LtiToolKey {
+pub(crate) struct LtiToolKey {
     /// Kept for signing the Deep Linking response / NRPS `client_assertion`
     /// (added with those features).
     #[allow(dead_code)]
@@ -482,12 +481,45 @@ struct LtiToolKey {
 
     /// The public JWKS document served at `/~lti/jwks`.
     jwks: String,
+
+    /// Whether the key was generated for this process (no `auth.lti.tool_key`
+    /// configured). Signing with an ephemeral key gets a warning: with more
+    /// than one Tobira process, `/~lti/jwks` would serve a different key set
+    /// depending on which process answers, so verification can fail.
+    #[allow(dead_code)]
+    ephemeral: bool,
 }
 
 impl LtiToolKey {
+    /// Loads the key from `auth.lti.tool_key` (a PEM PKCS#8 RSA private key),
+    /// or generates a fresh one per process if the option is not set —
+    /// mirroring how `auth.jwt.secret_key` behaves.
+    pub(crate) fn load(config: &LtiConfig) -> Result<Self> {
+        let Some(path) = &config.tool_key else {
+            return Ok(Self::generate());
+        };
+
+        let pem = std::fs::read(path)
+            .with_context(|| format!("failed to read `auth.lti.tool_key` file '{}'",
+                path.display()))?;
+        Self::from_pem(&pem)
+    }
+
+    fn from_pem(pem: &[u8]) -> Result<Self> {
+        let (_label, pkcs8) = pem_rfc7468::decode_vec(pem)
+            .context("`auth.lti.tool_key` is not a valid PEM document")?;
+        let keypair = KeyPair::from_pkcs8(&pkcs8)
+            .map_err(|e| anyhow!("`auth.lti.tool_key` is not a valid RSA key: {e}"))?;
+        Ok(Self::from_keypair(keypair, false))
+    }
+
     fn generate() -> Self {
         let keypair = KeyPair::generate(KeySize::Rsa2048)
             .expect("failed to generate LTI tool RSA key");
+        Self::from_keypair(keypair, true)
+    }
+
+    fn from_keypair(keypair: KeyPair, ephemeral: bool) -> Self {
         let public = keypair.public_key();
 
         // JWK RSA components: base64url(big-endian modulus / exponent).
@@ -509,11 +541,9 @@ impl LtiToolKey {
             }],
         }).to_string();
 
-        Self { keypair, jwks }
+        Self { keypair, jwks, ephemeral }
     }
 }
-
-static LTI_TOOL_KEY: Lazy<LtiToolKey> = Lazy::new(LtiToolKey::generate);
 
 /// Handles `GET /~lti/jwks`: serves the tool's public keys (JWKS) so platforms
 /// can register Tobira and verify JWTs it signs (Deep Linking response, service
@@ -524,7 +554,7 @@ pub(crate) async fn handle_jwks(ctx: &Context) -> Response {
     }
     Response::builder()
         .header(header::CONTENT_TYPE, "application/json")
-        .body(ByteBody::new(LTI_TOOL_KEY.jwks.clone().into()))
+        .body(ByteBody::new(ctx.lti_tool_key.jwks.clone().into()))
         .unwrap()
 }
 
@@ -570,6 +600,31 @@ mod tests {
         base.extend(extra);
 
         serde_json::from_value(json).expect("claims should deserialize")
+    }
+
+    #[test]
+    fn tool_key_loads_from_pem_and_rejects_garbage() {
+        use aws_lc_rs::encoding::{AsDer, Pkcs8V1Der};
+
+        // Round-trip a freshly generated key through PEM, the same shape an
+        // operator's openssl-generated `auth.lti.tool_key` file would have.
+        let generated = KeyPair::generate(KeySize::Rsa2048).unwrap();
+        let der = AsDer::<Pkcs8V1Der>::as_der(&generated).unwrap();
+        let pem = pem_rfc7468::encode_string(
+            "PRIVATE KEY",
+            pem_rfc7468::LineEnding::LF,
+            der.as_ref(),
+        ).unwrap();
+
+        let key = LtiToolKey::from_pem(pem.as_bytes()).unwrap();
+        assert!(!key.ephemeral);
+        // The JWKS must describe the loaded key, same shape as a generated one.
+        let doc: serde_json::Value = serde_json::from_str(&key.jwks).unwrap();
+        assert_eq!(doc["keys"][0]["kty"], "RSA");
+        assert!(doc["keys"][0]["n"].as_str().unwrap().len() > 300);
+
+        assert!(LtiToolKey::from_pem(b"not a pem").is_err());
+        assert!(LtiToolKey::generate().ephemeral);
     }
 
     #[test]

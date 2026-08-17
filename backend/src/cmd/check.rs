@@ -108,6 +108,7 @@ async fn check_referenced_files(config: &Config) -> Result<()> {
     files.extend(&config.theme.font.files);
     files.extend(&config.theme.font.extra_css);
     files.extend(config.auth.jwt.secret_key.as_ref());
+    files.extend(config.auth.lti.tool_key.as_ref());
 
     for path in files {
         debug!("Trying to open '{}' for reading...", path.display());

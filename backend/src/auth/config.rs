@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 use hyper::{http::HeaderName, Uri};
 use secrecy::SecretString;
@@ -504,6 +504,16 @@ pub(crate) struct LtiConfig {
     #[config(default = false)]
     pub(crate) enabled: bool,
 
+    /// Path to the RSA private key (PEM-encoded PKCS#8) Tobira uses as its
+    /// LTI tool key, e.g. for signing Deep Linking responses. The public part
+    /// is served at `/~lti/jwks`. If not specified, a key is generated
+    /// every time Tobira is started. That is fine as long as nothing is
+    /// signed, but for Deep Linking — and whenever Tobira runs as more than
+    /// one process — a persistent key is required, as platforms verify
+    /// signatures against `/~lti/jwks`. Generate one with e.g.:
+    /// `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048`
+    pub(crate) tool_key: Option<PathBuf>,
+
     /// Registered LTI platforms, one table entry per platform/deployment. All
     /// values come from the tool registration in your LMS, which labels them
     /// differently than the spec terms used here (Moodle labels shown; Canvas
@@ -636,7 +646,7 @@ mod tests {
     }
 
     fn lti_config(enabled: bool, platforms: Vec<LtiPlatform>) -> LtiConfig {
-        LtiConfig { enabled, platforms }
+        LtiConfig { enabled, platforms, tool_key: None }
     }
 
     #[test]
