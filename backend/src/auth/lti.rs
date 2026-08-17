@@ -212,6 +212,23 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
 
     debug!("LTI launch claims: {claims:#?}");
 
+    // ----- Dispatch on the message type ------------------------------------------------------
+    match launch_kind(&claims) {
+        Some(LaunchKind::ResourceLink) => {}
+        Some(LaunchKind::DeepLinking) => {
+            // Recognized, but not implemented yet (next commits add the
+            // selection flow). Rejecting cleanly beats silently treating it
+            // as a resource link, which would confuse the platform.
+            warn!("LTI launch: Deep Linking request received, but not supported yet");
+            return http::response::bad_request("LTI launch: Deep Linking is not supported yet");
+        }
+        None => {
+            let ty = claims.message_type.as_deref().unwrap_or("<absent>");
+            warn!("LTI launch with unsupported message_type '{ty}'");
+            return http::response::bad_request("LTI launch: unsupported message type");
+        }
+    }
+
     // ----- Build the user and create a session ----------------------------------------------
     // Roles come from Opencast, exactly like the OIDC login (#1706). The
     // username comes from the claim the platform is configured to use; see the
@@ -274,6 +291,27 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
         .header(header::SET_COOKIE, cookie.to_string())
         .body(ByteBody::empty())
         .unwrap()
+}
+
+/// The kind of LTI message a launch carries.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LaunchKind {
+    /// A regular content launch (`LtiResourceLinkRequest`).
+    ResourceLink,
+    /// A Deep Linking content selection request (`LtiDeepLinkingRequest`).
+    DeepLinking,
+}
+
+/// Classifies the launch by its `message_type` claim. An *absent* claim is
+/// treated as a resource link: the spec requires the claim, but being lenient
+/// here keeps already-working platform configurations working. Unknown types
+/// yield `None` and must be rejected.
+fn launch_kind(claims: &LtiClaims) -> Option<LaunchKind> {
+    match claims.message_type.as_deref() {
+        None | Some("LtiResourceLinkRequest") => Some(LaunchKind::ResourceLink),
+        Some("LtiDeepLinkingRequest") => Some(LaunchKind::DeepLinking),
+        Some(_) => None,
+    }
 }
 
 /// Determines the Opencast username from the launch claims, using the source
@@ -362,6 +400,10 @@ struct LtiClaims {
     name: Option<String>,
     preferred_username: Option<String>,
     email: Option<String>,
+
+    /// What kind of message this launch is (resource link, deep linking, …).
+    #[serde(rename = "https://purl.imsglobal.org/spec/lti/claim/message_type")]
+    message_type: Option<String>,
 
     #[serde(rename = "https://purl.imsglobal.org/spec/lti/claim/deployment_id")]
     deployment_id: String,
@@ -528,6 +570,29 @@ mod tests {
         base.extend(extra);
 
         serde_json::from_value(json).expect("claims should deserialize")
+    }
+
+    #[test]
+    fn launch_kind_classifies_message_types() {
+        let with_type = |ty: &str| claims_with(serde_json::json!({
+            "https://purl.imsglobal.org/spec/lti/claim/message_type": ty,
+        }));
+
+        // Absent is treated as a resource link (leniency for existing setups).
+        assert_eq!(
+            launch_kind(&claims_with(serde_json::json!({}))),
+            Some(LaunchKind::ResourceLink),
+        );
+        assert_eq!(
+            launch_kind(&with_type("LtiResourceLinkRequest")),
+            Some(LaunchKind::ResourceLink),
+        );
+        assert_eq!(
+            launch_kind(&with_type("LtiDeepLinkingRequest")),
+            Some(LaunchKind::DeepLinking),
+        );
+        // Unknown types must be rejected by the caller.
+        assert_eq!(launch_kind(&with_type("LtiSubmissionReviewRequest")), None);
     }
 
     #[test]
