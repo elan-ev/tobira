@@ -17,9 +17,9 @@ source = "tobira-session"
 ```
 
 :::note
-This is the MVP of LTI support. It implements LTI 1.3 Core (launch + login). Deep Linking,
-Names & Role Provisioning (NRPS), and Dynamic Registration are **not** included yet. See
-[Known limitations](#known-limitations).
+LTI support covers LTI 1.3 Core (launch + login) and [Deep Linking](#deep-linking)
+(content selection). Names & Role Provisioning (NRPS) and Dynamic Registration are **not**
+included yet. See [Known limitations](#known-limitations).
 :::
 
 
@@ -184,15 +184,44 @@ Common failures and their log lines:
 | `user '…' is not known to Opencast` | The resolved username does not exist in Opencast, or no username was provided (see [Users and roles](#users-and-roles)). |
 
 
+## Deep Linking (content selection) {#deep-linking}
+
+With Deep Linking, a teacher picks a Tobira video, series or playlist in a selection
+dialog instead of copying IDs around; the LMS then creates the activity. A student
+clicking it triggers a normal LTI launch that opens the picked content.
+
+**Configure the tool key first.** Tobira signs the Deep Linking response, and the LMS
+verifies it against `/~lti/jwks` — so the key must be stable across restarts and
+identical for all Tobira processes:
+
+```toml
+[auth.lti]
+tool_key = "/opt/tobira/lti-tool-key.pem"
+```
+
+Generate the key with `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048` and
+make it readable only by the Tobira user. (Without `tool_key`, a per-process key is
+generated; Tobira logs a warning when it signs with one.)
+
+**Moodle:** in the tool configuration, check **Supports Deep Linking (Content-Item
+Message)** and set the **Content Selection URL** to the same URL as the Tool URL
+(`https://tobira.example.org/~lti/launch`). Teachers then get a *Select content* button
+when adding the activity.
+
+**How the dialog behaves:** most LMS open the selection in an embedded dialog, where
+Tobira's session cookie is unavailable. Tobira therefore shows a button that opens the
+actual selection in a **separate window**; after inserting, the dialog continues
+automatically. The user's browser must allow this popup — if nothing opens, check the
+browser's popup blocker. Platforms that open the selection in a real window skip this
+extra step.
+
+The teacher must be able to *see* the content in Tobira to link it (read access is
+re-checked server-side on confirmation).
+
+
 ## Known limitations
 
-- **New window only** — iframe embedding needs `SameSite=None` / Storage Access work.
-- **Tool key is process-ephemeral** — regenerated on every start, and each Tobira process
-  serves its own key, so behind a load balancer `/~lti/jwks` answers with a different key
-  set depending on which process replies. That is harmless for launches, because nothing
-  currently signs with this key — Tobira only *verifies* the platform's tokens, and the
-  keyset is served purely so the LMS registration form can be completed. A configurable
-  persistent key becomes necessary once Tobira signs anything itself (Deep Linking
-  responses, NRPS service calls).
-- **No Deep Linking, NRPS or Dynamic Registration yet** — platforms must be registered
-  manually, and landing is via the `series` custom parameter or `target_link_uri`.
+- **New window only** — iframe embedding of *content* needs `SameSite=None` / Storage
+  Access work. This is also why the Deep Linking selection bridges to a separate window.
+- **No NRPS or Dynamic Registration yet** — platforms must be registered manually, and
+  access control derives from the launch and Opencast alone.

@@ -6,7 +6,7 @@ sidebar_position: 100
 
 | | |
 |---|---|
-| **Status** | Draft / for discussion. **LTI 1.3 Core is implemented** (see below); Deep Linking, NRPS and Dynamic Registration are not. |
+| **Status** | Draft / for discussion. **LTI 1.3 Core and Deep Linking 2.0 are implemented** (see below); NRPS and Dynamic Registration are not. |
 | **Author** | rrolf@uni-osnabrück.de |
 | **Scope** | Backend (`backend/src/auth`), frontend (selection UI), docs |
 | **Target** | LTI 1.3 Core + Deep Linking 2.0 + NRPS 2.0 (LTI Advantage) |
@@ -17,6 +17,12 @@ sidebar_position: 100
 > an open question differently than sketched here, the code and that document are
 > authoritative — notably **OQ8 (identity mapping)**, which is resolved by the per-platform
 > `username_source` config option. Later phases (§7) remain proposals.
+>
+> **Deep Linking 2.0 is implemented** as well (selection page `/~lti/select`, signed
+> response via a persistent tool key `auth.lti.tool_key`). Because platforms open the
+> selection in an iframe — where the `SameSite=Lax` session cookie does not exist — the
+> selection bridges into a popup with a one-time cookie handoff, rather than the plain
+> in-place UI sketched in §5.5. Details: `docs/docs/dev/lti-deep-linking-spec.md`.
 
 This document proposes adding LTI 1.3 support to Tobira so it can be embedded as a
 standalone LTI **tool** in LMS **platforms** such as Moodle and Canvas. The primary
