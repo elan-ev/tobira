@@ -24,6 +24,7 @@ import { UploadRoute } from "./routes/Upload";
 import { SearchRoute } from "./routes/Search";
 import { InvalidUrlRoute } from "./routes/InvalidUrl";
 import { BlockEmbedRoute, EmbedOpencastVideoRoute, EmbedVideoRoute } from "./routes/Embed";
+import { LtiSelectRoute } from "./routes/LtiSelect";
 import { ManageVideoDetailsRoute } from "./routes/manage/Video/VideoDetails";
 import { ManageVideoTechnicalDetailsRoute } from "./routes/manage/Video/TechnicalDetails";
 import React from "react";
@@ -101,6 +102,7 @@ const {
         ManageRealmContentRoute,
         EmbedVideoRoute,
         EmbedOpencastVideoRoute,
+        LtiSelectRoute,
     ],
 });
 

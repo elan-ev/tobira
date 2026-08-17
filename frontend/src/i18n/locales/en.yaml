@@ -743,6 +743,23 @@ manage:
 embed:
   not-supported: This page can't be embedded.
 
+lti:
+  select:
+    title: Select content for your course
+    kind:
+      video: Video
+      series: Series
+      playlist: Playlist
+    picked: "Selected content:"
+    insert: Insert
+    open-window: Open content selection
+    bridge-explainer: >
+      The content selection cannot run embedded in this page. It opens in a
+      separate window; this page then continues automatically.
+    window-open: "Continue in the selection window…"
+    failed: Inserting the selection failed. Please try again from your course.
+    no-token: This page can only be opened from your course.
+
 
 # These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:

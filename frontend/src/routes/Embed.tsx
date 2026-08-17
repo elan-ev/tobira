@@ -183,8 +183,10 @@ export const BlockEmbedRoute = makeRoute({
             return null;
         }
 
-        // And only if this is a non-embeddable route
-        if (url.pathname.startsWith("/~embed/")) {
+        // And only if this is a non-embeddable route. The LTI Deep Linking
+        // selection page handles being iframed itself (it bridges to a
+        // popup), so it is exempt too.
+        if (url.pathname.startsWith("/~embed/") || url.pathname === "/~lti/select") {
             return null;
         }
 

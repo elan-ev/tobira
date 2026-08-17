@@ -774,6 +774,26 @@ manage:
 embed:
   not-supported: Diese Seite kann nicht eingebettet werden.
 
+lti:
+  select:
+    title: "Inhalt für Ihren Kurs auswählen"
+    kind:
+      video: Video
+      series: Serie
+      playlist: Playlist
+    picked: "Ausgewählter Inhalt:"
+    insert: "Einfügen"
+    open-window: "Inhaltsauswahl öffnen"
+    bridge-explainer: >
+      Die Inhaltsauswahl kann nicht eingebettet in dieser Seite laufen. Sie
+      öffnet sich in einem eigenen Fenster; diese Seite macht danach
+      automatisch weiter.
+    window-open: "Weiter im Auswahlfenster…"
+    failed: >
+      Das Einfügen der Auswahl ist fehlgeschlagen. Bitte versuchen Sie es
+      erneut aus Ihrem Kurs.
+    no-token: "Diese Seite kann nur aus Ihrem Kurs heraus geöffnet werden."
+
 
 # These errors map the `key` field of an API error response to a nice message.
 api-remote-errors:
