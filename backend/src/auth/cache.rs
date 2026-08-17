@@ -374,9 +374,6 @@ const LTI_DEEP_LINK_TTL: Duration = Duration::from_secs(60 * 30);
 
 /// State of one ongoing Deep Linking selection, from the `LtiDeepLinkingRequest`
 /// launch until the signed response is sent back to the platform.
-// TODO: several fields are only read by the return endpoint, which lands in
-// the next commit — hence the temporary `allow(dead_code)`.
-#[allow(dead_code)]
 pub(crate) struct DeepLinkState {
     /// The platform's `deep_link_return_url` — where the signed response goes.
     pub(crate) return_url: String,
@@ -410,8 +407,6 @@ pub(crate) struct DeepLinkState {
 }
 
 /// A confirmed content selection: everything the response JWT needs.
-// TODO: read by the return endpoint (next commit).
-#[allow(dead_code)]
 #[derive(Clone)]
 pub(crate) struct DeepLinkSelection {
     pub(crate) title: String,

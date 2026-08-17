@@ -491,19 +491,20 @@ impl<H> jwtea::Validator<H, LtiClaims> for LtiLaunchValidator<'_> {
 /// across restarts is still valid, it just invalidates in-flight signed
 /// messages (of which the MVP has none).
 pub(crate) struct LtiToolKey {
-    /// Kept for signing the Deep Linking response / NRPS `client_assertion`
-    /// (added with those features).
-    #[allow(dead_code)]
+    /// Signs the Deep Linking response (and later the NRPS `client_assertion`).
     keypair: KeyPair,
 
     /// The public JWKS document served at `/~lti/jwks`.
     jwks: String,
 
+    /// The key id, included in headers of JWTs we sign so the platform picks
+    /// the right key from our JWKS.
+    kid: String,
+
     /// Whether the key was generated for this process (no `auth.lti.tool_key`
     /// configured). Signing with an ephemeral key gets a warning: with more
     /// than one Tobira process, `/~lti/jwks` would serve a different key set
     /// depending on which process answers, so verification can fail.
-    #[allow(dead_code)]
     ephemeral: bool,
 }
 
@@ -558,7 +559,36 @@ impl LtiToolKey {
             }],
         }).to_string();
 
-        Self { keypair, jwks, ephemeral }
+        Self { keypair, jwks, kid, ephemeral }
+    }
+
+    /// Signs `payload` as an RS256 JWT with this key. The platform verifies
+    /// the signature against `/~lti/jwks`.
+    pub(super) fn sign_jwt(&self, payload: &serde_json::Value) -> String {
+        if self.ephemeral {
+            warn!("Signing an LTI JWT with an ephemeral tool key. Set `auth.lti.tool_key` \
+                so signatures stay verifiable across restarts and processes.");
+        }
+
+        let header = serde_json::json!({ "alg": "RS256", "typ": "JWT", "kid": self.kid });
+        let mut jwt = format!(
+            "{}.{}",
+            BASE64_URL_SAFE_NO_PAD.encode(header.to_string()),
+            BASE64_URL_SAFE_NO_PAD.encode(payload.to_string()),
+        );
+
+        let mut signature = vec![0; self.keypair.public_modulus_len()];
+        self.keypair
+            .sign(
+                &aws_lc_rs::signature::RSA_PKCS1_SHA256,
+                &aws_lc_rs::rand::SystemRandom::new(),
+                jwt.as_bytes(),
+                &mut signature,
+            )
+            .expect("failed to RS256-sign LTI JWT");
+        jwt.push('.');
+        jwt.push_str(&BASE64_URL_SAFE_NO_PAD.encode(&signature));
+        jwt
     }
 }
 
@@ -642,6 +672,43 @@ mod tests {
 
         assert!(LtiToolKey::from_pem(b"not a pem").is_err());
         assert!(LtiToolKey::generate().ephemeral);
+    }
+
+    /// The round trip a platform performs: our signed JWT must verify against
+    /// our own published JWKS, using the same verification code (`jwtea`)
+    /// that we use for incoming tokens.
+    #[tokio::test]
+    async fn signed_jwt_verifies_against_own_jwks() {
+        let key = LtiToolKey::generate();
+        let now = chrono::Utc::now().timestamp();
+        let jwt = key.sign_jwt(&serde_json::json!({ "exp": now + 60, "answer": 42 }));
+
+        let jwks: jwtea::Jwks = serde_json::from_str(&key.jwks).unwrap();
+        let keys: Vec<_> = jwks.to_verifying_keys().filter_map(|k| k.ok()).collect();
+        assert!(!keys.is_empty());
+
+        let validator = jwtea::BasicValidator { allowed_clock_skew: 10 };
+        let claims = jwtea::RawJwt::new(jwt).unwrap()
+            .decode::<(), serde_json::Value, _>(
+                keys.as_slice(),
+                &validator,
+                |_header, payload| payload.extra_fields,
+            )
+            .await
+            .expect("own JWT must verify against own JWKS");
+        assert_eq!(claims["answer"], 42);
+
+        // A signature from a *different* key must be rejected.
+        let other = LtiToolKey::generate();
+        let forged = other.sign_jwt(&serde_json::json!({ "exp": now + 60 }));
+        assert!(jwtea::RawJwt::new(forged).unwrap()
+            .decode::<(), serde_json::Value, _>(
+                keys.as_slice(),
+                &validator,
+                |_header, payload| payload.extra_fields,
+            )
+            .await
+            .is_err());
     }
 
     #[test]
