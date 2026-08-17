@@ -280,16 +280,16 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
         return deeplink::start_selection(settings, platform, &cookie, ctx).await;
     }
 
-    // Decide where to land: a Tobira series page if the placement carries a
-    // `series` custom parameter (an Opencast series ID), otherwise the
-    // platform's target_link_uri. Both are kept within Tobira (no open redirect).
-    let target = match claims.custom.as_ref()
+    // Decide where to land; see `landing_target`. Both candidates are kept
+    // within Tobira (no open redirect).
+    let custom_series = claims.custom.as_ref()
         .and_then(|custom| custom.get("series"))
-        .and_then(|series| series.as_str())
-    {
-        Some(series) => series_landing(&ctx.config.general.tobira_url.to_string(), series),
-        None => safe_target(&login.target_link_uri, ctx),
-    };
+        .and_then(|series| series.as_str());
+    let target = landing_target(
+        &login.target_link_uri,
+        custom_series,
+        &ctx.config.general.tobira_url.to_string(),
+    );
     // `target` is constrained to our own origin, but a `series` custom parameter
     // could still carry characters that are invalid in a header; fall back to the
     // base URL rather than panic when building the response.
@@ -363,10 +363,23 @@ async fn fetch_platform_jwks(
     Ok(jwks.to_verifying_keys().filter_map(|res| res.ok()).collect())
 }
 
-/// Returns `target` if it points within our own Tobira instance, otherwise the
-/// Tobira base URL. Prevents the launch from being abused as an open redirect.
-fn safe_target(target: &str, ctx: &Context) -> String {
-    resolve_target(target, &ctx.config.general.tobira_url.to_string())
+/// Picks the page a resource-link launch lands on.
+///
+/// A specific `target_link_uri` wins: activities created via Deep Linking
+/// carry the picked page there. The `series` custom parameter is only the
+/// fallback for manually configured placements — it is typically set
+/// tool-wide, so it must not override a specific target (otherwise every
+/// launch of that tool would land on the same series, no matter what was
+/// picked). Without either, the launch lands on the start page.
+fn landing_target(target_link_uri: &str, custom_series: Option<&str>, base: &str) -> String {
+    let resolved = resolve_target(target_link_uri, base);
+    if resolved != base {
+        return resolved;
+    }
+    match custom_series {
+        Some(series) => series_landing(base, series),
+        None => resolved,
+    }
 }
 
 /// Picks a safe in-Tobira redirect target for a launch, defaulting to `base`
@@ -732,6 +745,29 @@ mod tests {
         );
         // Unknown types must be rejected by the caller.
         assert_eq!(launch_kind(&with_type("LtiSubmissionReviewRequest")), None);
+    }
+
+    #[test]
+    fn landing_prefers_specific_target_over_series_parameter() {
+        let base = "https://tobira.example.org";
+
+        // A Deep-Linking-created activity: its target names the picked page,
+        // and a tool-wide `series` parameter must NOT override it.
+        assert_eq!(
+            landing_target("https://tobira.example.org/!s/:picked", Some("toolwide"), base),
+            "https://tobira.example.org/!s/:picked",
+        );
+        // Manually configured placement: target is just the tool URL, so the
+        // `series` parameter decides the landing.
+        assert_eq!(
+            landing_target("https://tobira.example.org/~lti/launch", Some("toolwide"), base),
+            "https://tobira.example.org/!s/:toolwide",
+        );
+        // Neither: start page.
+        assert_eq!(
+            landing_target("https://tobira.example.org/~lti/launch", None, base),
+            base,
+        );
     }
 
     #[test]
