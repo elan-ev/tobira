@@ -12,6 +12,8 @@ use aws_lc_rs::{digest, rsa::{KeyPair, KeySize}, signature::KeyPair as _};
 use base64::{Engine, prelude::BASE64_URL_SAFE_NO_PAD};
 use hyper::{Method, Request, StatusCode, Uri, body::Incoming, header};
 use secrecy::ExposeSecret;
+
+pub(crate) mod deeplink;
 use serde::Deserialize;
 
 use crate::{
@@ -212,21 +214,26 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
     debug!("LTI launch claims: {claims:#?}");
 
     // ----- Dispatch on the message type ------------------------------------------------------
-    match launch_kind(&claims) {
-        Some(LaunchKind::ResourceLink) => {}
-        Some(LaunchKind::DeepLinking) => {
-            // Recognized, but not implemented yet (next commits add the
-            // selection flow). Rejecting cleanly beats silently treating it
-            // as a resource link, which would confuse the platform.
-            warn!("LTI launch: Deep Linking request received, but not supported yet");
-            return http::response::bad_request("LTI launch: Deep Linking is not supported yet");
-        }
+    // Unknown types are rejected before the expensive user resolution; Deep
+    // Linking requests additionally need valid settings, checked here so a
+    // broken request fails before a session is created.
+    let kind = match launch_kind(&claims) {
+        Some(kind) => kind,
         None => {
             let ty = claims.message_type.as_deref().unwrap_or("<absent>");
             warn!("LTI launch with unsupported message_type '{ty}'");
             return http::response::bad_request("LTI launch: unsupported message type");
         }
-    }
+    };
+    let deep_linking_settings = match kind {
+        LaunchKind::ResourceLink => None,
+        LaunchKind::DeepLinking => {
+            match deeplink::validated_settings(&claims) {
+                Ok(settings) => Some(settings),
+                Err(response) => return response,
+            }
+        }
+    };
 
     // ----- Build the user and create a session ----------------------------------------------
     // Roles come from Opencast, exactly like the OIDC login (#1706). The
@@ -266,6 +273,12 @@ pub(crate) async fn handle_launch(req: Request<Incoming>, ctx: &Context) -> Resp
         Ok(cookie) => cookie,
         Err(response) => return response,
     };
+
+    // A Deep Linking launch continues into the selection flow instead of
+    // landing on content.
+    if let Some(settings) = deep_linking_settings {
+        return deeplink::start_selection(settings, platform, &cookie, ctx).await;
+    }
 
     // Decide where to land: a Tobira series page if the placement carries a
     // `series` custom parameter (an Opencast series ID), otherwise the
@@ -403,6 +416,10 @@ struct LtiClaims {
     /// What kind of message this launch is (resource link, deep linking, …).
     #[serde(rename = "https://purl.imsglobal.org/spec/lti/claim/message_type")]
     message_type: Option<String>,
+
+    /// Settings of a Deep Linking request; only present on those.
+    #[serde(rename = "https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings")]
+    deep_linking_settings: Option<deeplink::DeepLinkingSettingsClaim>,
 
     #[serde(rename = "https://purl.imsglobal.org/spec/lti/claim/deployment_id")]
     deployment_id: String,

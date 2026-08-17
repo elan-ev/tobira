@@ -13,6 +13,7 @@ pub struct Caches {
     pub(crate) user: UserCache,
     pub(crate) callback: AuthCallbackCache,
     pub(crate) lti_login: LtiNonceStore,
+    pub(crate) lti_deep_link: DeepLinkStore,
 }
 
 impl Caches {
@@ -21,6 +22,7 @@ impl Caches {
             user: UserCache::new(),
             callback: AuthCallbackCache::new(),
             lti_login: LtiNonceStore::new(),
+            lti_deep_link: DeepLinkStore::new(),
         }
     }
 
@@ -77,12 +79,23 @@ impl Caches {
                 LTI_LOGIN_TTL,
                 |v| v.created,
             ).await;
+            let next_deep_link_action = cleanup(
+                now,
+                &self.lti_deep_link.0,
+                LTI_DEEP_LINK_TTL,
+                |v| v.created,
+            ).await;
 
             // We will wait until the next entry in the hashmap gets stale, but
             // at least 30s to not do cleanup too often. In case there are no
             // entries currently, it will also retry in 30s. But we will wait
             // at most as long as we would do for an empty cache.
-            let next_action = [next_user_action, next_callback_action, next_lti_action]
+            let next_action = [
+                next_user_action,
+                next_callback_action,
+                next_lti_action,
+                next_deep_link_action,
+            ]
                 .into_iter()
                 .filter_map(|x| x)
                 .min();
@@ -354,6 +367,132 @@ impl LtiNonceStore {
 }
 
 
+/// How long a Deep Linking selection may take before its state expires.
+/// Deliberately generous: a teacher browsing for the right recording is a
+/// human-speed process, unlike the sub-second login round trip.
+const LTI_DEEP_LINK_TTL: Duration = Duration::from_secs(60 * 30);
+
+/// State of one ongoing Deep Linking selection, from the `LtiDeepLinkingRequest`
+/// launch until the signed response is sent back to the platform.
+// TODO: several fields are only read by the return endpoint, which lands in
+// the next commit — hence the temporary `allow(dead_code)`.
+#[allow(dead_code)]
+pub(crate) struct DeepLinkState {
+    /// The platform's `deep_link_return_url` — where the signed response goes.
+    pub(crate) return_url: String,
+
+    /// The `data` value from the settings claim; must be echoed verbatim.
+    pub(crate) data: Option<String>,
+
+    /// The platform this selection belongs to, plus the deployment the
+    /// response JWT must name.
+    pub(crate) issuer: String,
+    pub(crate) client_id: String,
+    pub(crate) deployment_id: String,
+
+    /// The (base64) value of the session cookie created by the launch, to
+    /// verify that confirm requests come from that very session.
+    pub(crate) session_value: String,
+
+    /// The full `Set-Cookie` string of that session, re-issued once by the
+    /// window handoff (the launch happens in an iframe, where the browser
+    /// drops the cookie — the popup needs it again at top level).
+    pub(crate) session_cookie: String,
+
+    /// Whether the one-time window handoff was already used.
+    handoff_used: bool,
+
+    /// The confirmed selection (resolved & authorization-checked server-side),
+    /// set by the confirm endpoint, read by the return endpoint.
+    pub(crate) selection: Option<DeepLinkSelection>,
+
+    created: Instant,
+}
+
+/// A confirmed content selection: everything the response JWT needs.
+// TODO: read by the return endpoint (next commit).
+#[allow(dead_code)]
+#[derive(Clone)]
+pub(crate) struct DeepLinkSelection {
+    pub(crate) title: String,
+    pub(crate) url: String,
+}
+
+/// One-time-use store of ongoing Deep Linking selections, living in [`Caches`]
+/// so it shares the periodic cleanup task.
+pub(crate) struct DeepLinkStore(HashMap<String, DeepLinkState>);
+
+impl DeepLinkStore {
+    fn new() -> Self {
+        Self(HashMap::new())
+    }
+
+    /// Remembers the settings of a just-verified Deep Linking launch.
+    pub(crate) async fn insert(&self, token: String, state: DeepLinkState) {
+        let _ = self.0.insert_async(token, state).await;
+    }
+
+    /// Redeems the one-time window handoff: returns the session `Set-Cookie`
+    /// exactly once. `None` if the token is unknown, expired, or the handoff
+    /// was already used.
+    pub(crate) async fn redeem_handoff(&self, token: &str) -> Option<String> {
+        self.0.update_async(token, |_, state| {
+            if state.handoff_used || state.created.elapsed() > LTI_DEEP_LINK_TTL {
+                return None;
+            }
+            state.handoff_used = true;
+            Some(state.session_cookie.clone())
+        }).await.flatten()
+    }
+
+    /// Stores the confirmed selection iff `session_value` matches the session
+    /// that started this Deep Linking flow. Returns whether it did.
+    pub(crate) async fn confirm(
+        &self,
+        token: &str,
+        session_value: &str,
+        selection: DeepLinkSelection,
+    ) -> bool {
+        self.0.update_async(token, |_, state| {
+            if state.session_value != session_value
+                || state.created.elapsed() > LTI_DEEP_LINK_TTL
+            {
+                return false;
+            }
+            state.selection = Some(selection);
+            true
+        }).await.unwrap_or(false)
+    }
+
+    /// Consumes the whole state, at most once. Called by the return endpoint.
+    pub(crate) async fn take(&self, token: &str) -> Option<DeepLinkState> {
+        self.0.remove_async(token).await
+            .map(|(_, v)| v)
+            .filter(|v| v.created.elapsed() <= LTI_DEEP_LINK_TTL)
+    }
+}
+
+impl DeepLinkState {
+    pub(crate) fn new(
+        return_url: String,
+        data: Option<String>,
+        issuer: String,
+        client_id: String,
+        deployment_id: String,
+        session_value: String,
+        session_cookie: String,
+    ) -> Self {
+        Self {
+            return_url, data, issuer, client_id, deployment_id,
+            session_value, session_cookie,
+            handoff_used: false,
+            selection: None,
+            created: Instant::now(),
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -375,5 +514,47 @@ mod tests {
 
         // Taking the same state again → None (one-time use, i.e. replay protection).
         assert!(store.take("state-1").await.is_none());
+    }
+
+    fn deep_link_state() -> DeepLinkState {
+        DeepLinkState::new(
+            "https://lms.example.org/return".into(), Some("opaque".into()),
+            "https://lms.example.org".into(), "client-a".into(), "1".into(),
+            "sess-value".into(), "id=sess-value; Path=/".into(),
+        )
+    }
+
+    #[tokio::test]
+    async fn deep_link_handoff_is_one_time() {
+        let store = DeepLinkStore::new();
+        store.insert("tok".into(), deep_link_state()).await;
+
+        assert!(store.redeem_handoff("nope").await.is_none());
+        assert_eq!(
+            store.redeem_handoff("tok").await.as_deref(),
+            Some("id=sess-value; Path=/"),
+        );
+        // Second redemption must fail, but the state itself stays usable.
+        assert!(store.redeem_handoff("tok").await.is_none());
+        assert!(store.take("tok").await.is_some());
+    }
+
+    #[tokio::test]
+    async fn deep_link_confirm_requires_matching_session() {
+        let store = DeepLinkStore::new();
+        store.insert("tok".into(), deep_link_state()).await;
+        let selection = || DeepLinkSelection {
+            title: "Lecture 1".into(),
+            url: "https://tobira.example.org/!v/:oc-1".into(),
+        };
+
+        // A different session must not be able to attach a selection.
+        assert!(!store.confirm("tok", "other-session", selection()).await);
+        assert!(store.confirm("tok", "sess-value", selection()).await);
+
+        // The final take returns the confirmed selection, exactly once.
+        let state = store.take("tok").await.unwrap();
+        assert_eq!(state.selection.map(|s| s.title), Some("Lecture 1".into()));
+        assert!(store.take("tok").await.is_none());
     }
 }

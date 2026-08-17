@@ -168,6 +168,13 @@ pub(super) async fn handle(req: Request<Incoming>, ctx: Arc<Context>) -> Respons
             register_req!(HttpReqCategory::Other);
             auth::lti::handle_jwks(&ctx).await
         }
+        // One-time handoff that opens the Deep Linking selection in its own
+        // window (the launch itself happens in an iframe, where the session
+        // cookie cannot be stored).
+        "/~lti/select-window" => {
+            register_req!(HttpReqCategory::Other);
+            auth::lti::deeplink::handle_select_window(req, &ctx).await
+        }
 
         // Currently we just reply with our `index.html` to everything else.
         // That's of course not optimal because for many paths, our frontend
