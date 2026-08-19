@@ -11,7 +11,7 @@ import { Configuration } from "webpack";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_PATH = path.join(__dirname, "src");
 const OUT_PATH = path.join(__dirname, "build");
-const PAELLA_SKIN_PATH = path.join(__dirname, "node_modules", "paella-skins", "skins", "opencast");
+const PAELLA_PATH = path.join(APP_PATH, "paella");
 
 const config = (_env: unknown, argv: { mode: string }): Configuration => ({
     entry: {
@@ -108,26 +108,14 @@ const config = (_env: unknown, argv: { mode: string }): Configuration => ({
             patterns: [
                 { from: path.join(APP_PATH, "fonts.css"), to: path.join(OUT_PATH) },
                 { from: path.join(__dirname, "static"), to: OUT_PATH },
-                { from: PAELLA_SKIN_PATH, to: path.join(OUT_PATH, "paella") },
+                // Our Paella skin: `theme.json` and the icons it wires up.
                 {
-                    from: path.join(APP_PATH, "icons/settings.svg"),
-                    to: path.join(OUT_PATH, "paella/icons"),
+                    from: PAELLA_PATH,
+                    to: path.join(OUT_PATH, "paella"),
+                    globOptions: { ignore: ["**/README.md"] },
                 },
             ],
         }),
-        compiler => {
-            compiler.hooks.afterEmit.tap("AdjustPaellaSkinPlugin", async () => {
-                const outPath = path.join(OUT_PATH, "paella/theme.css");
-                const inPath = path.join(PAELLA_SKIN_PATH, "theme.css");
-                const file = fs.readFileSync(inPath).toString();
-                if (!file.includes(fontDecl)) {
-                    // To guard against updates.
-                    throw new Error("Paella skin CSS changed! Adjust webpack config.");
-                }
-                const out = file.replace(fontDecl, "").replaceAll("font-family: roboto;", "");
-                fs.writeFileSync(outPath, out);
-            });
-        },
         new HtmlWebpackPlugin({
             template: path.join(APP_PATH, "index.html"),
             chunks: ["main"],
@@ -136,13 +124,5 @@ const config = (_env: unknown, argv: { mode: string }): Configuration => ({
 
     devtool: "source-map",
 });
-
-const fontDecl = `@font-face {
-  font-family: roboto;
-  src: local('Roboto'),
-       url(Roboto-Regular.woff2) format('woff2'),
-       url(Roboto-Regular.woff) format('woff'),
-       url(Roboto-Regular.ttf) format('truetype');
-}`;
 
 export default config;

@@ -1,22 +1,28 @@
 import { useEffect, useRef } from "react";
-import { Config, Manifest, Paella, Source, Stream } from "paella-core";
-import getBasicPluginsContext from "paella-basic-plugins";
-import getZoomPluginContext from "paella-zoom-plugin";
-import getMP4MultiQualityContext from "paella-mp4multiquality-plugin";
-import getUserTrackingPluginsContext from "paella-user-tracking";
-import getSlidePluginsContext from "paella-slide-plugins";
-import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
+import { Manifest, Paella, Source, Stream } from "@asicupv/paella-core";
+import { basicPlugins } from "@asicupv/paella-basic-plugins";
+import { zoomPlugins } from "@asicupv/paella-zoom-plugin";
+import { userTrackingPlugins } from "@asicupv/paella-user-tracking";
+import { videoPlugins } from "@asicupv/paella-video-plugins";
+import { slidePlugins } from "@asicupv/paella-slide-plugins";
+import coreStyles from "@asicupv/paella-core/paella-core.css";
+import basicPluginStyles from "@asicupv/paella-basic-plugins/paella-basic-plugins.css";
+import slidePluginStyles from "@asicupv/paella-slide-plugins/paella-slide-plugins.css";
+import zoomPluginStyles from "@asicupv/paella-zoom-plugin/paella-zoom-plugin.css";
+import { css, Global } from "@emotion/react";
+import { screenWidthAtMost } from "@opencast/appkit";
 
-import { isHlsTrack, PlayerEvent, Track } from ".";
+import { getPlayerAspectRatio, isHlsTrack, PlayerEvent, Track } from ".";
 import { SPEEDS, TRANSLATIONS } from "./consts";
 import { captionsWithLabels, timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
+import { installVolumeSlider } from "./volumeSlider";
+import { installSeekBarTapHandler } from "./seekBar";
 import CONFIG from "../../config";
 import i18n from "../../i18n";
 import { SKIP_INTERVAL } from "./consts";
-import { screenWidthAtMost } from "@opencast/appkit";
 import { BREAKPOINT_SMALL } from "../../GlobalStyle";
 
 
@@ -27,8 +33,50 @@ type PaellaPlayerProps = {
 export type PaellaState = {
     player: Paella;
     loadPromise: Promise<void>;
-    removeUiHandlers?: () => void;
+    removeHandlers?: (() => void)[];
 };
+
+/**
+ * Wraps Paella's own CSS so that it only applies inside the player.
+ *
+ * We have to load that CSS ourselves since Paella 8 ships it as separate files
+ * instead of putting it into the JS. And sadly we can't just throw it into the
+ * page as is, because a few of its rules aren't limited to the player at all:
+ * it styles every single `svg` (including `pointer-events: none`, which would
+ * break all of our icon buttons), sets a font size on every `button` and `a`,
+ * and puts ~150 variables on `:root`. So everything goes inside
+ * `.player-container`. We use `:where` for that, as it doesn't count towards
+ * specificity, so Paella's rules keep the weight they were written with and our
+ * own overrides below still win.
+ *
+ * The two replacements are a bit annoying:
+ *
+ * - Paella's rules that already talk about `:root` or `.player-container` mean
+ *   *our* wrapper, not something inside it, so those become `&`.
+ * - Selectors starting with a `:` get glued right onto the wrapper instead of
+ *   being nested below it. Paella's `:is(button, a) .button-title-small` would
+ *   turn into `.player-container:is(button, a) ...`, and our player div is
+ *   neither a button nor a link, so that would simply never match anything. The
+ *   `& ` we stick in front makes them descendants again. We only do that at the
+ *   start of a rule, because a `:` after a comma could be either case
+ *   (`:is(a, :hover)` vs `.a, :hover`) — luckily Paella has no selector list
+ *   that starts with a pseudo class.
+ */
+const scopePaellaCss = (packageCss: string) => css`
+    :where(.player-container) {
+        ${packageCss
+        .replaceAll(/:root|\.player-container/gu, "&")
+        .replaceAll(/(^|[{}])\s*(::?[a-zA-Z-])/gu, "$1& $2")}
+    }
+`;
+
+const PAELLA_PACKAGE_STYLES = [
+    coreStyles,
+    basicPluginStyles,
+    slidePluginStyles,
+    zoomPluginStyles,
+].map(scopePaellaCss);
+
 
 const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     const { t, i18n } = useTranslation();
@@ -74,7 +122,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 metadata: {
                     title: event.title,
                     duration: fixedDuration,
-                    preview: event.syncedData.thumbnail,
+                    preview: event.syncedData.thumbnail ?? undefined,
 
                     // These are not strictly necessary for Paella to know, but can be used by
                     // plugins, like the Matomo plugin. It is not well defined what to pass how,
@@ -87,6 +135,7 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     license: event.metadata.dcterms?.license,
                     location: event.metadata.dcterms?.spatial,
                     isLive: event.isLive, // Not passed by the OC integration, but useful.
+                    timelineMarks: "frameList",
                 },
                 streams: Object.entries(tracksByKind).map(([key, tracks]) => ({
                     content: key,
@@ -94,22 +143,26 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 })),
                 captions: captionsWithLabels(event.authorizedData.captions, t).map(
                     ({ label, caption }) => ({
+                        id: caption.uri,
                         format: "vtt",
                         url: caption.uri,
-                        lang: caption.lang ?? undefined,
+                        lang: caption.lang ?? "",
                         text: label,
                     }),
                 ),
-                frameList: event.authorizedData.segments.map(segment => {
-                    const time = segment.startTime / 1000;
-                    return {
-                        id: "frame_" + time,
-                        mimetype: "image/jpeg",
-                        time,
-                        url: segment.uri,
-                        thumb: segment.uri,
-                    };
-                }),
+                frameList: {
+                    targetContent: "presentation",
+                    frames: event.authorizedData.segments.map(segment => {
+                        const time = segment.startTime / 1000;
+                        return {
+                            id: "frame_" + time,
+                            mimetype: "image/jpeg",
+                            time,
+                            url: segment.uri,
+                            thumb: segment.uri,
+                        };
+                    }),
+                },
             };
 
             // If there are no presenter tracks (and there is more than one
@@ -124,29 +177,26 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
             }
 
             const player = new Paella(ref.current, {
-                // Paella has a weird API unfortunately. It by default loads two
-                // files via `fetch`. But we can provide that data immediately
-                // since we just derive it from our GraphQL data. So we
-                // override all functions (which Paella luckily allows) to do
-                // nothing except immediately return the data.
-                loadConfig: async () => PAELLA_CONFIG as Config,
+                // Paella 8 fetches its configuration and the video manifest by
+                // default. We have both already (they are derived from our
+                // GraphQL data) so these hand them over directly and Paella
+                // makes no request of its own.
+                loadConfig: async () => PAELLA_CONFIG,
                 getVideoId: async () => event.opencastId,
-                getManifestUrl: async () => "dummy-url",
-                getManifestFileUrl: async () => "dummy-file-url",
                 loadVideoManifest: async () => manifest,
-                loadDictionaries: (player: Paella) => {
+                loadDictionaries: async (player: Paella) => {
                     Object.entries(TRANSLATIONS).forEach(([lang, dict]) => {
                         player.addDictionary(lang, dict);
                     });
                     player.setLanguage(i18n.language);
                 },
                 configResourcesUrl: "/~assets/paella",
-                customPluginContext: [
-                    getBasicPluginsContext(),
-                    getZoomPluginContext(),
-                    getUserTrackingPluginsContext(),
-                    getMP4MultiQualityContext(),
-                    getSlidePluginsContext(),
+                plugins: [
+                    ...basicPlugins,
+                    ...zoomPlugins,
+                    ...userTrackingPlugins,
+                    ...videoPlugins,
+                    ...slidePlugins,
                 ],
             });
 
@@ -156,107 +206,110 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 register(player);
                 const time = new URL(window.location.href).searchParams.get("t");
                 if (!event.isLive && time) {
-                    player.videoContainer.setCurrentTime(timeStringToSeconds(time));
+                    player.videoContainer?.setCurrentTime(timeStringToSeconds(time));
                 }
+                writeSkipIntervalIntoIcons(player);
             });
 
             player.bindEvent("paella:play", () => {
                 setActivePlayer(player);
                 players.forEach((playerInstance: Paella) => {
                     if (playerInstance && playerInstance !== player) {
-                        playerInstance.videoContainer.pause();
+                        playerInstance.videoContainer?.pause();
                     }
                 });
             });
 
-            const removeUiHandlers = installUiActivityHandlers(player);
+            const removeHandlers = [
+                installUiActivityHandlers(player),
+                installVolumeSlider(player),
+                installSeekBarTapHandler(player),
+            ];
 
             const loadPromise = player.skin.loadSkin(CONFIG.paellaThemeJson)
                 .then(() => player.loadManifest());
-            paella.current = { player, loadPromise, removeUiHandlers };
+            paella.current = { player, loadPromise, removeHandlers };
         }
 
         const paellaSnapshot = paella.current;
         return () => {
-            paellaSnapshot.removeUiHandlers?.();
+            paellaSnapshot.removeHandlers?.forEach(remove => remove());
             unregister(paellaSnapshot.player);
             paella.current = undefined;
             paellaSnapshot.loadPromise.then(() => {
-                paellaSnapshot.player.unload();
+                // Hacky workaround alert:
+                // The `setTimeout` seems to be necessary in dev (sth sth StrictMode)
+                // since Paella 8's `loadManifest` resolves slightly too early.
+                // Unloading immediately after loading causes incomplete plugin data,
+                // which then throws errors in console.
+                // Deferring by a task lets that data load completely first.
+                setTimeout(() => paellaSnapshot.player.unload());
             });
         };
     }, [event, t]);
+
+    const aspectRatio = getPlayerAspectRatio(event.authorizedData.tracks);
 
     // This is `neutral10` in dark mode. We hard code this here as it's really
     // not important that an adjusted neutral tone is reflected in the player.
     // We just want to override the default dark blue.
     const toolbarBg = "#1e1e1e";
-    const colors = {
+    const overrides = {
         "--main-bg-color": toolbarBg,
-        "--main-bg-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
-        "--secondary-bg-color": "#2e2e2e",
-        "--secondary-bg-color-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
+        "--main-fg-color": "#F9FAFB",
+
+        // From `paella-skins`. Only used for the layout buttons of dual stream
+        // videos, hence the odd blue-grey.
+        "--main-bg-color-hover": "#1F2937",
+
+        // From `paella-skins`. Paella references this for `:focus-visible`
+        // outlines, but never defines it. Without it the outline falls back to
+        // the text color.
+        "--main-outline-color": "#f200f2",
+
+        "--playback-bar-gradient": `color-mix(in srgb, ${toolbarBg} 80%, transparent)`,
+        "--playback-bar-gradient-hover": `color-mix(in srgb, ${toolbarBg} 90%, transparent)`,
+        "--playback-bar-backdrop-filter": "unset",
+        "--playback-bar-backdrop-filter-hover": "unset",
+        "--button-color": "#F9FAFB",
+        "--icon-color": "#F9FAFB",
         "--highlight-bg-color": "#444",
         "--highlight-bg-color-hover": "#444",
-        "--highlight-bg-color-progress-indicator": "var(--color-player-accent-light)",
-        "--volume-slider-fill-color": "var(--color-player-accent-light)",
-        "--volume-slider-empty-color": "#555",
+        "--progress-indicator-elapsed-color": "var(--color-player-accent-light)",
+        "--progress-indicator-remaining-color": "#555",
         "--video-container-background-color": "#000",
         "--base-video-rect-background-color": "#000",
+
+        "--button-fixed-height": "40px",
+        "--button-fixed-width": "40px",
+        "--canvas-button-gap": "4px",
+        "--canvas-button-height": "unset",
+        "--canvas-button-container-padding": "8px",
+
+        // Progress bar
+        "--slide-marker-gap": "2px",
+        "--handler-size": "16px",
+        // This applies on hover:
+        "--progress-indicator-slide-marker-height": "10px",
+
+        // Pop-up menus
+        "--popup-wrapper-padding": "5px",
+        "--popup-border-radius": "3px",
+        "--popup-box-shadow": `0 0 4px 0 ${toolbarBg}`,
+        "--popup-padding": "0px 10px",
+        "--popup-menu-item-height": "40px",
+        "--popup-menu-item-font-size": "16px",
     };
 
     return <>
-        <Global styles={{
-            "body > .popup-container": colors,
-            "body:has(.paella-fallback-fullscreen)": {
-                overflow: "hidden",
-            },
-            ".popup-container": {
-                zIndex: 500050,
-                "& .button-group": {
-                    "& .button-plugin-wrapper:hover, button:hover": {
-                        backgroundColor: "var(--highlight-bg-color-hover)",
-                    },
-                },
-                '& button[name="es.upv.paella.qualitySelector"] div': {
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    i: {
-                        display: "none",
-                    },
-                    span: {
-                        color: "var(--main-fg-color)",
-                        backgroundColor: "var(--main-bg-color)",
-                        border: "2px solid var(--main-fg-color)",
-                        borderRadius: 3,
-                        margin: "0 !important",
-                        fontSize: "10px !important",
-                        fontWeight: "bold",
-                        padding: "2px 3px",
-                    },
-                },
-                [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                    "& .popup-content": {
-                        transform: "scale(0.9)",
-                        padding: "4px 0",
-                    },
+        <Global styles={[
+            ...PAELLA_PACKAGE_STYLES,
+            {
+                "body:has(.paella-fallback-fullscreen)": {
+                    overflow: "hidden",
                 },
             },
-            ".paella-fallback-fullscreen": {
-                position: "fixed !important" as "fixed",
-                inset: "0 !important",
-                zIndex: "499 !important",
-            },
-            [`.${UI_HIDDEN_CLASS}`]: {
-                "& .playback-bar, & .button-area": {
-                    display: "none !important",
-                },
-            },
-            [`body:has(.${UI_HIDDEN_CLASS}) > .popup-container`]: {
-                display: "none !important",
-            },
-        }} />
+        ]} />
         <div
             // We use `key` here to force React to re-create this `div` and not
             // reuse the old one. This is useful as Paella's cleanup function
@@ -275,7 +328,22 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 top: "unset",
                 fontFamily: "unset",
 
-                ...colors,
+                ...overrides,
+
+                // The old paella version had this internally and it prevents a thin line above
+                // the player in preview state on very specific screen widths
+                // (starting from 328px and then in increments of 16px).
+                // I don't wanna spend time investigating this further, so I'd rather just add these
+                // overrides.
+                ".video-container": {
+                    position: "absolute",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                },
+
+                ".landscape-container": {
+                    gap: 7,
+                },
 
                 // Buttons inside video containers
                 "& .video-canvas": {
@@ -284,14 +352,49 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                 },
                 "& .preview-container": {
                     backgroundColor: "#000 !important",
-                    "div, div img": {
-                        height: "inherit",
-                    },
-                    "div img": {
+                    // The preview should occupy exactly the box that the video
+                    // occupies once it is loaded, i.e. the video's aspect ratio
+                    // fitted into the container. We cannot rely on the
+                    // thumbnail's own aspect ratio for that, so
+                    // instead we size this box via the video's aspect ratio
+                    // (`height: 100%` plus `aspect-ratio`; the container is
+                    // never narrower than the video, so the width always fits)
+                    // and let `object-fit: cover` crop whatever bars the
+                    // thumbnail brings along.
+                    "> .preview-image-container": {
                         display: "block",
-                        margin: "0 auto",
-                        width: "unset !important",
+                        height: "100%",
+                        width: "auto",
+                        aspectRatio: `${aspectRatio[0]} / ${aspectRatio[1]}`,
+                        flexShrink: 0,
                     },
+                    "img": {
+                        display: "block",
+                        width: "100% !important",
+                        height: "100% !important",
+                        objectFit: "cover",
+                    },
+                },
+                "& .button-area svg": {
+                    fill: "var(--button-color)",
+                },
+                // From `paella-skins`.
+                "& .video-canvas .button-area button": {
+                    backgroundColor: "var(--highlight-bg-color-hover)",
+                    boxSizing: "border-box",
+                    width: 32,
+                    height: 32,
+                    padding: 4,
+                },
+                // From `paella-skins`.
+                "& button": {
+                    cursor: "pointer",
+                },
+                // From `paella-skins`. Buttons that are faded out should be
+                // fully visible while focused. Paella draws the outline itself,
+                // but does nothing about the opacity.
+                "& button:focus-visible": {
+                    opacity: 1,
                 },
                 "@container video-canvas (width < 400px)": {
                     "& .button-area": {
@@ -304,29 +407,72 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     },
                 },
 
+                // Control bar elements
                 "& .playback-bar": {
                     transition: "background 0.08s",
-                },
-                "& .progress-indicator-remaining": {
-                    backgroundColor: "#9e9e9e !important",
-                },
-                "& .progress-indicator-content": {
-                    opacity: "unset",
+                    // From `paella-skins`.
+                    userSelect: "none",
+
+                    // Default appears to be "hidden",
+                    // which actually hides the slide previews as well.
+                    overflow: "visible",
                 },
 
-                '& div[name="es.upv.paella.customTimeProgressIndicator"]': {
+                // From `paella-skins`.
+                "& .playback-bar .button-plugins": {
+                    height: "calc(var(--button-fixed-height) - 1px)",
+                    boxSizing: "content-box",
+                    padding: 4,
+                },
+
+                "& .playback-bar-container, & .pop-up-wrapper": {
+                    minHeight: 0,
+                },
+
+                "& .timeline-preview p": {
+                    // Otherwise our global override would make the timestamps invisible.
+                    color: "inherit",
+                },
+
+                // From `paella-skins`.
+                "& .playback-bar button": {
                     fontWeight: "bold",
                 },
 
-                '& button[name="es.upv.paella.backwardButtonPlugin"] div': {
+                "& .playback-bar button i svg": {
+                    fill: "var(--main-fg-color)",
+                    color: "var(--main-fg-color)",
+                },
+                '& div[name="es.upv.paella.currentTimeLabel"]': {
+                    fontWeight: "bold",
+                    padding: "3px 5px 2px 5px",
+                    span: {
+                        fontSize: 12,
+                    },
+                },
+
+                '& button[name="es.upv.paella.playbackRateButton"]': {
+                    fontSize: 12,
+                    padding: "0 9px",
+                    paddingTop: 1,
+                    minWidth: "unset !important",
+                },
+
+                '& button[name="es.upv.paella.playPauseButton"] i': {
+                    height: "unset",
+                },
+
+                '& button[name="es.upv.paella.backwardButtonPlugin"] i': {
                     marginTop: "-7px !important",
+                    height: "unset",
                     "svg text": {
                         transform: "translate(0px, -1px)",
                         fontFamily: "var(--main-font) !important",
                     },
                 },
-                '& button[name="es.upv.paella.forwardButtonPlugin"] div': {
+                '& button[name="es.upv.paella.forwardButtonPlugin"] i': {
                     marginTop: "-7px !important",
+                    height: "unset",
                     "svg text": {
                         transform: "translate(2px, -1px)",
                         fontFamily: "var(--main-font) !important",
@@ -348,8 +494,115 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     },
                 },
 
+                // From `paella-skins`. Paella gives the `<i>` a fixed pixel size
+                // and spins it; this scales it with the player and spins the
+                // icon inside instead, so that a non-square icon doesn't wobble.
+                "& .loader-container i": {
+                    width: "21%",
+                    height: "unset",
+                    aspectRatio: "1",
+                    animation: "unset",
+
+                    "svg": {
+                        animation: "spin 1s linear infinite",
+                    },
+                },
+
+                "& .progress-indicator": {
+                    boxSizing: "border-box",
+                    padding: 0,
+                    // From `paella-skins`. Paella sizes this from the handler
+                    // and slide markers, which makes for a very thin hit area,
+                    // and lets it span the full width.
+                    height: 26,
+                    width: "calc(100% - 30px)",
+                    marginLeft: 15,
+                },
+
+                "& .playback-bar nav": {
+                    padding: "3.5px 9px",
+                },
+
                 ":hover .preview-play-icon, .loader-container i": {
                     opacity: "1 !important",
+                },
+
+                // Volume slider. See `volumeSlider.ts` for the JS side of this
+                // and for why any of it is necessary.
+                "& .volume-button + span": {
+                    display: "flex",
+                    marginLeft: 10,
+                    input: {
+                        width: 100,
+                    },
+                    // Strip the native track and thumb: the track should show
+                    // our gradient and nothing else, to mirror our previous styling.
+                    "input[type=range].isu": {
+                        "::-moz-range-track": { height: 8, border: 0 },
+                        "::-webkit-slider-runnable-track": { height: 8, border: 0 },
+                        "::-moz-range-thumb": { appearance: "none", width: 0, border: 0 },
+                        "::-webkit-slider-thumb": { appearance: "none", width: 0, border: 0 },
+
+                        // Just don't ask, ok...
+                        ":hover": {
+                            display: "flex",
+                        },
+                    },
+                },
+
+                // Keep the slider visible while its button is hovered or
+                // focused. Paella reveals the slider on the button's
+                // `mouseover`/`focus` but re-hides it (adds `.hidden`, i.e.
+                // `display: none`) shortly after the button loses focus — and
+                // it blurs the button on every click. So muting/unmuting made
+                // the already-open slider blink out again. This overrides that
+                // hide while the pointer/focus is still on the control, so the
+                // press no longer flickers the slider. Paella's own
+                // `.side-container.hidden:hover`/`:focus-within` rules still
+                // hide it once the control is left.
+                ["& .volume-button:hover + .side-container, "
+                    + "& .volume-button:focus + .side-container"]: {
+                    display: "flex !important",
+                },
+
+                // Captions. All of these are from `paella-skins`.
+                "& .captions-canvas": {
+                    "& .text-container": {
+                        backgroundColor:
+                            "color-mix(in srgb, var(--main-bg-color) 70%, transparent)",
+                        left: "15%",
+                        right: "15%",
+                        width: "unset",
+                    },
+                    "&.visible-ui .text-container": {
+                        bottom: 75,
+                    },
+                    // Paella's own sizes are a good deal larger than what we want.
+                    "&.size-s .text-container": { fontSize: 12, padding: 2 },
+                    "&.size-m .text-container": { fontSize: 15, padding: 3 },
+                    "&.size-l .text-container": { fontSize: 20, padding: 4 },
+                    "&.size-xl .text-container": { fontSize: 25, padding: 5 },
+                    "&.size-xxl .text-container": { fontSize: 30, padding: 6 },
+                },
+
+
+                // Several of our icons (the layout and captions ones, for
+                // example) have no `fill` of their own and rely on being
+                // colored from the outside, which Paella only does in the
+                // playback bar. In a menu they would render black on black.
+                // Icons that bring their own `fill` (usually `none`, being
+                // stroke-only) have to be left alone.
+                "& .pop-up-content .menu-icon svg:not([fill])": {
+                    fill: "var(--icon-color)",
+                },
+
+                [`&.${UI_HIDDEN_CLASS} .playback-bar, &.${UI_HIDDEN_CLASS} .button-area`]: {
+                    display: "none !important",
+                },
+                "&.paella-fallback-fullscreen": {
+                    position: "fixed !important" as "fixed",
+                    inset: "0 !important",
+                    zIndex: "499 !important",
                 },
 
                 [screenWidthAtMost(600)]: {
@@ -377,38 +630,31 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
                     // css workaround. This way, the time is only circumcised in portrait mode
                     // but still fully visible in landscape.
                     // Does not account for videos lengths >= 100h.
-                    '& div[name="es.upv.paella.customTimeProgressIndicator"]': {
+                    '& div[name="es.upv.paella.currentTimeLabel"]': {
                         width: event.syncedData.duration < 3600000 ? "5ch" : "8ch",
                         overflowY: "hidden",
-                    },
-
-                    // The slider is hidden by paella magic on mobile devices, but not on
-                    // very narrow desktop windows. At least sometimes. The behavior appears
-                    // to be inconsistent. We shrink it a little, just in case it does decide
-                    // to show up and mess with the layout. The positioning rules are needed
-                    // to prevent unexplainable layout shifts.
-                    "& .volume-slider": {
-                        width: 70,
-                        transform: "scale(0.9)",
-
-                        position: "absolute",
-                        bottom: 0.5,
-                        margin: "0 -1px",
                     },
                 },
 
                 [screenWidthAtMost(BREAKPOINT_SMALL)]: {
-                    // On iOS, the volume button itself is completely hidden, but I think
-                    // that having at the least the option to mute a video is a good thing,
-                    // so we keep it on other devices. But just in case, this forces the slider
-                    // to hide, mainly to prevent the inconsistent behavior mentioned above.
-                    "& .volume-slider": {
+                    "& .pop-up .pop-up-content": {
+                        transform: "scale(0.9)",
+                        padding: "4px 0",
+                    },
+
+                    // Volume slider. On iOS, the volume button itself is completely
+                    // hidden, but I think that having at the least the option to mute a
+                    // video is a good thing, so we keep it on other devices. But just in
+                    // case, this forces the slider to hide, mainly to prevent the
+                    // inconsistent behavior mentioned above.
+                    "& input[type=range].isu": {
                         display: "none !important",
                     },
                 },
 
                 [screenWidthAtMost(330)]: {
-                    // Below 331px we always hide the button to prevent line breaks.
+                    // Volume slider. Below 331px we always hide the button to
+                    // prevent line breaks.
                     "& .volume-button": {
                         display: "none !important",
                     },
@@ -418,7 +664,9 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     </>;
 };
 
+
 export const UI_HIDDEN_CLASS = "paella-ui-hidden";
+
 const installUiActivityHandlers = (player: Paella) => {
     const container = player.containerElement;
     const onActivity = () => {
@@ -434,6 +682,15 @@ const installUiActivityHandlers = (player: Paella) => {
     events.forEach(e => container.addEventListener(e, onActivity));
 
     return () => events.forEach(e => container.removeEventListener(e, onActivity));
+};
+
+// Filling that in is really the button plugins' job, but I fail to understand
+// why that isn't working (I assume it's because the plugins are outdated).
+// So, another hacky workaround it is.
+const writeSkipIntervalIntoIcons = (player: Paella) => {
+    player.containerElement.querySelectorAll(".time-text").forEach(el => {
+        el.textContent = String(SKIP_INTERVAL);
+    });
 };
 
 
@@ -475,7 +732,7 @@ const PAELLA_CONFIG = {
             // These cannot be changed dynamically, but using translations here will
             // at least work for users that don't usually switch their language.
             description: i18n.t("player.options.title"),
-            icon: CONFIG.paellaSettingsIcon.replace(/^\/~assets\/paella/, ""),
+            icon: CONFIG.paellaSettingsIcon,
             order: 6,
             side: "right",
             tabIndex: 6,
@@ -582,10 +839,10 @@ const PAELLA_CONFIG = {
             order: 0,
             tabIndex: 1,
         },
-        "es.upv.paella.customTimeProgressIndicator": {
+        "es.upv.paella.currentTimeLabel": {
             enabled: true,
             textSize: "large",
-            showTotal: true,
+            showTotalTime: true,
             order: 1,
         },
         "es.upv.paella.backwardButtonPlugin": {

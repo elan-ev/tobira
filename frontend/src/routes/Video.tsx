@@ -912,7 +912,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
 
             return <ProtoButton
                 key={index}
-                onClick={() => paella.current?.player.videoContainer.setCurrentTime(timestamp)}
+                onClick={() => paella.current?.player.videoContainer?.setCurrentTime(timestamp)}
                 css={{
                     color: COLORS.primary0,
                     ":hover": {
@@ -967,7 +967,7 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                     videoLink={window.location.href}
                     onOpen={setTimestamp => {
                         if (playerIsLoaded) {
-                            paella.current?.player.videoContainer.currentTime().then(setTimestamp);
+                            paella.current?.player.videoContainer?.currentTime().then(setTimestamp);
                         }
                     }}
                 />
