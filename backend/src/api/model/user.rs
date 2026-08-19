@@ -94,6 +94,12 @@ impl User {
         HasRoles::is_tobira_admin(self, &context.config.auth)
     }
 
+    /// `True` if the user is a global Opencast administrator and can do
+    /// anything.
+    fn is_admin(&self, context: &Context) -> bool {
+        HasRoles::is_admin(self, &context.config.auth)
+    }
+
     /// Returns all events that somehow "belong" to the user, i.e. that appear
     /// on the "my videos" page. This also returns events that have been marked
     /// as deleted (meaning their deletion in Opencast has been requested but they

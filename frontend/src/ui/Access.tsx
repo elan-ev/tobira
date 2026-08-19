@@ -827,9 +827,8 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
     const resetModalRef = useRef<ModalHandle>(null);
 
     const containsUser = (acl: Acl) => isRealUser(user) && (
-        userIsOwner || user.roles.some(r => r === COMMON_ROLES.ADMIN
-            || acl.get(r)?.actions.has(kind)
-            || inheritedAcl?.get(r)?.actions.has(kind))
+        userIsOwner || user.isAdmin || user.roles.some(r =>
+            acl.get(r)?.actions.has(kind) || inheritedAcl?.get(r)?.actions.has(kind))
     );
 
     const selectionIsInitial = selections.size === initialAcl.size
