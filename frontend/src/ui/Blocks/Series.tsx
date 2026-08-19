@@ -49,6 +49,7 @@ const seriesFragment = graphql`
         description
         state
         canWrite
+        hasPublicVideos
         entries {
             __typename
             ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: false) }
@@ -131,7 +132,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
             shareUrl: props.realmPath == null
                 ? DirectSeriesRoute.url({ seriesId: series.id })
                 : SeriesRoute.url({ realmPath: props.realmPath, seriesId: series.id }),
-            rssUrl: `/~rss/series/${seriesKey}`,
+            rssUrl: series.hasPublicVideos ? `/~rss/series/${seriesKey}` : undefined,
         }}
         linkToManagePage={ManageSeriesDetailsRoute.url({ id: series.id })}
     />;

@@ -89,6 +89,7 @@ const query = graphql`
             canWrite
             description
             state
+            hasPublicVideos
             tobiraDeletionTimestamp
             thumbnailStack { thumbnails { url live audioOnly state }}
             entries {

@@ -479,7 +479,7 @@ const buttonStyle = {
 
 type VideoListShareButtonProps = {
     shareUrl: string;
-    rssUrl: string;
+    rssUrl?: string;
     kind: ListKind;
     className?: string;
     hideLabel?: boolean;
@@ -491,7 +491,6 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
     const { t } = useTranslation();
 
     const directLinkUrl = document.location.origin + shareUrl;
-    const rssLinkUrl = document.location.origin + rssUrl;
 
     const tabs = {
         "main": {
@@ -502,13 +501,18 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
                 <QrCodeButton label={t("share.link")} target={directLinkUrl} />
             </>,
         },
-        "rss": {
-            label: t("share.rss"),
-            Icon: LuRss,
-            render: () => <>
-                <CopyableInput label={t("share.copy-rss")} value={rssLinkUrl} />
-                <QrCodeButton label={t("share.rss")} target={rssLinkUrl} />
-            </>,
+        ...rssUrl != null && {
+            "rss": {
+                label: t("share.rss"),
+                Icon: LuRss,
+                render: () => {
+                    const rssLinkUrl = document.location.origin + rssUrl;
+                    return <>
+                        <CopyableInput label={t("share.copy-rss")} value={rssLinkUrl} />
+                        <QrCodeButton label={t("share.rss")} target={rssLinkUrl} />
+                    </>;
+                },
+            },
         },
     };
     return <ShareButton height={180} {...{ tabs, className, hideLabel, kind }} css={buttonStyle} />;

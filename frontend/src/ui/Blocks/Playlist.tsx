@@ -45,6 +45,7 @@ const playlistFragment = graphql`
             description
             creator
             canWrite
+            hasPublicRssFeed
             entries {
                 __typename
                 ... on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
@@ -139,7 +140,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
             shareUrl: props.realmPath == null
                 ? DirectPlaylistRoute.url({ playlistId: playlist.id })
                 : PlaylistRoute.url({ realmPath: props.realmPath, playlistId: playlist.id }),
-            rssUrl: `/~rss/playlist/${playlistKey}`,
+            rssUrl: playlist.hasPublicRssFeed ? `/~rss/playlist/${playlistKey}` : undefined,
         }}
         linkToManagePage={ManagePlaylistDetailsRoute.url({ id: playlist.id })}
     />;

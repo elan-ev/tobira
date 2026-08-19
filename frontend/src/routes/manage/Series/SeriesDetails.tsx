@@ -107,7 +107,7 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
     const shareInfo = {
         kind: "series" as const,
         shareUrl: `/!s/${seriesKey}`,
-        rssUrl: `/~rss/series/${seriesKey}`,
+        rssUrl: series.hasPublicVideos ? `/~rss/series/${seriesKey}` : undefined,
     };
 
     const disableDelete = CONFIG.behavior.disallowEventsWithoutSeries && series.entries.length > 0;

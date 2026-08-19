@@ -88,6 +88,7 @@ const query = graphql`
                     numEntries
                     readRoles
                     writeRoles
+                    hasPublicRssFeed
                     thumbnailStack { thumbnails { url live audioOnly state }}
                     hostRealms { id }
                 }
@@ -124,7 +125,7 @@ const PlaylistItem: React.FC<{ item: SinglePlaylist }> = ({ item }) => <ListItem
     renderShareButton={url => <VideoListShareButton
         kind="playlist"
         shareUrl={url}
-        rssUrl={`/~rss/playlist/${keyOfId(item.id)}`}
+        rssUrl={item.hasPublicRssFeed ? `/~rss/playlist/${keyOfId(item.id)}` : undefined}
         hideLabel
     />}
 />;

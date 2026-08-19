@@ -111,7 +111,8 @@ pub(crate) async fn generate_playlist_feed(
     let query = format!("select {selection} from events \
         where opencast_id = any(event_entry_ids((\
             select entries from playlists where id = $1 and read_roles && $2\
-        )))",
+        ))) \
+        and read_roles && $2",
     );
     let events = db.query_raw(&query, dbargs![&playlist_id, &auth.roles_vec()])
         .await

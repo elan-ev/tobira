@@ -351,6 +351,7 @@ impl AuthorizedEvent {
                     write_roles: None,
                     num_videos: LazyLoad::NotLoaded,
                     thumbnail_stack: LazyLoad::NotLoaded,
+                    has_public_videos: LazyLoad::NotLoaded,
                     tobira_deletion_timestamp: None,
                 }))
             } else {

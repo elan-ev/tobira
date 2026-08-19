@@ -89,6 +89,7 @@ const query = graphql`
                 canWrite
                 readRoles
                 writeRoles
+                hasPublicRssFeed
                 acl { role actions info { label implies large } }
                 updated
                 thumbnailStack { thumbnails { url live audioOnly state }}
