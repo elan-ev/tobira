@@ -558,7 +558,12 @@ const VideoListManageButton: React.FC<VideoListManageButtonProps> = ({ link, kin
 
 export const LIST_ORDERS = ["ORIGINAL", "AZ", "ZA", "NEW_TO_OLD", "OLD_TO_NEW"] as const;
 export type Order = typeof LIST_ORDERS[number];
-export type VideoListLayout = "GALLERY" | "LIST" | "SLIDER";
+export const LIST_LAYOUTS = ["GALLERY", "LIST", "SLIDER"] as const;
+export type VideoListLayout = typeof LIST_LAYOUTS[number];
+
+export const parseVideoListLayout = (s: string | null): VideoListLayout | null => (
+    s && (LIST_LAYOUTS as readonly string[]).includes(s) ? s as VideoListLayout : null
+);
 
 export type LayoutOrderContext = {
     layoutState: VideoListLayout;

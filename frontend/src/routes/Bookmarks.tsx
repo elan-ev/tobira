@@ -18,8 +18,9 @@ import { Link } from "../router";
 import { LinkButton } from "../ui/LinkButton";
 import { BookmarksManageRoute } from "./manage/Bookmarks";
 import {
-    categorizeEvent, LayoutOrderContext, readVideoListEventDataFragment, UpcomingEventsGrid,
-    VideoListBlockContainer, VideoListItem, VideoListItems, VideoListLayout, VideoListLayoutMenu,
+    categorizeEvent, LayoutOrderContext, parseVideoListLayout, readVideoListEventDataFragment,
+    UpcomingEventsGrid, VideoListBlockContainer, VideoListItem, VideoListItems, VideoListLayout,
+    VideoListLayoutMenu,
 } from "../ui/Blocks/VideoList";
 import { paginationControlStyles, PaginationNav } from "../ui/PaginationNav";
 import { CollapsibleBlock } from "../ui/CollapsibleBlock";
@@ -215,6 +216,8 @@ type FeedProps = {
 
 const ALLOWED_INLINE_UPCOMING_ITEMS = 3;
 
+const LOCAL_STORAGE_KEY_LAYOUT = "tobira.bookmarks.feed.layout";
+
 const Feed: React.FC<FeedProps> = ({ feed, page }) => {
     const { t } = useTranslation();
 
@@ -234,7 +237,12 @@ const Feed: React.FC<FeedProps> = ({ feed, page }) => {
         upcomingItems = [];
     }
 
-    const [layoutState, setLayoutState] = useState<VideoListLayout>("GALLERY");
+    const initialLayout = parseVideoListLayout(localStorage.getItem(LOCAL_STORAGE_KEY_LAYOUT));
+    const [layoutState, setLayoutStateRaw] = useState<VideoListLayout>(initialLayout ?? "GALLERY");
+    const setLayoutState = (layout: VideoListLayout) => {
+        setLayoutStateRaw(layout);
+        localStorage.setItem(LOCAL_STORAGE_KEY_LAYOUT, layout);
+    };
     const layoutOrderContext: LayoutOrderContext = {
         allowOriginalOrder: true,
         eventOrder: "ORIGINAL",
