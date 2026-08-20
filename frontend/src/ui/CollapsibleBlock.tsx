@@ -19,7 +19,7 @@ export const CollapsibleBlock: React.FC<Props> = ({
     children,
     className,
     maxHeight,
-    paddingBottom = 24,
+    paddingBottom = 40,
     gradientHeight = 24,
     backgroundColor = COLORS.neutral05,
     buttonHoverBackgroundColor = COLORS.neutral20,

@@ -147,7 +147,7 @@ const QuickLinks: React.FC<QuickLinksProps> = ({ bookmarks }) => {
 
     return (
         <CollapsibleBlock
-            maxHeight={160}
+            maxHeight={170}
             buttonLabel={expanded => expanded ? t("bookmark.show-fewer") : t("bookmark.show-all")}
         >
             <ul css={{
