@@ -381,4 +381,5 @@ static MIGRATIONS: Lazy<BTreeMap<u64, Migration>> = include_migrations![
     46: "known-groups-sort-key",
     47: "search-thumbnail-info-with-state",
     48: "user-session-timestamp-fix",
+    49: "bookmarks",
 ];

@@ -68,6 +68,7 @@ pub(crate) struct Series {
     #[allow(dead_code)]
     pub(crate) read_roles: Option<Vec<String>>,
     pub(crate) write_roles: Option<Vec<String>>,
+    pub(crate) is_bookmark: LazyLoad<bool>,
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<ThumbnailStack>,
     pub(crate) has_public_videos: LazyLoad<bool>,
@@ -102,6 +103,7 @@ impl_from_db!(
             write_roles: row.write_roles(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             description: row.description(),
+            is_bookmark: LazyLoad::NotLoaded,
             num_videos: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
             has_public_videos: LazyLoad::NotLoaded,
@@ -117,6 +119,7 @@ impl Series {
 
         let (selection, mapping) = select!(
             series: Series,
+            is_bookmark: "exists(select from bookmarks where series = $1 and username = $2)",
             has_public_videos: "exists(\
                 select from events \
                 where events.series = series.id and 'ROLE_ANONYMOUS' = any(events.read_roles)\
@@ -125,10 +128,11 @@ impl Series {
         let col = id.column();
         let query = format!("select {selection} from series where {col} = $1");
         context.db
-            .query_opt(&query, &[&id_arg])
+            .query_opt(&query, &[&id_arg, &context.auth.state.username()])
             .await?
             .map(|row| {
                 let mut series = Series::from_row(&row, mapping.series);
+                series.is_bookmark = LazyLoad::Loaded(mapping.is_bookmark.of(&row));
                 series.has_public_videos = LazyLoad::Loaded(mapping.has_public_videos.of::<bool>(&row));
                 series
             })
@@ -717,6 +721,12 @@ impl Series {
 
     fn metadata(&self) -> &Option<ExtraMetadata> {
         &self.metadata
+    }
+
+    /// Returns `true` iff this series is a bookmark of the current user. Note:
+    /// this is lazily loaded and only available in certain contexts.
+    fn is_bookmark(&self) -> bool {
+        self.is_bookmark.unwrap()
     }
 
     /// Returns creators extracted from the series metadata.

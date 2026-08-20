@@ -238,6 +238,20 @@ share:
   set-time-label: 'Videostartzeit einstellen. Aktuell: {{time}}.'
   set-time-unit: '{{unit}} einstellen'
 
+bookmark:
+  main-label: Lesezeichen
+  add: Lesezeichen hinzufügen
+  remove: Lesezeichen entfernen
+  manage: Lesezeichen verwalten
+  no-bookmarks-yet: Sie haben noch keine Lesezeichen.
+  failed-to-add: Lesezeichen hinzufügen fehlgeschlagen
+  failed-to-remove: Lesezeichen entfernen fehlgeschlagen
+  inaccessible: Unzugänglich (keine Leseberechtigung)
+  feed-title: Neuste Videos
+  feed-description: Videos aller Serien und Playlists, für die Sie Lesezeichen haben.
+  show-all: Alle anzeigen
+  show-fewer: Weniger anzeigen
+
 video-list-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
   unauthorized: Fehlende Berechtigung

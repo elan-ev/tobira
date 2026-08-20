@@ -5,6 +5,7 @@ pub(crate) mod acl;
 pub(crate) mod admin;
 pub(crate) mod block;
 pub(crate) mod event;
+pub(crate) mod bookmarks;
 pub(crate) mod known_roles;
 pub(crate) mod playlist;
 pub(crate) mod realm;

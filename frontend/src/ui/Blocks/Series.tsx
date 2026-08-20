@@ -48,6 +48,7 @@ const seriesFragment = graphql`
         creators
         description
         state
+        isBookmark
         canWrite
         hasPublicVideos
         entries {
@@ -116,6 +117,7 @@ const SeriesBlock: React.FC<Props> = ({ series, ...props }) => {
             allowOriginalOrder: false,
         }}
         listId={series.id}
+        isBookmark={series.isBookmark}
         metadata={{
             title: props.title ?? (props.showTitle ? series.title : undefined),
             description: (props.showMetadata && series.description) || undefined,
