@@ -149,7 +149,9 @@ async fn upsert(file: &str, config: &Config, tx: Transaction<'_>) -> Result<()> 
             &info.implies,
             &info.sort_key,
             &info.warn_for_action,
-            &info.assignable_by,
+            &info.assignable_by.unwrap_or_else(|| ActionRoleMap(
+                HashMap::from([("read".into(), vec![crate::auth::ROLE_USER.into()])])
+            )),
         ]).await?;
     }
     tx.commit().await?;
@@ -213,7 +215,7 @@ struct GroupData {
     implies: Vec<Role>,
 
     warn_for_action: Vec<String>,
-    assignable_by: ActionRoleMap,
+    assignable_by: Option<ActionRoleMap>,
     sort_key: Option<String>,
 }
 

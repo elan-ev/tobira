@@ -47,20 +47,17 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
         "label": { "default": "Students", "de": "Studierende" },
         "implies": [],
         "sortKey": "_c",
-        "warnForAction": ["write"],
-        "assignableBy": { "read": ["ROLE_ANONYMOUS"] }
+        "warnForAction": ["write"]
     },
     "ROLE_STAFF": {
         "label": { "default": "Staff", "de": "Angestellte" },
         "implies": [],
-        "warnForAction": ["write"],
-        "assignableBy": { "read": ["ROLE_ANONYMOUS"] }
+        "warnForAction": ["write"]
     },
     "ROLE_LECTURER": {
         "label": { "default": "Lecturers", "de": "Vortragende" },
         "implies": ["ROLE_STAFF"],
-        "warnForAction": ["write"],
-        "assignableBy": { "read": ["ROLE_ANONYMOUS"] }
+        "warnForAction": ["write"]
     },
     "ROLE_TOBIRA_MODERATOR": {
         "label": { "default": "Moderators", "de": "Moderierende" },
@@ -88,7 +85,6 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
     //     "label": { "default": "...", "de": "..." },
     //     "implies": [],
     //     "warnForAction": ["write"],
-    //     "assignableBy": { "read": ["ROLE_ANONYMOUS"] },
     // },
 }
 ```
@@ -111,7 +107,7 @@ Field explanation:
   *any* action don't see it in the ACL selector at all — this is how "internal" groups (e.g. for
   management staff) or course-scoped groups (many thousands of them, only relevant to their own
   course) are kept out of everyone else's way. Groups without any matching entry in `assignableBy`
-  for a given role still show up for admins.
+  for a given role still show up for admins. Optional, defaults to `{ "read": ["ROLE_USER"] }`.
 - `sortKey`: optional, used to sort entries in the group selector.
   Entries with same `sortKey` are sorted alphabetically.
   Entries without `sortKey` are sorted last.
