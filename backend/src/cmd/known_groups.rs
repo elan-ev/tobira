@@ -78,23 +78,12 @@ pub(crate) async fn run(config: Config, args: &Args) -> Result<()> {
 }
 
 fn print_group(group: &KnownGroup) {
-    print!(r#"    {}: {{ "label": {{"#, json!(group.role));
-
-    // Sort by key to get consistent ordering (hashmap order is random).
-    let mut labels = group.label.iter().collect::<Vec<_>>();
-    labels.sort();
-    for (lang, label) in labels {
-        print!(" {}: {}", json!(lang), json!(label));
-    }
-    print!(r#" }}, "implies": ["#);
-    for (i, role) in group.implies.iter().enumerate() {
-        if i > 0 {
-            print!(", ");
-        }
-        print!("{}", json!(role));
-    }
-    print!(r#"], "warnForAction": {}, "assignableBy": {} }}"#,
-        json!(group.warn_for_action), json!(group.assignable_by.0));
+    println!("    {}: {{ ", json!(group.role));
+    println!(r#"        "label": {},"#, json!(group.label));
+    println!(r#"        "implies": {},"#, json!(group.implies));
+    println!(r#"        "warnForAction": {},"#, json!(group.warn_for_action));
+    println!(r#"        "assignableBy": {},"#, json!(group.assignable_by));
+    println!("    }},");
 }
 
 async fn list(tx: Transaction<'_>) -> Result<()> {
@@ -107,7 +96,6 @@ async fn list(tx: Transaction<'_>) -> Result<()> {
     rows.try_for_each(|row| {
         let group = KnownGroup::from_row_start(&row);
         print_group(&group);
-        println!(",");
         future::ready(Ok(()))
     }).await?;
     println!("}}");
@@ -176,7 +164,6 @@ async fn remove(roles: &[String], tx: Transaction<'_>) -> Result<()> {
         for row in &rows {
             let group = KnownGroup::from_row_start(&row);
             print_group(&group);
-            println!(",");
         }
         println!("}}");
     }
