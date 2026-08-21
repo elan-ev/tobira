@@ -15,8 +15,11 @@ update known_groups set warn_for_action = array['write'] where large;
 alter table known_groups drop column large;
 
 alter table known_groups
-    add column assignable_by jsonb not null default '{"write": ["ROLE_ANONYMOUS"]}'::jsonb;
+    add column assignable_by jsonb not null default '{"write": ["ROLE_USER"]}'::jsonb;
 alter table known_groups alter column assignable_by drop default;
+update known_groups
+    set assignable_by = '{"read": ["ROLE_USER"]}'::jsonb
+    where role in ('ROLE_ANONYMOUS', 'ROLE_USER');
 
 -- Verifies that `assignable_by` follows the expected format: a JSON object
 -- mapping action names to arrays of role strings.
