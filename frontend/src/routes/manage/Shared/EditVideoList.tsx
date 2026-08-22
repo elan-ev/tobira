@@ -356,6 +356,59 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
 };
 
 
+const thumbnailContainerStyle = {
+    width: 100,
+    flexShrink: 0,
+    [screenWidthAtMost(420)]: {
+        width: "min(100px, 25%)",
+    },
+} as const;
+
+type EntryAction = "add" | "remove" | "move" | "none";
+
+const entryActionColor = (action: EntryAction) => match(action, {
+    "add": () => COLORS.happy0,
+    "remove": () => COLORS.danger0,
+    "move": () => COLORS.danger0,
+    "none": () => "transparent",
+});
+
+type EntryRowProps = PropsWithChildren<{
+    action: EntryAction;
+    index: number;
+    totalItems: number;
+    onMove?: (direction: -1 | 1) => void;
+}>;
+
+const EntryRow: React.FC<EntryRowProps> = ({
+    action,
+    index,
+    totalItems,
+    onMove,
+    children,
+}) => (
+    <div css={{
+        display: "flex",
+        position: "relative",
+        gap: 8,
+        padding: 6,
+        ":hover": { backgroundColor: COLORS.neutral15 },
+        "::before": {
+            content: "''",
+            position: "absolute",
+            inset: "1px 0",
+            width: 3,
+            backgroundColor: entryActionColor(action),
+        },
+    }}>
+        {children}
+        {onMove && <MoveButtons
+            disabled={action === "remove"}
+            {...{ index, totalItems, onMove }}
+        />}
+    </div>
+);
+
 type EventEntryProps = {
     event: ListEvent;
     listId?: string;
@@ -371,72 +424,40 @@ const EventEntry: React.FC<EventEntryProps> = ({
     event, index, totalEvents, onChange, listId, onSeriesChange, onMove, isPlaylistEntry,
 }) => {
     const { t, i18n } = useTranslation();
-    const { isDark } = useColorScheme();
-
-    const moveButtonStyle = css({
-        display: "flex",
-        padding: 6,
-        border: "none",
-        borderRadius: 8,
-        color: COLORS.neutral60,
-        backgroundColor: "inherit",
-        "&[disabled]": {
-            color: COLORS.neutral25,
-        },
-        "&:not([disabled])": {
-            cursor: "pointer",
-            "&:hover, &:focus": {
-                backgroundColor: COLORS.neutral10,
-                ...isDark && {
-                    backgroundColor: COLORS.neutral15,
-                    color: COLORS.neutral80,
-                },
-            },
-            ...focusStyle({}),
-        },
-    });
 
     const date = new Date(event.syncedData?.startTime ?? event.created);
 
-    const actionColor = match(event.action, {
-        "add": () => COLORS.happy0,
-        "remove": () => COLORS.danger0,
-        "move": () => COLORS.danger0,
-        "none": () => "transparent",
+    const pendingAction = match(event.action, {
+        "add": () => ({
+            color: COLORS.happy0,
+            label: t("manage.video-list.edit.to-be-added"),
+        }),
+        "remove": () => ({
+            color: COLORS.danger0,
+            label: t("manage.video-list.edit.to-be-removed"),
+        }),
+        "move": () => ({
+            color: COLORS.danger0,
+            label: t("manage.video-list.edit.to-be-moved", {
+                series: event.action === "move" ? event.targetSeries.title : undefined,
+            }),
+        }),
+        "none": () => null,
     });
 
     return (
-        <div
-            key={event.id}
-            css={{
-                display: "flex",
-                position: "relative",
-                gap: 8,
-                padding: 6,
-                ":hover": { backgroundColor: COLORS.neutral15 },
-
-                ...event.action !== "none" && {
-                    "::before": {
-                        content: "''",
-                        position: "absolute",
-                        inset: "1px 0",
-                        width: 3,
-                        backgroundColor: actionColor,
-                    },
-                },
-            }}
+        <EntryRow
+            action={event.action}
+            totalItems={totalEvents}
+            {...{ index, onMove }}
         >
             <Link to={DirectVideoRoute.url({ videoId: event.id })} css={{
-                width: 100,
-                flexShrink: 0,
                 ":focus-visible": { outline: "none" },
                 ":focus-within div:first-child": {
                     outline: `2.5px solid ${COLORS.focus}`,
                     outlineOffset: 1,
                 },
-                [screenWidthAtMost(420)]: {
-                    width: "min(100px, 25%)",
-                },
+                ...thumbnailContainerStyle,
             }}>
                 <Thumbnail {...{ event }} />
             </Link>
@@ -497,7 +518,9 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                             padding: "0 4px",
                                         },
                                     },
-                                }}>{event.creators.join(", ")}</span>
+                                }}>
+                                    {event.creators.join(", ")}
+                                </span>
                             </>}
                             <span css={{
                                 [screenWidthAtMost(BREAKPOINT_SMALL)]: {
@@ -513,60 +536,28 @@ const EventEntry: React.FC<EventEntryProps> = ({
                     </div>
 
                     <div css={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignContent: "space-between",
-                        alignItems: "flex-end",
-                        i: { fontSize: 10, whiteSpace: "nowrap" },
+                        ...actionColumnStyle,
                         [screenWidthAbove(BREAKPOINT_SMALL)]: {
                             minWidth: 75,
                         },
                     }}>
-                        {event.action === "remove" && <>
-                            <i css={{ color: COLORS.danger0 }}>
-                                ({t("manage.video-list.edit.to-be-removed")})
-                            </i>
-                            <Button css={buttonStyle} onClick={onChange}>
-                                <LuUndo2 size={16} />
-                                <span>{t("manage.video-list.edit.undo")}</span>
-                            </Button>
-                        </>}
-
-                        {event.action === "add" && <>
-                            <i css={{ color: COLORS.happy0 }}>
-                                ({t("manage.video-list.edit.to-be-added")})
-                            </i>
-                            <Button css={buttonStyle} onClick={onChange}>
-                                <LuUndo2 size={16} />
-                                <span>{t("manage.video-list.edit.undo")}</span>
-                            </Button>
-                        </>}
-
-                        {event.action === "move" && <>
-                            <i css={{ color: COLORS.danger0 }}>
-                                ({t(
-                                    "manage.video-list.edit.to-be-moved",
-                                    { series: event.targetSeries?.title },
-                                )})
-                            </i>
-                            <Button css={buttonStyle} onClick={onChange}>
-                                <LuUndo2 size={16} />
-                                <span>{t("manage.video-list.edit.undo")}</span>
-                            </Button>
+                        {pendingAction && <>
+                            <ActionLabel {...pendingAction} />
+                            <UndoButton onClick={onChange} />
                         </>}
 
                         {event.action === "none" && <>
                             {!event.canWrite && !isPlaylistEntry
-                                && <i css={{ color: COLORS.neutral50 }}>
-                                    ({t("manage.video-list.edit.cannot-be-removed")})
-                                </i>
+                                && <ActionLabel
+                                    color={COLORS.neutral50}
+                                    label={t("manage.video-list.edit.cannot-be-removed")}
+                                />
                             }
                             <div css={{
                                 display: "flex",
                                 gap: 8,
                                 marginTop: "auto",
                             }}>
-                                {/* `listId` is always set for series, so the `!` is fine here */}
                                 {!isPlaylistEntry && onSeriesChange
                                     && <SwitchSeriesMenu
                                         {...{ event, onSeriesChange }}
@@ -574,58 +565,85 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                     />
                                 }
 
-                                <div>
-                                    <Button
-                                        disabled={!isPlaylistEntry && (
-                                            !event.canWrite
-                                                || CONFIG.behavior.disallowEventsWithoutSeries
-                                        )}
-                                        kind="danger"
-                                        css={buttonStyle}
-                                        onClick={onChange}
-                                    >
-                                        <LuListX size={16} />
-                                        <span>{t("manage.video-list.edit.remove")}</span>
-                                    </Button>
-                                </div>
+                                <RemoveButton
+                                    disabled={!isPlaylistEntry && (
+                                        !event.canWrite
+                                            || CONFIG.behavior.disallowEventsWithoutSeries
+                                    )}
+                                    onClick={onChange}
+                                />
                             </div>
                         </>}
                     </div>
                 </div>
             </div>
-            {/* Only show move buttons for playlists */}
-            {onMove && (
-                <div css={{ marginLeft: -2 }}>
-                    <WithTooltip tooltip={t("manage.realm.content.move-up")} placement="left">
-                        <button
-                            aria-label={t("manage.realm.content.move-up")}
-                            disabled={index === 0 || event.action === "remove"}
-                            onClick={e => {
-                                e.currentTarget.blur();
-                                onMove(-1);
-                            }}
-                            css={moveButtonStyle}
-                        >
-                            <LuArrowUp size={16} />
-                        </button>
-                    </WithTooltip>
-                    <WithTooltip tooltip={t("manage.realm.content.move-down")} placement="left">
-                        <button
-                            aria-label={t("manage.realm.content.move-down")}
-                            disabled={index === totalEvents - 1 || event.action === "remove"}
-                            onClick={e => {
-                                e.currentTarget.blur();
-                                onMove(1);
-                            }}
-                            css={moveButtonStyle}
-                        >
-                            <LuArrowDown size={16} />
-                        </button>
-                    </WithTooltip>
-                </div>
-            )}
-        </div>
+        </EntryRow>
     );
+};
+
+
+type MoveButtonsProps = {
+    index: number;
+    totalItems: number;
+    disabled?: boolean;
+    onMove: (direction: -1 | 1) => void;
+};
+
+const MoveButtons: React.FC<MoveButtonsProps> = ({ index, totalItems, disabled, onMove }) => {
+    const { t } = useTranslation();
+    const { isDark } = useColorScheme();
+
+    const style = css({
+        display: "flex",
+        padding: 6,
+        border: "none",
+        borderRadius: 8,
+        color: COLORS.neutral60,
+        backgroundColor: "inherit",
+        "&[disabled]": {
+            color: COLORS.neutral25,
+        },
+        "&:not([disabled])": {
+            cursor: "pointer",
+            "&:hover, &:focus": {
+                backgroundColor: COLORS.neutral10,
+                ...isDark && {
+                    backgroundColor: COLORS.neutral15,
+                    color: COLORS.neutral80,
+                },
+            },
+            ...focusStyle({}),
+        },
+    });
+
+    return <div css={{ marginLeft: -2 }}>
+        <WithTooltip tooltip={t("manage.realm.content.move-up")} placement="left">
+            <button
+                aria-label={t("manage.realm.content.move-up")}
+                disabled={index === 0 || disabled}
+                onClick={e => {
+                    e.currentTarget.blur();
+                    onMove(-1);
+                }}
+                css={style}
+            >
+                <LuArrowUp size={16} />
+            </button>
+        </WithTooltip>
+        <WithTooltip tooltip={t("manage.realm.content.move-down")} placement="left">
+            <button
+                aria-label={t("manage.realm.content.move-down")}
+                disabled={index === totalItems - 1 || disabled}
+                onClick={e => {
+                    e.currentTarget.blur();
+                    onMove(1);
+                }}
+                css={style}
+            >
+                <LuArrowDown size={16} />
+            </button>
+        </WithTooltip>
+    </div>;
 };
 
 
@@ -745,3 +763,37 @@ const buttonStyle = css({
         span: { display: "none" },
     },
 });
+
+const actionColumnStyle = {
+    display: "flex",
+    flexDirection: "column",
+    alignContent: "space-between",
+    alignItems: "flex-end",
+} as const;
+
+const ActionLabel: React.FC<{ color: string; label: string }> = ({ color, label }) => (
+    <i css={{ fontSize: 10, whiteSpace: "nowrap", color }}>({label})</i>
+);
+
+const UndoButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
+    const { t } = useTranslation();
+    return (
+        <Button css={buttonStyle} onClick={onClick}>
+            <LuUndo2 size={16} />
+            <span>{t("manage.video-list.edit.undo")}</span>
+        </Button>
+    );
+};
+
+const RemoveButton: React.FC<{ onClick: () => void; disabled?: boolean }> = ({
+    onClick,
+    disabled,
+}) => {
+    const { t } = useTranslation();
+    return (
+        <Button disabled={disabled} kind="danger" css={buttonStyle} onClick={onClick}>
+            <LuListX size={16} />
+            <span>{t("manage.video-list.edit.remove")}</span>
+        </Button>
+    );
+};
