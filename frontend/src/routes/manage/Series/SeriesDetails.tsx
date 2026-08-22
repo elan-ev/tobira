@@ -58,8 +58,8 @@ const editSeriesContent = graphql`
                     canWrite
                     syncedData { thumbnail audioOnly duration startTime endTime }
                 }
-                ...on Missing { opencastId }
-                ...on NotAllowed { opencastId }
+                ...on Missing { __typename }
+                ...on NotAllowed { __typename }
             }
         }
     }

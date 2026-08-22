@@ -62,7 +62,7 @@ import { VideoListSelector } from "../../../ui/SearchableSelect";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../../../GlobalStyle";
 
 
-type Entry = Series["entries"][number];
+type Entry = Series["entries"][number] & { entryId?: number };
 type AuthEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
 export type ListEvent = AuthEvent & (
     | { action: "add" | "remove" | "none"; }
@@ -73,6 +73,7 @@ type PlaceholderEvent = {
     __typename: "placeholder";
     placeholderKind: "missing" | "not-allowed";
     id: string;
+    entryId?: number;
     action: "none" | "remove";
 };
 
@@ -140,9 +141,10 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
     const updatedEntries = isPlaylist ? {
         entries: items
             .filter(e => e.action !== "remove")
-            .map(e => isPlaceholder(e)
-                ? { opencastId: e.id }
-                : { id: e.id }),
+            .map(e => e.entryId != null
+                ? { entryId: e.entryId }
+                // Newly added entries don't have an entry id yet.
+                : { newEventId: e.id }),
     } : {
         addedEvents: events.filter(e => e.action === "add").map(e => e.id),
         removedEvents: events
@@ -856,29 +858,33 @@ const isAuthorizedEvent = (e: Entry): e is AuthEvent => e.__typename === "Author
 
 /** Sorts series by date of creation but preserves manual order for playlists */
 const mapItems = (entries: readonly Entry[], isPlaylist: boolean): ListItem[] => {
-    const toPlaceholder = (e: Exclude<Entry, AuthEvent>): PlaceholderEvent | null => {
+    const toPlaceholder = (
+        e: Exclude<Entry, AuthEvent>, index: number,
+    ): PlaceholderEvent | null => {
         if (e.__typename !== "Missing" && e.__typename !== "NotAllowed") {
             return null;
         }
         return {
             __typename: "placeholder",
             placeholderKind: e.__typename === "Missing" ? "missing" : "not-allowed",
-            id: e.opencastId,
+            id: `placeholder-${index}`,
+            entryId: e.entryId,
             action: "none",
         };
     };
 
     if (isPlaylist) {
         // Preserve original order for all entry types (regular events and placeholders).
-        return entries.flatMap(e =>
-            isAuthorizedEvent(e) ? { ...e, action: "none" } : toPlaceholder(e) ?? []);
+        return entries.flatMap((e, index) =>
+            isAuthorizedEvent(e) ? { ...e, action: "none" } : toPlaceholder(e, index) ?? []);
     }
 
     // For series: just sort authorized events by creation date. Stick placeholder at the end.
     const authorized = entries.filter(isAuthorizedEvent)
         .sort((a, b) => a.created === b.created ? 0 : (a.created > b.created ? 1 : -1))
         .map(e => ({ ...e, action: "none" as const }));
-    const placeholders = entries.flatMap(e => isAuthorizedEvent(e) ? [] : toPlaceholder(e) ?? []);
+    const placeholders = entries.flatMap((e, index) =>
+        isAuthorizedEvent(e) ? [] : toPlaceholder(e, index) ?? []);
     return [...authorized, ...placeholders];
 };
 

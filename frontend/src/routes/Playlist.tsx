@@ -238,10 +238,12 @@ const fragment = graphql`
             title
             description
             entries {
-                __typename
-                ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
-                ...on Missing { __typename }
-                ...on NotAllowed { __typename }
+                node {
+                    __typename
+                    ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
+                    ...on Missing { __typename }
+                    ...on NotAllowed { __typename }
+                }
             }
         }
         ... PlaylistBlockPlaylistData

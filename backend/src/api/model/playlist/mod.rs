@@ -47,6 +47,15 @@ pub(crate) enum Playlist {
     NotAllowed(NotAllowed),
 }
 
+/// A playlist entry has its own ID within the playlist and can also be used to identify
+/// missing or not-allowed items. `Node` holds the actual data, if present.
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct PlaylistEntry {
+    entry_id: i32,
+    node: VideoListEntry,
+}
+
 pub(crate) struct AuthorizedPlaylist {
     pub(crate) key: Key,
     opencast_id: OpencastId,
@@ -125,7 +134,7 @@ impl Playlist {
         if auth.overlaps_roles(&playlist.acl.read_roles) {
             Self::Playlist(playlist)
         } else {
-            Self::NotAllowed(NotAllowed { opencast_id: playlist.opencast_id.0 })
+            Self::NotAllowed(NotAllowed)
         }
     }
 
@@ -297,10 +306,10 @@ impl AuthorizedPlaylist {
             .pipe(Ok)
     }
 
-    async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
+    async fn entries(&self, context: &Context) -> ApiResult<Vec<PlaylistEntry>> {
         let (selection, mapping) = select!(
             found: "events.id is not null",
-            content_id: "t.content_id",
+            entry_id: "t.entry_id",
             event: AuthorizedEvent,
         );
         let query = format!("\
@@ -314,20 +323,19 @@ impl AuthorizedPlaylist {
         ");
         context.db
             .query_mapped(&query, dbargs![&self.key], |row| {
-                if !mapping.found.of::<bool>(&row) {
-                    return VideoListEntry::Missing(Missing {
-                        opencast_id: mapping.content_id.of::<String>(&row),
-                    });
-                }
+                let entry_id = mapping.entry_id.of::<i64>(&row) as i32;
+                let node = if !mapping.found.of::<bool>(&row) {
+                    VideoListEntry::Missing(Missing)
+                } else {
+                    let event = AuthorizedEvent::from_row(&row, mapping.event);
+                    if !context.auth.overlaps_roles(&event.acl.read_roles) {
+                        VideoListEntry::NotAllowed(NotAllowed)
+                    } else {
+                        VideoListEntry::Event(event)
+                    }
+                };
 
-                let event = AuthorizedEvent::from_row(&row, mapping.event);
-                if !context.auth.overlaps_roles(&event.acl.read_roles) {
-                    return VideoListEntry::NotAllowed(NotAllowed {
-                        opencast_id: mapping.content_id.of::<String>(&row),
-                    });
-                }
-
-                VideoListEntry::Event(event)
+                PlaylistEntry { entry_id, node }
             })
             .await?
             .pipe(Ok)

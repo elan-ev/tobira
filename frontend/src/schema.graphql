@@ -173,8 +173,14 @@ input NewVideoBlock {
 }
 
 input PlaylistEntrySlot {
-  "Tobira ID for visible events." id: ID
-  "Opencast ID for hidden/missing entries (from `NotAllowed` or `Missing`)." opencastId: String
+  """
+    Used to identify existing playlist entries, regardless of visibility
+    (i.e. it's also on placeholders in frontend)
+  """ entryId: Int
+  """
+    Newly added events do not have an entry ID before the playlist is saved in Opencast,
+    so we use the Tobira ID to load them.
+  """ newEventId: ID
 }
 
 input PlaylistsSortOrder {
@@ -505,7 +511,7 @@ type AuthorizedPlaylist implements Node {
     Otherwise, `false` is returned.
   """
   isReferencedByRealm(path: String!): Boolean!
-  entries: [VideoListEntry!]!
+  entries: [PlaylistEntry!]!
   hostRealms: [Realm!]!
   "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
   readRoles: [String!]!
@@ -591,9 +597,12 @@ type KnownUserSearchResults {
   items: [KnownUser!]!
 }
 
-"The data referred to by a playlist entry was not found."
 type Missing {
-  opencastId: String!
+  """
+    Unused dummy field for this marker type. GraphQL requires all objects to
+    have at least one field. Always returns `null`.
+  """
+  dummy: Boolean
 }
 
 type Mutation {
@@ -774,7 +783,11 @@ type Mutation {
 }
 
 type NotAllowed {
-  opencastId: String!
+  """
+    Unused dummy field for this marker type. GraphQL requires all objects to
+    have at least one field. Always returns `null`.
+  """
+  dummy: Boolean
 }
 
 type PageInfo {
@@ -803,6 +816,15 @@ type PlaylistConnection {
   pageInfo: PageInfo!
   items: [AuthorizedPlaylist!]!
   totalCount: Int!
+}
+
+"""
+  A playlist entry has its own ID within the playlist and can also be used to identify
+  missing or not-allowed items. `Node` holds the actual data, if present.
+"""
+type PlaylistEntry {
+  entryId: Int!
+  node: VideoListEntry!
 }
 
 type PlaylistSearchResults {

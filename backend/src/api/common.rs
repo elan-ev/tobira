@@ -36,15 +36,7 @@ pub(crate) trait Node {
 /// allowed to access some data.
 ///
 /// This is used instead of GraphQL errors in places where we easily want to
-/// deal with the "not allowed" case. When used in a video list context,
-/// `opencast_id` is used to identify which entry is not allowed.
-pub(crate) struct NotAllowed {
-    pub(crate) opencast_id: String,
-}
+/// deal with the "not allowed" case.
+pub(crate) struct NotAllowed;
 
-#[juniper::graphql_object(Context = Context)]
-impl NotAllowed {
-    fn opencast_id(&self) -> &str {
-        &self.opencast_id
-    }
-}
+super::util::impl_object_with_dummy_field!(NotAllowed);

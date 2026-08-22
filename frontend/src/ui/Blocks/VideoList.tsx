@@ -94,10 +94,11 @@ const SLIDER_BATCH_SIZE = 36;
 
 export type VideoListItem = Event | "missing" | "unauthorized";
 
-type Entries = Extract<
+
+type Entries = readonly Extract<
     PlaylistBlockPlaylistData$data,
     { __typename: "AuthorizedPlaylist" }
->["entries"];
+>["entries"][number]["node"][];
 type AuthorizedEntry = Extract<Entries[number], { __typename: "AuthorizedEvent" }>;
 
 export type VideoListMetadata = {

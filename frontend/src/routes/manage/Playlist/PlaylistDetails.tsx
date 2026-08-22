@@ -48,25 +48,28 @@ const editPlaylistContent = graphql`
     ) {
         updatePlaylist(id: $id, entries: $entries) {
             entries {
-                __typename
-                ...on AuthorizedEvent {
-                    id
-                    title
-                    isLive
-                    created
-                    creators
-                    description
-                    canWrite
-                    syncedData {
-                        thumbnail
-                        audioOnly
-                        duration
-                        startTime
-                        endTime
+                entryId
+                node {
+                    __typename
+                    ...on AuthorizedEvent {
+                        id
+                        title
+                        isLive
+                        created
+                        creators
+                        description
+                        canWrite
+                        syncedData {
+                            thumbnail
+                            audioOnly
+                            duration
+                            startTime
+                            endTime
+                        }
                     }
+                    ...on Missing { __typename }
+                    ...on NotAllowed { __typename }
                 }
-                ...on Missing { opencastId }
-                ...on NotAllowed { opencastId }
             }
         }
     }
@@ -150,8 +153,10 @@ const PlaylistContentSection: React.FC<{ playlist: AuthorizedPlaylist }> = ({ pl
 
     return <ManageVideoListContent
         listId={playlist.id}
-        listEntries={[...playlist.entries]}
-        getUpdatedEntries={data => [...data.updatePlaylist.entries]}
+        listEntries={playlist.entries.map(e => ({ ...e.node, entryId: e.entryId }))}
+        getUpdatedEntries={data => data.updatePlaylist.entries.map(
+            e => ({ ...e.node, entryId: e.entryId }),
+        )}
         description={t("manage.playlist.details.edit-note")}
         {...{ commit, inFlight }}
     />;
