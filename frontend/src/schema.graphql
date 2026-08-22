@@ -774,11 +774,6 @@ type Mutation {
 }
 
 type NotAllowed {
-  """
-    Unused dummy field for this marker type. GraphQL requires all objects to
-    have at least one field. Always returns `null`.
-  """
-  dummy: Boolean
   opencastId: String!
 }
 

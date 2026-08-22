@@ -38,7 +38,7 @@ const blockFragment = graphql`
 const playlistFragment = graphql`
     fragment PlaylistBlockPlaylistData on Playlist {
         __typename
-        ... on NotAllowed { dummy } # workaround
+        ... on NotAllowed { __typename }
         ... on AuthorizedPlaylist {
             id
             title

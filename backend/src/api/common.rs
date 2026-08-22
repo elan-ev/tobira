@@ -44,12 +44,6 @@ pub(crate) struct NotAllowed {
 
 #[juniper::graphql_object(Context = Context)]
 impl NotAllowed {
-    /// Unused dummy field for this marker type. GraphQL requires all objects to
-    /// have at least one field. Always returns `null`.
-    fn dummy() -> Option<bool> {
-        None
-    }
-
     fn opencast_id(&self) -> &str {
         &self.opencast_id
     }

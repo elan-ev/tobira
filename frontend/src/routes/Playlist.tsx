@@ -232,7 +232,7 @@ const realmFragment = graphql`
 const fragment = graphql`
     fragment PlaylistRouteData on Playlist {
         __typename
-        ... on NotAllowed { dummy } # workaround
+        ... on NotAllowed { __typename }
         ... on AuthorizedPlaylist {
             id
             title

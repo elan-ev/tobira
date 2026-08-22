@@ -40,7 +40,7 @@ export const EditPlaylistBlock: React.FC<EditPlaylistBlockProps> = ({ block: blo
         fragment PlaylistEditModeBlockData on PlaylistBlock {
             playlist {
                 __typename
-                ...on NotAllowed { dummy }
+                ...on NotAllowed { __typename }
                 ...on AuthorizedPlaylist {
                     id
                     opencastId

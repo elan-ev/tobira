@@ -449,7 +449,7 @@ const eventFragment = graphql`
         )
     {
         __typename
-        ... on NotAllowed { dummy } # workaround
+        ... on NotAllowed { __typename }
         ... on AuthorizedEvent {
             id
             title
