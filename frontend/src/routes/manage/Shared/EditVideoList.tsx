@@ -7,9 +7,11 @@ import {
     LuArrowLeftRight,
     LuArrowUp,
     LuCalendar,
+    LuCircleHelp,
     LuCircleUser,
     LuListPlus,
     LuListX,
+    LuShieldQuestion,
     LuUndo2,
     LuUpload,
 } from "react-icons/lu";
@@ -34,13 +36,19 @@ import { css } from "@emotion/react";
 import { createPortal } from "react-dom";
 
 import { Series } from "../Series/Shared";
+import {
+    RemovedEventFromSeries,
+} from "../Series/__generated__/SeriesDetailsContentMutation.graphql";
+import {
+    PlaylistEntrySlot,
+} from "../Playlist/__generated__/PlaylistDetailsContentMutation.graphql";
 import { COLORS } from "../../../color";
 import { SubmitButtonWithStatus } from "../../../ui/metadata";
 import { displayCommitError } from "../Realm/util";
 import { EventSelector } from "../../../ui/EventSelector";
 import { currentRef, floatingMenuProps, Inertable, keyOfId } from "../../../util";
 import { ellipsisOverflowCss, focusStyle } from "../../../ui";
-import { Thumbnail } from "../../../ui/Thumbnail";
+import { PlaceholderThumbnailReplacement, Thumbnail } from "../../../ui/Thumbnail";
 import { Link } from "../../../router";
 import { DirectVideoRoute } from "../../Video";
 import { useNavBlocker } from "../../util";
@@ -59,18 +67,24 @@ export type ListEvent = AuthEvent & (
     | { action: "move", targetSeries: { id: string; title: string } }
 );
 
+type PlaceholderEvent = {
+    __typename: "placeholder";
+    placeholderKind: "missing" | "not-allowed";
+    id: string;
+    action: "none" | "remove";
+};
+
+export type ListItem = ListEvent | PlaceholderEvent;
+
 
 type VideoListMutationParams = MutationParameters & {
     variables: {
         id: string;
     } & {
         addedEvents: readonly string[];
-        removedEvents: readonly {
-            id: string;
-            seriesId?: string | null;
-        }[];
+        removedEvents: readonly RemovedEventFromSeries[];
     } | {
-        entries: readonly string[];
+        entries?: readonly PlaylistEntrySlot[] | null;
     }
 };
 type ManageVideoListProps<TMutation extends VideoListMutationParams> = {
@@ -94,23 +108,25 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
     const [commitError, setCommitError] = useState<JSX.Element | null>(null);
     const [success, setSuccess] = useState(false);
     const isPlaylist = listId.startsWith("pl");
-    const [events, setEvents] = useState(mapItems(listEntries, isPlaylist));
+    const [items, setItems] = useState(mapItems(listEntries, isPlaylist));
+    const events = items.filter(isListEvent);
 
-    const initialOrderRef = useRef(
-        isPlaylist ? listEntries.filter(isAuthorizedEvent).map(e => e.id) : [],
-    );
+    const initialOrder = isPlaylist ? items.map(e => e.id) : [];
+    const initialOrderRef = useRef(initialOrder);
 
     const isOrderChanged = () => {
         if (!isPlaylist) {
             return false;
         }
-        const currentOrder = events.filter(e => e.action !== "remove").map(e => e.id);
+        const currentOrder = items
+            .filter(e => e.action !== "remove")
+            .map(e => e.id);
         const initialOrder = initialOrderRef.current;
         return currentOrder.length === initialOrder.length
             && currentOrder.some((id, i) => id !== initialOrder[i]);
     };
 
-    const hasChanges = events.some(e => e.action !== "none") || isOrderChanged();
+    const hasChanges = items.some(e => e.action !== "none") || isOrderChanged();
 
     useNavBlocker(() => hasChanges || inFlight);
 
@@ -119,10 +135,12 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         return bug("Used <ManageVideoListContent> without user");
     }
 
-    const unknownItemsCount = listEntries.filter(e => e.__typename !== "AuthorizedEvent").length;
-
     const updatedEntries = isPlaylist ? {
-        entries: events.filter(e => e.action !== "remove").map(e => e.id),
+        entries: items
+            .filter(e => e.action !== "remove")
+            .map(e => isPlaceholder(e)
+                ? { opencastId: e.id }
+                : { id: e.id }),
     } : {
         addedEvents: events.filter(e => e.action === "add").map(e => e.id),
         removedEvents: events
@@ -141,10 +159,11 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
         onCompleted: data => {
             setSuccess(true);
             const newEntries = getUpdatedEntries(data);
+            const newItems = mapItems(newEntries, isPlaylist);
             if (isPlaylist) {
-                initialOrderRef.current = newEntries.filter(isAuthorizedEvent).map(e => e.id);
+                initialOrderRef.current = newItems.map(e => e.id);
             }
-            setEvents(mapItems(newEntries, isPlaylist));
+            setItems(newItems);
         },
         onError: e => {
             setSuccess(false);
@@ -155,7 +174,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 
     return <Inertable isInert={inFlight || !!commitError} css={{ marginBottom: 32, maxWidth: 750 }}>
         <VideoListMenu
-            {...{ listEntries, isPlaylist, events, setEvents, listId }}
+            {...{ isPlaylist, listId, items, setItems }}
             seriesLink={
                 user.canUpload && !isPlaylist && <LinkButton
                     to={UploadRoute.url({ seriesId: keyOfId(listId) })} >
@@ -171,10 +190,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
                 {t("manage.video-list.removing-disabled")}
             </Card>}
         </VideoListMenu>
-        {unknownItemsCount > 0 && <Card css={{ marginTop: 12 }} kind="info">
-            {t("manage.video-list.details.unknown", { count: unknownItemsCount })}
-        </Card>}
-        {events.length > 0 && <SubmitButtonWithStatus
+        {items.length > 0 && <SubmitButtonWithStatus
             label={t("manage.video-list.edit.save")}
             onClick={onSubmit}
             disabled={!!commitError || !hasChanges || inFlight}
@@ -187,27 +203,30 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
 type VideoListMenuProps = PropsWithChildren<{
     isPlaylist: boolean;
     listId?: string;
-    events: ListEvent[];
-    setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    items: ListItem[];
+    setItems: React.Dispatch<React.SetStateAction<ListItem[]>>;
     seriesLink?: React.ReactNode;
 }>;
 
 export const VideoListMenu: React.FC<VideoListMenuProps> = ({
     isPlaylist,
     listId,
-    events,
-    setEvents,
+    items,
+    setItems,
     children,
     seriesLink,
 }) => {
     const { t } = useTranslation();
 
-    const handleSeriesChange = (eventId: string, targetSeries: { id: string; title: string }) => {
-        setEvents(prev => prev.map(e => e.id !== eventId ? e : {
-            ...e,
-            action: "move",
-            targetSeries,
-        }));
+    const handleSeriesChange = (
+        eventId: string,
+        targetSeries: { id: string; title: string },
+    ) => {
+        setItems(prev => updateListEventById(
+            prev,
+            eventId,
+            event => setEventAction(event, "move", targetSeries),
+        ));
     };
 
     return <>
@@ -216,18 +235,18 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                 {t("video.plural")}
             </h2>
             <i css={{ fontSize: 14, color: COLORS.neutral50 }}>
-                ({events.length > 0
-                    ? t("manage.video-list.no-of-videos", { count: events.length })
+                ({items.length > 0
+                    ? t("manage.video-list.no-of-videos", { count: items.length })
                     : <i>{t("manage.video-list.no-content")}</i>
                 })
             </i>
         </div>
         {children}
         <div css={{ margin: "24px auto 16px", display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <AddVideoMenu {...{ setEvents, events, isPlaylist }} />
+            <AddVideoMenu {...{ isPlaylist, items, setItems }} />
             {seriesLink}
         </div>
-        {events.length > 0 && <>
+        {items.length > 0 && <>
             <div css={{
                 maxHeight: 360,
                 overflowY: "auto",
@@ -237,50 +256,79 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                     margin: "0 -12px",
                 },
             }}>
-                {events.map((event, index) => (
-                    <EventEntry
-                        key={event.id}
+                {items.map((item, index) => {
+                    if (isPlaceholder(item)) {
+                        return <PlaceholderEntry
+                            key={item.id}
+                            {...{ index, item }}
+                            totalItems={items.length}
+                            onChange={() => {
+                                setItems(prev => prev.map(e =>
+                                    (e.id === item.id && isPlaceholder(e)
+                                        ? togglePlaceholderRemoval(e)
+                                        : e)));
+                            }}
+                            onMove={isPlaylist
+                                ? direction => setItems(
+                                    prev => moveItem(prev, index, index + direction),
+                                )
+                                : undefined
+                            }
+                        />;
+                    }
+                    return <EventEntry
+                        key={item.id}
                         isPlaylistEntry={isPlaylist}
-                        {...{ index, event, listId }}
+                        {...{ index, listId }}
+                        event={item}
                         onSeriesChange={handleSeriesChange}
-                        totalEvents={events.length}
+                        totalEvents={items.length}
                         onMove={isPlaylist
-                            ? direction => setEvents(
+                            ? direction => setItems(
                                 prev => moveItem(prev, index, index + direction),
                             )
                             : undefined
                         }
-                        onChange={() => setEvents(prev => match(event.action, {
-                            // Undo "add" -> remove from list again
-                            "add": () => prev.filter(e => e.id !== event.id),
-                            // Undo "remove" -> set action to "none"
-                            "remove": () => prev.map(e =>
-                                e.id === event.id ? { ...e, action: "none" } : e),
-                            // Undo "move" -> set action to "none" and target series to "undefined"
-                            "move": () => prev.map(e =>
-                                e.id !== event.id ? e : {
-                                    ...e,
-                                    action: "none",
-                                    targetSeries: undefined,
-                                }),
-                            // Remove existing event
-                            "none": () => prev.map(e =>
-                                e.id === event.id ? { ...e, action: "remove" } : e),
-                        }))}
-                    />
-                ))}
+                        onChange={() => setItems(prev => {
+                            const update = match(item.action, {
+                                // Undo "add" -> remove from list again
+                                "add": () => prev.filter(e => e.id !== item.id),
+                                // Undo "remove" -> set action to "none"
+                                "remove": () => updateListEventById(
+                                    prev,
+                                    item.id,
+                                    clearEventAction,
+                                ),
+                                // Undo "move" -> set action to "none" and
+                                // target series to "undefined"
+                                "move": () => updateListEventById(
+                                    prev,
+                                    item.id,
+                                    clearEventAction,
+                                ),
+                                // Remove existing event
+                                "none": () => updateListEventById(
+                                    prev,
+                                    item.id,
+                                    event => setEventAction(event, "remove"),
+                                ),
+                            });
+                            return update;
+                        })}
+                    />;
+                })}
             </div>
         </>}
     </>;
 };
 
 type AddVideoMenuProps = {
-    events: ListEvent[];
-    setEvents: React.Dispatch<React.SetStateAction<ListEvent[]>>;
+    items: ListItem[];
+    setItems: React.Dispatch<React.SetStateAction<ListItem[]>>;
     isPlaylist: boolean;
 };
 
-const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlaylist }) => {
+const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ items, setItems, isPlaylist }) => {
     const { t } = useTranslation();
     const { isDark } = useColorScheme();
     const [buttonIsActive, setButtonIsActive] = useState(false);
@@ -328,7 +376,7 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
                             return;
                         }
 
-                        setEvents(prev => [
+                        setItems(prev => [
                             {
                                 ...event,
                                 __typename: "AuthorizedEvent",
@@ -347,7 +395,9 @@ const AddVideoMenu: React.FC<AddVideoMenuProps> = ({ events, setEvents, isPlayli
                     menuIsOpen
                     additionalOptions={{
                         excludeSeriesMembers: !isPlaylist,
-                        excludedIds: events.map(e => keyOfId(e.id)),
+                        excludedIds: items
+                            .filter(isListEvent)
+                            .map(e => keyOfId(e.id)),
                     }}
                 />
             </Floating>
@@ -565,16 +615,75 @@ const EventEntry: React.FC<EventEntryProps> = ({
                                     />
                                 }
 
-                                <RemoveButton
-                                    disabled={!isPlaylistEntry && (
-                                        !event.canWrite
-                                            || CONFIG.behavior.disallowEventsWithoutSeries
-                                    )}
-                                    onClick={onChange}
-                                />
+                                <RemoveButton onClick={onChange} disabled={!isPlaylistEntry && (
+                                    !event.canWrite || CONFIG.behavior.disallowEventsWithoutSeries
+                                )} />
                             </div>
                         </>}
                     </div>
+                </div>
+            </div>
+        </EntryRow>
+    );
+};
+
+
+type PlaceholderEntryProps = {
+    item: PlaceholderEvent;
+    index: number;
+    totalItems: number;
+    onChange: () => void;
+    onMove?: (direction: -1 | 1) => void;
+};
+
+const PlaceholderEntry: React.FC<PlaceholderEntryProps> = ({
+    item,
+    index,
+    totalItems,
+    onChange,
+    onMove,
+}) => {
+    const { t } = useTranslation();
+    const isMissing = item.placeholderKind === "missing";
+    const label = isMissing
+        ? t("manage.video-list.edit.placeholder-missing")
+        : t("manage.video-list.edit.placeholder-not-allowed");
+    const Icon = isMissing ? LuCircleHelp : LuShieldQuestion;
+
+    return (
+        <EntryRow
+            action={item.action}
+            {...{ index, totalItems, onMove }}
+        >
+            <PlaceholderThumbnailReplacement
+                icon={<Icon />}
+                css={{
+                    ...thumbnailContainerStyle,
+                    aspectRatio: "16 / 9",
+                    borderRadius: 8,
+                }}
+            />
+            <div css={{
+                display: "flex",
+                flexGrow: 1,
+                justifyContent: "space-between",
+                gap: 8,
+                minWidth: 0,
+            }}>
+                <i css={{ fontSize: 14, color: COLORS.neutral50, alignSelf: "center" }}>
+                    {label}
+                </i>
+                <div css={actionColumnStyle}>
+                    {item.action === "remove"
+                        ? <>
+                            <ActionLabel
+                                color={COLORS.danger0}
+                                label={t("manage.video-list.edit.to-be-removed")}
+                            />
+                            <UndoButton onClick={onChange} />
+                        </>
+                        : isMissing && <RemoveButton onClick={onChange} />
+                    }
                 </div>
             </div>
         </EntryRow>
@@ -733,17 +842,35 @@ const SwitchSeriesMenu: React.FC<SwitchSeriesMenuProps> = ({ event, onSeriesChan
 const isAuthorizedEvent = (e: Entry): e is AuthEvent => e.__typename === "AuthorizedEvent";
 
 /** Sorts series by date of creation but preserves manual order for playlists */
-const mapItems = (entries: readonly Entry[], isPlaylist: boolean): ListEvent[] => {
-    const authorized = entries.filter(isAuthorizedEvent);
-    const sorted = isPlaylist
-        ? authorized
-        : [...authorized].sort((a, b) =>
-            a.created === b.created ? 0 : (a.created > b.created ? 1 : -1));
-    return sorted.map(e => ({ ...e, action: "none" }));
+const mapItems = (entries: readonly Entry[], isPlaylist: boolean): ListItem[] => {
+    const toPlaceholder = (e: Exclude<Entry, AuthEvent>): PlaceholderEvent | null => {
+        if (e.__typename !== "Missing" && e.__typename !== "NotAllowed") {
+            return null;
+        }
+        return {
+            __typename: "placeholder",
+            placeholderKind: e.__typename === "Missing" ? "missing" : "not-allowed",
+            id: e.opencastId,
+            action: "none",
+        };
+    };
+
+    if (isPlaylist) {
+        // Preserve original order for all entry types (regular events and placeholders).
+        return entries.flatMap(e =>
+            isAuthorizedEvent(e) ? { ...e, action: "none" } : toPlaceholder(e) ?? []);
+    }
+
+    // For series: just sort authorized events by creation date. Stick placeholder at the end.
+    const authorized = entries.filter(isAuthorizedEvent)
+        .sort((a, b) => a.created === b.created ? 0 : (a.created > b.created ? 1 : -1))
+        .map(e => ({ ...e, action: "none" as const }));
+    const placeholders = entries.flatMap(e => isAuthorizedEvent(e) ? [] : toPlaceholder(e) ?? []);
+    return [...authorized, ...placeholders];
 };
 
 /** Swap two items in the video list */
-const moveItem = (arr: ListEvent[], from: number, to: number): ListEvent[] => {
+const moveItem = (arr: ListItem[], from: number, to: number): ListItem[] => {
     if (to < 0 || to >= arr.length) {
         return arr;
     }
@@ -797,3 +924,62 @@ const RemoveButton: React.FC<{ onClick: () => void; disabled?: boolean }> = ({
         </Button>
     );
 };
+
+const isPlaceholder = (item: ListItem): item is PlaceholderEvent =>
+    item.__typename === "placeholder";
+const isListEvent = (item: ListItem): item is ListEvent =>
+    item.__typename === "AuthorizedEvent";
+
+const updateListEventById = (
+    items: ListItem[],
+    id: string,
+    update: (event: ListEvent) => ListEvent,
+): ListItem[] => items.map(item => {
+    if (item.id === id && isListEvent(item)) {
+        return update(item);
+    }
+
+    return item;
+});
+
+
+/**
+ * Returns the event without its `action` and (if present) `targetSeries`
+ * fields, so that a new action can be assigned without a stale `targetSeries`
+ * leaking into the new state.
+ */
+const stripTargetSeries = (event: ListEvent): AuthEvent => {
+    if (event.action !== "move") {
+        return event;
+    }
+    const { targetSeries, action, ...rest } = event;
+    return rest;
+};
+
+const clearEventAction = (event: ListEvent): ListEvent =>
+    ({ ...stripTargetSeries(event), action: "none" });
+
+const togglePlaceholderRemoval = (placeholder: PlaceholderEvent): PlaceholderEvent => {
+    if (placeholder.placeholderKind === "not-allowed") {
+        return placeholder;
+    }
+    return {
+        ...placeholder,
+        action: placeholder.action === "remove" ? "none" : "remove",
+    };
+};
+
+type SetEventAction = {
+    (event: ListEvent, action: "remove"): ListEvent;
+    (event: ListEvent, action: "move", targetSeries: { id: string; title: string }): ListEvent;
+};
+
+const setEventAction: SetEventAction = (
+    event: ListEvent,
+    action: "remove" | "move",
+    targetSeries?: { id: string; title: string },
+): ListEvent => (
+    action === "move"
+        ? { ...stripTargetSeries(event), action, targetSeries: notNullish(targetSeries) }
+        : { ...stripTargetSeries(event), action }
+);

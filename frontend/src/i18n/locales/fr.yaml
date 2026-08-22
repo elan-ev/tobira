@@ -537,11 +537,6 @@ manage:
     no-of-videos_one: '{{count}} vidéo' # verify - should be singular and probably lowercase
     no-of-videos_other: '{{count}} vidéos' # verify - should be lowercase
     removing-disabled: La suppression des vidéos est désactivée. # needs verification
-    details:
-      unknown_one: Vous n'avez pas les droits d'accès à une vidéo ou elle n'existe plus. # needs verification
-      unknown_other: > # needs verification
-        Pour {{count}} vous n'avez pas les droits d'accès aux vidéos
-        ou elles n'existent plus.
     edit:
       add-video: Ajouter une vidéo
       to-be-added: sera ajouté
@@ -550,6 +545,8 @@ manage:
       move: Déplacer # verify
       to-be-moved: "sera déplacé vers : {{series}}" # verify
       cannot-be-removed: 'Pas possible de supprimer : manque du droit d''écriture'
+      placeholder-missing: Vidéo manquante # verify
+      placeholder-not-allowed: Permissions insuffisantes # verify
       undo: Annuler
       save: Sauvegarder les modifications
       error: Échec de la mise à jour du contenu de la série.
