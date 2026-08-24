@@ -900,7 +900,7 @@ type Query {
     results is limited to some fixed value.
   """
   searchKnownUsers(query: String!): KnownUsersSearchOutcome!
-  "Returns all known groups selectable in the ACL UI by the current user."
+  "Returns all known groups, with `assignableActions` for the current user."
   knownGroups: [KnownGroup!]!
   "Returns information for the admin dashboard."
   adminDashboardInfo: AdminInfo

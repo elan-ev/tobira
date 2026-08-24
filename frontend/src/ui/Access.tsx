@@ -224,9 +224,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         entries = groupDag.sort(entries);
 
         // In the group selector, sort groups by the sortKey and then alphabetically.
-        // Non-assignable roles for any action are not offered. The backend
-        // already filters those out, except for built-in groups. Those are always
-        // sent so that "not configured" can be told apart from "not assignable".
+        // We filter out all groups that the user cannot assign any permission level to.
         groupSelectorEntries = [...knownGroups.entries()]
             .filter(([, { assignableActions }]) => (
                 filterPermissionLevels(permissionLevels, assignableActions).length > 0

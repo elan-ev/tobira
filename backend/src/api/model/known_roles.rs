@@ -29,7 +29,6 @@ pub(crate) struct KnownGroup {
     pub assignable_actions: Vec<String>,
 }
 
-/// Loads all known groups and actions the current user is allowed to assign for each.
 pub(crate) async fn known_groups_for_user(context: &Context) -> ApiResult<Vec<KnownGroup>> {
     let user_is_tobira_admin = context.auth.is_tobira_admin(&context.config.auth);
     let user_roles = context.auth.roles();
