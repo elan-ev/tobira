@@ -317,8 +317,8 @@ where
 }
 
 
-#[derive(Debug)]
-pub(crate) struct AclForDB {
+#[derive(Debug, Clone)]
+pub(crate) struct AclForDb {
     pub(crate) read_roles: Vec<String>,
     pub(crate) write_roles: Vec<String>,
     // todo: add custom and preview roles for events when sent by frontend
@@ -326,45 +326,57 @@ pub(crate) struct AclForDB {
     // custom_action_roles: Option<CustomActions>,
 }
 
-pub(crate) fn convert_acl_input(entries: &[AclItem]) -> AclForDB {
-    let mut read_roles = HashSet::new();
-    let mut write_roles = HashSet::new();
-    // let mut preview_roles = HashSet::new();
-    // let mut custom_action_roles = CustomActions::default();
-
-    for entry in entries {
-        let role = &entry.role;
-        for action in &entry.actions {
-            match action.as_str() {
-                // "preview" => {
-                //     preview_roles.insert(role.clone());
-                // }
-                "read" => {
-                    read_roles.insert(role.clone());
-                }
-                "write" => {
-                    write_roles.insert(role.clone());
-                }
-                _ => {
-                    // custom_action_roles
-                    //     .0
-                    //     .entry(action)
-                    //     .or_insert_with(Vec::new)
-                    //     .push(role.clone());
-                    todo!();
-                }
-            };
+impl AclForDb {
+    pub(crate) fn empty() -> Self {
+        Self {
+            read_roles: Vec::new(),
+            write_roles: Vec::new(),
         }
     }
 
-    AclForDB {
-        read_roles: read_roles.into_iter().collect(),
-        write_roles: write_roles.into_iter().collect(),
-        // todo: add custom and preview roles when sent by frontend
-        // preview_roles: preview_roles.into_iter().collect(),
-        // custom_action_roles,
+    pub(crate) fn from_items(entries: &[AclItem]) -> Self {
+        let mut read_roles = HashSet::new();
+        let mut write_roles = HashSet::new();
+        // let mut preview_roles = HashSet::new();
+        // let mut custom_action_roles = CustomActions::default();
+
+        for entry in entries {
+            let role = &entry.role;
+            for action in &entry.actions {
+                match action.as_str() {
+                    // "preview" => { preview_roles.insert(role.clone()); }
+                    "read" => { read_roles.insert(role.clone()); }
+                    "write" => { write_roles.insert(role.clone()); }
+                    _ => {
+                        // custom_action_roles.0.entry(action)
+                        //     .or_insert_default()
+                        //     .push(role.clone());
+                        todo!();
+                    }
+                };
+            }
+        }
+
+        AclForDb {
+            read_roles: read_roles.into_iter().collect(),
+            write_roles: write_roles.into_iter().collect(),
+            // todo: add custom and preview roles when sent by frontend
+            // preview_roles: preview_roles.into_iter().collect(),
+            // custom_action_roles,
+        }
+    }
+
+    /// Returns the list of roles that are allowed to perform the given action.
+    pub(crate) fn roles_for_action(&self, action: &str) -> &[String] {
+        match action {
+            "read" => &self.read_roles,
+            "write" => &self.write_roles,
+            _ => &[],
+        }
     }
 }
+
+
 
 /// Checks that the current user is allowed to make the ACL change described
 /// by `entries`, i.e. is allowed to grant every newly added role/action
@@ -376,23 +388,24 @@ pub(crate) fn convert_acl_input(entries: &[AclItem]) -> AclForDB {
 /// `assignable_by` (as of now, shrinking access is always allowed).
 pub(crate) async fn ensure_acl_assignment_allowed(
     context: &Context,
-    entries: &[AclItem],
-    previous: Option<(&[String], &[String])>,
+    new: &[AclItem],
+    old: Option<&AclForDb>,
 ) -> ApiResult<()> {
     if context.auth.is_tobira_admin(&context.config.auth) {
         return Ok(());
     }
 
-    let new_acl = convert_acl_input(entries);
-    let (prev_read, prev_write) = previous.unwrap_or((&[], &[]));
-    // Todo: also check preview roles and custom actions once `convert_acl_input` returns them.
-    let added_read = new_acl.read_roles.iter()
-        .filter(|role| !prev_read.contains(role))
-        .map(|role| (role.as_str(), "read"));
-    let added_write = new_acl.write_roles.iter()
-        .filter(|role| !prev_write.contains(role))
-        .map(|role| (role.as_str(), "write"));
-    let added = added_read.chain(added_write).collect::<Vec<_>>();
+    let empty_acl = AclForDb::empty();
+    let old = old.unwrap_or(&empty_acl);
+    let added = new.iter()
+        .map(|item| (
+            item.role.as_str(),
+            item.actions.iter()
+                .filter(|action| !old.roles_for_action(action).contains(&item.role))
+                .collect::<Vec<_>>(),
+        ))
+        .filter(|(_role, actions)| !actions.is_empty())
+        .collect::<Vec<_>>();
 
     if added.is_empty() {
         return Ok(());
@@ -406,12 +419,14 @@ pub(crate) async fn ensure_acl_assignment_allowed(
         .map(|g| (g.role.as_str(), g.actions_assignable_by(user_roles, false)))
         .collect::<HashMap<_, _>>();
 
-    for (role, action) in added {
-        let Some(actions) = assignable.get(role) else { continue };
-        if !actions.iter().any(|a| a == action) {
+    for (role, requested_actions) in added {
+        // If the group isn't known, everything is allowed
+        let Some(allowed_actions) = assignable.get(role) else { continue };
+
+        if requested_actions.iter().any(|req| !allowed_actions.contains(&req)) {
             return Err(not_authorized!(
                 key = "acl.assign-not-allowed",
-                "not allowed to assign group '{role}' for action '{action}'",
+                "not allowed to assign group '{role}' for '{requested_actions:?}'",
             ));
         }
     }

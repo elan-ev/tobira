@@ -4,7 +4,7 @@ use crate::{
     api::{
         err::{self, ApiResult, ApiError, ApiErrorKind},
         model::{
-            shared::{convert_acl_input, ensure_acl_assignment_allowed, BasicMetadata},
+            shared::{AclForDb, ensure_acl_assignment_allowed, BasicMetadata},
         },
         Context,
         Id,
@@ -47,7 +47,7 @@ impl AuthorizedPlaylist {
                 err::opencast_unavailable!("Failed to create playlist")
             })?;
 
-        let acl = convert_acl_input(&acl);
+        let acl = AclForDb::from_items(&acl);
         let selection = Self::select();
 
         let query = format!(
@@ -85,8 +85,7 @@ impl AuthorizedPlaylist {
         let playlist = Playlist::load_for_mutation(id, context).await?;
 
         if let Some(acl) = &acl {
-            let previous = Some((playlist.read_roles.as_slice(), playlist.write_roles.as_slice()));
-            ensure_acl_assignment_allowed(context, acl, previous).await?;
+            ensure_acl_assignment_allowed(context, acl, Some(&playlist.acl)).await?;
         }
 
         let mut entry_ids = if let Some(entries) = entries {
@@ -142,7 +141,7 @@ impl AuthorizedPlaylist {
             .filter(|a| a.allow)
             .map(|a| AclItem { role: a.role, actions: vec![a.action] })
             .collect();
-        let response_acl = convert_acl_input(&acl_entries);
+        let response_acl = AclForDb::from_items(&acl_entries);
 
         let selection = Self::select();
         let query = format!(

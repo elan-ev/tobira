@@ -18,7 +18,7 @@ use crate::{
             acl::{self, Acl},
             realm::Realm,
             series::Series,
-            shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input, ensure_acl_assignment_allowed},
+            shared::{AclForDb, SearchFilter, SortDirection, ToSqlColumn, ensure_acl_assignment_allowed},
         },
         util::{OcItemId, LazyLoad},
     },
@@ -59,8 +59,7 @@ pub(crate) struct AuthorizedEvent {
     pub(crate) creators: Vec<String>,
 
     pub(crate) metadata: ExtraMetadata,
-    pub(crate) read_roles: Vec<String>,
-    pub(crate) write_roles: Vec<String>,
+    pub(crate) acl: AclForDb,
     pub(crate) preview_roles: Vec<String>,
     pub(crate) credentials: Option<Credentials>,
 
@@ -124,8 +123,10 @@ impl_from_db!(
             created: row.created(),
             creators: row.creators(),
             metadata: row.metadata(),
-            read_roles: row.read_roles::<Vec<String>>(),
-            write_roles: row.write_roles::<Vec<String>>(),
+            acl: AclForDb {
+                read_roles: row.read_roles::<Vec<String>>(),
+                write_roles: row.write_roles::<Vec<String>>(),
+            },
             preview_roles: row.preview_roles::<Vec<String>>(),
             credentials: row.credentials(),
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
@@ -252,11 +253,11 @@ impl AuthorizedEvent {
     }
     /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
     fn read_roles(&self) -> &[String] {
-        &self.read_roles
+        &self.acl.read_roles
     }
     /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
     fn write_roles(&self) -> &[String] {
-        &self.write_roles
+        &self.acl.write_roles
     }
     /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
     fn preview_roles(&self) -> &[String] {
@@ -287,7 +288,7 @@ impl AuthorizedEvent {
                 && password.map_or(false, |p| sha1_matches(&p, &credentials.password))
         });
 
-        if context.auth.overlaps_roles(&self.read_roles) || credentials_match {
+        if context.auth.overlaps_roles(&self.acl.read_roles) || credentials_match {
             self.authorized_data.as_ref()
         } else {
             None
@@ -296,7 +297,7 @@ impl AuthorizedEvent {
 
     /// Whether the current user has write access to this event.
     fn can_write(&self, context: &Context) -> bool {
-        context.auth.overlaps_roles(&self.write_roles)
+        context.auth.overlaps_roles(&self.acl.write_roles)
     }
 
     fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {
@@ -305,7 +306,7 @@ impl AuthorizedEvent {
 
     /// Whether the event has active workflows.
     async fn workflow_status(&self, context: &Context) -> ApiResult<WorkflowStatus> {
-        if !context.auth.overlaps_roles(&self.write_roles) {
+        if !context.auth.overlaps_roles(&self.acl.write_roles) {
             return Err(err::not_authorized!(
                 key = "event.workflow.not-allowed",
                 "you are not allowed to inquire about this event's workflow activity",
@@ -347,8 +348,7 @@ impl AuthorizedEvent {
                     created: None,
                     updated: None,
                     metadata: None,
-                    read_roles: None,
-                    write_roles: None,
+                    acl: AclForDb::empty(),
                     is_bookmark: LazyLoad::NotLoaded,
                     num_videos: LazyLoad::NotLoaded,
                     thumbnail_stack: LazyLoad::NotLoaded,
@@ -422,7 +422,7 @@ impl AuthorizedEvent {
     fn jwt_for_read(&self, context: &Context) -> Option<String> {
         // TODO: think about how to make it work for password-protected videos,
         // i.e. whether to use preview roles.
-        if !context.auth.overlaps_roles(&self.read_roles) {
+        if !context.auth.overlaps_roles(&self.acl.read_roles) {
             return None;
         }
 
@@ -434,7 +434,7 @@ impl AuthorizedEvent {
     fn jwt_for_download(&self, context: &Context) -> Option<String> {
         // TODO: think about how to make it work for password-protected videos,
         // i.e. whether to use preview roles.
-        if !context.auth.overlaps_roles(&self.read_roles) {
+        if !context.auth.overlaps_roles(&self.acl.read_roles) {
             return None;
         }
 
@@ -528,7 +528,7 @@ impl Event {
 impl AuthorizedEvent {
     fn can_be_previewed(&self, context: &AuthContext) -> bool {
         context.overlaps_roles(&self.preview_roles)
-            || context.overlaps_roles(&self.read_roles)
+            || context.overlaps_roles(&self.acl.read_roles)
     }
 
     fn series_key(&self) -> Option<Key> {
@@ -544,7 +544,7 @@ impl AuthorizedEvent {
             .ok_or_else(|| err::invalid_input!(key = "event.not-found", "event not found"))?
             .into_result()?;
 
-        if !context.auth.overlaps_roles(&event.write_roles) {
+        if !context.auth.overlaps_roles(&event.acl.write_roles) {
             return Err(err::not_authorized!(key = "event.not-allowed", "event action not allowed"));
         }
 
@@ -588,7 +588,7 @@ impl AuthorizedEvent {
         ");
 
         ensure_acl_assignment_allowed(context, &event.acl, None).await?;
-        let acl = convert_acl_input(&event.acl);
+        let acl = AclForDb::from_items(&event.acl);
 
         context.db.execute(&query, &[
             &event.opencast_id,
@@ -667,9 +667,7 @@ impl AuthorizedEvent {
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_for_mutation(id, context).await?;
         event.require_idle(context).await?;
-
-        let previous = Some((event.read_roles.as_slice(), event.write_roles.as_slice()));
-        ensure_acl_assignment_allowed(context, &acl, previous).await?;
+        ensure_acl_assignment_allowed(context, &acl, Some(&event.acl)).await?;
 
         info!(
             event_id = %id,
@@ -689,7 +687,7 @@ impl AuthorizedEvent {
         if response.status() == StatusCode::NO_CONTENT {
             // 204: The access control list for the specified event is updated.
             Self::start_workflow(&event.opencast_id, &context.config.opencast.republish_workflow_id, &context).await?;
-            let db_acl = convert_acl_input(&acl);
+            let db_acl = AclForDb::from_items(&acl);
 
             // Todo: also update custom and preview roles once frontend sends these
             context.db.execute("\

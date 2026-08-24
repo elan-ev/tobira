@@ -10,6 +10,7 @@ use crate::{
             event::{Missing, VideoListEntry},
             realm::Realm,
             shared::{
+                AclForDb,
                 define_sort_column_and_order,
                 load_writable_for_user,
                 Connection,
@@ -59,8 +60,7 @@ pub(crate) struct AuthorizedPlaylist {
     thumbnail_stack: LazyLoad<ThumbnailStack>,
     has_public_videos: LazyLoad<bool>,
 
-    pub(crate) read_roles: Vec<String>,
-    write_roles: Vec<String>,
+    pub(crate) acl: AclForDb,
 }
 
 impl_from_db!(
@@ -78,8 +78,10 @@ impl_from_db!(
             title: row.title(),
             description: row.description(),
             creator: row.creator(),
-            read_roles: row.read_roles(),
-            write_roles: row.write_roles(),
+            acl: AclForDb {
+                read_roles: row.read_roles(),
+                write_roles: row.write_roles(),
+            },
             updated: row.updated(),
             is_bookmark: LazyLoad::NotLoaded,
             num_entries: LazyLoad::NotLoaded,
@@ -121,7 +123,7 @@ impl Playlist {
     }
 
     pub(crate) fn check_auth(playlist: AuthorizedPlaylist, auth: &AuthContext) -> Self {
-        if auth.overlaps_roles(&playlist.read_roles) {
+        if auth.overlaps_roles(&playlist.acl.read_roles) {
             Self::Playlist(playlist)
         } else {
             Self::NotAllowed(NotAllowed)
@@ -134,7 +136,7 @@ impl Playlist {
             .ok_or_else(|| err::invalid_input!(key = "playlist.not-found", "playlist not found"))?
             .into_result()?;
 
-        if !context.auth.overlaps_roles(&playlist.write_roles) {
+        if !context.auth.overlaps_roles(&playlist.acl.write_roles) {
             return Err(err::not_authorized!(key = "playlist.not-allowed", "playlist action not allowed"));
         }
 
@@ -278,7 +280,7 @@ impl AuthorizedPlaylist {
     /// Returns whether this playlist's RSS feed is public (i.e. the playlist itself is
     /// accessible to anonymous users, and it contains at least one public video).
     fn has_public_rss_feed(&self) -> bool {
-        self.has_public_videos() && self.read_roles.iter().any(|role| role == ROLE_ANONYMOUS)
+        self.has_public_videos() && self.acl.read_roles.iter().any(|role| role == ROLE_ANONYMOUS)
     }
 
     /// Returns `true` if the realm has a playlist block with this playlist.
@@ -323,7 +325,7 @@ impl AuthorizedPlaylist {
                 }
 
                 let event = AuthorizedEvent::from_row(&row, mapping.event);
-                if !context.auth.overlaps_roles(&event.read_roles) {
+                if !context.auth.overlaps_roles(&event.acl.read_roles) {
                     return VideoListEntry::NotAllowed(NotAllowed);
                 }
 
@@ -354,17 +356,17 @@ impl AuthorizedPlaylist {
 
     /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
     fn read_roles(&self) -> &[String] {
-        &self.read_roles
+        &self.acl.read_roles
     }
 
     /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
     fn write_roles(&self) -> &[String] {
-        &self.write_roles
+        &self.acl.write_roles
     }
 
     /// Whether the current user has write access to this playlist.
     fn can_write(&self, context: &Context) -> bool {
-        context.auth.overlaps_roles(&self.write_roles)
+        context.auth.overlaps_roles(&self.acl.write_roles)
     }
 }
 
