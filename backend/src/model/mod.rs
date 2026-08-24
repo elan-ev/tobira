@@ -23,7 +23,7 @@ mod series;
 mod translated_string;
 
 pub(crate) use self::{
-    acl::AclItem,
+    acl::{AclForDb, AclItem},
     block::BlockType,
     event::{
         TextMatch, TextAssetType, TimespanText, EventState,

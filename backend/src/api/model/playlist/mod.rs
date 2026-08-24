@@ -10,7 +10,6 @@ use crate::{
             event::{Missing, VideoListEntry},
             realm::Realm,
             shared::{
-                AclForDb,
                 define_sort_column_and_order,
                 load_writable_for_user,
                 Connection,
@@ -30,7 +29,7 @@ use crate::{
     },
     auth::{AuthContext, ROLE_ANONYMOUS},
     db::util::{impl_from_db, select},
-    model::{Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
+    model::{AclForDb, Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
 };
 

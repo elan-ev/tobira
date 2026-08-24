@@ -4,12 +4,12 @@ use crate::{
     api::{
         err::{self, ApiResult, ApiError, ApiErrorKind},
         model::{
-            shared::{AclForDb, ensure_acl_assignment_allowed, BasicMetadata},
+            shared::{ensure_acl_assignment_allowed, BasicMetadata},
         },
         Context,
         Id,
     },
-    model::{AclItem, OpencastId},
+    model::{AclForDb, AclItem, OpencastId},
     prelude::*,
     sync::client::{AclInput, OpencastItem},
 };

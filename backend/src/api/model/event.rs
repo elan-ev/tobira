@@ -18,7 +18,7 @@ use crate::{
             acl::{self, Acl},
             realm::Realm,
             series::Series,
-            shared::{AclForDb, SearchFilter, SortDirection, ToSqlColumn, ensure_acl_assignment_allowed},
+            shared::{SearchFilter, SortDirection, ToSqlColumn, ensure_acl_assignment_allowed},
         },
         util::{OcItemId, LazyLoad},
     },
@@ -27,7 +27,7 @@ use crate::{
         types::{Credentials, EventCaption, EventSegment, EventTrack},
         util::impl_from_db,
     },
-    model::{AclItem, EventState, ExtraMetadata, Key, OpencastId, SeriesState},
+    model::{AclForDb, AclItem, EventState, ExtraMetadata, Key, OpencastId, SeriesState},
     prelude::*,
     sync::client::{AclInput, OpencastItem},
 };
