@@ -415,9 +415,14 @@ pub(crate) async fn ensure_acl_assignment_allowed(
     let groups = KnownGroup::load_by_roles(&roles, context).await?;
     let user_roles = context.auth.roles();
     // Admins already returned above, so `is_admin: false`.
-    let assignable = groups.iter()
+    let mut assignable = groups.iter()
         .map(|g| (g.role.as_str(), g.actions_assignable_by(user_roles, false)))
         .collect::<HashMap<_, _>>();
+
+    // Insert defaults for built-in groups if not present yet.
+    // TODO: this is duplicated with frontend logic! Deduplicate
+    assignable.entry(crate::auth::ROLE_ANONYMOUS).or_insert_with(|| vec!["read".into()]);
+    assignable.entry(crate::auth::ROLE_USER).or_insert_with(|| vec!["read".into()]);
 
     for (role, requested_actions) in added {
         // If the group isn't known, everything is allowed
