@@ -9,6 +9,7 @@ import {
     Button,
     Card,
     Spinner,
+    unreachable,
 } from "@opencast/appkit";
 import {
     createContext,
@@ -29,7 +30,7 @@ import { graphql } from "react-relay";
 import { i18n, ParseKeys } from "i18next";
 
 import { IconWithTooltip, focusStyle } from ".";
-import { useUser, isRealUser } from "../User";
+import { useUser, isRealUser, User } from "../User";
 import { COLORS } from "../color";
 import { COMMON_ROLES } from "../util/roles";
 import { SelectProps } from "./Input";
@@ -207,8 +208,11 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
     const { t, i18n } = useTranslation();
     const { change, knownGroups, groupDag, permissionLevels, ownerDisplayName } = useAclContext();
     const [menuIsOpen, setMenuIsOpen] = useState<boolean>(false);
-    const userIsOwner = isRealUser(user) && user.displayName === ownerDisplayName;
     const [error, setError] = useState<ReactNode>(null);
+    if (!isRealUser(user)) {
+        return bug("<AclSelect> used without user session");
+    }
+    const userIsOwner = user.displayName === ownerDisplayName;
 
     // Sort the active ACL entries (and put them into a new variable for that).
     let entries: Entry[] = [...acl.entries()].map(([role, { actions, info }]) => ({
@@ -227,7 +231,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         // We filter out all groups that the user cannot assign any permission level to.
         groupSelectorEntries = [...knownGroups.entries()]
             .filter(([, { assignableActions }]) => (
-                filterPermissionLevels(permissionLevels, assignableActions).length > 0
+                filterPermissionLevels(permissionLevels, assignableActions, user).length > 0
             ))
             .map(([role, { label, sortKey }]) => ({
                 role,
@@ -664,8 +668,9 @@ const UnchangeableAllActions: React.FC<{ permission?: PermissionLevel }> = ({ pe
 const filterPermissionLevels = (
     permissionLevels: PermissionLevels,
     assignableActions: readonly string[] | null | undefined,
+    user: User,
 ): PermissionLevel[] => {
-    if (assignableActions == null) {
+    if (user.isTobiraAdmin || assignableActions == null) {
         return Object.keys(permissionLevels.all) as PermissionLevel[];
     }
 
@@ -677,16 +682,20 @@ const filterPermissionLevels = (
 
 const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const { isDark } = useColorScheme();
+    const user = useUser();
     const ref = useRef<FloatingHandle>(null);
     const { t } = useTranslation();
     const { change, permissionLevels, itemType } = useAclContext();
     const currentActionOption = getActionLabel(item, permissionLevels);
+    if (!isRealUser(user)) {
+        return unreachable();
+    }
 
     // Restrict the offered options to the ones the current user is allowed
     // to assign this role for. `null` or `undefined` means unrestricted.
     // (This is for entries that are already present in the ACL)
     const { assignableActions } = item;
-    const allowedLabels = filterPermissionLevels(permissionLevels, assignableActions);
+    const allowedLabels = filterPermissionLevels(permissionLevels, assignableActions, user);
 
     const changeOption = (newOption: PermissionLevel) => change(prev => {
         notNullish(prev.get(item.role)).actions

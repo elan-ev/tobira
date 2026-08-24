@@ -68,25 +68,28 @@ impl KnownGroup {
 }
 
 /// Returns the set of actions that the current user is allowed to hand out for a specific group.
+/// For admins, an empty list is returned, as the frontend has the logic for the special
+/// "admin can do anything".
 pub(crate) fn actions_assignable_by(
     assignable_by: &ActionRoleMap,
     user_roles: &HashSet<String>,
     is_admin: bool,
 ) -> Vec<String> {
-    let mut candidate_actions: HashSet<&str> = ["read", "write"].into_iter().collect();
-    candidate_actions.extend(assignable_by.0.keys().map(String::as_str));
+    if is_admin {
+        return Vec::new();
+    }
 
-    let is_allowed_for = |action: &str| {
-        assignable_by.0.get(action)
-            .is_some_and(|roles| roles.iter().any(|role| user_roles.contains(role)))
-    };
+    let mut out = assignable_by.0.iter()
+        .filter(|(_action, roles)| roles.iter().any(|role| user_roles.contains(role)))
+        .map(|(action, _roles)| action.as_str())
+        .collect::<Vec<_>>();
 
-    candidate_actions.into_iter()
-        .filter(|action| {
-            is_admin || is_allowed_for(action) || (*action == "read" && is_allowed_for("write"))
-        })
-        .map(str::to_owned)
-        .collect()
+    // Apply implicit rule that `write` implies `read`.
+    if out.contains(&"write") && !out.contains(&"read") {
+        out.push("read");
+    }
+
+    out.into_iter().map(str::to_owned).collect()
 }
 
 
