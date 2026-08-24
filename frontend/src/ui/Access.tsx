@@ -228,7 +228,9 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         // already filters those out, except for built-in groups. Those are always
         // sent so that "not configured" can be told apart from "not assignable".
         groupSelectorEntries = [...knownGroups.entries()]
-            .filter(([, { assignableActions }]) => assignableActions.length > 0)
+            .filter(([, { assignableActions }]) => (
+                filterPermissionLevels(permissionLevels, assignableActions).length > 0
+            ))
             .map(([role, { label, sortKey }]) => ({
                 role,
                 label: getLabel(role, label, i18n),
@@ -661,24 +663,32 @@ const UnchangeableAllActions: React.FC<{ permission?: PermissionLevel }> = ({ pe
     return <span css={{ marginLeft: 8 }}>{t(`acl.table.permissions.${label}`)}</span>;
 };
 
+const filterPermissionLevels = (
+    permissionLevels: PermissionLevels,
+    assignableActions: readonly string[] | null | undefined,
+): PermissionLevel[] => {
+    if (assignableActions == null) {
+        return Object.keys(permissionLevels.all) as PermissionLevel[];
+    }
+
+    const allowed = new Set(assignableActions);
+    return Object.entries(permissionLevels.all)
+        .filter(([_key, level]) => level.actions.isSubsetOf(allowed))
+        .map(([key, _level]) => key as PermissionLevel);
+};
+
 const ActionsMenu: React.FC<ItemProps> = ({ item, kind }) => {
     const { isDark } = useColorScheme();
     const ref = useRef<FloatingHandle>(null);
     const { t } = useTranslation();
     const { change, permissionLevels, itemType } = useAclContext();
-    const allLabels = Object.keys(permissionLevels.all) as PermissionLevel[];
     const currentActionOption = getActionLabel(item, permissionLevels);
 
     // Restrict the offered options to the ones the current user is allowed
     // to assign this role for. `null` or `undefined` means unrestricted.
     // (This is for entries that are already present in the ACL)
     const { assignableActions } = item;
-    const allowedLabels = assignableActions == null
-        ? allLabels
-        : allLabels.filter(level => {
-            const actions = permissionLevels.all[level]?.actions;
-            return actions && [...actions].every(action => assignableActions.includes(action));
-        });
+    const allowedLabels = filterPermissionLevels(permissionLevels, assignableActions);
 
     const changeOption = (newOption: PermissionLevel) => change(prev => {
         notNullish(prev.get(item.role)).actions
