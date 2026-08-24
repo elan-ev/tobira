@@ -7,11 +7,9 @@ import {
     LuArrowLeftRight,
     LuArrowUp,
     LuCalendar,
-    LuCircleHelp,
     LuCircleUser,
     LuListPlus,
     LuListX,
-    LuShieldQuestion,
     LuUndo2,
     LuUpload,
 } from "react-icons/lu";
@@ -50,7 +48,7 @@ import {
     ConditionalWrapper, currentRef, floatingMenuProps, Inertable, keyOfId,
 } from "../../../util";
 import { ellipsisOverflowCss, focusStyle } from "../../../ui";
-import { PlaceholderThumbnailReplacement, Thumbnail } from "../../../ui/Thumbnail";
+import { Thumbnail } from "../../../ui/Thumbnail";
 import { Link } from "../../../router";
 import { DirectVideoRoute } from "../../Video";
 import { useNavBlocker } from "../../util";
@@ -651,21 +649,20 @@ const PlaceholderEntry: React.FC<PlaceholderEntryProps> = ({
     const label = isMissing
         ? t("manage.video-list.edit.placeholder-missing")
         : t("manage.video-list.edit.placeholder-not-allowed");
-    const Icon = isMissing ? LuCircleHelp : LuShieldQuestion;
 
     return (
         <EntryRow
             action={item.action}
             {...{ index, totalItems, onMove }}
         >
-            <PlaceholderThumbnailReplacement
-                icon={<Icon />}
-                css={{
-                    ...thumbnailContainerStyle,
-                    aspectRatio: "16 / 9",
-                    borderRadius: 8,
-                }}
-            />
+            <div css={{
+                ...thumbnailContainerStyle,
+                aspectRatio: "16 / 9",
+                borderRadius: 8,
+                overflow: "hidden",
+            }}>
+                <Thumbnail event={item.placeholderKind} />
+            </div>
             <div css={{
                 display: "flex",
                 flexGrow: 1,
