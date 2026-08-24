@@ -46,23 +46,20 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
     "ROLE_STUDENT": {
         "label": { "default": "Students", "de": "Studierende" },
         "implies": [],
-        "sortKey": "_c",
-        "warnForAction": ["write"]
+        "sortKey": "_c"
     },
     "ROLE_STAFF": {
         "label": { "default": "Staff", "de": "Angestellte" },
-        "implies": [],
-        "warnForAction": ["write"]
+        "implies": []
     },
     "ROLE_LECTURER": {
         "label": { "default": "Lecturers", "de": "Vortragende" },
-        "implies": ["ROLE_STAFF"],
-        "warnForAction": ["write"]
+        "implies": ["ROLE_STAFF"]
     },
     "ROLE_TOBIRA_MODERATOR": {
         "label": { "default": "Moderators", "de": "Moderierende" },
         "implies": ["ROLE_STAFF"],
-        "warnForAction": [],
+        "safeActions": ["read", "write"],
         "assignableBy": {} // Only assignable by admins
     },
 
@@ -73,7 +70,7 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
     "ROLE_COURSE_123_STUDENTS": {
         "label": { "default": "Course 123 (students)", "de": "Kurs 123 (Studierende)" },
         "implies": [],
-        "warnForAction": [],
+        "safeActions": ["read", "write"],
         "assignableBy": {
             "read": ["ROLE_COURSE_123_STUDENTS"],
             "write": ["ROLE_COURSE_123_LECTURERS"]
@@ -84,7 +81,7 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
     // "ROLE_USER": {
     //     "label": { "default": "...", "de": "..." },
     //     "implies": [],
-    //     "warnForAction": ["write"],
+    //     "safeActions": ["read"],
     // },
 }
 ```
@@ -97,9 +94,9 @@ Field explanation:
   So all users with `ROLE_LECTURER` always also have the role `ROLE_STAFF`.
   This information is used to improve the user interaction with the ACL interface.
   All roles automatically imply `ROLE_USER` and `ROLE_ANONYMOUS`.
-- `warnForAction`: a list of actions (currently `read` and/or `write` are relevant) that should
-  trigger a warning in the ACL interface when granted to this group, e.g. because it is unusually
-  large or broad. `ROLE_USER` and `ROLE_ANONYMOUS` both warn for `write` by default.
+- `safeActions`: a list of actions that are considered safe to assign to this group. All
+  other actions will show a warning in the UI. Defaults to `["read"]` if not specified and for
+  `ROLE_USER` and `ROLE_ANONYMOUS`.
 - `assignableBy`: a mapping from action (`read`, `write`) to the list of roles allowed to assign
   this group for that action. Being allowed to assign a group for `write` implicitly also allows
   assigning it for `read`. An action that's missing from the map (or an empty list) means only

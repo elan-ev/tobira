@@ -21,22 +21,8 @@ pub(crate) enum Args {
     /// `ROLE_ANONYMOUS` are not listed.
     List,
 
-    /// Adds new known groups and updates existing ones. The groups are
-    /// specified in a JSON file in this format:
-    ///
-    /// {
-    ///     "ROLE_LECTURER": {
-    ///         "label": { "default": "Lecturer", "de": "Vortragende" },
-    ///         "implies": ["ROLE_STAFF"],
-    ///         "warnForAction": ["write"],
-    ///         "assignableBy": { "write": ["ROLE_STAFF"] }
-    ///     }
-    /// }
-    ///
-    /// Each entry may also have a field `sortKey` which is used to sort entries
-    /// in the group selector. Entries with same `sortKey` are sorted
-    /// alphabetically. Entries without `sortKey` are sorted last. By default,
-    /// ROLE_ANONYMOUS has sortKey "_a" and ROLE_USER has "_b".
+    /// Adds new known groups and updates existing ones. See the documentation
+    /// on "known groups" for more detail in the format.
     Upsert {
         /// File to JSON file containing groups to add.
         file: String,
@@ -81,7 +67,7 @@ fn print_group(group: &KnownGroup) {
     println!("    {}: {{ ", json!(group.role));
     println!(r#"        "label": {},"#, json!(group.label));
     println!(r#"        "implies": {},"#, json!(group.implies));
-    println!(r#"        "warnForAction": {},"#, json!(group.warn_for_action));
+    println!(r#"        "safeActions": {},"#, json!(group.safe_actions));
     println!(r#"        "assignableBy": {},"#, json!(group.assignable_by));
     println!("    }},");
 }
@@ -123,20 +109,20 @@ async fn upsert(file: &str, config: &Config, tx: Transaction<'_>) -> Result<()> 
     let len = groups.len();
     for (role, info) in groups {
         let sql = "insert into known_groups \
-            (role, label, implies, sort_key, warn_for_action, assignable_by) \
+            (role, label, implies, sort_key, safe_actions, assignable_by) \
             values ($1, $2, $3, $4, $5, $6) \
             on conflict (role) do update set \
                 label = excluded.label, \
                 implies = excluded.implies, \
                 sort_key = excluded.sort_key, \
-                warn_for_action = excluded.warn_for_action, \
+                safe_actions = excluded.safe_actions, \
                 assignable_by = excluded.assignable_by";
         tx.execute(sql, &[
             &role,
             &info.label,
             &info.implies,
             &info.sort_key,
-            &info.warn_for_action,
+            &info.safe_actions.unwrap_or_else(|| vec!["read".into()]),
             &info.assignable_by.unwrap_or_else(|| ActionRoleMap(
                 HashMap::from([("read".into(), vec![crate::auth::ROLE_USER.into()])])
             )),
@@ -201,7 +187,7 @@ struct GroupData {
     #[serde(default)]
     implies: Vec<Role>,
 
-    warn_for_action: Vec<String>,
+    safe_actions: Option<Vec<String>>,
     assignable_by: Option<ActionRoleMap>,
     sort_key: Option<String>,
 }

@@ -46,10 +46,11 @@ pub(crate) struct RoleInfo {
     /// also has these other roles.
     pub implies: Option<Vec<String>>,
 
-    /// List of actions that should trigger a warning when assigning this
-    /// role, e.g. because it represents an unusually large or broad group.
+    /// List of actions that are considered harmless to assign to this group.
+    /// All other actions will show a warning, as assigning it is considered
+    /// questionable, e.g. because the group is very large.
     /// Always empty for roles that are not a known group.
-    pub warn_for_action: Vec<String>,
+    pub safe_actions: Vec<String>,
 
     /// Actions the current user is allowed to assign this role for.
     /// `null` if the role is not a known group (like free-text roles added in the ACL selector).
@@ -85,7 +86,7 @@ where
         role: "roles.role",
         actions,
         implies,
-        warn_for_action: "coalesce(known_groups.warn_for_action, '{}')",
+        safe_actions: "coalesce(known_groups.safe_actions, '{}')",
         assignable_by: "known_groups.assignable_by",
         label: "coalesce(
             known_groups.label,
@@ -121,7 +122,7 @@ where
             info: mapping.label.of::<Option<_>>(&row).map(|label| RoleInfo {
                 label,
                 implies: mapping.implies.of(&row),
-                warn_for_action: mapping.warn_for_action.of(&row),
+                safe_actions: mapping.safe_actions.of(&row),
                 assignable_actions,
             }),
         }

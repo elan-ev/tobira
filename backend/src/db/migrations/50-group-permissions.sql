@@ -1,17 +1,14 @@
---  Adds `assignable_by`: a mapping from action to the list of roles allowed to
+-- Adds `assignable_by`: a mapping from action to the list of roles allowed to
 -- assign that group for that action. Empty/missing entries for actions
 -- mean that only admins can assign the group for that action (`read` is still
--- implied by `write`)
--- Also replaces the `large` boolean on known groups with `warn_for_action`
--- (a list of actions that should trigger a warning when assigned).
+-- implied by `write`).
 --
--- Existing groups are migrated to `warn_for_action = ['write']` (iff they
--- were `large`) and `assignable_by = { "write": ["ROLE_ANONYMOUS"] }`.
--- This preserves today's behavior (anyone can assign any group for any action).
--- Admins will have to manually adjust `assignable_by` after this migration (if needed).
+-- Also replaces the `large` boolean on known groups with `safe_actions`, a
+-- list of actions that is considered harmless to assign to that group. All
+-- other actions will show a warning in the UI.
 
-alter table known_groups add column warn_for_action text[] not null default '{}';
-update known_groups set warn_for_action = array['write'] where large;
+alter table known_groups add column safe_actions text[] not null default array['read'];
+update known_groups set safe_actions = array['read', 'write'] where not large;
 alter table known_groups drop column large;
 
 alter table known_groups

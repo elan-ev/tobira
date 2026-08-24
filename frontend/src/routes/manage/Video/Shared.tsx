@@ -93,7 +93,7 @@ const query = graphql`
                 canWrite
                 isLive
                 workflowStatus @include(if: $fetchWorkflowState)
-                acl { role actions info { label implies warnForAction assignableActions } }
+                acl { role actions info { label implies safeActions assignableActions } }
                 syncedData {
                     duration
                     updated

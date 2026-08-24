@@ -1,25 +1,22 @@
 {
     "ROLE_STUDENT": {
         "label": { "default": "Students", "de": "Studierende", "it": "Studenti", "fr": "Étudiants" },
-        "implies": [],
-        "warnForAction": ["write"]
+        "implies": []
     },
     "ROLE_STAFF": {
         "label": { "default": "Staff", "de": "Angestellte", "it": "Personale", "fr": "Personnel" },
         "implies": [],
-        "warnForAction": ["write"],
         "assignableBy": { "write": ["ROLE_STAFF"] }
     },
     "ROLE_INSTRUCTOR": {
         "label": { "default": "Lecturers", "de": "Vortragende", "it": "Docenti", "fr": "Conférenciers" },
         "implies": ["ROLE_STAFF"],
-        "warnForAction": ["write"],
         "assignableBy": { "read": ["ROLE_USER"], "write": ["ROLE_STAFF"] }
     },
     "ROLE_TOBIRA_MODERATOR": {
         "label": { "default": "Moderators", "de": "Moderierende", "it": "Moderatori", "fr": "Modérateurs" },
         "implies": ["ROLE_STAFF"],
-        "warnForAction": [],
+        "safeActions": ["read", "write"],
         "assignableBy": {}
     }
 }

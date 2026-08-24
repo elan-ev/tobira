@@ -58,7 +58,7 @@ export type Acl = Map<string, {
 export type RoleInfo = {
     label: TranslatedLabel;
     implies?: readonly string[] | null;
-    warnForAction: readonly string[];
+    safeActions?: readonly string[];
     assignableActions?: readonly string[] | null;
 };
 
@@ -80,7 +80,7 @@ type AclContext = {
         label: TranslatedLabel;
         implies: Set<string>;
         sortKey: string | null;
-        warnForAction: readonly string[];
+        safeActions: readonly string[];
         assignableActions: readonly string[];
     }>;
     groupDag: GroupDag;
@@ -148,7 +148,7 @@ export const AclSelector: React.FC<AclSelectorProps> = ({
             label: g.label,
             implies: new Set(g.implies),
             sortKey: g.sortKey ?? null,
-            warnForAction: g.warnForAction,
+            safeActions: g.safeActions,
             assignableActions: g.assignableActions,
         }])),
     };
@@ -170,7 +170,7 @@ type RoleKind = "group" | "user";
 
 export const knownRolesFragment = graphql`
     fragment AccessKnownRolesData on Query {
-        knownGroups { role label implies sortKey warnForAction assignableActions }
+        knownGroups { role label implies sortKey safeActions assignableActions }
     }
 `;
 
@@ -189,7 +189,7 @@ type Entry = {
     label: string;
 
     /** Actions that should trigger a warning when assigned. Empty for unknown roles. */
-    warnForAction: readonly string[];
+    safeActions?: readonly string[];
 
     /** Actions the current user may assign this role for. `undefined` means unrestricted. */
     assignableActions?: readonly string[] | null;
@@ -219,7 +219,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
         role,
         actions,
         label: getLabel(role, info?.label, i18n),
-        warnForAction: info?.warnForAction ?? [],
+        safeActions: info?.safeActions,
         assignableActions: info?.assignableActions,
     }));
     let groupSelectorEntries: { role: string, label: string, sortKey: string | null }[] = [];
@@ -280,7 +280,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             actions,
             label: getLabel(role, info?.label, i18n),
             // Don't show any warning on inherited entries as they can't be changed.
-            warnForAction: [],
+            safeActions: [],
             assignableActions: info?.assignableActions,
         }));
 
@@ -308,7 +308,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
                     info: {
                         label: info?.label ?? { "default": option.label },
                         implies: [...info?.implies ?? new Set()],
-                        warnForAction: info?.warnForAction ?? [],
+                        safeActions: info?.safeActions,
                         assignableActions: info?.assignableActions,
                     },
                 });
@@ -531,18 +531,6 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
     const { t, i18n } = useTranslation();
     const { userIsRequired, acl, groupDag, permissionLevels } = useAclContext();
 
-    const entryContainsActions = (actions: PermissionLevel[]) =>
-        actions.every(action => item.actions.has(action));
-
-    let noteworthyAccessType: PermissionLevel | null = null;
-    if (entryContainsActions(["write"])) {
-        noteworthyAccessType = "write";
-    } else if (entryContainsActions(["admin"])) {
-        noteworthyAccessType = "admin";
-    } else if (entryContainsActions(["moderate"]) && !entryContainsActions(["admin"])) {
-        noteworthyAccessType = "moderate";
-    }
-
     const supersets = kind === "user" ? [] : groupDag
         .supersetsOf(item.role)
         .filter(role => {
@@ -571,6 +559,10 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
         label = <>{item.label}</>;
     }
 
+    // For unknown groups, we just say "read" is safe.
+    const safeActions = new Set(item.safeActions ?? ["read"]);
+    const currentLevel = getActionLabel(item, permissionLevels);
+
     return <TableRow
         labelCol={<>
             {label}
@@ -580,14 +572,14 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
         </>}
         mutedLabel={isSubset || inherited}
         actionCol={immutable
-            ? <UnchangeableAllActions permission={getActionLabel(item, permissionLevels)} />
+            ? <UnchangeableAllActions permission={currentLevel} />
             : <>
                 <ActionsMenu {...{ item, kind }} />
-                {noteworthyAccessType && item.warnForAction.includes(noteworthyAccessType)
+                {kind === "group" && !item.actions.isSubsetOf(safeActions)
                     ? <IconWithTooltip
                         mode="warning"
                         tooltip={t("acl.table.permissions.large-group-warning", {
-                            val: t(`acl.table.permissions.${noteworthyAccessType}-access`),
+                            val: t(`acl.table.permissions.${currentLevel}`),
                         })}
                     />
                     : <div css={{ width: 22 }} />
@@ -1005,7 +997,7 @@ const insertBuiltinRoleInfo = (
             role: COMMON_ROLES.ANONYMOUS,
             implies: [],
             label: keyToTranslatedString("acl.groups.everyone"),
-            warnForAction: ["write"],
+            safeActions: ["read"],
             assignableActions: ["read"],
             sortKey: "_a",
         };
@@ -1017,7 +1009,7 @@ const insertBuiltinRoleInfo = (
             role: COMMON_ROLES.USER,
             implies: [COMMON_ROLES.ANONYMOUS],
             label: keyToTranslatedString("acl.groups.logged-in-users"),
-            warnForAction: ["write"],
+            safeActions: ["read"],
             assignableActions: ["read"],
             sortKey: "_b",
         };

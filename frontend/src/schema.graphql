@@ -572,11 +572,7 @@ type KnownGroup {
   label: TranslatedString!
   implies: [String!]!
   sortKey: String
-  """
-    List of actions that should trigger a warning when assigning this
-    group, e.g. because it is unusually large or broad.
-  """
-  warnForAction: [String!]!
+  safeActions: [String!]!
   "The actions the current user is allowed to assign this group for."
   assignableActions: [String!]!
 }
@@ -1058,11 +1054,12 @@ type RoleInfo {
   """
   implies: [String!]
   """
-    List of actions that should trigger a warning when assigning this
-    role, e.g. because it represents an unusually large or broad group.
+    List of actions that are considered harmless to assign to this group.
+    All other actions will show a warning, as assigning it is considered
+    questionable, e.g. because the group is very large.
     Always empty for roles that are not a known group.
   """
-  warnForAction: [String!]!
+  safeActions: [String!]!
   """
     Actions the current user is allowed to assign this role for.
     `null` if the role is not a known group (like free-text roles added in the ACL selector).

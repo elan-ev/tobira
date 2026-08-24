@@ -30,7 +30,7 @@ const updateSeriesAcl = graphql`
     mutation SeriesAccessAclMutation($id: ID!, $acl: [AclItem!]!) {
         updateSeriesAcl(id: $id, acl: $acl) {
             ...on Series {
-                acl { role actions info { label implies warnForAction assignableActions } }
+                acl { role actions info { label implies safeActions assignableActions } }
             }
         }
     }

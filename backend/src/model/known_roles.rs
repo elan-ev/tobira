@@ -17,14 +17,14 @@ pub struct KnownGroup {
     pub label: TranslatedString,
     pub implies: Vec<String>,
     pub sort_key: Option<String>,
-    pub warn_for_action: Vec<String>,
+    pub safe_actions: Vec<String>,
     pub assignable_by: ActionRoleMap,
 }
 
 impl_from_db!(
     KnownGroup,
     select: {
-        known_groups.{ role, label, implies, sort_key, warn_for_action, assignable_by },
+        known_groups.{ role, label, implies, sort_key, safe_actions, assignable_by },
     },
     |row| {
         KnownGroup {
@@ -32,7 +32,7 @@ impl_from_db!(
             label: row.label(),
             implies: row.implies(),
             sort_key: row.sort_key(),
-            warn_for_action: row.warn_for_action(),
+            safe_actions: row.safe_actions(),
             assignable_by: row.assignable_by(),
         }
     },
