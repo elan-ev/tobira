@@ -7,7 +7,7 @@ use super::{
     err::ApiResult,
     id::Id,
     model::{
-        series::{Series, NewSeries, RemovedEventFromSeries},
+        series::{Series, NewSeries, MovedEventToSeries},
         playlist::{AuthorizedPlaylist, PlaylistEntrySlot, RemovedPlaylist},
         shared::BasicMetadata,
         realm::{
@@ -133,10 +133,11 @@ impl Mutation {
     async fn update_series_content(
         id: Id,
         added_events: Vec<Id>,
-        removed_events: Vec<RemovedEventFromSeries>,
+        removed_events: Vec<Id>,
+        moved_events: Vec<MovedEventToSeries>,
         context: &Context,
     ) -> ApiResult<Series> {
-        Series::update_content(id, added_events, removed_events, context).await
+        Series::update_content(id, added_events, removed_events, moved_events, context).await
     }
 
     /// Sends an http request to Opencast to create a new series,

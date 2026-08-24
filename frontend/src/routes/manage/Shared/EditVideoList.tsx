@@ -37,7 +37,7 @@ import { createPortal } from "react-dom";
 
 import { Series } from "../Series/Shared";
 import {
-    RemovedEventFromSeries,
+    MovedEventToSeries,
 } from "../Series/__generated__/SeriesDetailsContentMutation.graphql";
 import {
     PlaylistEntrySlot,
@@ -85,7 +85,8 @@ type VideoListMutationParams = MutationParameters & {
         id: string;
     } & {
         addedEvents: readonly string[];
-        removedEvents: readonly RemovedEventFromSeries[];
+        removedEvents: readonly string[];
+        movedEvents: readonly MovedEventToSeries[];
     } | {
         entries?: readonly PlaylistEntrySlot[] | null;
     }
@@ -147,12 +148,10 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
                 : { newEventId: e.id }),
     } : {
         addedEvents: events.filter(e => e.action === "add").map(e => e.id),
-        removedEvents: events
-            .filter(e => e.action === "remove" || e.action === "move")
-            .map(e => ({
-                id: e.id,
-                targetSeries: e.action === "move" ? e.targetSeries.id : undefined,
-            })),
+        removedEvents: events.filter(e => e.action === "remove").map(e => e.id),
+        movedEvents: events
+            .filter((e): e is ListEvent & { action: "move" } => e.action === "move")
+            .map(e => ({ id: e.id, targetSeries: e.targetSeries.id })),
     };
 
     const onSubmit = () => commit({

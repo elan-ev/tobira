@@ -514,7 +514,8 @@ impl Series {
     pub(crate) async fn update_content(
         id: Id,
         added_events: Vec<Id>,
-        removed_events: Vec<RemovedEventFromSeries>,
+        removed_events: Vec<Id>,
+        moved_events: Vec<MovedEventToSeries>,
         context: &Context,
     ) -> ApiResult<Series> {
         let series = Self::load_for_mutation(id, context).await?;
@@ -526,8 +527,9 @@ impl Series {
         );
 
         let added_events = added_events.iter().map(|e| (*e, true, None));
-        let removed_events = removed_events.iter().map(|e| (e.id, false, e.target_series));
-        let modified_events = added_events.chain(removed_events);
+        let removed_events = removed_events.iter().map(|e| (*e, false, None));
+        let moved_events = moved_events.iter().map(|e| (e.id, false, Some(e.target_series)));
+        let modified_events = added_events.chain(removed_events).chain(moved_events);
 
         let series_key = series.key;
         let mut all_series = HashMap::from([(series_key, series)]);
@@ -905,9 +907,8 @@ define_sort_column_and_order!(
 );
 
 #[derive(Debug, GraphQLInputObject)]
-pub(crate) struct RemovedEventFromSeries {
+pub(crate) struct MovedEventToSeries {
     pub id: Id,
-    /// When an event is moved from one series to another,
-    /// this field is used to specify the new series.
-    pub target_series: Option<Id>,
+    /// The series to move the event to.
+    pub target_series: Id,
 }

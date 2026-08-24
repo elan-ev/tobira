@@ -124,6 +124,11 @@ input Filters {
   end: DateTime
 }
 
+input MovedEventToSeries {
+  id: ID!
+  "The series to move the event to." targetSeries: ID!
+}
+
 input NewEvent {
   opencastId: OpencastId!
   title: String!
@@ -196,14 +201,6 @@ input RealmLineageComponent {
 input RealmSpecifier {
   name: String
   pathSegment: String!
-}
-
-input RemovedEventFromSeries {
-  id: ID!
-  """
-    When an event is moved from one series to another,
-    this field is used to specify the new series.
-  """ targetSeries: ID
 }
 
 input SearchFilter {
@@ -665,7 +662,7 @@ type Mutation {
     and the series is preliminarily updated in Tobira's DB.
   """
   updateSeriesMetadata(id: ID!, metadata: BasicMetadata!): Series!
-  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [RemovedEventFromSeries!]!): Series!
+  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [ID!]!, movedEvents: [MovedEventToSeries!]!): Series!
   """
     Sends an http request to Opencast to create a new series,
     and stores the series in Tobira's DB.
