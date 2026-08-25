@@ -19,7 +19,7 @@ export const defaultAclMap = (user: User, knownRoles: AccessKnownRolesData$data)
             info: {
                 label: { "default": user.displayName },
                 implies: null,
-                warnForAction: [],
+                safeActions: [],
             },
         }],
     ]);
@@ -35,4 +35,3 @@ export const defaultAclMap = (user: User, knownRoles: AccessKnownRolesData$data)
 
     return acl;
 };
-

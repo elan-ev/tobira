@@ -196,7 +196,7 @@ impl Query {
         known_roles::search_known_users(query, context).await
     }
 
-    /// Returns all known groups selectable in the ACL UI by the current user.
+    /// Returns all known groups, with `assignableActions` for the current user.
     async fn known_groups(context: &Context) -> ApiResult<Vec<KnownGroup>> {
         known_roles::known_groups_for_user(context).await
     }

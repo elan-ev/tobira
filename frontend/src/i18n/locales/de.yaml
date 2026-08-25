@@ -428,10 +428,7 @@ acl:
         Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
       realm-admin-description_other: >
         Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
-      write-access: Schreibzugriff
-      moderate-access: Moderationsrechte
-      admin-access: Adminrechte
-      large-group-warning: Sie geben einer großen Gruppe {{val}}. Ist das beabsichtigt?
+      large-group-warning: Sie geben dieser ganzen Gruppe '{{val}}' Berechtigung. Ist das beabsichtigt?
   unlisted:
       note: Dieses Video ist ungelistet.
       explanation: >

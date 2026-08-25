@@ -75,6 +75,7 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
     editingBlocked = false,
     itemType,
 }) => {
+    const { t } = useTranslation();
     const knownRoles = useFragment(knownRolesFragment, data);
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
     const acl = aclArrayToMap(rawAcl);
@@ -97,7 +98,8 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
                 inFlight={inFlight}
                 saveModalRef={saveModalRef}
                 onSubmit={() => onSubmit({ selections, saveModalRef, setCommitError })}
-                kind="write"
+                warnIfActionLost="write"
+                warningText={t("acl.save-modal.disclaimer-write")}
             />
         </Inertable>
         {boxError(commitError)}

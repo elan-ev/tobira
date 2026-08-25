@@ -46,26 +46,20 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
     "ROLE_STUDENT": {
         "label": { "default": "Students", "de": "Studierende" },
         "implies": [],
-        "sortKey": "_c",
-        "warnForAction": ["write"],
-        "assignableBy": { "read": ["ROLE_ANONYMOUS"] }
+        "sortKey": "_c"
     },
     "ROLE_STAFF": {
         "label": { "default": "Staff", "de": "Angestellte" },
-        "implies": [],
-        "warnForAction": ["write"],
-        "assignableBy": { "read": ["ROLE_ANONYMOUS"] }
+        "implies": []
     },
     "ROLE_LECTURER": {
         "label": { "default": "Lecturers", "de": "Vortragende" },
-        "implies": ["ROLE_STAFF"],
-        "warnForAction": ["write"],
-        "assignableBy": { "read": ["ROLE_ANONYMOUS"] }
+        "implies": ["ROLE_STAFF"]
     },
     "ROLE_TOBIRA_MODERATOR": {
         "label": { "default": "Moderators", "de": "Moderierende" },
         "implies": ["ROLE_STAFF"],
-        "warnForAction": [],
+        "safeActions": ["read", "write"],
         "assignableBy": {} // Only assignable by admins
     },
 
@@ -76,10 +70,11 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
     "ROLE_COURSE_123_STUDENTS": {
         "label": { "default": "Course 123 (students)", "de": "Kurs 123 (Studierende)" },
         "implies": [],
-        "warnForAction": [],
+        "safeActions": ["read", "write"],
         "assignableBy": {
             "read": ["ROLE_COURSE_123_STUDENTS"],
-            "write": ["ROLE_COURSE_123_LECTURERS"]
+            "write": ["ROLE_COURSE_123_LECTURERS"],
+            "tobira:realm:moderate": ["ROLE_COURSE_123_LECTURERS"]
         }
     }
 
@@ -87,8 +82,7 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
     // "ROLE_USER": {
     //     "label": { "default": "...", "de": "..." },
     //     "implies": [],
-    //     "warnForAction": ["write"],
-    //     "assignableBy": { "read": ["ROLE_ANONYMOUS"] },
+    //     "safeActions": ["read"],
     // },
 }
 ```
@@ -101,21 +95,25 @@ Field explanation:
   So all users with `ROLE_LECTURER` always also have the role `ROLE_STAFF`.
   This information is used to improve the user interaction with the ACL interface.
   All roles automatically imply `ROLE_USER` and `ROLE_ANONYMOUS`.
-- `warnForAction`: a list of actions (currently `read` and/or `write` are relevant) that should
-  trigger a warning in the ACL interface when granted to this group, e.g. because it is unusually
-  large or broad. `ROLE_USER` and `ROLE_ANONYMOUS` both warn for `write` by default.
-- `assignableBy`: a mapping from action (`read`, `write`) to the list of roles allowed to assign
+- `safeActions`: a list of actions that are considered safe to assign to this group. All
+  other actions will show a warning in the UI. Defaults to `["read"]` if not specified and for
+  `ROLE_USER` and `ROLE_ANONYMOUS`.
+- `assignableBy`: a mapping from action to the list of roles allowed to assign
   this group for that action. Being allowed to assign a group for `write` implicitly also allows
   assigning it for `read`. An action that's missing from the map (or an empty list) means only
   Tobira/Opencast admins can assign the group for that action. Users who cannot assign a group for
   *any* action don't see it in the ACL selector at all — this is how "internal" groups (e.g. for
   management staff) or course-scoped groups (many thousands of them, only relevant to their own
   course) are kept out of everyone else's way. Groups without any matching entry in `assignableBy`
-  for a given role still show up for admins.
+  for a given role still show up for admins. Optional, defaults to `{ "read": ["ROLE_USER"] }`.
 - `sortKey`: optional, used to sort entries in the group selector.
   Entries with same `sortKey` are sorted alphabetically.
   Entries without `sortKey` are sorted last.
   By default, `ROLE_ANONYMOUS` has sortKey "_a" and `ROLE_USER` has "_b".
+
+"Actions" can be anything in an Opencast ACL (though the UI currently supports only `read` and `write`) plus these Tobira-specific ones:
+- `tobira:realm:moderate`: moderator access to a realm
+- `tobira:realm:admin`: page admin access to a realm (imples `tobira:realm:moderate`)
 
 Note that `upsert` is idempotent, so you can simply call this as part of your Ansible script, for example.
 

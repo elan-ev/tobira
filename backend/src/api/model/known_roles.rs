@@ -20,16 +20,12 @@ pub(crate) struct KnownGroup {
     pub label: TranslatedString,
     pub implies: Vec<String>,
     pub sort_key: Option<String>,
-
-    /// List of actions that should trigger a warning when assigning this
-    /// group, e.g. because it is unusually large or broad.
-    pub warn_for_action: Vec<String>,
+    pub safe_actions: Vec<String>,
 
     /// The actions the current user is allowed to assign this group for.
     pub assignable_actions: Vec<String>,
 }
 
-/// Loads all known groups and actions the current user is allowed to assign for each.
 pub(crate) async fn known_groups_for_user(context: &Context) -> ApiResult<Vec<KnownGroup>> {
     let user_is_tobira_admin = context.auth.is_tobira_admin(&context.config.auth);
     let user_roles = context.auth.roles();
@@ -43,7 +39,7 @@ pub(crate) async fn known_groups_for_user(context: &Context) -> ApiResult<Vec<Kn
                 label: group.label,
                 implies: group.implies,
                 sort_key: group.sort_key,
-                warn_for_action: group.warn_for_action,
+                safe_actions: group.safe_actions,
                 assignable_actions,
             }
         })

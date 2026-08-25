@@ -421,10 +421,7 @@ acl:
       realm-admin-description: Peut modérer, supprimer des pages et modifier les autorisations.
       realm-admin-description_one: Peut modérer, supprimer des pages et modifier les autorisations.
       realm-admin-description_other: Peuvent modérer, supprimer des pages et modifier les autorisations.
-      write-access: Droit d’écriture
-      moderate-access: Droits de modération
-      admin-access: Droits d'administration
-      large-group-warning: Vous donnez {{val}} à un grand groupe. Est-ce volontaire ?
+      large-group-warning: Vous donnez l'autorisation '{{val}}' à tout ce groupe. Est-ce volontaire ? # needs verification
   unlisted:
     note: Cette vidéo n'est pas répertoriée.
     explanation: >

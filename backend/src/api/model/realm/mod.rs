@@ -291,9 +291,9 @@ impl Realm {
     /// the respective actions that are necessary for UI purposes.
     async fn own_acl(&self, context: &Context) -> ApiResult<Acl> {
         let raw_roles_sql = "
-            select unnest(moderator_roles) as role, 'moderate' as action from realms where id = $1
+            select unnest(moderator_roles) as role, 'tobira:realm:moderate' as action from realms where id = $1
             union
-            select unnest(admin_roles) as role, 'admin' as action from realms where id = $1
+            select unnest(admin_roles) as role, 'tobira:realm:admin' as action from realms where id = $1
         ";
         acl::load_for(context, raw_roles_sql, dbargs![&self.key]).await
     }
@@ -305,9 +305,9 @@ impl Realm {
     /// acl.
     async fn inherited_acl(&self, context: &Context) -> ApiResult<Acl> {
         let raw_roles_sql = "
-            select unnest(flattened_moderator_roles) as role, 'moderate' as action from realms where id = $1
+            select unnest(flattened_moderator_roles) as role, 'tobira:realm:moderate' as action from realms where id = $1
             union
-            select unnest(flattened_admin_roles) as role, 'admin' as action from realms where id = $1
+            select unnest(flattened_admin_roles) as role, 'tobira:realm:admin' as action from realms where id = $1
         ";
         acl::load_for(context, raw_roles_sql, dbargs![&self.parent_key]).await
     }

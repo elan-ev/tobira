@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use serde::Deserialize;
 
-use crate::{api::Context, db::{types::ActionRoleMap, util::{impl_from_db}}, prelude::*};
+use crate::{api::Context, db::{types::ActionRoleMap, util::impl_from_db}, model::{REALM_ADMIN_ACTION, REALM_MODERATE_ACTION}, prelude::*};
 
 use super::{TranslatedString};
 
@@ -17,14 +17,14 @@ pub struct KnownGroup {
     pub label: TranslatedString,
     pub implies: Vec<String>,
     pub sort_key: Option<String>,
-    pub warn_for_action: Vec<String>,
+    pub safe_actions: Vec<String>,
     pub assignable_by: ActionRoleMap,
 }
 
 impl_from_db!(
     KnownGroup,
     select: {
-        known_groups.{ role, label, implies, sort_key, warn_for_action, assignable_by },
+        known_groups.{ role, label, implies, sort_key, safe_actions, assignable_by },
     },
     |row| {
         KnownGroup {
@@ -32,7 +32,7 @@ impl_from_db!(
             label: row.label(),
             implies: row.implies(),
             sort_key: row.sort_key(),
-            warn_for_action: row.warn_for_action(),
+            safe_actions: row.safe_actions(),
             assignable_by: row.assignable_by(),
         }
     },
@@ -68,25 +68,31 @@ impl KnownGroup {
 }
 
 /// Returns the set of actions that the current user is allowed to hand out for a specific group.
+/// For admins, an empty list is returned, as the frontend has the logic for the special
+/// "admin can do anything".
 pub(crate) fn actions_assignable_by(
     assignable_by: &ActionRoleMap,
     user_roles: &HashSet<String>,
     is_admin: bool,
 ) -> Vec<String> {
-    let mut candidate_actions: HashSet<&str> = ["read", "write"].into_iter().collect();
-    candidate_actions.extend(assignable_by.0.keys().map(String::as_str));
+    if is_admin {
+        return Vec::new();
+    }
 
-    let is_allowed_for = |action: &str| {
-        assignable_by.0.get(action)
-            .is_some_and(|roles| roles.iter().any(|role| user_roles.contains(role)))
-    };
+    let mut out = assignable_by.0.iter()
+        .filter(|(_action, roles)| roles.iter().any(|role| user_roles.contains(role)))
+        .map(|(action, _roles)| action.as_str())
+        .collect::<Vec<_>>();
 
-    candidate_actions.into_iter()
-        .filter(|action| {
-            is_admin || is_allowed_for(action) || (*action == "read" && is_allowed_for("write"))
-        })
-        .map(str::to_owned)
-        .collect()
+    // Apply implicit rules
+    if out.contains(&"write") && !out.contains(&"read") {
+        out.push("read");
+    }
+    if out.contains(&REALM_ADMIN_ACTION) && !out.contains(&REALM_MODERATE_ACTION) {
+        out.push(REALM_MODERATE_ACTION);
+    }
+
+    out.into_iter().map(str::to_owned).collect()
 }
 
 

@@ -402,10 +402,7 @@ acl:
       playlist-write-description: Can delete the playlist, change metadata and add or remove videos.
       realm-moderate-description: Can edit content, add subpages and change the name and subpage order.
       realm-admin-description: Can moderate, delete pages and edit permissions.
-      write-access: write-access
-      moderate-access: moderating-rights
-      admin-access: page admin-rights
-      large-group-warning: You are giving {{val}} to a large group. Is this intentional?
+      large-group-warning: You are giving '{{val}}' permissions to this whole group. Is this intentional?
   unlisted:
     note: This video is unlisted.
     explanation: >
