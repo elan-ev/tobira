@@ -388,7 +388,7 @@ acl:
     admin-user: Admin
     unknown-user-note: unbekannt
     no-entries: Keine Einträge
-    subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
+    subset-warning: 'Diese Auswahl ist bereits enthalten und wird durch die folgenden Gruppen überschrieben: {{groups}}.'
     inherited: 'Geerbte Berechtigungen:'
     inherited-tooltip: >
       Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden an alle Unterseiten
@@ -428,10 +428,7 @@ acl:
         Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
       realm-admin-description_other: >
         Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
-      write-access: Schreibzugriff
-      moderate-access: Moderationsrechte
-      admin-access: Adminrechte
-      large-group-warning: Sie geben einer großen Gruppe {{val}}. Ist das beabsichtigt?
+      large-group-warning: Sie geben dieser ganzen Gruppe '{{val}}' Berechtigung. Ist das beabsichtigt?
   unlisted:
       note: Dieses Video ist ungelistet.
       explanation: >
@@ -857,3 +854,5 @@ api-remote-errors:
     not-found: "Aktion fehlgeschlagen: Playlist nicht gefunden."
     entry-not-found: Es wurde versucht, unbekannte Einträge hinzuzufügen.
     not-allowed: Sie haben nicht die Berechtigung, diese Playlist-Aktion durchzuführen.
+  acl:
+    assign-not-allowed: Sie sind nicht berechtigt, diese Berechtigung zu vergeben.

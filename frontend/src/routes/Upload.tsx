@@ -95,7 +95,7 @@ const query = graphql`
             description
             created
             canWrite
-            acl { role actions info { label implies large } }
+            acl { role actions info { label implies safeActions assignableActions } }
         }
     }
 `;
@@ -823,7 +823,7 @@ const SeriesAclQuery = graphql`
     query UploadSeriesAclQuery($seriesId: String!) {
         series: seriesByOpencastId(id: $seriesId) {
             id
-            acl { role actions info { label implies large } }
+            acl { role actions info { label implies safeActions assignableActions } }
         }
     }
 `;
@@ -908,7 +908,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
 
     const formMethods = useForm<Metadata>({
         mode: "onChange",
-        defaultValues: { acl: defaultAclMap(user) },
+        defaultValues: { acl: defaultAclMap(user, knownRoles) },
     });
     const { handleSubmit, control, formState: { isValid, errors } } = formMethods;
 

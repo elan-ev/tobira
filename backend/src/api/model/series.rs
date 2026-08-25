@@ -12,12 +12,13 @@ use crate::{
             acl::{self, Acl},
             event::{AuthorizedEvent, Event},
             realm::Realm,
-            shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input},
+            shared::{SearchFilter, SortDirection, ToSqlColumn, ensure_acl_assignment_allowed},
         },
         util::{OcItemId, LazyLoad},
     },
     db::util::{impl_from_db, select},
     model::{
+        AclForDb,
         AclItem,
         ExtraMetadata,
         Key,
@@ -46,7 +47,6 @@ use super::{
         define_sort_column_and_order,
         load_writable_for_user,
         BasicMetadata,
-        AclForDB,
         Connection,
         ConnectionQueryParts,
         PageInfo,
@@ -65,9 +65,7 @@ pub(crate) struct Series {
     pub(crate) created: Option<DateTime<Utc>>,
     pub(crate) updated: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
-    #[allow(dead_code)]
-    pub(crate) read_roles: Option<Vec<String>>,
-    pub(crate) write_roles: Option<Vec<String>>,
+    pub(crate) acl: AclForDb,
     pub(crate) is_bookmark: LazyLoad<bool>,
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<ThumbnailStack>,
@@ -99,8 +97,10 @@ impl_from_db!(
             created: row.created(),
             updated: row.updated(),
             metadata: row.metadata(),
-            read_roles: row.read_roles(),
-            write_roles: row.write_roles(),
+            acl: AclForDb {
+                read_roles: row.read_roles::<Option<Vec<String>>>().unwrap_or(vec![]),
+                write_roles: row.write_roles::<Option<Vec<String>>>().unwrap_or(vec![]),
+            },
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             description: row.description(),
             is_bookmark: LazyLoad::NotLoaded,
@@ -144,7 +144,7 @@ impl Series {
             .await?
             .ok_or_else(|| err::invalid_input!(key = "series.not-found", "series {id} not found"))?;
 
-        if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[])) {
+        if !context.auth.overlaps_roles(&series.acl.write_roles) {
             return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
         }
 
@@ -153,7 +153,7 @@ impl Series {
 
     pub(crate) async fn create(
         series: NewSeries,
-        acl: Option<AclForDB>,
+        acl: Option<AclForDb>,
         context: &Context,
         state: SeriesState,
     ) -> ApiResult<Self> {
@@ -203,6 +203,7 @@ impl Series {
         if !context.auth.can_create_series(&context.config.auth) {
             return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
         }
+        ensure_acl_assignment_allowed(context, &acl, None).await?;
         let response = context
             .oc_client
             .create_series(&acl, &metadata.title, metadata.description.as_deref())
@@ -212,7 +213,7 @@ impl Series {
                 err::opencast_unavailable!("Failed to create series")
             })?;
 
-        let db_acl = Some(convert_acl_input(&acl));
+        let db_acl = Some(AclForDb::from_items(&acl));
 
         // If the request returned an Opencast identifier, the series was created successfully.
         // The series is created in the database, so the user doesn't have to wait for sync to see
@@ -418,6 +419,8 @@ impl Series {
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<Series> {
         let series = Self::load_for_mutation(id, context).await?;
 
+        ensure_acl_assignment_allowed(context, &acl, Some(&series.acl)).await?;
+
         info!(
             series_id = %id,
             opencast_id = %series.opencast_id,
@@ -435,7 +438,7 @@ impl Series {
 
         if response.status() == StatusCode::OK {
             // 200: The updated access control list is returned.
-            let db_acl = convert_acl_input(&acl);
+            let db_acl = AclForDb::from_items(&acl);
 
             context.db.execute("\
                 update all_series \
@@ -794,7 +797,7 @@ impl Series {
 
     /// Whether the current user has write access to this series.
     fn can_write(&self, context: &Context) -> bool {
-        self.write_roles.as_ref().is_some_and(|roles| context.auth.overlaps_roles(roles))
+        context.auth.overlaps_roles(&self.acl.write_roles)
     }
 
     fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {

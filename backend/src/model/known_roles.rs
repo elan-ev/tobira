@@ -1,6 +1,8 @@
+use std::collections::HashSet;
+
 use serde::Deserialize;
 
-use crate::{api::Context, db::util::{impl_from_db}, prelude::*};
+use crate::{api::Context, db::{types::ActionRoleMap, util::impl_from_db}, model::{REALM_ADMIN_ACTION, REALM_MODERATE_ACTION}, prelude::*};
 
 use super::{TranslatedString};
 
@@ -9,19 +11,20 @@ use super::{TranslatedString};
 
 /// A group selectable in the ACL UI. Basically a mapping from role to a nice
 /// label and info about the relationship to other roles/groups.
-#[derive(juniper::GraphQLObject)]
+#[derive(Debug)]
 pub struct KnownGroup {
     pub role: String,
     pub label: TranslatedString,
     pub implies: Vec<String>,
     pub sort_key: Option<String>,
-    pub large: bool,
+    pub safe_actions: Vec<String>,
+    pub assignable_by: ActionRoleMap,
 }
 
 impl_from_db!(
     KnownGroup,
     select: {
-        known_groups.{ role, label, implies, sort_key, large },
+        known_groups.{ role, label, implies, sort_key, safe_actions, assignable_by },
     },
     |row| {
         KnownGroup {
@@ -29,7 +32,8 @@ impl_from_db!(
             label: row.label(),
             implies: row.implies(),
             sort_key: row.sort_key(),
-            large: row.large(),
+            safe_actions: row.safe_actions(),
+            assignable_by: row.assignable_by(),
         }
     },
 );
@@ -40,6 +44,55 @@ impl KnownGroup {
         let query = format!("select {selection} from known_groups");
         context.db.query_mapped(&query, dbargs![], |row| Self::from_row_start(&row)).await
     }
+
+    /// Loads the known-group rows matching any of the given roles. Roles with
+    /// no matching row are simply absent from the result since they are not
+    /// tracked as known groups.
+    pub(crate) async fn load_by_roles(
+        roles: &[&str],
+        context: &Context,
+    ) -> Result<Vec<Self>, tokio_postgres::Error> {
+        let selection = Self::select();
+        let query = format!("select {selection} from known_groups where role = any($1)");
+        context.db.query_mapped(&query, dbargs![&roles], |row| Self::from_row_start(&row)).await
+    }
+
+    /// Returns the set of actions that the current user is allowed to hand out for a specific group.
+    pub(crate) fn actions_assignable_by(
+        &self,
+        user_roles: &HashSet<String>,
+        is_admin: bool,
+    ) -> Vec<String> {
+        actions_assignable_by(&self.assignable_by, user_roles, is_admin)
+    }
+}
+
+/// Returns the set of actions that the current user is allowed to hand out for a specific group.
+/// For admins, an empty list is returned, as the frontend has the logic for the special
+/// "admin can do anything".
+pub(crate) fn actions_assignable_by(
+    assignable_by: &ActionRoleMap,
+    user_roles: &HashSet<String>,
+    is_admin: bool,
+) -> Vec<String> {
+    if is_admin {
+        return Vec::new();
+    }
+
+    let mut out = assignable_by.0.iter()
+        .filter(|(_action, roles)| roles.iter().any(|role| user_roles.contains(role)))
+        .map(|(action, _roles)| action.as_str())
+        .collect::<Vec<_>>();
+
+    // Apply implicit rules
+    if out.contains(&"write") && !out.contains(&"read") {
+        out.push("read");
+    }
+    if out.contains(&REALM_ADMIN_ACTION) && !out.contains(&REALM_MODERATE_ACTION) {
+        out.push(REALM_MODERATE_ACTION);
+    }
+
+    out.into_iter().map(str::to_owned).collect()
 }
 
 

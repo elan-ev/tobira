@@ -1,13 +1,16 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use juniper::{GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use tokio_postgres::Row;
 
 use crate::{
-    HasRoles, api::{
+    auth::HasRoles,
+    api::{
         Context,
-        err::{ApiResult, invalid_input},
-    }, dbargs, model::AclItem
+        err::{ApiResult, invalid_input, not_authorized},
+    },
+    dbargs,
+    model::{AclForDb, AclItem, KnownGroup}
 };
 
 
@@ -317,53 +320,78 @@ where
 }
 
 
-#[derive(Debug)]
-pub(crate) struct AclForDB {
-    pub(crate) read_roles: Vec<String>,
-    pub(crate) write_roles: Vec<String>,
-    // todo: add custom and preview roles for events when sent by frontend
-    // preview_roles: Option<Vec<String>>,
-    // custom_action_roles: Option<CustomActions>,
+/// Checks that the current user is allowed to make the ACL change described
+/// by `entries`, i.e. is allowed to grant every newly added role/action
+/// combination.
+///
+/// `previous` holds the item's current roles or `None` when creating a new item
+/// (i.e. nothing granted yet).
+/// Only newly added role/action combinations are checked against each role's
+/// `assignable_by` (as of now, shrinking access is always allowed).
+pub(crate) async fn ensure_acl_assignment_allowed(
+    context: &Context,
+    new: &[AclItem],
+    old: Option<&AclForDb>,
+) -> ApiResult<()> {
+    if context.auth.is_tobira_admin(&context.config.auth) {
+        return Ok(());
+    }
+
+    let empty_acl = AclForDb::empty();
+    let old = old.unwrap_or(&empty_acl);
+    let added = new.iter()
+        .map(|item| (
+            item.role.as_str(),
+            item.actions.iter()
+                .filter(|action| !old.roles_for_action(action).contains(&item.role))
+                .map(|a| a.as_str())
+                .collect::<Vec<_>>(),
+        ))
+        .filter(|(_role, actions)| !actions.is_empty())
+        .collect::<Vec<_>>();
+
+    ensure_permission_change_allowed(context, added).await
 }
 
-pub(crate) fn convert_acl_input(entries: &[AclItem]) -> AclForDB {
-    let mut read_roles = HashSet::new();
-    let mut write_roles = HashSet::new();
-    // let mut preview_roles = HashSet::new();
-    // let mut custom_action_roles = CustomActions::default();
+/// Makes sure that an ACL modification is allowed by the known groups'
+/// `assignable_by`. `added` contains a list of `(role, actions)`.
+pub(crate) async fn ensure_permission_change_allowed(
+    context: &Context,
+    added: Vec<(&str, Vec<&str>)>,
+) -> ApiResult<()> {
+    if context.auth.is_tobira_admin(&context.config.auth) {
+        return Ok(());
+    }
+    if added.is_empty() {
+        return Ok(());
+    }
 
-    for entry in entries {
-        let role = &entry.role;
-        for action in &entry.actions {
-            match action.as_str() {
-                // "preview" => {
-                //     preview_roles.insert(role.clone());
-                // }
-                "read" => {
-                    read_roles.insert(role.clone());
-                }
-                "write" => {
-                    write_roles.insert(role.clone());
-                }
-                _ => {
-                    // custom_action_roles
-                    //     .0
-                    //     .entry(action)
-                    //     .or_insert_with(Vec::new)
-                    //     .push(role.clone());
-                    todo!();
-                }
-            };
+    let roles = added.iter().map(|&(role, _)| role).collect::<Vec<_>>();
+    let groups = KnownGroup::load_by_roles(&roles, context).await?;
+    let user_roles = context.auth.roles();
+    // Admins already returned above, so `is_admin: false`.
+    let mut assignable = groups.iter()
+        .map(|g| (g.role.as_str(), g.actions_assignable_by(user_roles, false)))
+        .collect::<HashMap<_, _>>();
+
+    // Insert defaults for built-in groups if not present yet.
+    // TODO: this is duplicated with frontend logic! Deduplicate
+    assignable.entry(crate::auth::ROLE_ANONYMOUS).or_insert_with(|| vec!["read".into()]);
+    assignable.entry(crate::auth::ROLE_USER).or_insert_with(|| vec!["read".into()]);
+
+    for (role, requested_actions) in added {
+        // If the group isn't known, everything is allowed
+        let Some(allowed_actions) = assignable.get(role) else { continue };
+
+        if requested_actions.iter().any(|req| !allowed_actions.iter().any(|a| a == *req)) {
+            return Err(not_authorized!(
+                key = "acl.assign-not-allowed",
+                "not allowed to assign group '{role}' for '{requested_actions:?}'",
+            ));
         }
     }
 
-    AclForDB {
-        read_roles: read_roles.into_iter().collect(),
-        write_roles: write_roles.into_iter().collect(),
-        // todo: add custom and preview roles when sent by frontend
-        // preview_roles: preview_roles.into_iter().collect(),
-        // custom_action_roles,
-    }
+    Ok(())
 }
 
 #[derive(GraphQLInputObject)]

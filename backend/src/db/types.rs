@@ -66,21 +66,22 @@ pub struct PlaylistEntry {
 }
 
 
-/// Represents the type for the `custom_action_roles` field from `32-custom-actions.sql`.
-/// This holds a mapping of actions to lists holding roles that are allowed
-/// to carry out the respective action.
-#[derive(Debug, Serialize, Deserialize, Default)]
+/// Represents a JSON object mapping an action (like `read` and/or `write`) to a
+/// list of roles. Used for the `custom_action_roles` field on events from
+/// `32-custom-actions.sql` and the `assignable_by` field on known groups
+/// from `49-group-permissions.sql`.
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
-pub(crate) struct CustomActions(pub(crate) HashMap<String, Vec<String>>);
+pub(crate) struct ActionRoleMap(pub(crate) HashMap<String, Vec<String>>);
 
-impl ToSql for CustomActions {
+impl ToSql for ActionRoleMap {
     fn to_sql(
         &self,
         ty: &postgres_types::Type,
         out: &mut BytesMut,
     ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
         serde_json::to_value(self)
-            .expect("failed to convert `CustomActions` to JSON value")
+            .expect("failed to convert `ActionRoleMap` to JSON value")
             .to_sql(ty, out)
     }
 
@@ -91,7 +92,7 @@ impl ToSql for CustomActions {
     postgres_types::to_sql_checked!();
 }
 
-impl<'a> FromSql<'a> for CustomActions {
+impl<'a> FromSql<'a> for ActionRoleMap {
     fn from_sql(
         ty: &postgres_types::Type,
         raw: &'a [u8],

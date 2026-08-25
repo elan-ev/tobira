@@ -432,10 +432,7 @@ acl:
       realm-admin-description: —
       realm-admin-description_one: Può moderare, cancellare pagine e modificare le autorizzazioni.
       realm-admin-description_other: Possono moderare, cancellare pagine e modificare le autorizzazioni.
-      write-access: accesso in scrittura
-      moderate-access: diritti di moderazione
-      admin-access: pagina diritti-amministratore
-      large-group-warning: State dando {{val}} a un gruppo numeroso. È una cosa intenzionale?
+      large-group-warning: State dando a questo intero gruppo l'autorizzazione '{{val}}'. È una cosa intenzionale? #needs verification
   unlisted:
     note: Questo video non è in elenco.
     explanation: >

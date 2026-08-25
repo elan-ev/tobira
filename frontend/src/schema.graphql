@@ -566,16 +566,15 @@ type InaccessibleBookmarkItem {
   id: ID!
 }
 
-"""
-  A group selectable in the ACL UI. Basically a mapping from role to a nice
-  label and info about the relationship to other roles/groups.
-"""
+"A group selectable in the ACL UI, as seen by the current user."
 type KnownGroup {
   role: String!
   label: TranslatedString!
   implies: [String!]!
   sortKey: String
-  large: Boolean!
+  safeActions: [String!]!
+  "The actions the current user is allowed to assign this group for."
+  assignableActions: [String!]!
 }
 
 type KnownUser {
@@ -897,7 +896,7 @@ type Query {
     results is limited to some fixed value.
   """
   searchKnownUsers(query: String!): KnownUsersSearchOutcome!
-  "Returns all known groups selectable in the ACL UI."
+  "Returns all known groups, with `assignableActions` for the current user."
   knownGroups: [KnownGroup!]!
   "Returns information for the admin dashboard."
   adminDashboardInfo: AdminInfo
@@ -1055,10 +1054,18 @@ type RoleInfo {
   """
   implies: [String!]
   """
-    Is `true` if this role represents a large group. Used to warn users
-    accidentally giving write access to large groups.
+    List of actions that are considered harmless to assign to this group.
+    All other actions will show a warning, as assigning it is considered
+    questionable, e.g. because the group is very large.
+    Always empty for roles that are not a known group.
   """
-  large: Boolean!
+  safeActions: [String!]!
+  """
+    Actions the current user is allowed to assign this role for.
+    `null` if the role is not a known group (like free-text roles added in the ACL selector).
+    In that case the assignment is unrestricted.
+  """
+  assignableActions: [String!]
 }
 
 type SearchEvent implements Node {

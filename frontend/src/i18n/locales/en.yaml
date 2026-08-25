@@ -382,7 +382,7 @@ acl:
     admin-user: Admin
     unknown-user-note: unknown
     no-entries: No entries
-    subset-warning: 'This selection is already included in the following group(s): {{groups}}.'
+    subset-warning: 'This selection is already included in and overridden by the following group(s): {{groups}}.'
     inherited: 'Inherited permissions:'
     inherited-tooltip: >
       The following permissions were granted in a higher level page and are inherited to all subpages.
@@ -402,10 +402,7 @@ acl:
       playlist-write-description: Can delete the playlist, change metadata and add or remove videos.
       realm-moderate-description: Can edit content, add subpages and change the name and subpage order.
       realm-admin-description: Can moderate, delete pages and edit permissions.
-      write-access: write-access
-      moderate-access: moderating-rights
-      admin-access: page admin-rights
-      large-group-warning: You are giving {{val}} to a large group. Is this intentional?
+      large-group-warning: You are giving '{{val}}' permissions to this whole group. Is this intentional?
   unlisted:
     note: This video is unlisted.
     explanation: >
@@ -815,3 +812,5 @@ api-remote-errors:
     not-found: "Action failed: playlist not found."
     entry-not-found: Attempted to add unknown entries.
     not-allowed: You are not allowed to perform this playlist action.
+  acl:
+    assign-not-allowed: You are not allowed to grant this permission.

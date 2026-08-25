@@ -4,12 +4,12 @@ use crate::{
     api::{
         err::{self, ApiResult, ApiError, ApiErrorKind},
         model::{
-            shared::{convert_acl_input, BasicMetadata},
+            shared::{ensure_acl_assignment_allowed, BasicMetadata},
         },
         Context,
         Id,
     },
-    model::{AclItem, OpencastId},
+    model::{AclForDb, AclItem, OpencastId},
     prelude::*,
     sync::client::{AclInput, OpencastItem},
 };
@@ -29,6 +29,7 @@ impl AuthorizedPlaylist {
         if !context.auth.can_create_playlists(&context.config.auth) {
             return Err(err::not_authorized!(key = "playlist.not-allowed", "playlist action not allowed"));
         }
+        ensure_acl_assignment_allowed(context, &acl, None).await?;
 
         let entry_ids = load_entries(entries, context).await?;
 
@@ -46,7 +47,7 @@ impl AuthorizedPlaylist {
                 err::opencast_unavailable!("Failed to create playlist")
             })?;
 
-        let acl = convert_acl_input(&acl);
+        let acl = AclForDb::from_items(&acl);
         let selection = Self::select();
 
         let query = format!(
@@ -82,6 +83,10 @@ impl AuthorizedPlaylist {
     ) -> ApiResult<Self> {
         // `load_for_mutation` handles authorization.
         let playlist = Playlist::load_for_mutation(id, context).await?;
+
+        if let Some(acl) = &acl {
+            ensure_acl_assignment_allowed(context, acl, Some(&playlist.acl)).await?;
+        }
 
         let mut entry_ids = if let Some(entries) = entries {
             Some(load_entries(entries, context).await?)
@@ -136,7 +141,7 @@ impl AuthorizedPlaylist {
             .filter(|a| a.allow)
             .map(|a| AclItem { role: a.role, actions: vec![a.action] })
             .collect();
-        let response_acl = convert_acl_input(&acl_entries);
+        let response_acl = AclForDb::from_items(&acl_entries);
 
         let selection = Self::select();
         let query = format!(

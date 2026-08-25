@@ -10,15 +10,17 @@ import { ConfirmationModalHandle } from "../../../ui/Modal";
 import { boxError } from "@opencast/appkit";
 import { displayCommitError } from "./util";
 import { currentRef } from "../../../util";
-import { MODERATE_ADMIN_ACTIONS } from "../../../util/permissionLevels";
+import {
+    MODERATE_ADMIN_ACTIONS, REALM_ADMIN_ACTION, REALM_MODERATE_ACTION,
+} from "../../../util/permissionLevels";
 import { aclArrayToMap } from "../../util";
 
 
 const fragment = graphql`
     fragment RealmPermissionsData on Realm {
         id
-        ownAcl { role actions info { label implies large } }
-        inheritedAcl { role actions info { label implies large } }
+        ownAcl { role actions info { label implies safeActions assignableActions } }
+        inheritedAcl { role actions info { label implies safeActions assignableActions } }
         ownerDisplayName
         ancestors { ownerDisplayName }
     }
@@ -45,7 +47,7 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
     const [commit, inFlight] = useMutation<RealmPermissionsMutation>(graphql`
         mutation RealmPermissionsMutation($id: ID!, $permissions: UpdatedPermissions!) {
             updatePermissions(id: $id, permissions: $permissions) {
-                ownAcl { role actions info { label implies large } }
+                ownAcl { role actions info { label implies safeActions assignableActions } }
                 isCurrentUserPageAdmin
                 canCurrentUserModerate
                 ... GeneralRealmData
@@ -57,11 +59,11 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
         const [moderatorRoles, adminRoles]: string[][] = [[], []];
 
         for (const [role, { actions }] of selections) {
-            if (actions.has("moderate")) {
+            if (actions.has(REALM_MODERATE_ACTION)) {
                 moderatorRoles.push(role);
             }
 
-            if (actions.has("admin")) {
+            if (actions.has(REALM_ADMIN_ACTION)) {
                 adminRoles.push(role);
             }
         }
@@ -94,7 +96,8 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
         <AclEditButtons
             userIsOwner={!!ownerDisplayName}
             css={{ marginTop: 16 }}
-            kind="admin"
+            warnIfActionLost={REALM_ADMIN_ACTION}
+            warningText={t("acl.save-modal.disclaimer-admin")}
             {...{
                 selections,
                 setSelections,
