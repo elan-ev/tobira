@@ -43,7 +43,7 @@ import { ErrorDisplay } from "../util/err";
 import { useNavBlocker } from "../routes/util";
 import { currentRef, OcEntity } from "../util";
 import { ModalHandle, Modal, ConfirmationModal, ConfirmationModalHandle } from "./Modal";
-import { PermissionLevel, PermissionLevels } from "../util/permissionLevels";
+import { AclActions, PermissionLevel, PermissionLevels } from "../util/permissionLevels";
 import { languages } from "../i18n";
 import { fetchQuery } from "../relay";
 
@@ -294,7 +294,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             // If "create" is called, a new option is created, meaning that we
             // don't know the role.
             info: null,
-            actions: new Set([permissionLevels.default]),
+            actions: notNullish(permissionLevels.all[permissionLevels.default]).actions,
         });
     });
 
@@ -304,7 +304,7 @@ const AclSelect: React.FC<AclSelectProps> = ({ acl, inheritedAcl, kind }) => {
             .forEach(option => {
                 const info = knownGroups.get(option.role);
                 prev.set(option.role, {
-                    actions: new Set([permissionLevels.default]),
+                    actions: notNullish(permissionLevels.all[permissionLevels.default]).actions,
                     info: {
                         label: info?.label ?? { "default": option.label },
                         implies: [...info?.implies ?? new Set()],
@@ -453,7 +453,7 @@ type TableProps = PropsWithChildren<{
 
 const Table: React.FC<TableProps> = ({ children, header }) => {
     const { i18n } = useTranslation();
-    const { permissionLevels } = useAclContext();
+    const { itemType } = useAclContext();
 
     return (
         <table css={{
@@ -489,7 +489,7 @@ const Table: React.FC<TableProps> = ({ children, header }) => {
                     // labels altogether, this needs yet another check.
                     // This will of course become even more complicated once more languages are
                     // added.
-                    width: permissionLevels.highest === "admin"
+                    width: itemType === "realm"
                         ? i18n.resolvedLanguage === "en" ? 160 : 165
                         : i18n.resolvedLanguage === "en" ? 190 : 224,
                 }} />
@@ -842,7 +842,8 @@ type AclEditButtonsProps = {
     inheritedAcl?: Acl;
     userIsOwner?: boolean;
     /** Checks if the user loses permissions to perform this action, and warns in that case. */
-    warnIfActionLost: "write" | "admin";
+    warnIfActionLost: AclActions;
+    warningText: string;
     saveModalRef: React.RefObject<ConfirmationModalHandle>;
 }
 
@@ -857,16 +858,17 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
     userIsOwner,
     saveModalRef,
     warnIfActionLost,
+    warningText,
 }) => {
     const { t } = useTranslation();
     const user = useUser();
     const resetModalRef = useRef<ModalHandle>(null);
 
     const containsUser = (acl: Acl) => isRealUser(user) && (
-        userIsOwner || user.isAdmin || user.roles.some(r =>
+        userIsOwner || user.isAdmin || user.roles.some(r => (
             acl.get(r)?.actions.has(warnIfActionLost)
                 || inheritedAcl?.get(r)?.actions.has(warnIfActionLost)
-        )
+        ))
     );
 
     const selectionIsInitial = selections.size === initialAcl.size
@@ -933,7 +935,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
                 buttonContent={t("acl.save-modal.confirm")}
                 onSubmit={() => submit(selections)}
             >
-                <p>{t(`acl.save-modal.disclaimer-${warnIfActionLost}`)}</p>
+                <p>{warningText}</p>
             </ConfirmationModal>
         </div>
     );
