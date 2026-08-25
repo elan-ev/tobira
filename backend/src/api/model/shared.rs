@@ -344,11 +344,24 @@ pub(crate) async fn ensure_acl_assignment_allowed(
             item.role.as_str(),
             item.actions.iter()
                 .filter(|action| !old.roles_for_action(action).contains(&item.role))
+                .map(|a| a.as_str())
                 .collect::<Vec<_>>(),
         ))
         .filter(|(_role, actions)| !actions.is_empty())
         .collect::<Vec<_>>();
 
+    ensure_permission_change_allowed(context, added).await
+}
+
+/// Makes sure that an ACL modification is allowed by the known groups'
+/// `assignable_by`. `added` contains a list of `(role, actions)`.
+pub(crate) async fn ensure_permission_change_allowed(
+    context: &Context,
+    added: Vec<(&str, Vec<&str>)>,
+) -> ApiResult<()> {
+    if context.auth.is_tobira_admin(&context.config.auth) {
+        return Ok(());
+    }
     if added.is_empty() {
         return Ok(());
     }
@@ -370,7 +383,7 @@ pub(crate) async fn ensure_acl_assignment_allowed(
         // If the group isn't known, everything is allowed
         let Some(allowed_actions) = assignable.get(role) else { continue };
 
-        if requested_actions.iter().any(|req| !allowed_actions.contains(&req)) {
+        if requested_actions.iter().any(|req| !allowed_actions.iter().any(|a| a == *req)) {
             return Err(not_authorized!(
                 key = "acl.assign-not-allowed",
                 "not allowed to assign group '{role}' for '{requested_actions:?}'",

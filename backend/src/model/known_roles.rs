@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use serde::Deserialize;
 
-use crate::{api::Context, db::{types::ActionRoleMap, util::{impl_from_db}}, prelude::*};
+use crate::{api::Context, db::{types::ActionRoleMap, util::impl_from_db}, model::{REALM_ADMIN_ACTION, REALM_MODERATE_ACTION}, prelude::*};
 
 use super::{TranslatedString};
 
@@ -84,9 +84,12 @@ pub(crate) fn actions_assignable_by(
         .map(|(action, _roles)| action.as_str())
         .collect::<Vec<_>>();
 
-    // Apply implicit rule that `write` implies `read`.
+    // Apply implicit rules
     if out.contains(&"write") && !out.contains(&"read") {
         out.push("read");
+    }
+    if out.contains(&REALM_ADMIN_ACTION) && !out.contains(&REALM_MODERATE_ACTION) {
+        out.push(REALM_MODERATE_ACTION);
     }
 
     out.into_iter().map(str::to_owned).collect()

@@ -11,7 +11,7 @@
     "ROLE_INSTRUCTOR": {
         "label": { "default": "Lecturers", "de": "Vortragende", "it": "Docenti", "fr": "Conférenciers" },
         "implies": ["ROLE_STAFF"],
-        "assignableBy": { "read": ["ROLE_USER"], "write": ["ROLE_STAFF"] }
+        "assignableBy": { "read": ["ROLE_USER"], "write": ["ROLE_STAFF"], "tobira:realm:moderate": ["ROLE_INSTRUCTOR"] }
     },
     "ROLE_TOBIRA_MODERATOR": {
         "label": { "default": "Moderators", "de": "Moderierende", "it": "Moderatori", "fr": "Modérateurs" },

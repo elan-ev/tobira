@@ -3,6 +3,9 @@ use juniper::GraphQLInputObject;
 use serde::Serialize;
 
 
+pub const REALM_ADMIN_ACTION: &str = "tobira:realm:admin";
+pub const REALM_MODERATE_ACTION: &str = "tobira:realm:moderate";
+
 /// A role being granted permission to perform certain actions.
 #[derive(Debug, GraphQLInputObject, Serialize)]
 pub struct AclItem {

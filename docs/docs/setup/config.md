@@ -73,7 +73,8 @@ Groups are specified in a JSON file in this format (`list` outputs the same form
         "safeActions": ["read", "write"],
         "assignableBy": {
             "read": ["ROLE_COURSE_123_STUDENTS"],
-            "write": ["ROLE_COURSE_123_LECTURERS"]
+            "write": ["ROLE_COURSE_123_LECTURERS"],
+            "tobira:realm:moderate": ["ROLE_COURSE_123_LECTURERS"]
         }
     }
 
@@ -97,7 +98,7 @@ Field explanation:
 - `safeActions`: a list of actions that are considered safe to assign to this group. All
   other actions will show a warning in the UI. Defaults to `["read"]` if not specified and for
   `ROLE_USER` and `ROLE_ANONYMOUS`.
-- `assignableBy`: a mapping from action (`read`, `write`) to the list of roles allowed to assign
+- `assignableBy`: a mapping from action to the list of roles allowed to assign
   this group for that action. Being allowed to assign a group for `write` implicitly also allows
   assigning it for `read`. An action that's missing from the map (or an empty list) means only
   Tobira/Opencast admins can assign the group for that action. Users who cannot assign a group for
@@ -109,6 +110,10 @@ Field explanation:
   Entries with same `sortKey` are sorted alphabetically.
   Entries without `sortKey` are sorted last.
   By default, `ROLE_ANONYMOUS` has sortKey "_a" and `ROLE_USER` has "_b".
+
+"Actions" can be anything in an Opencast ACL (though the UI currently supports only `read` and `write`) plus these Tobira-specific ones:
+- `tobira:realm:moderate`: moderator access to a realm
+- `tobira:realm:admin`: page admin access to a realm (imples `tobira:realm:moderate`)
 
 Note that `upsert` is idempotent, so you can simply call this as part of your Ansible script, for example.
 
