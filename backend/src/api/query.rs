@@ -3,7 +3,7 @@ use juniper::graphql_object;
 
 use crate::{
     auth::{AuthState, User},
-    model::{OpencastId, KnownGroup},
+    model::{OpencastId, KnownGroup, OpencastKnownUser},
 };
 
 use super::{
@@ -199,6 +199,32 @@ impl Query {
     /// Returns all known groups selectable in the ACL UI.
     async fn known_groups(context: &Context) -> ApiResult<Vec<KnownGroup>> {
         KnownGroup::load_all(context).await.map_err(Into::into)
+    }
+
+    /// Looks up a single known user by exact username.
+    /// Returns username, display name, email, and user role.
+    async fn known_user_by_username(
+        username: String,
+        context: &Context,
+    ) -> ApiResult<Option<OpencastKnownUser>> {
+        known_roles::lookup_known_user(username, context).await
+    }
+
+    /// Searches for known users by partial match on username, display name,
+    /// email, or user role. Returns username, display name, email, and user
+    /// role.
+    ///
+    /// `query` may be `null` or an empty string, in which case all users are
+    /// returned (paginated). `limit` is clamped to `[1, 1000]`. `offset` is
+    /// clamped to be non-negative. Results are ordered by username so that
+    /// pagination via `limit`/`offset` is stable.
+    async fn find_known_users(
+        query: Option<String>,
+        limit: i32,
+        offset: i32,
+        context: &Context,
+    ) -> ApiResult<Vec<OpencastKnownUser>> {
+        known_roles::find_known_users_for_opencast(query, limit, offset, context).await
     }
 
     /// Returns information for the admin dashboard.

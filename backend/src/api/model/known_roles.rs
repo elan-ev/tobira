@@ -2,7 +2,7 @@ use meilisearch_sdk::search::{Selectors, MatchingStrategies};
 
 use crate::{
     api::{err::ApiResult, Context},
-    model::KnownUser,
+    model::{KnownUser, OpencastKnownUser},
     db::util::select,
     prelude::*,
 };
@@ -84,4 +84,84 @@ pub(crate) async fn search_known_users(
     }
 
     Ok(KnownUsersSearchOutcome::Results(SearchResults { items, total_hits, duration: elapsed_time() }))
+}
+
+/// Looks up a single known user by exact username.
+pub(crate) async fn lookup_known_user(
+    username: String,
+    context: &Context,
+) -> ApiResult<Option<OpencastKnownUser>> {
+    if !context.auth.is_admin(&context.config.auth) {
+        return Err(context.not_logged_in_error());
+    }
+
+    let (selection, mapping) = select!(username, display_name, email, user_role);
+    let query = format!("select {selection} from users where lower(username) = $1 limit 1");
+    let users = context.db.query_mapped(&query, dbargs![&username.to_lowercase()], |row| {
+        OpencastKnownUser {
+            username: mapping.username.of(&row),
+            display_name: mapping.display_name.of(&row),
+            email: mapping.email.of(&row),
+            user_role: mapping.user_role.of(&row),
+        }
+    }).await?;
+
+    Ok(users.into_iter().next())
+}
+
+/// Searches for known users by partial match on username, display name, email, or user role.
+///
+/// Passing `None` (or an empty string) for `query` returns all users, paginated by `limit`
+/// and `offset`. Results are ordered by `username` for stable pagination.
+pub(crate) async fn find_known_users_for_opencast(
+    query: Option<String>,
+    limit: i32,
+    offset: i32,
+    context: &Context,
+) -> ApiResult<Vec<OpencastKnownUser>> {
+    if !context.auth.is_admin(&context.config.auth) {
+        return Err(context.not_logged_in_error());
+    }
+
+    let limit = (limit as i64).clamp(1, 1000);
+    let offset = (offset as i64).max(0);
+
+    // An empty/missing query means "no filter": return all users.
+    let filter = query.as_deref().filter(|q| !q.is_empty());
+
+    let (selection, mapping) = select!(username, display_name, email, user_role);
+    let map_row = |row| OpencastKnownUser {
+        username: mapping.username.of(&row),
+        display_name: mapping.display_name.of(&row),
+        email: mapping.email.of(&row),
+        user_role: mapping.user_role.of(&row),
+    };
+
+    match filter {
+        Some(q) => {
+            let escaped = q.to_lowercase()
+                .replace('\\', "\\\\")
+                .replace('%', "\\%")
+                .replace('_', "\\_");
+            let like_pattern = format!("%{}%", escaped);
+            let sql = format!("select {selection} from users \
+                where lower(username) like $1 \
+                    or lower(display_name) like $1 \
+                    or lower(email) like $1 \
+                    or lower(user_role) like $1 \
+                order by lower(username), username \
+                limit $2 offset $3"
+            );
+            context.db.query_mapped(&sql, dbargs![&like_pattern, &limit, &offset], map_row)
+                .await.map_err(Into::into)
+        }
+        None => {
+            let sql = format!("select {selection} from users \
+                order by lower(username), username \
+                limit $1 offset $2"
+            );
+            context.db.query_mapped(&sql, dbargs![&limit, &offset], map_row)
+                .await.map_err(Into::into)
+        }
+    }
 }

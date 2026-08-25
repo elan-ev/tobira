@@ -51,3 +51,13 @@ pub(crate) struct KnownUser {
     pub display_name: String,
     pub user_role: String,
 }
+
+/// User information exposed to Opencast.
+/// Unlike `KnownUser`, this includes username and email.
+#[derive(juniper::GraphQLObject)]
+pub(crate) struct OpencastKnownUser {
+    pub username: String,
+    pub display_name: String,
+    pub email: Option<String>,
+    pub user_role: String,
+}
