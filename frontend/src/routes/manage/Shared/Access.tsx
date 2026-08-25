@@ -97,7 +97,7 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
                 inFlight={inFlight}
                 saveModalRef={saveModalRef}
                 onSubmit={() => onSubmit({ selections, saveModalRef, setCommitError })}
-                kind="write"
+                warnIfActionLost="write"
             />
         </Inertable>
         {boxError(commitError)}

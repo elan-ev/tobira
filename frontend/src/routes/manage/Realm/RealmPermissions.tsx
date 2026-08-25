@@ -94,7 +94,7 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
         <AclEditButtons
             userIsOwner={!!ownerDisplayName}
             css={{ marginTop: 16 }}
-            kind="admin"
+            warnIfActionLost="admin"
             {...{
                 selections,
                 setSelections,

@@ -841,7 +841,8 @@ type AclEditButtonsProps = {
     inFlight?: boolean;
     inheritedAcl?: Acl;
     userIsOwner?: boolean;
-    kind: "write" | "admin";
+    /** Checks if the user loses permissions to perform this action, and warns in that case. */
+    warnIfActionLost: "write" | "admin";
     saveModalRef: React.RefObject<ConfirmationModalHandle>;
 }
 
@@ -855,7 +856,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
     inheritedAcl,
     userIsOwner,
     saveModalRef,
-    kind,
+    warnIfActionLost,
 }) => {
     const { t } = useTranslation();
     const user = useUser();
@@ -863,7 +864,9 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
 
     const containsUser = (acl: Acl) => isRealUser(user) && (
         userIsOwner || user.isAdmin || user.roles.some(r =>
-            acl.get(r)?.actions.has(kind) || inheritedAcl?.get(r)?.actions.has(kind))
+            acl.get(r)?.actions.has(warnIfActionLost)
+                || inheritedAcl?.get(r)?.actions.has(warnIfActionLost)
+        )
     );
 
     const selectionIsInitial = selections.size === initialAcl.size
@@ -930,7 +933,7 @@ export const AclEditButtons: React.FC<AclEditButtonsProps> = ({
                 buttonContent={t("acl.save-modal.confirm")}
                 onSubmit={() => submit(selections)}
             >
-                <p>{t(`acl.save-modal.disclaimer-${kind}`)}</p>
+                <p>{t(`acl.save-modal.disclaimer-${warnIfActionLost}`)}</p>
             </ConfirmationModal>
         </div>
     );
