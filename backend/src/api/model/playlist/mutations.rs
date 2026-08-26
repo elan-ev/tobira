@@ -11,7 +11,7 @@ use crate::{
         Context,
         Id,
     },
-    model::{AclForDb, AclItem, Key, OpencastId},
+    model::{AclForDb, AclItem, Key, OpencastId, PlaylistEntryId},
     prelude::*,
     sync::client::{AclInput, OpencastItem},
 };
@@ -23,7 +23,7 @@ use super::{Playlist, AuthorizedPlaylist};
 pub(crate) struct PlaylistEntrySlot {
     /// Used to identify existing playlist entries, regardless of visibility
    /// (i.e. it's also on placeholders in frontend)
-    pub(crate) entry_id: Option<i32>,
+    pub(crate) entry_id: Option<PlaylistEntryId>,
     /// Newly added events do not have an entry ID before the playlist is saved in Opencast,
     /// so we use the Tobira ID to load them.
     pub(crate) new_event_id: Option<Id>,
@@ -106,7 +106,7 @@ impl AuthorizedPlaylist {
         // playlist's own current entries; newly added events are referred to by Tobira ID and
         // resolved via the `events` table.
         let entry_ids = if let Some(entries) = entries {
-            let existing_entry_ids: Vec<i32> = entries.iter().filter_map(|e| e.entry_id).collect();
+            let existing_entry_ids: Vec<_> = entries.iter().filter_map(|e| e.entry_id).collect();
             let content_id_by_entry_id = load_entries_by_entry_id(
                 playlist.key,
                 &existing_entry_ids,
@@ -117,7 +117,7 @@ impl AuthorizedPlaylist {
             let resolved_new = load_entries(new_event_ids, context).await?;
             let mut resolved_new_iter = resolved_new.into_iter();
 
-            let ids: Result<Vec<OpencastId>, _> = entries.into_iter()
+            let ids: Result<Vec<_>, _> = entries.into_iter()
                 .map(|slot| {
                     match (slot.entry_id, slot.new_event_id) {
                         (Some(_), Some(_)) => Err(err::invalid_input!(
@@ -270,17 +270,16 @@ async fn load_entries(entries: Vec<Id>, context: &Context) -> ApiResult<Vec<Open
 /// Resolves given entry IDs to their Opencast ID.
 async fn load_entries_by_entry_id(
     playlist_key: Key,
-    entry_ids: &[i32],
+    entry_ids: &[PlaylistEntryId],
     context: &Context,
-) -> ApiResult<HashMap<i32, OpencastId>> {
-    let entry_ids_i64: Vec<i64> = entry_ids.iter().map(|&id| id as i64).collect();
-    let map: HashMap<i32, OpencastId> = context.db
+) -> ApiResult<HashMap<PlaylistEntryId, OpencastId>> {
+    let map: HashMap<PlaylistEntryId, _> = context.db
         .query_mapped(
             "select t.entry_id, t.content_id \
                 from playlists, lateral unnest(playlists.entries) as t \
                 where playlists.id = $1 and t.entry_id = any($2::bigint[])",
-            dbargs![&playlist_key, &entry_ids_i64],
-            |row| (row.get::<_, i64>(0) as i32, OpencastId(row.get(1))),
+            dbargs![&playlist_key, &entry_ids],
+            |row| (row.get(0), OpencastId(row.get(1))),
         )
         .await?
         .into_iter()

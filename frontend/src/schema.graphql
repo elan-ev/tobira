@@ -181,7 +181,7 @@ input PlaylistEntrySlot {
   """
     Used to identify existing playlist entries, regardless of visibility
     (i.e. it's also on placeholders in frontend)
-  """ entryId: Int
+  """ entryId: PlaylistEntryId
   """
     Newly added events do not have an entry ID before the playlist is saved in Opencast,
     so we use the Tobira ID to load them.
@@ -302,6 +302,9 @@ scalar ExtraMetadata
   Should prevent using a regular String where an Opencast ID is expected.
 """
 scalar OpencastId
+
+"Identifies an entry within a playlist."
+scalar PlaylistEntryId
 
 "A string specified in different languages. Entry 'default' is required."
 scalar TranslatedString
@@ -820,7 +823,7 @@ type PlaylistConnection {
   missing or not-allowed items. `Node` holds the actual data, if present.
 """
 type PlaylistEntry {
-  entryId: Int!
+  entryId: PlaylistEntryId!
   node: VideoListEntry!
 }
 

@@ -29,7 +29,7 @@ use crate::{
     },
     auth::{AuthContext, ROLE_ANONYMOUS},
     db::util::{impl_from_db, select},
-    model::{AclForDb, Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
+    model::{AclForDb, Key, OpencastId, PlaylistEntryId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
 };
 
@@ -52,7 +52,7 @@ pub(crate) enum Playlist {
 #[derive(juniper::GraphQLObject)]
 #[graphql(Context = Context)]
 pub(crate) struct PlaylistEntry {
-    entry_id: i32,
+    entry_id: PlaylistEntryId,
     node: VideoListEntry,
 }
 
@@ -323,7 +323,7 @@ impl AuthorizedPlaylist {
         ");
         context.db
             .query_mapped(&query, dbargs![&self.key], |row| {
-                let entry_id = mapping.entry_id.of::<i64>(&row) as i32;
+                let entry_id = mapping.entry_id.of::<PlaylistEntryId>(&row);
                 let node = if !mapping.found.of::<bool>(&row) {
                     VideoListEntry::Missing(Missing)
                 } else {

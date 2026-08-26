@@ -60,7 +60,7 @@ import { VideoListSelector } from "../../../ui/SearchableSelect";
 import { BREAKPOINT_SMALL, BREAKPOINT_MEDIUM } from "../../../GlobalStyle";
 
 
-type Entry = Series["entries"][number] & { entryId?: number };
+type Entry = Series["entries"][number] & { entryId?: string };
 type AuthEvent = Extract<Entry, { __typename: "AuthorizedEvent" }>;
 export type ListEvent = AuthEvent & (
     | { action: "add" | "remove" | "none"; }
@@ -71,7 +71,7 @@ type PlaceholderEvent = {
     __typename: "placeholder";
     placeholderKind: "missing" | "not-allowed";
     id: string;
-    entryId?: number;
+    entryId?: string;
     action: "none" | "remove";
 };
 
