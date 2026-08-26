@@ -79,7 +79,7 @@ const query = graphql`
                         ... on AuthorizedEvent {
                             ...VideoListEventData @arguments(includeSeries: true)
                         }
-                        ... on NotAllowed { dummy }
+                        ... on NotAllowed { __typename }
                     }
                 }
             }

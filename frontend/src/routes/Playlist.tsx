@@ -232,16 +232,18 @@ const realmFragment = graphql`
 const fragment = graphql`
     fragment PlaylistRouteData on Playlist {
         __typename
-        ... on NotAllowed { dummy } # workaround
+        ... on NotAllowed { __typename }
         ... on AuthorizedPlaylist {
             id
             title
             description
             entries {
-                __typename
-                ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
-                ...on Missing { dummy }
-                ...on NotAllowed { dummy }
+                node {
+                    __typename
+                    ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
+                    ...on Missing { __typename }
+                    ...on NotAllowed { __typename }
+                }
             }
         }
         ... PlaylistBlockPlaylistData

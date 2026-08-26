@@ -17,9 +17,8 @@ import {
 import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
 import {
-    LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
-    LuRss, LuLink, LuSettings,
-    LuFilm,
+    LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuInfo,
+    LuRss, LuLink, LuSettings, LuFilm,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
@@ -32,9 +31,7 @@ import { floatingMenuProps, keyOfId } from "../../util";
 import { Link } from "../../router";
 import SeriesIcon from "../../icons/series.svg";
 import { isPastLiveEvent, isUpcomingLiveEvent } from "../Video";
-import {
-    BaseThumbnailReplacement, Thumbnail, ThumbnailOverlayContainer,
-} from "../Thumbnail";
+import { Thumbnail } from "../Thumbnail";
 import { PrettyDate } from "../time";
 import {
     BadgeItem, BadgeList, CollapsibleDescription, CreatorsBadge, DateAndCreators, DateBadge,
@@ -95,10 +92,11 @@ const SLIDER_BATCH_SIZE = 36;
 
 export type VideoListItem = Event | "missing" | "unauthorized";
 
-type Entries = Extract<
+
+type Entries = readonly Extract<
     PlaylistBlockPlaylistData$data,
     { __typename: "AuthorizedPlaylist" }
->["entries"];
+>["entries"][number]["node"][];
 type AuthorizedEntry = Extract<Entries[number], { __typename: "AuthorizedEvent" }>;
 
 export type VideoListMetadata = {
@@ -1158,15 +1156,7 @@ const Item: React.FC<ItemProps> = ({
     const TRANSITION_OUT_DURATION = "0.3s";
 
     const thumbnail = isPlaceholder
-        ? <ThumbnailOverlayContainer>
-            <BaseThumbnailReplacement css={{
-                background: "repeating-linear-gradient(115deg, "
-                    + "#2e2e2e, #2e2e2e 30px, #292929 30px, #292929 60px)",
-                color: "#dbdbdb",
-            }}>
-                <LuCircleAlert />
-            </BaseThumbnailReplacement>
-        </ThumbnailOverlayContainer>
+        ? <Thumbnail event={item === "missing" ? "missing" : "not-allowed"} />
         : <>
             <Thumbnail event={item} active={active} />
             <div css={{

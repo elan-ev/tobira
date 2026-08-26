@@ -543,9 +543,6 @@ manage:
     no-of-entries_one: '{{count}} entry'
     no-of-entries_other: '{{count}} entries'
     removing-disabled: Removing videos is disabled.
-    details:
-      unknown_one: One video is missing or requires additional permissions to view.
-      unknown_other: '{{count}} videos are missing or require additional permissions to view.'
     edit:
       add-video: Add video
       to-be-added: will be added
@@ -554,6 +551,8 @@ manage:
       move: Move
       to-be-moved: "will be moved to: {{series}}"
       cannot-be-removed: "Can't be removed: Missing write access"
+      placeholder-missing: Missing video
+      placeholder-not-allowed: Insufficient permissions
       undo: Undo
       save: Save changes
       error: Failed to update series content.

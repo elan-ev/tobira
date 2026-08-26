@@ -54,7 +54,7 @@ const seriesFragment = graphql`
         entries {
             __typename
             ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: false) }
-            ...on NotAllowed { dummy }
+            ...on NotAllowed { __typename }
         }
     }
 `;

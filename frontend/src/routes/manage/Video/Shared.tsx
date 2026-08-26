@@ -119,7 +119,7 @@ const query = graphql`
                         id
                         title
                     }
-                    ... on NotAllowed { dummy }
+                    ... on NotAllowed { __typename }
                 }
                 hostRealms { id isMainRoot name path }
             }

@@ -29,7 +29,7 @@ use crate::{
     },
     auth::{AuthContext, ROLE_ANONYMOUS},
     db::util::{impl_from_db, select},
-    model::{AclForDb, Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
+    model::{AclForDb, Key, OpencastId, PlaylistEntryId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
 };
 
@@ -37,7 +37,7 @@ use super::event::AuthorizedEvent;
 
 mod mutations;
 
-pub(crate) use mutations::RemovedPlaylist;
+pub(crate) use mutations::{PlaylistEntrySlot, RemovedPlaylist};
 
 
 #[derive(juniper::GraphQLUnion)]
@@ -45,6 +45,15 @@ pub(crate) use mutations::RemovedPlaylist;
 pub(crate) enum Playlist {
     Playlist(AuthorizedPlaylist),
     NotAllowed(NotAllowed),
+}
+
+/// A playlist entry has its own ID within the playlist and can also be used to identify
+/// missing or not-allowed items. `Node` holds the actual data, if present.
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct PlaylistEntry {
+    entry_id: PlaylistEntryId,
+    node: VideoListEntry,
 }
 
 pub(crate) struct AuthorizedPlaylist {
@@ -297,38 +306,36 @@ impl AuthorizedPlaylist {
             .pipe(Ok)
     }
 
-    async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
+    async fn entries(&self, context: &Context) -> ApiResult<Vec<PlaylistEntry>> {
         let (selection, mapping) = select!(
             found: "events.id is not null",
+            entry_id: "t.entry_id",
             event: AuthorizedEvent,
         );
         let query = format!("\
-            with entries as (\
-                select unnest(entries) as entry \
-                from playlists \
-                where id = $1\
-            ),
-            event_ids as (\
-                select (entry).content_id as id \
-                from entries \
-                where (entry).type = 'event'\
-            )
-            select {selection} from event_ids \
-            left join events on events.opencast_id = event_ids.id \
-            left join series on series.id = events.series\
+            select {selection} \
+            from playlists, \
+            lateral unnest(playlists.entries) with ordinality as t \
+            left join events on events.opencast_id = t.content_id \
+            left join series on series.id = events.series \
+            where playlists.id = $1 and t.type = 'event' \
+            order by t.ordinality\
         ");
         context.db
             .query_mapped(&query, dbargs![&self.key], |row| {
-                if !mapping.found.of::<bool>(&row) {
-                    return VideoListEntry::Missing(Missing);
-                }
+                let entry_id = mapping.entry_id.of::<PlaylistEntryId>(&row);
+                let node = if !mapping.found.of::<bool>(&row) {
+                    VideoListEntry::Missing(Missing)
+                } else {
+                    let event = AuthorizedEvent::from_row(&row, mapping.event);
+                    if !context.auth.overlaps_roles(&event.acl.read_roles) {
+                        VideoListEntry::NotAllowed(NotAllowed)
+                    } else {
+                        VideoListEntry::Event(event)
+                    }
+                };
 
-                let event = AuthorizedEvent::from_row(&row, mapping.event);
-                if !context.auth.overlaps_roles(&event.acl.read_roles) {
-                    return VideoListEntry::NotAllowed(NotAllowed);
-                }
-
-                VideoListEntry::Event(event)
+                PlaylistEntry { entry_id, node }
             })
             .await?
             .pipe(Ok)

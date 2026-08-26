@@ -7,8 +7,8 @@ use super::{
     err::ApiResult,
     id::Id,
     model::{
-        series::{Series, NewSeries, RemovedEventFromSeries},
-        playlist::{AuthorizedPlaylist, RemovedPlaylist},
+        series::{Series, NewSeries, MovedEventToSeries},
+        playlist::{AuthorizedPlaylist, PlaylistEntrySlot, RemovedPlaylist},
         shared::BasicMetadata,
         realm::{
             ChildIndex,
@@ -133,10 +133,11 @@ impl Mutation {
     async fn update_series_content(
         id: Id,
         added_events: Vec<Id>,
-        removed_events: Vec<RemovedEventFromSeries>,
+        removed_events: Vec<Id>,
+        moved_events: Vec<MovedEventToSeries>,
         context: &Context,
     ) -> ApiResult<Series> {
-        Series::update_content(id, added_events, removed_events, context).await
+        Series::update_content(id, added_events, removed_events, moved_events, context).await
     }
 
     /// Sends an http request to Opencast to create a new series,
@@ -165,7 +166,7 @@ impl Mutation {
     async fn update_playlist(
         id: Id,
         metadata: Option<BasicMetadata>,
-        entries: Option<Vec<Id>>,
+        entries: Option<Vec<PlaylistEntrySlot>>,
         acl: Option<Vec<AclItem>>,
         context: &Context,
     ) -> ApiResult<AuthorizedPlaylist> {
@@ -174,7 +175,14 @@ impl Mutation {
             None => (None, None),
         };
 
-        AuthorizedPlaylist::update(id, title, description, entries, acl, context).await
+        AuthorizedPlaylist::update(
+            id,
+            title,
+            description,
+            entries,
+            acl,
+            context,
+        ).await
     }
 
     /// Deletes the given playlist by sending a delete request to Opencast.

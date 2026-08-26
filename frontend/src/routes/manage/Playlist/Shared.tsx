@@ -94,22 +94,27 @@ const query = graphql`
                 updated
                 thumbnailStack { thumbnails { url live audioOnly state }}
                 entries {
-                    __typename
-                    ...on AuthorizedEvent {
-                        id
-                        title
-                        isLive
-                        created
-                        creators
-                        description
-                        canWrite
-                        syncedData {
-                            thumbnail
-                            audioOnly
-                            duration
-                            startTime
-                            endTime
+                    entryId
+                    node {
+                        __typename
+                        ...on AuthorizedEvent {
+                            id
+                            title
+                            isLive
+                            created
+                            creators
+                            description
+                            canWrite
+                            syncedData {
+                                thumbnail
+                                audioOnly
+                                duration
+                                startTime
+                                endTime
+                            }
                         }
+                        ...on Missing { __typename }
+                        ...on NotAllowed { __typename }
                     }
                 }
                 hostRealms { id isMainRoot name path }

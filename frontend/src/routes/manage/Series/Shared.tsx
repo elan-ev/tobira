@@ -104,6 +104,8 @@ const query = graphql`
                     canWrite
                     syncedData { thumbnail audioOnly duration startTime endTime }
                 }
+                ...on Missing { __typename }
+                ...on NotAllowed { __typename }
             }
             hostRealms { id isMainRoot name path }
         }

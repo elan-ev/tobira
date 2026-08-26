@@ -105,7 +105,7 @@ const matchedEmbedRoute = (
 const embedEventFragment = graphql`
     fragment EmbedEventData on Event {
         __typename
-        ... on NotAllowed { dummy }
+        ... on NotAllowed { __typename }
         ... on AuthorizedEvent {
             id
             title

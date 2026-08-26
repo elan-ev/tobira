@@ -566,13 +566,6 @@ manage:
     no-of-videos_other: '{{count}} Videos'
     entries: Einträge
     removing-disabled: Entfernen von Videos ist deaktiviert.
-    details:
-      unknown_one: >
-        Ein Video wurde nicht gefunden oder es
-        fehlen Ihnen die nötigen Zugriffsrechte.
-      unknown_other: >
-        '{{count}} Videos wurden nicht gefunden oder es
-        fehlen Ihnen die nötigen Zugriffsrechte.'
     edit:
       add-video: Video hinzufügen
       to-be-added: wird hinzugefügt
@@ -581,6 +574,8 @@ manage:
       move: Verschieben
       to-be-moved: "wird verschoben in: {{series}}"
       cannot-be-removed: "Nicht entfernbar: Fehlender Schreibzugriff"
+      placeholder-missing: Fehlendes Video
+      placeholder-not-allowed: Fehlende Berechtigung
       undo: Rückgängig
       save: Änderungen speichern
       error: Es gab einen Fehler beim Speichern der Änderungen.

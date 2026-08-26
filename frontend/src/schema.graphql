@@ -124,6 +124,11 @@ input Filters {
   end: DateTime
 }
 
+input MovedEventToSeries {
+  id: ID!
+  "The series to move the event to." targetSeries: ID!
+}
+
 input NewEvent {
   opencastId: OpencastId!
   title: String!
@@ -172,6 +177,17 @@ input NewVideoBlock {
   displayOptions: DisplayOptions!
 }
 
+input PlaylistEntrySlot {
+  """
+    Used to identify existing playlist entries, regardless of visibility
+    (i.e. it's also on placeholders in frontend)
+  """ entryId: PlaylistEntryId
+  """
+    Newly added events do not have an entry ID before the playlist is saved in Opencast,
+    so we use the Tobira ID to load them.
+  """ newEventId: ID
+}
+
 input PlaylistsSortOrder {
   column: PlaylistsSortColumn!
   direction: SortDirection!
@@ -185,14 +201,6 @@ input RealmLineageComponent {
 input RealmSpecifier {
   name: String
   pathSegment: String!
-}
-
-input RemovedEventFromSeries {
-  id: ID!
-  """
-    When an event is moved from one series to another,
-    this field is used to specify the new series.
-  """ targetSeries: ID
 }
 
 input SearchFilter {
@@ -294,6 +302,9 @@ scalar ExtraMetadata
   Should prevent using a regular String where an Opencast ID is expected.
 """
 scalar OpencastId
+
+"Identifies an entry within a playlist."
+scalar PlaylistEntryId
 
 "A string specified in different languages. Entry 'default' is required."
 scalar TranslatedString
@@ -500,7 +511,7 @@ type AuthorizedPlaylist implements Node {
     Otherwise, `false` is returned.
   """
   isReferencedByRealm(path: String!): Boolean!
-  entries: [VideoListEntry!]!
+  entries: [PlaylistEntry!]!
   hostRealms: [Realm!]!
   "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
   readRoles: [String!]!
@@ -654,7 +665,7 @@ type Mutation {
     and the series is preliminarily updated in Tobira's DB.
   """
   updateSeriesMetadata(id: ID!, metadata: BasicMetadata!): Series!
-  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [RemovedEventFromSeries!]!): Series!
+  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [ID!]!, movedEvents: [MovedEventToSeries!]!): Series!
   """
     Sends an http request to Opencast to create a new series,
     and stores the series in Tobira's DB.
@@ -666,7 +677,7 @@ type Mutation {
     Updates a playlist's metadata, entries or acl by sending the changes to Opencast
     and updating the playlist in Tobira's DB.
   """
-  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [ID!], acl: [AclItem!]): AuthorizedPlaylist!
+  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [PlaylistEntrySlot!], acl: [AclItem!]): AuthorizedPlaylist!
   "Deletes the given playlist by sending a delete request to Opencast."
   deletePlaylist(id: ID!): RemovedPlaylist!
   """
@@ -805,6 +816,15 @@ type PlaylistConnection {
   pageInfo: PageInfo!
   items: [AuthorizedPlaylist!]!
   totalCount: Int!
+}
+
+"""
+  A playlist entry has its own ID within the playlist and can also be used to identify
+  missing or not-allowed items. `Node` holds the actual data, if present.
+"""
+type PlaylistEntry {
+  entryId: PlaylistEntryId!
+  node: VideoListEntry!
 }
 
 type PlaylistSearchResults {

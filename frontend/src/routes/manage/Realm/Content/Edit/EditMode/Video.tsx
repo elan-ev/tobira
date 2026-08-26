@@ -38,7 +38,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
         fragment VideoEditModeBlockData on VideoBlock {
             event {
                 __typename,
-                ... on NotAllowed { dummy }
+                ... on NotAllowed { __typename }
                 ... on AuthorizedEvent {
                     id
                     title

@@ -38,7 +38,7 @@ const blockFragment = graphql`
 const playlistFragment = graphql`
     fragment PlaylistBlockPlaylistData on Playlist {
         __typename
-        ... on NotAllowed { dummy } # workaround
+        ... on NotAllowed { __typename }
         ... on AuthorizedPlaylist {
             id
             title
@@ -48,10 +48,12 @@ const playlistFragment = graphql`
             hasPublicRssFeed
             isBookmark
             entries {
-                __typename
-                ... on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
-                ... on Missing { dummy }
-                ... on NotAllowed { dummy }
+                node {
+                    __typename
+                    ... on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
+                    ... on Missing { __typename }
+                    ... on NotAllowed { __typename }
+                }
             }
         }
     }
@@ -135,7 +137,7 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         realmPath={props.realmPath}
         listId={playlist.id}
         isBookmark={playlist.isBookmark}
-        listEntries={playlist.entries}
+        listEntries={playlist.entries.map(e => e.node)}
         editMode={props.editMode ?? false}
         shareInfo={{
             kind: "playlist",

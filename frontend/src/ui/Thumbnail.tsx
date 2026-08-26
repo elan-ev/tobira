@@ -1,6 +1,8 @@
 import { PropsWithChildren, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuVolume2 } from "react-icons/lu";
+import {
+    LuTriangleAlert, LuFilm, LuRadio, LuTrash, LuVolume2, LuCircleHelp, LuShieldQuestion,
+} from "react-icons/lu";
 import { screenWidthAtMost, useColorScheme } from "@opencast/appkit";
 
 import { COLORS } from "../color";
@@ -30,7 +32,7 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
         // Pass these if you want to show an access indicating icon inside the thumbnail.
         readRoles?: readonly string[];
         writeRoles?: readonly string[];
-    };
+    } | "missing" | "not-allowed";
 
     /** If `true`, an indicator overlay is shown */
     active?: boolean;
@@ -39,6 +41,15 @@ type ThumbnailProps = JSX.IntrinsicElements["div"] & {
 export const Thumbnail: React.FC<ThumbnailProps> = ({ event, active, ...rest }) => {
     const { t } = useTranslation();
     const { isDark } = useColorScheme();
+
+    if (event === "missing" || event === "not-allowed") {
+        return <ThumbnailOverlayContainer {...rest}>
+            <PlaceholderThumbnailReplacement
+                icon={event === "missing" ? <LuCircleHelp /> : <LuShieldQuestion />}
+            />
+        </ThumbnailOverlayContainer>;
+    }
+
     const isUpcoming = isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive);
     const deletionIsPending = event.tobiraDeletionTimestamp != null;
 
@@ -178,6 +189,23 @@ export const BaseThumbnailReplacement: React.FC<BaseThumbnailReplacementProps> =
         justifyContent: "center",
         fontSize: 40,
     }}>{children}</div>
+);
+
+type PlaceholderThumbnailReplacementProps = {
+    icon: React.ReactNode;
+    className?: string;
+};
+export const PlaceholderThumbnailReplacement: React.FC<PlaceholderThumbnailReplacementProps> = ({
+    icon,
+    className,
+}) => (
+    <BaseThumbnailReplacement className={className} css={{
+        background: "repeating-linear-gradient(115deg, "
+            + "#2e2e2e, #2e2e2e 30px, #292929 30px, #292929 60px)",
+        color: "#dbdbdb",
+    }}>
+        {icon}
+    </BaseThumbnailReplacement>
 );
 
 export const thumbnailOverlayStyles = ({
