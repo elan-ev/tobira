@@ -319,6 +319,18 @@ where
     })
 }
 
+/// Makes sure only `read` or `write` are used in the actions.
+pub fn ensure_only_read_write_actions(items: &[AclItem]) -> ApiResult<()> {
+    let bad_action = items.iter()
+        .flat_map(|item| &item.actions)
+        .find(|&action| action != "read" && action != "write");
+
+    if let Some(bad_action) = bad_action {
+        Err(invalid_input!("only actions 'read' and 'write' are allowed, but found '{bad_action}'"))
+    } else {
+        Ok(())
+    }
+}
 
 /// Checks that the current user is allowed to make the ACL change described
 /// by `entries`, i.e. is allowed to grant every newly added role/action
