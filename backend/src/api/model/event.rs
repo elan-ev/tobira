@@ -18,7 +18,10 @@ use crate::{
             acl::{self, Acl},
             realm::Realm,
             series::Series,
-            shared::{SearchFilter, SortDirection, ToSqlColumn, ensure_acl_assignment_allowed},
+            shared::{
+                SearchFilter, SortDirection, ToSqlColumn, ensure_acl_assignment_allowed,
+                ensure_only_read_write_actions,
+            },
         },
         util::{OcItemId, LazyLoad},
     },
@@ -587,6 +590,7 @@ impl AuthorizedEvent {
             ) returning id \
         ");
 
+        ensure_only_read_write_actions(&event.acl)?;
         ensure_acl_assignment_allowed(context, &event.acl, None).await?;
         let acl = AclForDb::from_items(&event.acl);
 
@@ -667,6 +671,7 @@ impl AuthorizedEvent {
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<AuthorizedEvent> {
         let event = Self::load_for_mutation(id, context).await?;
         event.require_idle(context).await?;
+        ensure_only_read_write_actions(&acl)?;
         ensure_acl_assignment_allowed(context, &acl, Some(&event.acl)).await?;
 
         info!(

@@ -247,7 +247,7 @@ pub async fn feed(
     let total_count = items.len() as i32;
 
     // Discard everything before the offset, and then apply limit.
-    items.drain(0..offset as usize);
+    items.drain(0..(offset as usize).min(items.len()));
     items.truncate(limit as usize);
 
     Ok(Connection {

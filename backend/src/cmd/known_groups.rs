@@ -69,7 +69,7 @@ fn print_group(group: &KnownGroup) {
     println!(r#"        "implies": {},"#, json!(group.implies));
     println!(r#"        "safeActions": {},"#, json!(group.safe_actions));
     println!(r#"        "assignableBy": {},"#, json!(group.assignable_by));
-    println!("    }},");
+    print!("    }}");
 }
 
 async fn list(tx: Transaction<'_>) -> Result<()> {
@@ -79,12 +79,17 @@ async fn list(tx: Transaction<'_>) -> Result<()> {
     println!();
 
     println!("{{");
+    let mut first = true;
     rows.try_for_each(|row| {
+        if !first {
+            println!(",");
+        }
+        first = false;
         let group = KnownGroup::from_row_start(&row);
         print_group(&group);
         future::ready(Ok(()))
     }).await?;
-    println!("}}");
+    println!("\n}}");
 
     Ok(())
 }
@@ -147,11 +152,16 @@ async fn remove(roles: &[String], tx: Transaction<'_>) -> Result<()> {
     let count = rows.len();
     if count > 0 {
         println!("{{");
+        let mut first = true;
         for row in &rows {
+            if !first {
+                println!(",");
+            }
+            first = false;
             let group = KnownGroup::from_row_start(&row);
             print_group(&group);
         }
-        println!("}}");
+        println!("\n}}");
     }
 
     println!();

@@ -770,7 +770,7 @@ type Mutation {
   """
   mountSeries(series: NewSeries!, parentRealmPath: String!, newRealms: [RealmSpecifier!]! = []): Realm!
   """
-    Bookmarks the item referred to by `id`. Must be an event, series or
+    Bookmarks the item referred to by `id`. Must be a series or a
     playlist. Mutation is idempotent. Returns `true` if the item was not a
     bookmark before already.
   """

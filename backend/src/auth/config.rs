@@ -39,10 +39,6 @@ pub(crate) struct AuthConfig {
     /// If `true`, Tobira attaches a JWT to all requests for Opencast static files.
     /// This only considers requests to hosts listed in the `opencast` section
     /// of the configuration. If necessary, use `other_hosts`.
-    ///
-    /// Experimental: this should work fine, but we don't have enough experience
-    /// yet to generally recommend turning this on. When you do, please report
-    /// any problems or weird behaviors to us!
     #[config(default = true)]
     pub(crate) auth_static_files: bool,
 

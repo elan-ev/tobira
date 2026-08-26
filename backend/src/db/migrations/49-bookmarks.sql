@@ -20,3 +20,5 @@ create table bookmarks (
 );
 
 create index idx_bookmarks_user on bookmarks (username);
+create index idx_bookmarks_series on bookmarks (series);
+create index idx_bookmarks_playlist on bookmarks (playlist);
