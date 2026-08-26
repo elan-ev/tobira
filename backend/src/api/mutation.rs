@@ -400,7 +400,7 @@ impl Mutation {
         Series::mount(series, parent_realm_path, new_realms, context).await
     }
 
-    /// Bookmarks the item referred to by `id`. Must be an event, series or
+    /// Bookmarks the item referred to by `id`. Must be a series or a
     /// playlist. Mutation is idempotent. Returns `true` if the item was not a
     /// bookmark before already.
     async fn add_bookmark(id: Id, context: &Context) -> ApiResult<bool> {
