@@ -7,7 +7,7 @@ sidebar_position: 1
 To run, Tobira requires:
 
 - A Unix system.
-- A **PostgreSQL** (≥13) database (see below for further requirements).
+- A **PostgreSQL** (≥14) database (see below for further requirements).
 - [**Meilisearch**](https://www.meilisearch.com/) (≥ v1.12). For installation, see [Meili's docs](https://docs.meilisearch.com/learn/getting_started/quick_start.html#step-1-setup-and-installation).
 - An **Opencast** that satisfies certain condition. See below.
 
@@ -28,19 +28,10 @@ These are technicalities that you likely don't need to care about if you have a 
 Tobira doesn't work with any Opencast instance out of the box.
 There are some requirements.
 
-- The Tobira Opencast module needs to be installed.
-  This is included in Opencast starting with 12.3 (released 2022-09-21).
-  Note that Tobira works with 12.3, but a some features (like subtitles) might not work on older versions.
-  Therefore, a new Opencast version is preferred.
-
-- No static file authorization.
-  Tobira links to various assets (thumbnails, videos, ...) on Opencast's servers.
-  Most users will only be authenticated against Tobira, not Opencast.
-  So all these requests for assets are unauthenticated, from Opencast perspective.
-  This means that non-public assets cannot be retrieved, meaning that non-public events will look broken in Tobira.
-  So either you disable static file authorization in Opencast or you can only use Tobira for public videos.
-
-  (We are aware that this limitation is annoying and are investigating possible solutions.)
+- **Version**: 
+  Tobira can in principle work with Opencast as far back as 12.3, but some features don't work in that case.
+  By default, Tobira uses ED25519 JWT signatures, which Opencast only supports since version 19. 
+  Tobira can be reconfigured to use a different JWT to support older Opencast versions, though.
 
 - Opencast needs to accept JWTs created by Tobira.
   See [this document](./auth/jwt) for more information.
@@ -53,5 +44,5 @@ There are some requirements.
   the roles allowed to write.
 
 - If you don't have an SSO solution, you need to configure the Opencast redirect endpoint in such a way that
-  all users having with access to Studio and/or the Editor can use it, and so that the URLs to these services
+  all users with access to Studio and/or the Editor can use it, and so that the URLs to these services
   are added to the appropriate allow-list.
