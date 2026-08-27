@@ -108,7 +108,7 @@ impl Playlist {
 
         let (selection, mapping) = select!(
             playlist: AuthorizedPlaylist,
-            is_bookmark: "exists(select from bookmarks where playlist = $1 and username = $2)",
+            is_bookmark: "exists(select from bookmarks where playlist = playlists.id and username = $2)",
             has_public_videos: "exists(\
                 select from events \
                 where opencast_id = any(event_entry_ids(playlists.entries)) \

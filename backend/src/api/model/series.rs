@@ -122,7 +122,7 @@ impl Series {
 
         let (selection, mapping) = select!(
             series: Series,
-            is_bookmark: "exists(select from bookmarks where series = $1 and username = $2)",
+            is_bookmark: "exists(select from bookmarks where series = series.id and username = $2)",
             has_public_videos: "exists(\
                 select from events \
                 where events.series = series.id and 'ROLE_ANONYMOUS' = any(events.read_roles)\
