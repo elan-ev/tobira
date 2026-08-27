@@ -157,6 +157,7 @@ impl Series {
     pub(crate) async fn create(
         series: NewSeries,
         acl: Option<AclForDb>,
+        metadata: ExtraMetadata,
         context: &Context,
         state: SeriesState,
     ) -> ApiResult<Self> {
@@ -175,9 +176,9 @@ impl Series {
         let query = format!(
             "insert into all_series ( \
                 opencast_id, title, description, state, \
-                created, updated, read_roles, write_roles \
+                created, updated, read_roles, write_roles, metadata \
             ) \
-            values ($1, $2, $3, $4, now(), {updated}, $5, $6) \
+            values ($1, $2, $3, $4, now(), {updated}, $5, $6, $7) \
             returning {selection}",
         );
 
@@ -190,6 +191,7 @@ impl Series {
                     &state,
                     &read_roles,
                     &write_roles,
+                    &metadata,
                 ]).await?
                 .pipe(|row| Self::from_row_start(&row))
                 .pipe(Ok)
@@ -220,6 +222,10 @@ impl Series {
             })?;
 
         let db_acl = Some(AclForDb::from_items(&acl));
+        let extra_metadata = ExtraMetadata {
+            dcterms: HashMap::from([("creator".into(), vec![creator])]),
+            extended: HashMap::new(),
+        };
 
         // If the request returned an Opencast identifier, the series was created successfully.
         // The series is created in the database, so the user doesn't have to wait for sync to see
@@ -231,6 +237,7 @@ impl Series {
                 description: metadata.description,
             },
             db_acl,
+            extra_metadata,
             context,
             SeriesState::Ready,
         ).await?;
@@ -240,7 +247,7 @@ impl Series {
 
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
         context.require_trusted_external_auth()?;
-        Self::create(series, None, context, SeriesState::Waiting).await
+        Self::create(series, None, ExtraMetadata::default(), context, SeriesState::Waiting).await
     }
 
     pub(crate) async fn add_mount_point(
@@ -361,7 +368,9 @@ impl Series {
         }
 
         // Create series
-        let series = Series::create(series, None, context, SeriesState::Waiting).await?;
+        let series = Series::create(
+            series, None, ExtraMetadata::default(), context, SeriesState::Waiting,
+        ).await?;
 
         // Create realms
         let target_realm = {
