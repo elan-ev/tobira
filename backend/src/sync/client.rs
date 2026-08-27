@@ -229,6 +229,7 @@ impl OcClient {
         acl: &[AclItem],
         title: &str,
         description: Option<&str>,
+        creator: &str,
     ) -> Result<CreateSeriesResponse> {
         let access_policy = build_access_policy(acl);
 
@@ -242,6 +243,10 @@ impl OcClient {
                 {
                     "id": "description",
                     "value": description
+                },
+                {
+                    "id": "creator",
+                    "value": [creator]
                 },
             ]
         }]);

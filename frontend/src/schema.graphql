@@ -670,7 +670,7 @@ type Mutation {
     Sends an http request to Opencast to create a new series,
     and stores the series in Tobira's DB.
   """
-  createSeries(metadata: BasicMetadata!, acl: [AclItem!]!): Series!
+  createSeries(metadata: BasicMetadata!, acl: [AclItem!]!, creator: String!): Series!
   "Creates a new playlist in Opencast and stores it in Tobira's DB."
   createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [ID!]!, acl: [AclItem!]!): AuthorizedPlaylist!
   """

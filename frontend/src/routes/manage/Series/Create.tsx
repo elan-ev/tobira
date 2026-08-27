@@ -43,8 +43,12 @@ const query = graphql`
 `;
 
 const createSeriesMutation = graphql`
-    mutation CreateSeriesMutation($metadata: BasicMetadata!, $acl: [AclItem!]!) {
-        createSeries(metadata: $metadata, acl: $acl) { id }
+    mutation CreateSeriesMutation(
+        $metadata: BasicMetadata!,
+        $acl: [AclItem!]!,
+        $creator: String!,
+    ) {
+        createSeries(metadata: $metadata, acl: $acl, creator: $creator) { id }
     }
 `;
 
@@ -60,6 +64,9 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
     return <CreateVideoList
         {...{ commit, inFlight, knownRolesRef, canUserCreateList }}
         kind="series"
+        buildVariables={({ displayName }) => ({
+            creator: displayName,
+        })}
         returnPath={response =>
             ManageSeriesDetailsRoute.url({ id: response.createSeries.id })
         }

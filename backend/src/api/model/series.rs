@@ -201,6 +201,7 @@ impl Series {
     pub(crate) async fn create_in_oc(
         metadata: BasicMetadata,
         acl: Vec<AclItem>,
+        creator: String,
         context: &Context,
     ) -> ApiResult<Self> {
         if !context.auth.can_create_series(&context.config.auth) {
@@ -211,7 +212,7 @@ impl Series {
 
         let response = context
             .oc_client
-            .create_series(&acl, &metadata.title, metadata.description.as_deref())
+            .create_series(&acl, &metadata.title, metadata.description.as_deref(), &creator)
             .await
             .map_err(|e| {
                 error!("Failed to create series in Opencast: {}", e);
