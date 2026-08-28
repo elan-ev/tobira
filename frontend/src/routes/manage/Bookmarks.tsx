@@ -149,6 +149,7 @@ const ListItem: React.FC<ListItemProps> = ({ fav }) => {
         commit({
             variables: { id: fav.id },
             onCompleted: () => setIsDeleted(true),
+            updater: store => store.invalidateStore(),
         });
     };
 
