@@ -75,8 +75,8 @@ const CreatePlaylistPage: React.FC<CreatePlaylistPageProps> = ({ knownRolesRef }
         <CreateVideoList
             {...{ commit, inFlight, knownRolesRef, canUserCreateList }}
             kind="playlist"
-            buildVariables={({ username }) => ({
-                creator: username,
+            buildVariables={({ displayName }) => ({
+                creator: displayName,
                 entries: items.map(e => e.id),
             })}
             returnPath={response =>

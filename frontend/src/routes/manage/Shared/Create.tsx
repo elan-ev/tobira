@@ -36,7 +36,7 @@ export type CreateVideoListProps<TMutation extends MutationParameters> = PropsWi
     kind: "series" | "playlist";
     showTitle?: boolean;
     buildVariables?: (args: {
-        username: string;
+        displayName: string;
     }) => Omit<TMutation["variables"], "metadata" | "acl">;
 }>;
 
@@ -74,7 +74,7 @@ export const CreateVideoList = <TMutation extends MutationParameters>({
     }
 
     const create = (data: Metadata) => {
-        const rest = buildVariables?.({ username: user.username });
+        const rest = buildVariables?.({ displayName: user.displayName });
         const base = {
             metadata: { title: data.title, description: data.description },
             acl: aclMapToArray(data.acl),

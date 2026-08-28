@@ -145,9 +145,10 @@ impl Mutation {
     async fn create_series(
         metadata: BasicMetadata,
         acl: Vec<AclItem>,
+        creator: String,
         context: &Context,
     ) -> ApiResult<Series> {
-        Series::create_in_oc(metadata, acl, context).await
+        Series::create_in_oc(metadata, acl, creator, context).await
     }
 
     /// Creates a new playlist in Opencast and stores it in Tobira's DB.

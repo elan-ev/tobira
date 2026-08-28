@@ -199,8 +199,12 @@ const createPlaceholderMutation = graphql`
 `;
 
 const createSeriesMutation = graphql`
-    mutation UploadCreateSeriesMutation($metadata: BasicMetadata!, $acl: [AclItem!]!) {
-        createSeries(metadata: $metadata, acl: $acl) { id }
+    mutation UploadCreateSeriesMutation(
+        $metadata: BasicMetadata!,
+        $acl: [AclItem!]!,
+        $creator: String!,
+    ) {
+        createSeries(metadata: $metadata, acl: $acl, creator: $creator) { id }
     }
 `;
 
@@ -392,6 +396,9 @@ const SeriesCreationStep: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) 
             {...{ commit, inFlight, knownRolesRef }}
             canUserCreateList={user => user.canCreateSeries}
             kind="series"
+            buildVariables={({ displayName }) => ({
+                creator: displayName,
+            })}
             returnPath={response => UploadRoute.url({
                 seriesId: keyOfId(response.createSeries.id),
             })}
