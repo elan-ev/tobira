@@ -109,17 +109,17 @@ impl BlockValue {
         let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
         let event = block.event.key_for(Id::EVENT_KIND)
             .ok_or_else(|| invalid_input!("`block.event` does not refer to an event"))?;
-
         context.db
             .execute(
-                "insert into blocks (realm, index, type, video, show_title, show_link) \
-                    values ($1, $2, 'video', $3, $4, $5)",
+                "insert into blocks (realm, index, type, video, show_title, show_link,show_metadata) \
+                    values ($1, $2, 'video', $3, $4, $5, $6)",
                 &[
                     &realm.key,
                     &index,
                     &event,
                     &block.display_options.show_title,
                     &block.display_options.show_link,
+                    &block.display_options.show_metadata,
                 ],
             )
             .await?;
@@ -386,7 +386,8 @@ impl BlockValue {
             "update blocks set \
                 video = coalesce($2, video), \
                 show_title = coalesce($3, show_title), \
-                show_link = coalesce($4, show_link) \
+                show_link = coalesce($4, show_link), \
+                show_metadata = coalesce($5, show_metadata) \
                 where id = $1 \
                 and type = 'video' \
                 returning {selection}",
@@ -397,6 +398,7 @@ impl BlockValue {
                 &video_id,
                 &set.display_options.show_title,
                 &set.display_options.show_link,
+                &set.display_options.show_metadata,
             ])
             .await?
             .pipe(|row| Ok(Self::from_row_start(&row)))
