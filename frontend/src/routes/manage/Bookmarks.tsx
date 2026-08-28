@@ -22,6 +22,8 @@ import { DirectSeriesRoute } from "../Series";
 import { COLORS } from "../../color";
 import { Creators } from "../../ui/Video";
 import { DateAndCreators } from "../../ui/metadata";
+import { LinkButton } from "../../ui/LinkButton";
+import { BookmarksRoute } from "../Bookmarks";
 
 
 export const PATH = "/~manage/bookmarks" as const;
@@ -77,11 +79,25 @@ const ManageBookmarks: React.FC<Props> = ({ queryData }) => {
             display: "flex",
             flexDirection: "column",
         }}>
-            <Breadcrumbs tail={t("bookmark.main-label")} path={[{
-                label: t("user.manage"),
-                link: ManageRoute.url,
-            }]} />
-            <PageTitle title={t("bookmark.manage")} />
+            <div css={{
+                marginBottom: 12,
+                display: "flex",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+            }}>
+                <div>
+                    <Breadcrumbs tail={t("bookmark.main-label")} path={[{
+                        label: t("user.manage"),
+                        link: ManageRoute.url,
+                    }]} />
+                    <PageTitle title={t("bookmark.manage")} />
+                </div>
+                <div>
+                    <LinkButton to={BookmarksRoute.url({})}>
+                        {t("bookmark.show-bookmarks")}
+                    </LinkButton>
+                </div>
+            </div>
 
             <ul css={{
                 maxWidth: 700,
