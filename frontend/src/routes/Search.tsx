@@ -875,7 +875,10 @@ type SearchBreadcrumbsProps = {
 const SearchBreadcrumbs: React.FC<SearchBreadcrumbsProps> = ({ parts }) => (
     <BreadcrumbsContainer css={{ fontSize: 12, color: COLORS.neutral80 }}>
         {parts.map((name, i) => <li key={i}>
-            {name ?? <MissingRealmName />}
+            <div css={{
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+            }}>{name ?? <MissingRealmName />}</div>
             <BreadcrumbSeparator />
         </li>)}
     </BreadcrumbsContainer>
