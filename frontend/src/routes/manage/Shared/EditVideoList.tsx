@@ -261,7 +261,7 @@ export const VideoListMenu: React.FC<VideoListMenuProps> = ({
                     if (isPlaceholder(item)) {
                         return <PlaceholderEntry
                             key={item.id}
-                            {...{ index, item }}
+                            {...{ index, item, isPlaylist }}
                             totalItems={items.length}
                             onChange={() => {
                                 setItems(prev => prev.map(e =>
@@ -633,6 +633,7 @@ type PlaceholderEntryProps = {
     item: PlaceholderEvent;
     index: number;
     totalItems: number;
+    isPlaylist: boolean;
     onChange: () => void;
     onMove?: (direction: -1 | 1) => void;
 };
@@ -641,6 +642,7 @@ const PlaceholderEntry: React.FC<PlaceholderEntryProps> = ({
     item,
     index,
     totalItems,
+    isPlaylist,
     onChange,
     onMove,
 }) => {
@@ -674,7 +676,7 @@ const PlaceholderEntry: React.FC<PlaceholderEntryProps> = ({
                     {label}
                 </i>
                 <div css={actionColumnStyle}>
-                    {item.action === "remove"
+                    {isPlaylist && (item.action === "remove"
                         ? <>
                             <ActionLabel
                                 color={COLORS.danger0}
@@ -682,7 +684,7 @@ const PlaceholderEntry: React.FC<PlaceholderEntryProps> = ({
                             />
                             <UndoButton onClick={onChange} />
                         </>
-                        : isMissing && <RemoveButton onClick={onChange} />
+                        : <RemoveButton onClick={onChange} />)
                     }
                 </div>
             </div>
@@ -974,15 +976,10 @@ const stripTargetSeries = (event: ListEvent): AuthEvent => {
 const clearEventAction = (event: ListEvent): ListEvent =>
     ({ ...stripTargetSeries(event), action: "none" });
 
-const togglePlaceholderRemoval = (placeholder: PlaceholderEvent): PlaceholderEvent => {
-    if (placeholder.placeholderKind === "not-allowed") {
-        return placeholder;
-    }
-    return {
-        ...placeholder,
-        action: placeholder.action === "remove" ? "none" : "remove",
-    };
-};
+const togglePlaceholderRemoval = (placeholder: PlaceholderEvent): PlaceholderEvent => ({
+    ...placeholder,
+    action: placeholder.action === "remove" ? "none" : "remove",
+});
 
 type SetEventAction = {
     (event: ListEvent, action: "remove"): ListEvent;
