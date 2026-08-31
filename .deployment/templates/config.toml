@@ -15,6 +15,33 @@ Asbest-frei seit zwanzig-zwanzig-drei
 Einen Bug gefunden? Melde ihn [hier](https://github.com/elan-ev/tobira/issues). *Danke!*
 """
 
+[general.global_banner]
+color = "primary"
+icon = "info"
+text = { de = """
+Neu in Tobira 4.1:
+- Globales Banner
+- Thumbnail Uploader
+- Neues design für "Meine Videos/Serien/Playlists"
+- Playlist Management
+- Pagination für Blöcke
+- Direktes Verschieben von Videos zwischen Serien
+- Bookmarks!
+- Markdown im Footer
+- ...und vieles mehr!
+""", default = """
+New in Tobira 4.1:
+- Global banner
+- Thumbnail uploader
+- Redesign of "My videos/series/playlists"
+- Playlist management
+- Pagination for blocks
+- Moving videos directly between two series
+- Bookmarks!
+- Markdown in footer
+- ...and much more!
+""" }
+
 [general.metadata]
 dcterms.source = "builtin:source"
 dcterms.license = "builtin:license"
