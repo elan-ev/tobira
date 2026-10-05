@@ -124,6 +124,7 @@ const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}>
         [LuFilm, "video", () => addBlock("Video", (_store, block) => {
             block.setValue(true, "showTitle");
             block.setValue(true, "showLink");
+            block.setValue(false, "showMetadata");
         })],
         [LuListVideo, "playlist", () => addBlock("Playlist", (_store, block) => {
             block.setValue("ORIGINAL", "order");
