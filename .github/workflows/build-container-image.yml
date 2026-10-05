@@ -1,0 +1,133 @@
+name: Build & Publish Tobira image
+
+on:
+  push:  
+    tags:     [ 'v*' ]          
+
+permissions:
+  contents: read
+  packages: write               
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME:  elan-ev/tobira
+  DOCKERFILE: util/containers/Dockerfile
+  VERSIONS_FILE: util/scripts/versions.env
+
+jobs:
+  meta:
+    name: Compute Docker image tags & labels
+    runs-on: ubuntu-latest
+    outputs:
+      tags:   ${{ steps.meta.outputs.tags }}
+      labels: ${{ steps.meta.outputs.labels }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: meta
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: amd64
+            platform: linux/amd64
+            rust_target: x86_64-unknown-linux-musl
+          - name: arm64
+            platform: linux/arm64
+            rust_target: aarch64-unknown-linux-musl
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Read Node/Rust versions
+        id: tools
+        shell: bash
+        run: |
+          source "${{ env.VERSIONS_FILE }}"
+          echo "node=${NODE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "rust=${RUST_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Common vars
+        id: vars
+        run: |
+          set -euo pipefail
+          echo "utc_now=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT" 
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push single-arch image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          provenance: false
+          labels: ${{ needs.meta.outputs.labels }}             
+          tags: |
+           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.version }}-${{ matrix.name }}
+           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-${{ matrix.name }}
+          build-args: |
+            NODE_VERSION=${{ steps.tools.outputs.node }}
+            RUST_VERSION=${{ steps.tools.outputs.rust }}
+            RUST_TARGET=${{ matrix.rust_target }}
+            BUILT_TIME_UTC=${{ steps.vars.outputs.utc_now }}
+            GIT_COMMIT_HASH=${{ github.sha }}
+            VERSION=${{ steps.vars.outputs.version }}
+
+  manifest:
+   name: Publish multi-arch tags
+   needs: [meta, build]
+   if: github.event_name != 'pull_request'
+   runs-on: ubuntu-latest
+   steps:
+
+    - name: Set up Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate and publish multi-arch Docker manifest
+      env:
+        TAGS: ${{ needs.meta.outputs.tags }}
+      run: |
+        set -euo pipefail
+        echo "$TAGS" | while IFS= read -r TAG; do
+          [ -z "$TAG" ] && continue
+          echo "→ $TAG"
+          docker buildx imagetools create \
+            --tag "$TAG" \
+            "${TAG}-amd64" \
+            "${TAG}-arm64"
+        done
