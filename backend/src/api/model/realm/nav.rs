@@ -31,6 +31,8 @@ pub(crate) struct RealmNavItem {
     name: Option<String>,
     path: String,
     has_children: bool,
+    visible: bool,
+    show_in_menu: bool,
 }
 
 impl RealmNav {
@@ -39,6 +41,9 @@ impl RealmNav {
             id,
             full_path,
             child_order,
+            visible,
+            show_in_menu,
+            flattened_moderator_roles,
             // This causes an "index only scan" for each row, but this is extremely fast.
             has_children: "exists(select from realms r2 where r2.parent = realms.id)",
             name: "case \
@@ -88,18 +93,41 @@ impl RealmNav {
         let mut list = vec![];
         rows.try_for_each(|row| {
             let id = mapping.id.of::<Key>(&row);
+
+            if parent_key == Some(id) {
+                parent_order = Some(mapping.child_order.of(&row));
+            }
+
+            let visible = mapping.visible.of::<bool>(&row);
+            let show_in_menu = mapping.show_in_menu.of::<bool>(&row);
+
+            let requires_moderator = !visible || !show_in_menu;
+            let can_moderate = requires_moderator
+                && {
+                    let flattened_moderator_roles =
+                        mapping.flattened_moderator_roles.of::<Vec<String>>(&row);
+
+                    context.auth.is_global_page_moderator(&context.config.auth)
+                        || context.auth.overlaps_roles(&flattened_moderator_roles)
+                };
+
+            if !visible && !can_moderate {
+                return std::future::ready(Ok(()));
+            }
+
             let item = RealmNavItem {
                 path: mapping.full_path.of(&row),
                 name: mapping.name.of(&row),
                 has_children: mapping.has_children.of(&row),
+                visible,
+                show_in_menu,
             };
 
             if parent_key == Some(id) {
-                parent_order = Some(mapping.child_order.of(&row));
                 parent = Some(item);
             } else if grandparent_path == Some(&item.path) {
                 grandparent = Some(item);
-            } else {
+            } else if show_in_menu || can_moderate {
                 list.push(item);
             }
 
@@ -120,6 +148,8 @@ impl RealmNav {
                 name: realm.resolved_name.clone(),
                 path: realm.full_path.clone(),
                 has_children: true,
+                visible: realm.visible,
+                show_in_menu: realm.show_in_menu,
             };
 
             // Special case main root where we don't show "this".

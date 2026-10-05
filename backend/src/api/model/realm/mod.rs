@@ -77,6 +77,8 @@ pub(crate) struct Realm {
     pub(crate) admin_roles: Vec<String>,
     pub(crate) flattened_moderator_roles: Vec<String>,
     pub(crate) flattened_admin_roles: Vec<String>,
+    pub(crate) visible: bool,
+    pub(crate) show_in_menu: bool,
 }
 
 impl_from_db!(
@@ -86,6 +88,7 @@ impl_from_db!(
             id, parent, name, name_from_block, path_segment, full_path, index,
             child_order, owner_display_name, moderator_roles,
             admin_roles, flattened_moderator_roles, flattened_admin_roles,
+            visible, show_in_menu,
         },
         resolved_name: "case \
             when ${table:realms}.name_from_block is null then ${table:realms}.name \
@@ -114,6 +117,8 @@ impl_from_db!(
             admin_roles: row.admin_roles(),
             flattened_moderator_roles: row.flattened_moderator_roles(),
             flattened_admin_roles: row.flattened_admin_roles(),
+            visible: row.visible(),
+            show_in_menu: row.show_in_menu(),
         }
     }
 );
@@ -201,6 +206,11 @@ impl Realm {
 
         Ok(())
     }
+
+    /// Returns whether the current user is allowed to see this realm.
+    pub(crate) fn is_visible_to_current_user(&self, context: &Context) -> bool {
+        self.visible || self.can_current_user_moderate(context)
+    }
 }
 
 impl Node for Realm {
@@ -282,6 +292,20 @@ impl Realm {
         self.owner_display_name.as_deref()
     }
 
+    /// Whether the page is visible to users. When the page is hidden, only users with
+    /// permission to manage it can view or access it. Hidden pages are excluded from
+    /// navigation and page hierarchies and cannot be reached through their URL.
+    fn visible(&self) -> bool {
+        self.visible
+    }
+
+    /// Whether the page is included in navigation menus. Pages that are not included
+    /// remain accessible and continue to appear in other contexts where appropriate,
+    /// such as direct navigation or links.
+    fn show_in_menu(&self) -> bool {
+        self.show_in_menu
+    }
+
     /// Info about the navigation UI for this realm.
     async fn nav(&self, context: &Context) -> ApiResult<RealmNav> {
         RealmNav::load_for(self, context).await
@@ -315,7 +339,10 @@ impl Realm {
     /// Returns the immediate parent of this realm.
     async fn parent(&self, context: &Context) -> ApiResult<Option<Realm>> {
         match self.parent_key {
-            Some(parent_key) => Realm::load_by_key(parent_key, context).await,
+            Some(parent_key) => Ok(
+                Realm::load_by_key(parent_key, context).await?
+                    .filter(|r| r.is_visible_to_current_user(context))
+            ),
             None => Ok(None)
         }
     }
@@ -337,6 +364,9 @@ impl Realm {
         context.db
             .query_mapped(&query, &[&self.key], |row| Self::from_row_start(&row))
             .await?
+            .into_iter()
+            .filter(|r| r.is_visible_to_current_user(context))
+            .collect::<Vec<_>>()
             .pipe(Ok)
     }
 
@@ -352,14 +382,19 @@ impl Realm {
                 where realms.parent = $1 \
                 order by index",
         );
-        context.db
+        let children = context.db
             .query_mapped(
                 &query,
                 &[&self.key],
                 |row| Self::from_row_start(&row),
             )
-            .await?
-            .pipe(Ok)
+            .await?;
+
+        if self.can_current_user_moderate(context) {
+            Ok(children)
+        } else {
+            Ok(children.into_iter().filter(|c| c.visible).collect())
+        }
     }
 
     /// Returns the (content) blocks of this realm.
