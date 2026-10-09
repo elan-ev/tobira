@@ -81,6 +81,7 @@
     "typescript": "^5.9.3",
     "vite": "^8.3.0",
     "vite-plugin-relay": "^2.1.0",
+    "vite-plugin-static-copy": "^4.1.1",
     "vite-plugin-svgr": "^5.2.0",
     "wait-port": "^1.1.0"
   },
