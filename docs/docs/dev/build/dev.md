@@ -102,6 +102,7 @@ Then start the backend (see below) with `TOBIRA_VITE_DEV_SERVER=http://localhost
 Its pages then load the frontend's code from the dev server, which reloads them whenever you change something.
 The backend still serves `index.html`, fonts and the service worker from `build/`, so run `npm run build:dev` once before
 and whenever you change one of these files.
+The dev server doesn't check types; run `npx tsc --watch` in another terminal for that (`./x.sh start` does).
 Note: `relay-compiler --watch` requires `watchman` to be installed!
 
 
