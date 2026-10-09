@@ -3,6 +3,8 @@ import { defineConfig } from "vite";
 import relay from "vite-plugin-relay";
 import svgr from "vite-plugin-svgr";
 
+import { paellaSkin } from "./vite-plugins/paellaSkin.mts";
+
 
 export default defineConfig(({ mode }) => ({
     base: "/~assets/",
@@ -12,6 +14,7 @@ export default defineConfig(({ mode }) => ({
     plugins: [
         svgr({ svgrOptions: { icon: true } }),
         yaml(),
+        paellaSkin(),
         relay,
     ],
 
