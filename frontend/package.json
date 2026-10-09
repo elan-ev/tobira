@@ -11,8 +11,8 @@
     "Lukas Kalbertodt <kalbertodt@elan-ev.de>"
   ],
   "scripts": {
-    "build:dev": "vite build --mode development",
-    "build:release": "vite build",
+    "build:dev": "vite build --mode development && vite build --mode development --config vite.sw.config.mts",
+    "build:release": "vite build && vite build --config vite.sw.config.mts",
     "typecheck": "tsc --skipLibCheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
