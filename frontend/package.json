@@ -20,10 +20,7 @@
     "clean:relay": "find src -path '__generated__' -delete"
   },
   "browserslist": [
-    "defaults",
-    "not ios < 15",
-    "not op_mini all",
-    "not kaios < 3"
+    "defaults and baseline widely available on 2026-01-01 with downstream"
   ],
   "dependencies": {
     "@emotion/cache": "^11.14.0",
