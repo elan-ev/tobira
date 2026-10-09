@@ -7,11 +7,13 @@ cd "$basedir"/../../frontend || exit 1
 # Backend serves `index.html`, service worker, fonts, etc. from `build/`,
 # so we build once up front.
 # The app's code itself is loaded from vite's dev server.
+# This also generates the Relay artifacts and translation types before
+# `tsc --watch` starts, which doesn't reliably notice them appearing later.
 # A failed build keeps the previous `build/`, so we start watching anyway.
 ./node_modules/.bin/relay-compiler --output quiet-with-errors
 npm run build:dev || echo "Initial frontend build failed, continuing with previous build."
 
-# Spawn a subshell so both commands are stopped in the same way with ctrl+c.
+# Spawn a subshell so all commands inside are stopped in the same way with ctrl+c.
 (
     trap 'kill 0' SIGINT;
 
@@ -21,6 +23,10 @@ npm run build:dev || echo "Initial frontend build failed, continuing with previo
         --ignore '**/__generated__/*' \
         --postpone \
         -- '../util/scripts/clr.sh; ./node_modules/.bin/relay-compiler --output quiet-with-errors' &
+
+    # Vite doesn't check types, so we run TypeScript alongside.
+    # See also https://vite.dev/guide/features#transpile-only
+    ./node_modules/.bin/tsc --watch --preserveWatchOutput &
 
     # Start dev server which serves the app's code and reloads pages when that code changes.
     ./node_modules/.bin/vite
