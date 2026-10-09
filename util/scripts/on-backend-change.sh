@@ -27,4 +27,4 @@ schema_out=../frontend/src/schema.graphql
 
 ./target/debug/tobira write-config ../docs/docs/setup/config.toml
 reload_once_port_is_open &
-./target/debug/tobira serve
+TOBIRA_VITE_DEV_SERVER="$vite_url" ./target/debug/tobira serve

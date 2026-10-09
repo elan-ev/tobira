@@ -12,6 +12,20 @@ export default defineConfig(({ mode }) => ({
     input: "src/index.tsx",
     publicDir: "static",
 
+    clearScreen: false,
+
+    server: {
+        // The dev docs point the backend at 5173 (Vite's default) via `TOBIRA_VITE_DEV_SERVER`.
+        // See also vite.dev/config/server-options
+        strictPort: true,
+    },
+
+    optimizeDeps: {
+        // `jsx-runtime` uses CommonJS, so it needs to be pre bundled.
+        // See also https://vite.dev/guide/dep-pre-bundling
+        include: ["react/jsx-runtime"],
+    },
+
     plugins: [
         svgr({ svgrOptions: { icon: true } }),
         translationTypes(),

@@ -52,6 +52,10 @@ pub(crate) struct Assets {
     assets: reinda::Assets,
     /// Not in `assets`, as it shouldn't be served.
     vite_manifest: reinda::Assets,
+
+    /// Points at the dev server url. If set, backend skips the manifest and uses dev
+    /// scripts (see `vite_tags`).
+    vite_dev_server: Option<String>,
 }
 
 impl Assets {
@@ -240,7 +244,14 @@ impl Assets {
         vite_manifest.add_embedded(VITE_MANIFEST_FILE, &EMBEDS[VITE_MANIFEST_FILE]);
         let vite_manifest = vite_manifest.build().await?;
 
-        Ok(Self { assets, vite_manifest })
+        // Only for development.
+        let vite_dev_server = std::env::var("TOBIRA_VITE_DEV_SERVER").ok()
+            .filter(|_| cfg!(debug_assertions));
+        if let Some(origin) = &vite_dev_server {
+            info!("Loading the frontend from Vite's dev server at {origin}");
+        }
+
+        Ok(Self { assets, vite_manifest, vite_dev_server })
     }
 
     /// Responds with the asset identified by the given path. If there exists no
@@ -308,13 +319,23 @@ impl Assets {
         Response::builder()
             .status(status)
             .header("Content-Type", "text/html; charset=UTF-8")
-            .with_content_security_policies(config, &nonce)
+            .with_content_security_policies(config, &nonce, self.vite_dev_server.as_deref())
             .body(body.into())
             .expect("bug: invalid response")
     }
 
     /// Returns the HTML that loads the frontend.
     async fn vite_tags(&self) -> String {
+        if let Some(origin) = &self.vite_dev_server {
+            // In development, frontend is loaded from the dev server and we need to inject
+            // the following scripts.
+            // See also https://vite.dev/guide/backend-integration.
+            return format!("
+                <script type=\"module\" src=\"{origin}/~assets/@vite/client\"></script>\
+                <script type=\"module\" src=\"{origin}/~assets/{VITE_ENTRY}\"></script>\
+            ");
+        }
+
         #[derive(serde::Deserialize)]
         struct ManifestFile {
             file: String,

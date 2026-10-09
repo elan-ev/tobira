@@ -25,8 +25,10 @@ Note that the first build can take a while.
 This also starts a dev server, which you want to use to access Tobira: http://127.0.0.1:8030.
 You want to open that URL in your browser during development.
 
-Frontend rebuilds are fairly quick, backend ones can take up to 15s.
-Once the relevant component has been rebuilt, all browser sessions of Tobira are automatically reloaded.
+Frontend changes are picked up by the Vite dev server almost instantly, which then reloads the page.
+Backend rebuilds can take up to 15s; once the backend is up again, all browser sessions of Tobira are automatically reloaded.
+
+The backend still serves some files from `frontend/build/`, which is only built once at startup: changes to `frontend/static/` (e.g. the `index.html` template) or to the service worker (`frontend/src/sw/`) need an `npm run build:dev` in `frontend/`.
 
 
 ## Using `mold` as linker to improve incremental build times
@@ -86,15 +88,20 @@ Finally, and whenever you change frontend code, you need to run `npm run build:d
 This does not check types or lint your code; run `npm run typecheck` and `npm run lint` for that.
 
 
-#### Watching
+#### Dev server
 
-If you want to automatically rebuild on file changes, you can run these two commands in different terminal sessions:
+During development, you can use Vite's dev server instead of rebuilding on every change.
+Run these two commands in different terminal sessions:
 
 ```sh
-watchexec --watch src --watch static --ignore '**/__generated__/*' -- npm run build:dev
+npm run dev                  # Vite dev server on http://localhost:5173
 npx relay-compiler --watch
 ```
 
+Then start the backend (see below) with `TOBIRA_VITE_DEV_SERVER=http://localhost:5173 cargo run -- serve`.
+Its pages then load the frontend's code from the dev server, which reloads them whenever you change something.
+The backend still serves `index.html`, fonts and the service worker from `build/`, so run `npm run build:dev` once before
+and whenever you change one of these files.
 Note: `relay-compiler --watch` requires `watchman` to be installed!
 
 
