@@ -115,6 +115,8 @@ jobs:
       with:
         name: frontend-artifacts
         retention-days: 1
+        # Include `.vite/manifest`
+        include-hidden-files: true
         path: frontend/build
 
 
