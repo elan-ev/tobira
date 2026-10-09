@@ -15,6 +15,8 @@ export default defineConfig(({ mode }) => ({
         outDir: "build",
         sourcemap: true,
         minify: mode !== "development",
+        // See also https://vite.dev/guide/backend-integration
+        manifest: true,
         rolldownOptions: {
             output: {
                 entryFileNames: "bundle.[name].[hash].js",
