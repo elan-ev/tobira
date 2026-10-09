@@ -8,6 +8,11 @@ import { checkInitialConsent } from "./ui/InitialConsent";
 import CONFIG from "./config";
 
 
+// See https://emotion.sh/docs/labels#automatic-labeling-at-runtime
+if (process.env.NODE_ENV === "development") {
+    Object.assign(globalThis, { EMOTION_RUNTIME_AUTO_LABEL: true });
+}
+
 if (CONFIG.auth.authStaticFiles) {
     navigator.serviceWorker
         .register("/~sw.js", { updateViaCache: "none" })
