@@ -1,9 +1,14 @@
+import yaml from "@rollup/plugin-yaml";
 import { defineConfig } from "vite";
 
 
 export default defineConfig(({ mode }) => ({
     base: "/~assets/",
     input: "src/index.tsx",
+
+    plugins: [
+        yaml(),
+    ],
 
     build: {
         outDir: "build",
