@@ -1,5 +1,6 @@
 import yaml from "@rollup/plugin-yaml";
 import { defineConfig } from "vite";
+import relay from "vite-plugin-relay";
 import svgr from "vite-plugin-svgr";
 
 
@@ -11,6 +12,7 @@ export default defineConfig(({ mode }) => ({
     plugins: [
         svgr({ svgrOptions: { icon: true } }),
         yaml(),
+        relay,
     ],
 
     build: {
