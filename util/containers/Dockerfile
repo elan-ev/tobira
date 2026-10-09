@@ -13,7 +13,7 @@ RUN npm i
 COPY frontend .
 RUN npm ci
 RUN npx relay-compiler
-RUN npx webpack --mode=production
+RUN npm run build:release
 
 
 FROM docker.io/rust:${RUST_VERSION}-alpine AS backend-build

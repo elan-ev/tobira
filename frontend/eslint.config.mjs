@@ -1,5 +1,4 @@
 import shared from "@opencast/eslint-config-ts-react";
-import tseslint from "typescript-eslint";
 import compat from "eslint-plugin-compat";
 
 export default [
@@ -89,12 +88,6 @@ export default [
             "*.js",
             ".*.js",
         ],
-    },
-
-    // This TS file is not part of the project.
-    {
-        files: ["webpack.config.ts"],
-        ...tseslint.configs.disableTypeChecked,
     },
 
     // // Config files can make use of Node stuff.

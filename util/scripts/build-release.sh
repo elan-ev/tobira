@@ -18,7 +18,7 @@ fi
 cd frontend || exit 1
 npm ci
 npx relay-compiler
-npx webpack --progress --mode=production
+npm run build:release
 
 # Build backend.
 #

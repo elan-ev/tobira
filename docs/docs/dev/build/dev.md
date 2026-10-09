@@ -82,8 +82,8 @@ Next, and whenever you change the GraphQL Schema or any GraphQL queries/fragment
 npx relay-compiler
 ```
 
-Finally, and whenever you change frontend code, you need to run `npm run build:dev`.
-Due to our Webpack configuration, ESLint and TypeScript are already used during a normal Webpack invocation.
+Finally, and whenever you change frontend code, you need to run `npm run build:dev` (or `npm run build:release`), which builds the frontend into `build/` with Vite.
+This does not check types or lint your code; run `npm run typecheck` and `npm run lint` for that.
 
 
 #### Watching
@@ -91,12 +91,10 @@ Due to our Webpack configuration, ESLint and TypeScript are already used during 
 If you want to automatically rebuild on file changes, you can run these two commands in different terminal sessions:
 
 ```sh
-npx webpack watch --mode=development --no-stats    # includes TypeScript and ESLint
+watchexec --watch src --ignore '**/__generated__/*' -- npm run build:dev
 npx relay-compiler --watch
 ```
 
-This gives you the fastest rebuilds.
-In rare cases, some caching problems occur and you need to restart these commands to get rid of outdated errors.
 Note: `relay-compiler --watch` requires `watchman` to be installed!
 
 
