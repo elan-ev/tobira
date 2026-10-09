@@ -1,5 +1,6 @@
 import yaml from "@rollup/plugin-yaml";
 import { defineConfig } from "vite";
+import svgr from "vite-plugin-svgr";
 
 
 export default defineConfig(({ mode }) => ({
@@ -8,6 +9,7 @@ export default defineConfig(({ mode }) => ({
     publicDir: "static",
 
     plugins: [
+        svgr({ svgrOptions: { icon: true } }),
         yaml(),
     ],
 
