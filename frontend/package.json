@@ -58,7 +58,8 @@
     "react-select": "^5.10.2",
     "react-transition-group": "^4.4.5",
     "relay-compiler": "^16.2.0",
-    "unified": "^11.0.5"
+    "unified": "^11.0.5",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@opencast/eslint-config-ts-react": "^0.3.0",
