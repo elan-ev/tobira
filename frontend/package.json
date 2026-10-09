@@ -11,6 +11,7 @@
     "Lukas Kalbertodt <kalbertodt@elan-ev.de>"
   ],
   "scripts": {
+    "dev": "vite",
     "build:dev": "vite build --mode development && vite build --mode development --config vite.sw.config.mts",
     "build:release": "vite build && vite build --config vite.sw.config.mts",
     "typecheck": "tsc --skipLibCheck",
