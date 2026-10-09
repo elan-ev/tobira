@@ -91,7 +91,7 @@ This does not check types or lint your code; run `npm run typecheck` and `npm ru
 If you want to automatically rebuild on file changes, you can run these two commands in different terminal sessions:
 
 ```sh
-watchexec --watch src --ignore '**/__generated__/*' -- npm run build:dev
+watchexec --watch src --watch static --ignore '**/__generated__/*' -- npm run build:dev
 npx relay-compiler --watch
 ```
 

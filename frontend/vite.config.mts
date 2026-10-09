@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 export default defineConfig(({ mode }) => ({
     base: "/~assets/",
     input: "src/index.tsx",
+    publicDir: "static",
 
     plugins: [
         yaml(),
