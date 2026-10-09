@@ -82,7 +82,8 @@
     "vite": "^8.3.0",
     "vite-plugin-relay": "^2.1.0",
     "vite-plugin-svgr": "^5.2.0",
-    "wait-port": "^1.1.0"
+    "wait-port": "^1.1.0",
+    "yaml": "^2.9.1"
   },
   "overrides": {
     "minimatch": "5.1.9"
