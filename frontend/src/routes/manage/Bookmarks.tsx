@@ -13,8 +13,8 @@ import {
     BookmarksManageQuery, BookmarksManageQuery$data,
 } from "./__generated__/BookmarksManageQuery.graphql";
 import { NotAuthorized } from "../../ui/error";
-import SeriesIcon from "../../icons/series.svg";
-import PlaylistIcon from "../../icons/playlist.svg";
+import SeriesIcon from "../../icons/series.svg?react";
+import PlaylistIcon from "../../icons/playlist.svg?react";
 import { LucideBookmarkOff } from "lucide-react";
 import { Link } from "../../router";
 import { DirectPlaylistRoute } from "../Playlist";

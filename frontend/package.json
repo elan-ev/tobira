@@ -64,6 +64,8 @@
     "@opencast/eslint-config-ts-react": "^0.3.0",
     "@playwright/test": "^1.59.1",
     "@rollup/plugin-yaml": "^5.0.0",
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__template": "^7.4.4",
     "@types/linkify-it": "^5.0.0",
     "@types/node": "^22.20.2",
     "@types/picomatch": "^4.0.3",
@@ -78,6 +80,7 @@
     "schema-dts": "^2.0.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.0",
+    "vite-plugin-svgr": "^5.2.0",
     "wait-port": "^1.1.0"
   },
   "overrides": {

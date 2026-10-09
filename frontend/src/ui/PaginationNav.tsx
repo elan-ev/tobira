@@ -4,8 +4,8 @@ import { ParseKeys } from "i18next";
 
 import { COLORS } from "../color";
 import { focusStyle } from ".";
-import FirstPage from "../icons/first-page.svg";
-import LastPage from "../icons/last-page.svg";
+import FirstPage from "../icons/first-page.svg?react";
+import LastPage from "../icons/last-page.svg?react";
 import { useTranslation } from "react-i18next";
 import { css } from "@emotion/react";
 
