@@ -30,9 +30,10 @@ const yaml = require("js-yaml");
 
 
 const TRANSLATION_FILE = path.join(__dirname, "../../../frontend/src/i18n/locales/en.yaml");
+const TYPES_FILE = path.join(__dirname, "../../../frontend/src/i18n/_generatedTranslationTypes.json");
 
 // Type-check command
-const CHECK_CMD = "(cd frontend && npx webpack --mode=development --stats=errors-warnings)";
+const CHECK_CMD = "(cd frontend && npx tsc)";
 
 // ────────────────────────────────────────────────────────────────────────────────
 
@@ -112,6 +113,7 @@ const deleteKeyAtPath = (obj, pathArray) => {
 
     const newYaml = yaml.dump(workingCopy);
     fs.writeFileSync(TRANSLATION_FILE, newYaml, "utf8");
+    fs.writeFileSync(TYPES_FILE, JSON.stringify(workingCopy), "utf8");
 
     let hasError = false;
     try {
@@ -131,8 +133,9 @@ const deleteKeyAtPath = (obj, pathArray) => {
     }
   }
 
-  // 4) Restore original YAML file.
+  // 4) Restore original YAML and types file.
   fs.writeFileSync(TRANSLATION_FILE, originalFileContent, "utf8");
+  fs.writeFileSync(TYPES_FILE, JSON.stringify(originalDoc), "utf8");
 
   // 5) Print summary.
   console.log("\n────────────────────────────────────────────────");
