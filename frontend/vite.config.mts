@@ -41,6 +41,7 @@ export default defineConfig(({ mode }) => ({
         // See also https://vite.dev/guide/backend-integration
         manifest: true,
         rolldownOptions: {
+            checks: { moduleLevelDirective: false },
             output: {
                 entryFileNames: "bundle.[name].[hash].js",
                 chunkFileNames: "bundle.[name].[hash].js",
