@@ -3,8 +3,7 @@ import { HotkeyCallback, Options } from "react-hotkeys-hook";
 import { useCallback } from "react";
 
 import { SHORTCUTS, useShortcut } from "../Shortcuts";
-import { FRAME_DURATION, SKIP_INTERVAL, SPEEDS } from "./consts";
-import { UI_HIDDEN_CLASS } from "./Paella";
+import { FRAME_DURATION, SKIP_INTERVAL, SPEEDS, UI_HIDDEN_CLASS } from "./consts";
 
 
 export const isSpaceOnInteractiveElement = (e: KeyboardEvent): boolean => (

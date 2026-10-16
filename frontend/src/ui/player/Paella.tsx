@@ -9,7 +9,7 @@ import { Global } from "@emotion/react";
 import { useTranslation } from "react-i18next";
 
 import { isHlsTrack, PlayerEvent, Track } from ".";
-import { SPEEDS, TRANSLATIONS } from "./consts";
+import { SPEEDS, TRANSLATIONS, UI_HIDDEN_CLASS } from "./consts";
 import { captionsWithLabels, timeStringToSeconds } from "../../util";
 import { usePlayerContext } from "./PlayerContext";
 import { usePlayerGroupContext } from "./PlayerGroupContext";
@@ -418,7 +418,6 @@ const PaellaPlayer: React.FC<PaellaPlayerProps> = ({ event }) => {
     </>;
 };
 
-export const UI_HIDDEN_CLASS = "paella-ui-hidden";
 const installUiActivityHandlers = (player: Paella) => {
     const container = player.containerElement;
     const onActivity = () => {
