@@ -35,4 +35,6 @@ A small set of fixed test data can be inserted for the test and a number of smal
 Therefore, you also have to run `./x.sh containers start` before running these tests.
 Further, you have to run `npm ci` in `frontend/` and build the Tobira binary, both done by `./x.sh start`.
 Finally, in some situations, git might not have downloaded the static files properly, which you can fix by manually running `git lfs checkout` or `git lfs fetch`.
-With all that done, you can run the tests via `npx playwright test` inside `frontend/`.
+With all that done, you can run the tests via `npm test` inside `frontend/`.
+This first builds the frontend (`npm run build:dev`), as the tests run against the files in `frontend/build`, which the Vite dev server does not update.
+If you know that `frontend/build` is up to date, you can skip that by running `npx playwright test` directly.
