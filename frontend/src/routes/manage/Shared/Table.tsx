@@ -1435,7 +1435,10 @@ const varsToQueryParams = (vars: ItemVars): URLSearchParams => {
 
 const varsToLink = (vars: ItemVars): string => {
     const url = new URL(document.location.href);
-    url.search = decodeURIComponent(varsToQueryParams(vars).toString());
+    // Keep `:` readable in `sort` and `filter:*` params. Colons are allowed
+    // unencoded in query strings, and since `URLSearchParams` encodes `%` as
+    // `%25`, a `%3A` in its output can only come from an actual colon.
+    url.search = varsToQueryParams(vars).toString().replaceAll("%3A", ":");
     return url.href;
 };
 
