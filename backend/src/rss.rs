@@ -72,7 +72,8 @@ pub(crate) async fn generate_series_feed(
 
     // Load event data
     let selection = Event::select();
-    let query = format!("select {selection} from events where series = $1 and read_roles && $2");
+    let query = format!("select {selection} from events \
+        where series = $1 and read_roles && $2 and state = 'ready'");
     let events = db.query_raw(&query, dbargs![&series_id, &auth.roles_vec()])
         .await
         .map_err(Into::into);
@@ -112,7 +113,8 @@ pub(crate) async fn generate_playlist_feed(
         where opencast_id = any(event_entry_ids((\
             select entries from playlists where id = $1 and read_roles && $2\
         ))) \
-        and read_roles && $2",
+        and read_roles && $2 \
+        and state = 'ready'",
     );
     let events = db.query_raw(&query, dbargs![&playlist_id, &auth.roles_vec()])
         .await
