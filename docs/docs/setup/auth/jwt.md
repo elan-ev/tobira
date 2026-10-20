@@ -24,16 +24,21 @@ The algorithm and private key can be specified in `[auth.jwt]`.
 
 ```toml
 [auth.jwt]
-signing_algorithm = "ES256"
-secret_key = "jwt-key.pem"
+signing_algorithm = "ED25519"
+secret_key = "private-key.pem"
 ```
 
-The secret key has to be a key matching the algorithm.
-For `ES*`, that's an EC key encoded as PKCS#8.
-To generate such a key, you can run these commands (you can replace `secp256r1` with other supported values like `secp384r1`):
+The secret key file has to be a PEM/PKCS#8 encoded and match the specified algorithm.
+To generate an ED25519 key, you can run this command:
 
 ```
-openssl ecparam -name secp256r1 -genkey -noout -out sec1.pem
+openssl genpkey -algorithm ed25519 -out private-key.pem
+```
+
+For ES256 and ES384, run this instead:
+
+```
+openssl ecparam -name secp256r1 -genkey -noout -out sec1.pem     # or secp384r1 for ES384
 openssl pkcs8 -topk8 -nocrypt -in sec1.pem -out private-key.pem
 ```
 
