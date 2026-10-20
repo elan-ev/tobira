@@ -7,7 +7,7 @@ use std::{path::PathBuf, time::Duration};
 
 use crate::prelude::*;
 
-use super::User;
+use super::{User, ROLE_ANONYMOUS};
 
 
 
@@ -143,6 +143,14 @@ impl JwtContext {
             },
             auth_claims,
         }, &self.service_expiration_time)
+    }
+
+    /// Creates a JWT that makes Opencast create or update a user reference
+    /// for `user`, without granting any privileges.
+    pub(crate) fn user_reference_token(&self, user: &User) -> String {
+        // Opencast fails to process JWTs it cannot extract any roles from, so
+        // we send `ROLE_ANONYMOUS`, which everyone has anyway.
+        self.service_token(user, json!({ "roles": [ROLE_ANONYMOUS] }))
     }
 
     /// Generates a JWT giving read access to a single event. `for_download`

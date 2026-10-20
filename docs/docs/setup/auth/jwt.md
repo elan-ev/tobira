@@ -113,6 +113,9 @@ Then, whenever Tobira sees a user for the first time in a while (or their user i
 Note that this stores the display name and email of all Tobira users in Opencast.
 If you use `auth.session.from_login_credentials = "opencast"`, you don't need this, as all Tobira users already exist in Opencast.
 
+Users who used Tobira before you enabled this only become known to Opencast on their next visit.
+To make all of Tobira's known users (i.e. users Tobira has seen or that were added via `tobira known-users upsert`) known to Opencast right away, run `tobira known-users create-opencast-user-references`.
+
 :::caution
 In the admin UI, these users are offered with the user role that *Opencast* derives from the username.
 By default, that's `ROLE_USER_` followed by the username in uppercase, with every character other than `a-z`, `A-Z` and `0-9` replaced by `_`

@@ -1,12 +1,14 @@
 use std::collections::{HashMap, HashSet};
 
 use deadpool_postgres::Transaction;
-use futures::pin_mut;
+use futures::{pin_mut, StreamExt};
 
 use crate::{
     prelude::*,
-    db,
+    auth::{JwtContext, User},
+    db::{self, util::select},
     config::Config,
+    sync::OcClient,
 };
 
 use super::prompt_for_yes;
@@ -35,7 +37,18 @@ pub(crate) enum Args {
         #[clap(long)]
         yes_absolutely_clear_known_users: bool,
     },
+
+    /// Makes Opencast create or update a user reference for every known user.
+    ///
+    /// This sends the same request that Tobira sends when it sees a user with
+    /// `auth.create_opencast_user_references` enabled. Requires
+    /// `auth.jwt.secret_key` to be set.
+    CreateOpencastUserReferences,
 }
+
+/// How many requests are sent to Opencast in parallel when creating user
+/// references.
+const OPENCAST_REQUEST_CONCURRENCY: usize = 8;
 
 
 
@@ -60,6 +73,9 @@ pub(crate) async fn run(config: Config, args: &Args) -> Result<()> {
         Args::Upsert { file } => upsert(&file, &config, tx).await?,
         // Args::Remove { roles } => remove(roles, tx).await?,
         Args::Clear { yes_absolutely_clear_known_users: yes } => clear(tx, *yes).await?,
+        Args::CreateOpencastUserReferences => {
+            create_opencast_user_references(&config, tx).await?
+        }
     }
 
     Ok(())
@@ -146,4 +162,74 @@ async fn clear(tx: Transaction<'_>, yes: bool) -> Result<()> {
     println!("Removed {affected} known users");
 
     Ok(())
+}
+
+async fn create_opencast_user_references(config: &Config, tx: Transaction<'_>) -> Result<()> {
+    if config.auth.jwt.secret_key.is_none() {
+        bail!("'auth.jwt.secret_key' is not set, so the JWTs would be signed with a \
+            newly generated key that Opencast does not know. Configure a fixed key first.");
+    }
+    let jwt = JwtContext::new(&config.auth.jwt)?;
+    let oc_client = OcClient::new(config)?;
+
+    let (selection, mapping) = select!(
+        username, display_name, email, user_role, user_realm_handle,
+    );
+    let users = tx.query(&format!("select {selection} from users"), &[]).await?
+        .into_iter()
+        .map(|row| User {
+            username: mapping.username.of(&row),
+            display_name: mapping.display_name.of(&row),
+            email: mapping.email.of(&row),
+            // Not stored in the DB, but also not needed for the JWT.
+            roles: HashSet::new(),
+            user_role: mapping.user_role.of(&row),
+            user_realm_handle: mapping.user_realm_handle.of(&row),
+        })
+        .collect::<Vec<_>>();
+    tx.commit().await?;
+
+    let Some((first, rest)) = users.split_first() else {
+        println!("There are no known users");
+        return Ok(());
+    };
+
+    // Errors are most likely caused by a misconfiguration, which would make all requests fail.
+    // So this only continues if the first one succeeds.
+    create_opencast_user_reference(first, &jwt, &oc_client).await
+        .with_context(|| format!("failed to create user reference for '{}'", first.username))?;
+
+    info!("Sending requests for the remaining {} known users to Opencast...", rest.len());
+    let jwt = &jwt;
+    let oc_client = &oc_client;
+    let mut requests = futures::stream::iter(rest)
+        .map(|user| async move {
+            (user, create_opencast_user_reference(user, jwt, oc_client).await)
+        })
+        .buffer_unordered(OPENCAST_REQUEST_CONCURRENCY);
+
+    let mut num_failed = 0;
+    while let Some((user, res)) = requests.next().await {
+        if let Err(e) = res {
+            warn!("Failed to create Opencast user reference for '{}': {e:#}", user.username);
+            num_failed += 1;
+        }
+    }
+
+    let num_ok = users.len() - num_failed;
+    println!("Created or updated Opencast user references for {num_ok} of {} known users",
+        users.len());
+    if num_failed > 0 {
+        bail!("{num_failed} requests failed (see log for details)");
+    }
+
+    Ok(())
+}
+
+async fn create_opencast_user_reference(
+    user: &User,
+    jwt: &JwtContext,
+    oc_client: &OcClient,
+) -> Result<()> {
+    oc_client.create_user_reference(&user.username, &jwt.user_reference_token(user)).await
 }
