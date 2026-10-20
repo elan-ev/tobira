@@ -8,6 +8,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
+use serde_json::json;
 use tokio_postgres::Error as PgError;
 
 use crate::{
@@ -31,7 +32,7 @@ pub(crate) use self::{
     config::{AuthConfig, AuthSource, CallbackUri},
     session_id::SessionId,
     jwt::{JwtConfig, JwtContext},
-    handlers::{handle_post_session, handle_delete_session, handle_post_login},
+    handlers::{handle_post_session, handle_delete_session, handle_post_login, InfoMeResponse},
 };
 
 
@@ -164,7 +165,10 @@ impl User {
             user.add_default_roles();
             // TODO: consider not awaiting here. The result is not important and
             // we can finish the rest of the API in the meantime.
-            ctx.auth_caches.user.upsert_user_info(user, db).await;
+            let written = ctx.auth_caches.user.upsert_user_info(user, db).await;
+            if written && ctx.config.auth.create_opencast_user_references {
+                user.create_opencast_user_reference(ctx);
+            }
         }
 
 
@@ -393,6 +397,21 @@ impl User {
         ).await?;
 
         Ok(session_id)
+    }
+
+    /// Makes Opencast create or update a user reference for this user. The request is sent
+    /// in the background and errors are only logged.
+    fn create_opencast_user_reference(&self, ctx: &Context) {
+        // This JWT is not supposed to grant any privileges, so we just send `ROLE_ANONYMOUS`.
+        let jwt = ctx.jwt.service_token(self, json!({ "roles": [ROLE_ANONYMOUS] }));
+        let oc_client = ctx.oc_client.clone();
+        let username = self.username.clone();
+        tokio::spawn(async move {
+            match oc_client.create_user_reference(&username, &jwt).await {
+                Ok(()) => debug!("Created or updated Opencast user reference for '{username}'"),
+                Err(e) => warn!("Failed to create Opencast user reference for '{username}': {e:#}"),
+            }
+        });
     }
 
     /// Makes sure this user has the roles `ROLE_ANONYMOUS` and `ROLE_USER`.

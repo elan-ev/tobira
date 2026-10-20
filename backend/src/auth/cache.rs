@@ -117,8 +117,9 @@ impl UserCacheEntry {
 }
 
 /// Cache to remember what users we have seen. Its only purpose is to make
-/// writes to the `users` table less frequent. The data from this cache must
-/// not be used in any other way.
+/// writes to the `users` table (and requests creating Opencast user
+/// references) less frequent. The data from this cache must not be used in any
+/// other way.
 ///
 /// This works fine in multi-node setups: each node just has its local cache and
 /// prevents some DB writes. But as this data is never used otherwise, we don't
@@ -130,7 +131,10 @@ impl UserCache {
         Self(HashMap::new())
     }
 
-    pub(crate) async fn upsert_user_info(&self, user: &super::User, db: &Client) {
+    /// Writes the user's info to the `users` table, unless it was written
+    /// recently and hasn't changed since. Returns `true` if the user info was
+    /// successfully written.
+    pub(crate) async fn upsert_user_info(&self, user: &super::User, db: &Client) -> bool {
         match self.0.entry_async(user.username.clone()).await {
             Entry::Occupied(mut occupied) => {
                 let entry = occupied.get();
@@ -145,14 +149,17 @@ impl UserCache {
                     let res = Self::write_to_db(user, db).await;
                     if res.is_ok() {
                         *occupied.get_mut() = UserCacheEntry::new(user);
+                        return true;
                     }
                 }
+                false
             },
             Entry::Vacant(vacant) => {
                 let res = Self::write_to_db(user, db).await;
                 if res.is_ok() {
                     vacant.insert_entry(UserCacheEntry::new(user));
                 }
+                res.is_ok()
             },
         }
     }
