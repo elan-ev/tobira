@@ -24,19 +24,22 @@ npx webpack --progress --mode=production
 #
 # We set some weird flags here to sanitize the paths embedded into the binary.
 # Ideally, that should happen by default, but that has not been implemented
-# yet. See this RFC: https://github.com/rust-lang/rfcs/pull/3127
+# yet. See `profile.trim-paths` (RFC 3127), which is not yet available on
+# stable Cargo: https://github.com/rust-lang/cargo/issues/12137
 #
-# Also, the dependency 'ring' does something special with compiling C or
-# assembly files. So we also need to set the corresponding C flag. See here:
+# Several dependencies (e.g. 'ring', 'aws-lc-sys', 'tikv-jemalloc-sys') compile
+# C or assembly files. So we also need to set the corresponding C flags. See here:
 # https://github.com/briansmith/ring/issues/715
 #
-# The long Cargo registry path is actually fixed, despite its looks. The hash in
-# there is just the one for the crates.io registry, but we don't use any other
-# crate registries, so it's fine. And yes, people could have installed cargo
-# elsewhere... we can still add support for that later.
+# Dependencies from crates.io are unpacked to
+# `$CARGO_HOME/registry/src/index.crates.io-<hash>/<crate>-<version>/`. We remap
+# everything up to `registry/src`, so we don't depend on the `<hash>` part,
+# which differs between Cargo versions. `CARGO_HOME` defaults to `~/.cargo`,
+# but can be set to something else.
 cd ../backend || exit 1
-CFLAGS="-fdebug-prefix-map=$HOME/.cargo/registry/src/github.com-1ecc6299db9ec823/=__dep__" \
-    RUSTFLAGS="--remap-path-prefix=$(pwd)=<src> --remap-path-prefix=$HOME/.cargo/registry/src/github.com-1ecc6299db9ec823/=<dep>" \
+registry_src="${CARGO_HOME:-$HOME/.cargo}/registry/src"
+CFLAGS="-fdebug-prefix-map=$(pwd)=__src__ -fdebug-prefix-map=$registry_src=__dep__" \
+    RUSTFLAGS="--remap-path-prefix=$(pwd)=<src> --remap-path-prefix=$registry_src=<dep>" \
     cargo build --release $([ "$1" == "--musl" ] && echo "--target=x86_64-unknown-linux-musl")
 
 cd .. || exit 1
