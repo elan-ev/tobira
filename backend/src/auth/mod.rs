@@ -8,7 +8,6 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
-use serde_json::json;
 use tokio_postgres::Error as PgError;
 
 use crate::{
@@ -402,8 +401,7 @@ impl User {
     /// Makes Opencast create or update a user reference for this user. The request is sent
     /// in the background and errors are only logged.
     fn create_opencast_user_reference(&self, ctx: &Context) {
-        // This JWT is not supposed to grant any privileges, so we just send `ROLE_ANONYMOUS`.
-        let jwt = ctx.jwt.service_token(self, json!({ "roles": [ROLE_ANONYMOUS] }));
+        let jwt = ctx.jwt.user_reference_token(self);
         let oc_client = ctx.oc_client.clone();
         let username = self.username.clone();
         tokio::spawn(async move {
