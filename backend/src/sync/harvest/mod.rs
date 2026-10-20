@@ -278,7 +278,8 @@ async fn store_in_db(
                 // But now we have to fix the foreign key for any events that
                 // previously referenced this series (via the Opencast UUID)
                 // but did not have the correct foreign key yet.
-                let query = "update events set series = $1 where part_of = $2 and series <> $1";
+                let query = "update events set series = $1 \
+                    where part_of = $2 and series is distinct from $1";
                 let updated_events = db.execute(query, &[&new_id, &series.id]).await?;
 
                 trace!("Inserted or updated series {} ({})", series.id, series.title);
