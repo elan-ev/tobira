@@ -340,6 +340,54 @@ impl OcClient {
         Ok(out)
     }
 
+    /// Makes Opencast create or update a user reference for the user described by `jwt`.
+    /// Opencast does that for every new JWT it accepts that contains user info,
+    /// so this just sends a request authenticated with `jwt`.
+    /// Fails if Opencast does not associate the request with `username`.
+    pub(crate) async fn create_user_reference(&self, username: &str, jwt: &str) -> Result<()> {
+        let uri = self.sync_node.clone().with_path_and_query("/info/me.json");
+        let req = Request::builder()
+            .uri(&uri)
+            .header(http::header::AUTHORIZATION, format!("Bearer {jwt}"))
+            .body(RequestBody::empty())
+            .expect("bug: failed to build request");
+
+        // 10 secs seem like a reasonable timeout for a small request like info/me.
+        let response = tokio::time::timeout(Duration::from_secs(10), self.http_client.request(req))
+            .await
+            .with_context(|| format!("HTTP request timed out (to '{uri}')"))?
+            .with_context(|| format!("HTTP request failed (to '{uri}')"))?;
+
+        let (parts, body) = response.into_parts();
+        if parts.status != StatusCode::OK {
+            bail!("Opencast replied with unexpected HTTP code {} (for '{uri}')", parts.status);
+        }
+        let body = download_body(body).await
+            .with_context(|| format!("failed to download body from '{uri}'"))?;
+
+        #[derive(Deserialize)]
+        struct InfoMeResponse {
+            user: InfoMeUserResponse,
+        }
+
+        #[derive(Deserialize)]
+        struct InfoMeUserResponse {
+            username: String,
+        }
+
+        let info = serde_json::from_slice::<InfoMeResponse>(&body)
+            .with_context(|| format!("failed to deserialize response from '{uri}'"))?;
+        if info.user.username != username {
+            bail!(
+                "Opencast associated the request with user '{}'. Most likely, it did not \
+                    accept the JWT. Check the JWT configuration of Opencast.",
+                info.user.username,
+            );
+        }
+
+        Ok(())
+    }
+
     fn authed_req_builder(&self, node: &HttpHost, path_and_query: &str) -> (request::Builder, Uri) {
         let uri = Uri::builder()
             .scheme(node.scheme.clone())
