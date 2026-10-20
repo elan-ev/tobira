@@ -6,7 +6,7 @@ basedir=$(dirname "$0")
 cd "$basedir"/../..
 
 NODE_VERSION=22.15
-RUST_VERSION=1.86
+RUST_VERSION=1.91
 
 CONTAINER_PLATFORM="${CONTAINER_PLATFORM:-linux/amd64}"
 RUST_TARGET="${RUST_TARGET:-x86_64-unknown-linux-musl}"
