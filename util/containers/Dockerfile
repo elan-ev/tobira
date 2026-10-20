@@ -28,21 +28,18 @@ RUN apk add --no-cache \
   musl-dev \
   perl
 
-ARG RUST_TARGET
-RUN rustup target add "${RUST_TARGET}"
-
 COPY backend/Cargo.toml backend/Cargo.lock /build/backend/
 COPY backend/vendor /build/backend/vendor
 COPY <<EOF /build/backend/src/main.rs
 fn main() {}
 EOF
-RUN cargo build --target "${RUST_TARGET}" --release
+RUN cargo build --release
 
 COPY --from=frontend-build /build/build /build/frontend/build
 COPY backend .
 ARG GIT_COMMIT_HASH
-RUN cargo build --target "${RUST_TARGET}" --release
-RUN cp "target/${RUST_TARGET}/release/tobira" .
+RUN cargo build --release
+RUN cp target/release/tobira .
 RUN objcopy --compress-debug-sections tobira
 
 
@@ -72,7 +69,7 @@ ARG BUILT_TIME_UTC \
 LABEL maintainer="The Opencast project" \
       org.opencontainers.image.created="${BUILT_TIME_UTC}" \
       org.opencontainers.image.authors="The Opencast project" \
-      org.opencontainers.image.url="quay.io/opencast/tobira" \
+      org.opencontainers.image.url="https://github.com/elan-ev/tobira" \
       org.opencontainers.image.documentation="https://elan-ev.github.io/tobira/" \
       org.opencontainers.image.source="https://github.com/elan-ev/tobira" \
       org.opencontainers.image.version="${VERSION}" \
