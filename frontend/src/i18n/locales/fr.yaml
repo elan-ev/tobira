@@ -272,7 +272,7 @@ realm:
     my-page: Ma page
     note-label: Page d'utilisateur
     note-body: >
-      Il s'agit d'une page personnelle gérée par {{utilisateur}}. Il est
+      Il s'agit d'une page personnelle gérée par {{user}}. Il est
       responsable de l'ensemble du contenu.
     create:
       title: Créez votre propre page
