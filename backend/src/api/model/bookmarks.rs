@@ -47,6 +47,7 @@ pub async fn fetch_for_user(context: &Context) -> ApiResult<Vec<BookmarkItem>> {
         left join series on series.id = bookmarks.series
         left join playlists on playlists.id = bookmarks.playlist
         where username = $1
+            and (series.id is not null or playlists.id is not null)
         order by bookmarks.created desc"
     );
     context.db.query_mapped(&sql, dbargs![&user.username], |row| {

@@ -72,7 +72,8 @@ impl OpencastConfig {
         let all_overrides_set = self.sync_node.is_some()
             && self.upload_node.is_some()
             && self.studio_url.is_some()
-            && self.editor_url.is_some();
+            && self.editor_url.is_some()
+            && self.external_api_node.is_some();
 
         if self.host.is_some() && all_overrides_set {
             bail!("If all overrides in `opencast` are set, `opencast.host` is \

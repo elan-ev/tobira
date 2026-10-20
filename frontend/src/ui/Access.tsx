@@ -553,7 +553,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
             .filter(prefix => item.label.startsWith(prefix));
         const name = item.role.slice(Math.max(...prefixes.map(p => p.length)))
             .toLocaleLowerCase(i18n.resolvedLanguage)
-            .replace("_", " ");
+            .replaceAll("_", " ");
         label = <span>{name} (<i>{t("acl.table.unknown-user-note")}</i>)</span>;
     } else {
         label = <>{item.label}</>;
