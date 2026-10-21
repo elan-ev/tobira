@@ -330,6 +330,8 @@ const GlobalBanner: React.FC = () => {
                 "info": () => <LuInfo size={28} />,
             })}
             <div css={{
+                minWidth: 0,
+                maxWidth: "100%",
                 "& > *:first-child": { marginTop: 0 },
                 "& > *:last-child": { marginBottom: 0 },
                 p: { color: "inherit" },
