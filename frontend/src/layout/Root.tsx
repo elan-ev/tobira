@@ -48,9 +48,15 @@ export const Root: React.FC<Props> = ({ nav, children }) => {
                 </StickyNav>}
 
                 {/* Main part */}
-                <div css={{ width: "100%", minWidth: 0, flex: "12 0 0" }}>
+                <div css={{
+                    width: "100%",
+                    minWidth: 0,
+                    flex: "12 0 0",
+                    display: "flex",
+                    flexDirection: "column",
+                }}>
                     <GlobalBanner />
-                    {children}
+                    <div css={{ flex: 1 }}>{children}</div>
                 </div>
             </Main>
             <Footer />
