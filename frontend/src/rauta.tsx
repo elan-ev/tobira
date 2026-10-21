@@ -509,8 +509,9 @@ export const makeRouter = <C extends Config, >(config: C): RouterLib => {
             }
         }, [context.activeRoute]);
 
-        // Rendered via JSX, as just calling `render()` causes unnecessary rerenders
-        return <context.activeRoute.route.matchedRoute.render />;
+        // Don't use `<render />` as JSX. `render` is a new function on every navigation
+        // and React would see a new component, causing a rebuild of the whole page.
+        return context.activeRoute.route.matchedRoute.render();
     };
 
     return {
