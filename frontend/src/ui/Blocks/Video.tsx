@@ -104,7 +104,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, realmPath, edit
                 outlineOffset: 1,
             }}
         >
-            {t("video.details")}
+            {t("video.page")}
             <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
         </Link>}
     </div>;
