@@ -4,15 +4,9 @@ sidebar_position: 1
 
 # Contributing to Tobira
 
-As an open source project, Tobira welcomes contributions in many forms.
-Examples of contributions include:
-
-- Code patches
-- Documentation improvements
-- Bug reports and patch reviews
-
-If you plan on writing a larger patch or implementing a larger feature, please get in touch with us first!
-That way, we can coordinate and avoid us rejecting a pull request you put significant time into.
+You want to contribute to Tobira by suggesting or implementing features, fixing bugs, improving documentation or in some other way? Great! 
+But please do read [our contribution guidelines](https://github.com/elan-ev/tobira/blob/main/docs/CONTRIBUTING.md) first! 
+The gist: open an issue before working on new features or bigger changes.
 
 
 ## Getting started with the code base

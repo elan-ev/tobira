@@ -24,6 +24,8 @@ Among other things, it explains how to install and configure Tobira on your own 
 
 ## Contribute
 
+**Note**: read [our contribution guidelines](https://github.com/elan-ev/tobira/blob/main/docs/CONTRIBUTING.md) first!
+
 In short: clone this repository, run the following commands and then open http://localhost:8030/.
 
 ```bash
@@ -39,4 +41,3 @@ But please see [our developer documentation](https://elan-ev.github.io/tobira/de
 *Tobira* (扉) is Japanese  for "door", "hinged door" or "front page" (of a book).
 A video *portal* is a kind of door, so we chose that name.
 It is also short and somewhat pronounceable for English speaking people.
-
