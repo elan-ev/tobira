@@ -20,7 +20,7 @@ embed-in-debug = ["reinda/always-prod"]
 ahash = "0.8"
 anyhow = { version = "1.0.71", features = ["backtrace"] }
 aws-lc-rs = { version = "1.13.3", default-features = false, features = ["aws-lc-sys"] }
-base64 = "0.22.1"
+base64 = "0.23.1"
 bstr = "1.4.0"
 bunt = "0.2.7"
 bytes = "1"
