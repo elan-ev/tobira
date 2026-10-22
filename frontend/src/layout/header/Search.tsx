@@ -79,7 +79,10 @@ export const SearchField: React.FC<SearchFieldProps> = ({ variant }) => {
         input.focus();
     };
 
+    // The header stays mounted across navigations, so we reset the input via key
+    // whenever the query in the URL changes (e.g. by leaving the search).
     return <SearchInput
+        key={defaultValue}
         {...{ search, inputRef, clear, defaultValue, variant }}
         inputProps={{
             disabled,
