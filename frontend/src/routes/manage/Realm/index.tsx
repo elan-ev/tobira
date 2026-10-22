@@ -10,6 +10,7 @@ import type {
 import { loadQuery } from "../../../relay";
 import { ChildOrder } from "./ChildOrder";
 import { General } from "./General";
+import { Visibility } from "./Visibility";
 import { DangerZone } from "./DangerZone";
 import { LinkButton } from "../../../ui/LinkButton";
 import { LuCircleArrowRight, LuCirclePlus } from "react-icons/lu";
@@ -80,6 +81,7 @@ const query = graphql`
             numberOfDescendants
             ancestors { name path }
             ... GeneralRealmData
+            ... VisibilityRealmData
             ... ChildOrderEditData
             ... DangerZoneRealmData
             ... NavigationData
@@ -128,6 +130,7 @@ const SettingsPage: React.FC<Props> = ({ realm, data }) => {
             </div>
             <section><General fragRef={realm} /></section>
             <section><ChildOrder fragRef={realm} /></section>
+            <section><Visibility fragRef={realm} /></section>
             {realm.isCurrentUserPageAdmin && <>
                 <section><RealmPermissions fragRef={realm} {...{ data }} /></section>
                 <section><DangerZone fragRef={realm} /></section>

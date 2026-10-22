@@ -200,9 +200,13 @@ pub(crate) async fn perform(
         .build();
 
     // Prepare the realm search
+    let realm_filter = Filter::and([
+        Filter::Leaf("is_user_realm = false".into()),
+        Filter::realm_visible(context),
+    ]).to_string();
     let realm_query = context.search.realm_index.search()
         .with_query(user_query)
-        .with_filter("is_user_realm = false")
+        .with_filter(&realm_filter)
         .with_show_matches_position(true)
         .build();
 
@@ -512,6 +516,21 @@ impl Filter {
             Self::acl_access_raw("read_roles", context),
             Self::acl_access_raw("preview_roles", context),
         ]))
+    }
+
+    /// Returns the filter for a realm being visible to the current user:
+    /// either the realm is publicly visible, or the current user can
+    /// moderate it. A global page moderator (which includes Tobira admins,
+    /// via `is_global_page_admin`) can always see every realm.
+    fn realm_visible(context: &Context) -> Self {
+        if context.auth.is_global_page_moderator(&context.config.auth) {
+            return Self::True;
+        }
+
+        Self::or([
+            Self::Leaf("visible = true".into()),
+            Self::acl_access_raw("flattened_moderator_roles", context),
+        ])
     }
 
     /// Returns a filter checking if `roles_field` has any overlap with the
