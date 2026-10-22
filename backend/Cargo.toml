@@ -89,7 +89,7 @@ xmlparser = "0.13.6"
 procfs = "0.18.0"
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
-tikv-jemallocator = "0.6"
+tikv-jemallocator = "0.7"
 
 [build-dependencies]
 built = { version = "0.8", features = ["chrono", "git2"] }
