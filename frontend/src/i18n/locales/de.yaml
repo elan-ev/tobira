@@ -135,6 +135,7 @@ video:
   singular: Video
   plural: Videos
   count: Videoanzahl
+  page: Videoseite
   video-page: 'Video Seite: „{{video}}“'
   video-player: Videoplayer
   duration: Abspielzeit

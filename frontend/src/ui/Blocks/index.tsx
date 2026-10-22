@@ -86,7 +86,11 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm, edit }) =>
                 realmPath={path}
                 editMode={edit}
             />,
-            "VideoBlock": () => <VideoBlock fragRef={block} {...{ basePath, edit }} />,
+            "VideoBlock": () => <VideoBlock
+                fragRef={block}
+                realmPath={path}
+                {...{ basePath, edit }}
+            />,
             "PlaylistBlock": () => <PlaylistBlockFromBlock
                 fragRef={block}
                 realmPath={path}

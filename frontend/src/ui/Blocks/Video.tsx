@@ -10,6 +10,7 @@ import { Link } from "../../router";
 import { LuCircleArrowRight } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
 import { PreviewPlaceholder, useEventWithAuthData } from "../../routes/Video";
+import { VideoMetadata } from "../metadata";
 
 
 export type BlockEvent = VideoBlockData$data["event"];
@@ -18,12 +19,13 @@ export type AuthorizedBlockEvent = Extract<BlockEvent, { __typename: "Authorized
 type Props = {
     fragRef: VideoBlockData$key;
     basePath: string;
+    realmPath: string;
     edit?: boolean;
 };
 
-export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
+export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, realmPath, edit }) => {
     const { t } = useTranslation();
-    const { event: protoEvent, showTitle, showLink } = useFragment(graphql`
+    const { event: protoEvent, showTitle, showLink, showMetadata } = useFragment(graphql`
         fragment VideoBlockData on VideoBlock {
             event {
                 __typename
@@ -52,6 +54,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
             }
             showTitle
             showLink
+            showMetadata
         }
     `, fragRef);
     const [event, refetch] = useEventWithAuthData(protoEvent);
@@ -83,6 +86,9 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
                     : <PreviewPlaceholder {...{ event, refetch }} />
                 }
             </section>
+            {showMetadata && <div css={{ marginTop: 16 }}>
+                <VideoMetadata {...{ event, realmPath }} />
+            </div>}
         </PlayerContextProvider>
 
         {showLink && <Link
@@ -98,7 +104,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, edit }) => {
                 outlineOffset: 1,
             }}
         >
-            {t("video.details")}
+            {t("video.page")}
             <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
         </Link>}
     </div>;
