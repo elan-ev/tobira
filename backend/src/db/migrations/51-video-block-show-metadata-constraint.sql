@@ -1,5 +1,4 @@
--- Adds a single `show_metadata` field to blocks, used for video blocks to also show
--- metadata below the video player.
+-- Makes video blocks also use `show_metadata`.
 
 -- Ensure that all existing video blocks have a value for `show_metadata` (defaulting to false).
 update blocks set show_metadata = false where type = 'video' and show_metadata is null;
