@@ -76,6 +76,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                 && "canCreateSeries" in user && typeof user.canCreateSeries === "boolean"
                 && "canCreatePlaylists" in user && typeof user.canCreatePlaylists === "boolean"
                 && "isTobiraAdmin" in user && typeof user.isTobiraAdmin === "boolean"
+                && "isAdmin" in user && typeof user.isAdmin === "boolean"
                 && "canFindUnlisted" in user && typeof user.canFindUnlisted === "boolean"
                 && "roles" in user && isStringArray(user.roles)
                 && "userRole" in user && typeof user.userRole === "string"
@@ -94,6 +95,7 @@ class GraphQLErrorBoundaryImpl extends React.Component<Props, State> {
                     canCreateSeries: user.canCreateSeries,
                     canCreatePlaylists: user.canCreatePlaylists,
                     isTobiraAdmin: user.isTobiraAdmin,
+                    isAdmin: user.isAdmin,
                     canFindUnlisted: user.canFindUnlisted,
                     roles: user.roles,
                     userRole: user.userRole,

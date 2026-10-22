@@ -44,26 +44,31 @@ const updatePlaylistMetadata = graphql`
 const editPlaylistContent = graphql`
     mutation PlaylistDetailsContentMutation(
         $id: ID!,
-        $entries: [ID!]!,
+        $entries: [PlaylistEntrySlot!],
     ) {
         updatePlaylist(id: $id, entries: $entries) {
             entries {
-                __typename
-                ...on AuthorizedEvent {
-                    id
-                    title
-                    isLive
-                    created
-                    creators
-                    description
-                    canWrite
-                    syncedData {
-                        thumbnail
-                        audioOnly
-                        duration
-                        startTime
-                        endTime
+                entryId
+                node {
+                    __typename
+                    ...on AuthorizedEvent {
+                        id
+                        title
+                        isLive
+                        created
+                        creators
+                        description
+                        canWrite
+                        syncedData {
+                            thumbnail
+                            audioOnly
+                            duration
+                            startTime
+                            endTime
+                        }
                     }
+                    ...on Missing { __typename }
+                    ...on NotAllowed { __typename }
                 }
             }
         }
@@ -115,7 +120,7 @@ const PlaylistButtonSection: React.FC<{ playlist: AuthorizedPlaylist }> = ({ pla
     const shareInfo = {
         kind: "playlist" as const,
         shareUrl: `/!p/${playlistKey}`,
-        rssUrl: `/~rss/playlist/${playlistKey}`,
+        rssUrl: playlist.hasPublicRssFeed ? `/~rss/playlist/${playlistKey}` : undefined,
     };
 
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
@@ -148,8 +153,10 @@ const PlaylistContentSection: React.FC<{ playlist: AuthorizedPlaylist }> = ({ pl
 
     return <ManageVideoListContent
         listId={playlist.id}
-        listEntries={[...playlist.entries]}
-        getUpdatedEntries={data => [...data.updatePlaylist.entries]}
+        listEntries={playlist.entries.map(e => ({ ...e.node, entryId: e.entryId }))}
+        getUpdatedEntries={data => data.updatePlaylist.entries.map(
+            e => ({ ...e.node, entryId: e.entryId }),
+        )}
         description={t("manage.playlist.details.edit-note")}
         {...{ commit, inFlight }}
     />;

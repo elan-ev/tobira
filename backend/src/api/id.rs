@@ -7,6 +7,8 @@ use std::fmt;
 use crate::model::Key;
 
 
+pub type IdKind = [u8; 2];
+
 /// An opaque, globally-unique identifier for all "nodes" that the GraphQL API
 /// might return.
 ///
@@ -25,7 +27,7 @@ pub(crate) struct Id {
     /// The kind of node. Each different "thing" in our API has a different
     /// static prefix. For example, realms have the prefix `b"re"`. All IDs
     /// referring to a realm starts with `re`.
-    kind: [u8; 2],
+    kind: IdKind,
 
     /// This uniquely refers to one object from the class of objects defined by
     /// `kind`. This is typically exactly the primary bigint database key. This
@@ -47,7 +49,7 @@ macro_rules! define_kinds {
         paste!(
             impl Id {
                 $(
-                    pub(crate) const [<$name:upper _KIND>]: [u8; 2] = *$val;
+                    pub(crate) const [<$name:upper _KIND>]: IdKind = *$val;
 
                     pub(crate) fn $name(key: Key) -> Self {
                         Self {
@@ -99,7 +101,7 @@ define_kinds![
 
 impl Id {
     /// See `invalid`.
-    const INVALID_KIND: [u8; 2] = *b"!!";
+    const INVALID_KIND: IdKind = *b"!!";
 
     /// Returns an ID that refers to no object at all. This is used to signal an
     /// ID that cannot be parsed. We treat malformed IDs in this way to make IDs
@@ -116,7 +118,7 @@ impl Id {
     /// the kinds don't match, `None` is returned. This is not just a simple
     /// getter as that would make it very easy to accidentally not check the
     /// kind of an id.
-    pub(crate) fn key_for(&self, expected_kind: [u8; 2]) -> Option<Key> {
+    pub(crate) fn key_for(&self, expected_kind: IdKind) -> Option<Key> {
         if self.kind == expected_kind {
             Some(self.key)
         } else {
@@ -124,7 +126,7 @@ impl Id {
         }
     }
 
-    pub(crate) fn kind(&self) -> [u8; 2] {
+    pub(crate) fn kind(&self) -> IdKind {
         self.kind
     }
 
@@ -170,12 +172,12 @@ impl fmt::Display for Id {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use super::{Id, Key};
+    use super::{Id, IdKind, Key};
 
     #[test]
     fn simple() {
         #[track_caller]
-        fn check(kind: [u8; 2], key: u64, s: &str) {
+        fn check(kind: IdKind, key: u64, s: &str) {
             let left = Id { kind, key: Key(key) };
             assert_eq!(left.to_string(), s);
             assert_eq!(Id::from_str(s), Ok(left));

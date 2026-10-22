@@ -69,9 +69,6 @@ pub(crate) struct Config {
     pub(crate) auth: crate::auth::AuthConfig,
 
     #[config(nested)]
-    pub(crate) log: crate::logger::LogConfig,
-
-    #[config(nested)]
     pub(crate) opencast: OpencastConfig,
 
     #[config(nested)]
@@ -93,6 +90,10 @@ pub(crate) struct Config {
 
     #[config(nested)]
     pub(crate) player: PlayerConfig,
+
+    // Keep last! This is useful when manually editing the config file to increase log level.
+    #[config(nested)]
+    pub(crate) log: crate::logger::LogConfig,
 }
 
 impl Config {

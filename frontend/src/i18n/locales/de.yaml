@@ -134,11 +134,14 @@ login-page:
 video:
   singular: Video
   plural: Videos
+  count: Videoanzahl
   video-page: 'Video Seite: „{{video}}“'
   video-player: Videoplayer
   duration: Abspielzeit
   details: Videodetails
   part-of-series: Teil der Serie
+  part-of-playlists: Teil der Playlists
+  private-playlist: Private Playlist
   more-from-series: Mehr von „{{series}}“
   more-from-playlist: Mehr von „{{playlist}}”
   deleted-block: Das hier referenzierte Video wurde gelöscht.
@@ -155,6 +158,7 @@ video:
   upcoming: Anstehend
   ended: Beendet
   ended-at: Beendet {{datetime}}
+  ending: Endet
   license: Lizenz
   source: Quelle
   stream-ended: Dieser Stream ist beendet.
@@ -209,6 +213,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Anzahl der Einträge
+  no-of-entries_one: '{{count}} Eintrag'
+  no-of-entries_other: '{{count}} Einträge'
   playlist-page: 'Playlistseite: “{{playlist}}”'
   deleted-block: Die hier referenzierte Playlist wurde gelöscht.
   not-allowed: Sie sind nicht autorisiert, diese Playlist zu sehen.
@@ -230,6 +237,21 @@ share:
   set-time: 'Starten bei: '
   set-time-label: 'Videostartzeit einstellen. Aktuell: {{time}}.'
   set-time-unit: '{{unit}} einstellen'
+
+bookmark:
+  main-label: Lesezeichen
+  add: Lesezeichen hinzufügen
+  remove: Lesezeichen entfernen
+  manage: Lesezeichen verwalten
+  show-bookmarks: Lesezeichen anzeigen
+  no-bookmarks-yet: Sie haben noch keine Lesezeichen.
+  failed-to-add: Lesezeichen hinzufügen fehlgeschlagen
+  failed-to-remove: Lesezeichen entfernen fehlgeschlagen
+  inaccessible: Unzugänglich (keine Leseberechtigung)
+  feed-title: Neuste Videos
+  feed-description: Videos aller Serien und Playlists, für die Sie Lesezeichen haben.
+  show-all: Alle anzeigen
+  show-fewer: Weniger anzeigen
 
 video-list-block:
   upcoming-live-streams: "Anstehende Livestreams ({{count}})"
@@ -298,6 +320,9 @@ search:
 
 upload:
   title: Video hochladen
+  no-writable-series-blocked: >
+    Für den Upload ist eine Serie erforderlich, aber Sie haben auf keine Serie Schreibzugriff und können auch keine erstellen.
+  create-series-first: Sie müssen zunächst eine Serie erstellen, in welche das hochgeladene Video eingebunden werden kann.
   drop-to-upload: Videodatei zum Hochladen per Drag-and-drop hinzufügen
   not-authorized: Sie haben nicht die Berechtigung, Videos hochzuladen.
   specified-series-not-found: Angegebene Serie nicht gefunden.
@@ -343,7 +368,6 @@ acl:
   title: Zugriffsrechte
   authorized-groups: Autorisierte Gruppen
   authorized-users: Autorisierte Personen
-  editing-disabled: Bearbeitung der Zugangsberechtigungen ist deaktiviert.
   locked-to-series: >
     Die Berechtigungen dieses Videos werden durch seine <1>Serie</1> bestimmt und können daher nicht bearbeitet werden.
   users-no-options:
@@ -365,7 +389,7 @@ acl:
     admin-user: Admin
     unknown-user-note: unbekannt
     no-entries: Keine Einträge
-    subset-warning: 'Diese Auswahl ist bereits in den folgenden Gruppen enthalten: {{groups}}.'
+    subset-warning: 'Diese Auswahl ist bereits enthalten und wird durch die folgenden Gruppen überschrieben: {{groups}}.'
     inherited: 'Geerbte Berechtigungen:'
     inherited-tooltip: >
       Die folgenden Berechtigungen wurden auf einer übergeordneten Seite gewährt und werden an alle Unterseiten
@@ -405,10 +429,7 @@ acl:
         Kann moderieren, Seiten löschen und Berechtigungen bearbeiten.
       realm-admin-description_other: >
         Können moderieren, Seiten löschen und Berechtigungen bearbeiten.
-      write-access: Schreibzugriff
-      moderate-access: Moderationsrechte
-      admin-access: Adminrechte
-      large-group-warning: Sie geben einer großen Gruppe {{val}}. Ist das beabsichtigt?
+      large-group-warning: Sie geben dieser ganzen Gruppe '{{val}}' Berechtigung. Ist das beabsichtigt?
   unlisted:
       note: Dieses Video ist ungelistet.
       explanation: >
@@ -542,16 +563,12 @@ manage:
 
   video-list:
     no-content: Keine Videos
-    no-of-videos_one: '{{count}} Videos'
+    no-of-videos_one: '{{count}} Video'
     no-of-videos_other: '{{count}} Videos'
+    entries: Einträge
+    no-of-entries_one: '{{count}} Eintrag'
+    no-of-entries_other: '{{count}} Einträge'
     removing-disabled: Entfernen von Videos ist deaktiviert.
-    details:
-      unknown_one: >
-        Ein Video wurde nicht gefunden oder es
-        fehlen Ihnen die nötigen Zugriffsrechte.
-      unknown_other: >
-        '{{count}} Videos wurden nicht gefunden oder es
-        fehlen Ihnen die nötigen Zugriffsrechte.'
     edit:
       add-video: Video hinzufügen
       to-be-added: wird hinzugefügt
@@ -560,6 +577,8 @@ manage:
       move: Verschieben
       to-be-moved: "wird verschoben in: {{series}}"
       cannot-be-removed: "Nicht entfernbar: Fehlender Schreibzugriff"
+      placeholder-missing: Fehlendes Video
+      placeholder-not-allowed: Fehlende Berechtigung
       undo: Rückgängig
       save: Änderungen speichern
       error: Es gab einen Fehler beim Speichern der Änderungen.
@@ -582,13 +601,38 @@ manage:
       next: Nächste Seite
       last: Letzte Seite
     filter:
-      by-title: Nach Titel filtern
-    columns:
+      date: Datum
+      select-date: Zeitraum auswählen
+      from: Von
+      to: Bis
+      date-last-3-months: Letzte 3 Monate
+      date-last-6-months: Letzte 6 Monate
+      date-last-12-months: Letzte 12 Monate
+      date-custom-range: Benutzerdefinierter Zeitraum
+      filter-by-visibility: Nach Sichtbarkeit filtern
+      remove: Filter entfernen
+      visibility: Sichtbarkeit
+      visibility-public: Öffentlich
+      visibility-public-tooltip: Kann von jedem gesehen werden
+      visibility-private: Privat
+      visibility-private-tooltip: Kann nur von Ihnen gesehen werden
+      visibility-shared: Geteilt
+      visibility-shared-tooltip: Kann von ausgewählten Personen/Gruppen gesehen werden
+      writable: Zugriff
+      write: Schreiben
+      read: Lesen
+    sorting:
+      label: Einträge sortieren
+      sort-by: Sortieren nach
+      order: Anordnung
       description: 'Sortieren nach {{title}}, {{direction}}'
       ascending: aufsteigend
       descending: absteigend
+      ascending-cap: Aufsteigend
+      descending-cap: Absteigend
       created: Erstellt
       updated: Aktualisiert
+      unknown: Unbekannte Sortierung
     no-series-title: Fehlender Titel
     no-entries-found: Keine Einträge gefunden.
     missing-date: Unbekannt
@@ -736,6 +780,7 @@ manage:
           monospace: Monospace
           link: Link
           quote: Zitat
+          line-break: Zeilenumbruch
           code-block: Codeblock
           external-image: Externes Bild
           hr: Trennlinie
@@ -807,3 +852,5 @@ api-remote-errors:
     not-found: "Aktion fehlgeschlagen: Playlist nicht gefunden."
     entry-not-found: Es wurde versucht, unbekannte Einträge hinzuzufügen.
     not-allowed: Sie haben nicht die Berechtigung, diese Playlist-Aktion durchzuführen.
+  acl:
+    assign-not-allowed: Sie sind nicht berechtigt, diese Berechtigung zu vergeben.

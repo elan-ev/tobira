@@ -5,6 +5,7 @@ import {
     LuUpload, LuVideo, LuLogOut, LuChevronDown, LuUserCheck,
     LuCirclePlus,
     LuGauge,
+    LuBookmark,
 } from "react-icons/lu";
 import { HiOutlineFire, HiOutlineTranslate } from "react-icons/hi";
 import {
@@ -37,6 +38,7 @@ import { ModalHandle } from "../../ui/Modal";
 import { AdminDashboardRoute } from "../../routes/manage/admin";
 import { ManagePlaylistsRoute } from "../../routes/manage/Playlist";
 import { CreatePlaylistRoute } from "../../routes/manage/Playlist/Create";
+import { BookmarksRoute } from "../../routes/Bookmarks";
 
 
 
@@ -236,6 +238,12 @@ const LoggedIn: React.FC<LoggedInProps> = ({ user }) => {
 
     const indent = { paddingLeft: 30 };
     const items: HeaderMenuProps["items"] = [
+        {
+            icon: <LuBookmark />,
+            wrapper: <Link to={BookmarksRoute.url({})} />,
+            children: t("bookmark.main-label"),
+            css: { minWidth: 200 },
+        },
         {
             icon: <LuFolder />,
             wrapper: <Link to={ManageRoute.url} />,

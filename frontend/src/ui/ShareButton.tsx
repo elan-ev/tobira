@@ -31,7 +31,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
 }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<string | null>(null);
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const ref = useRef(null);
 
     const tabStyle = {

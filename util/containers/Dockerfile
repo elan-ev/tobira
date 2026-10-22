@@ -18,8 +18,8 @@ RUN npx webpack --mode=production
 
 FROM docker.io/rust:${RUST_VERSION}-alpine AS backend-build
 
-ENV CFLAGS    "-fdebug-prefix-map=/root/.cargo/registry/src/github.com-1ecc6299db9ec823/=__dep__"
-ENV RUSTFLAGS "--remap-path-prefix=/build/backend=<src> --remap-path-prefix=/root/.cargo/registry/src/github.com-1ecc6299db9ec823/=<dep>"
+ENV CFLAGS    "-fdebug-prefix-map=/build/backend=__src__ -fdebug-prefix-map=${CARGO_HOME}/registry/src=__dep__"
+ENV RUSTFLAGS "--remap-path-prefix=/build/backend=<src> --remap-path-prefix=${CARGO_HOME}/registry/src=<dep>"
 
 WORKDIR /build/backend
 
@@ -77,7 +77,7 @@ LABEL maintainer="The Opencast project" \
       org.opencontainers.image.source="https://github.com/elan-ev/tobira" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${GIT_COMMIT_HASH}" \
-      org.opencontainers.image.vendor="ELAN e.V." \
+      org.opencontainers.image.vendor="elan e.V." \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.title="Tobira" \
       org.opencontainers.image.description="Video portal for Opencast"

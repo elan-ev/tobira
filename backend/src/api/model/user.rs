@@ -1,11 +1,12 @@
 use crate::{
     api::{
+        Context,
         err::ApiResult,
         model::{
             event::AuthorizedEvent,
+            bookmarks::{self, BookmarkFeedItem, BookmarkItem},
             playlist::{AuthorizedPlaylist, Playlist, PlaylistsSortOrder},
         },
-        Context,
     },
     auth::User,
     prelude::*,
@@ -94,6 +95,12 @@ impl User {
         HasRoles::is_tobira_admin(self, &context.config.auth)
     }
 
+    /// `True` if the user is a global Opencast administrator and can do
+    /// anything.
+    fn is_admin(&self, context: &Context) -> bool {
+        HasRoles::is_admin(self, &context.config.auth)
+    }
+
     /// Returns all events that somehow "belong" to the user, i.e. that appear
     /// on the "my videos" page. This also returns events that have been marked
     /// as deleted (meaning their deletion in Opencast has been requested but they
@@ -139,5 +146,22 @@ impl User {
         filter: Option<SearchFilter>,
     ) -> ApiResult<Connection<AuthorizedPlaylist>> {
         Playlist::load_writable_for_user(context, order.into(), offset, limit, filter).await
+    }
+
+    /// Returns all bookmarks of the current user.
+    async fn my_bookmarks(&self, context: &Context) -> ApiResult<Vec<BookmarkItem>> {
+        bookmarks::fetch_for_user(context).await
+    }
+
+    /// Returns the latest videos (by `created` date) from items that the user
+    /// added as bookmark.
+    async fn bookmark_feed(
+        &self,
+        context: &Context,
+        #[graphql(default)]
+        offset: i32,
+        limit: i32,
+    ) -> ApiResult<Connection<BookmarkFeedItem>> {
+        bookmarks::feed(context, offset, limit).await
     }
 }

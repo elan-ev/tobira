@@ -50,6 +50,7 @@ pub(crate) struct GeneralConfig {
     /// be specified with only the shown string. To add custom ones, you need
     /// to define a label and a link. The link is either the same for every language
     /// or can be specified for each language in the same manner as the label.
+    /// To leave this empty and only use the markdown footer below, set this to `[]`.
     /// Example:
     ///
     /// ```
@@ -59,8 +60,43 @@ pub(crate) struct GeneralConfig {
     ///     "about",
     /// ]
     /// ```
+    ///
+    /// Example (empty):
+    ///
+    /// ```
+    /// footer_links = []
+    /// ```
     #[config(default = ["about", "graphiql"])]
     pub footer_links: Vec<FooterLink>,
+
+    /// Optional markdown footer content. Will be rendered below the footer links or on its own.
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// footer_markdown.default = """
+    /// Tobira is the university video portal for recorded lectures,
+    /// seminars, and academic events.
+    ///
+    /// This footer supports markdown, so you can add links and formatting:
+    ///
+    /// - [Support](https://example.edu/support)
+    /// - [Contact](mailto:help@example.edu)
+    /// - **Important:** Only authorized users may access this portal.
+    /// """
+    /// ```
+    ///
+    /// Example with translated markdown:
+    ///
+    /// ```
+    /// footer_markdown.default = """
+    /// Tobira is the university video portal.
+    /// """
+    /// footer_markdown.de = """
+    /// Tobira ist das universitäre Portal für Videoaufzeichnungen.
+    /// """
+    /// ```
+    pub footer_markdown: Option<TranslatedString>,
 
     /// Additional metadata that is shown below a video. Example:
     ///
@@ -111,18 +147,6 @@ pub(crate) struct GeneralConfig {
     #[config(default = false)]
     pub users_searchable: bool,
 
-    /// This allows users to edit the ACL of events and series they have write access for.
-    /// Doing so will update these in Opencast and start the configured republish metadata workflow
-    /// for events to propagate the changes to other publications as well (series however
-    /// do not need the extra workflow for this to happen).
-    /// Instead of waiting for the workflow, Tobira will immediately store the updated ACL in its
-    /// database.
-    ///
-    /// Note that this might lead to situations where the ACL in Tobira is different
-    /// from that in other publications if the propagation from Opencast fails.
-    #[config(default = true)]
-    pub allow_acl_edit: bool,
-
     /// Activating this will disable ACL editing for events that are part of a series.
     /// For the uploader, this means that the ACL of the series will be used.
     #[config(default = false)]
@@ -135,13 +159,15 @@ pub(crate) struct GeneralConfig {
     #[config(default = true)]
     pub explicit_rss_content: bool,
 
-    /// Whether users can remove events from a series they have write access for.
-    /// Should to be disabled (i.e. set to `false`) when the connected Opencast requires
-    /// events to always be part of a series, as removing wouldn't work in that case.
+    /// Set to `true` if all events should be part of a series.
     ///
-    /// Disabling this will also prevent series from being deleted as long as they contain any event.
-    #[config(default = true)]
-    pub allow_series_event_removal: bool,
+    /// If `true`, users must chose a series when uploading videos, and can not
+    /// perform actions that would leave an event without series. This also
+    /// includes deleting a non-empty series. Note that events without series
+    /// might still exist if they are created that way in Opencast. Tobira will
+    /// still display those as usual.
+    #[config(default = false)]
+    pub disallow_events_without_series: bool,
 
     #[config(nested)]
     pub global_banner: GlobalBannerConfig,

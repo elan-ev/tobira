@@ -128,7 +128,7 @@ const delayTill = (date: Date): number => {
  */
 export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playerProps }) => {
     const aspectRatio = getPlayerAspectRatio(event.authorizedData?.tracks);
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const ref = useRef<HTMLDivElement>(null);
 
     const minControlWidth = 470;
@@ -155,17 +155,6 @@ export const InlinePlayer: React.FC<PlayerProps> = ({ className, event, ...playe
             },
             "div.video-canvas": {
                 backgroundColor: "#000",
-            },
-            "div.preview-container": {
-                backgroundColor: "#000 !important",
-                "div, div img": {
-                    height: "inherit",
-                },
-                "div img": {
-                    display: "block",
-                    margin: "0 auto",
-                    width: "unset !important",
-                },
             },
             display: "flex",
             flexDirection: "column",
@@ -259,7 +248,7 @@ export const isHlsTrack = (t: Track) =>
 
 
 export const PlayerPlaceholder: React.FC<PropsWithChildren> = ({ children }) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     return <div css={{
         height: "100%",
         backgroundColor: isDark ? COLORS.neutral15 : COLORS.neutral80,

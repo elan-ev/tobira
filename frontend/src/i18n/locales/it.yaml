@@ -133,11 +133,14 @@ login-page:
 video:
   singular: Video
   plural: Video
+  count: Conteggio dei video # verify
   video-page: 'Pagina video: “{{video}}”'
   video-player: Videolettore
   duration: Durata
   details: Dettagli video
   part-of-series: Parte della serie
+  part-of-playlists: Parte delle playlist # verify
+  private-playlist: Playlist privata # verify
   more-from-series: Altro da "{{series}}“
   more-from-playlist: Altro da "{{playlist}}”
   deleted-block: Il video a cui si fa riferimento è stato cancellato.
@@ -206,6 +209,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Numero di voci # verify
+  no-of-entries_one: '{{count}} voce' # verify
+  no-of-entries_other: '{{count}} voci' # verify
   playlist-page: 'Pagina playlist: “{{playlist}}”' # needs verification
   deleted-block: La playlist a cui si fa riferimento è stata cancellata.
   not-allowed: Non è autorizzato a visualizzare questa playlist.
@@ -300,6 +306,10 @@ search:
 
 upload:
   title: Caricare video
+  no-writable-series-blocked: > #verify
+    Il caricamento richiede una serie. Non hai accesso in scrittura a nessuna serie e non puoi crearne una.
+  create-series-first: > #verify
+    Il caricamento richiede una serie. Creane una qui sotto per continuare.
   drop-to-upload: Trascina e rilascia il file video da caricare
   not-authorized: Non hai l'autorizzazione a caricare video.
   specified-series-not-found: Serie specificata non trovata.
@@ -349,7 +359,6 @@ acl:
   title: Politica di accesso
   authorized-groups: Gruppi autorizzati
   authorized-users: Utenti autorizzati
-  editing-disabled: La modifica dei criteri di accesso è disabilitata.
   locked-to-series: >
     La politica di accesso di questo video è determinata dalla sua <1>serie</1>
     e non può essere modificata.
@@ -423,10 +432,7 @@ acl:
       realm-admin-description: —
       realm-admin-description_one: Può moderare, cancellare pagine e modificare le autorizzazioni.
       realm-admin-description_other: Possono moderare, cancellare pagine e modificare le autorizzazioni.
-      write-access: accesso in scrittura
-      moderate-access: diritti di moderazione
-      admin-access: pagina diritti-amministratore
-      large-group-warning: State dando {{val}} a un gruppo numeroso. È una cosa intenzionale?
+      large-group-warning: State dando a questo intero gruppo l'autorizzazione '{{val}}'. È una cosa intenzionale? #needs verification
   unlisted:
     note: Questo video non è in elenco.
     explanation: >
@@ -568,12 +574,8 @@ manage:
     no-content: Nessun video
     no-of-videos_one: '{{count}} video'
     no-of-videos_other: '{{count}} video'
+    entries: Voci # verify
     removing-disabled: La rimozione dei video è disabilitata.
-    details:
-      unknown_one: Un video è mancante o richiede ulteriori autorizzazioni per essere visualizzato. # needs verification
-      unknown_other: > # needs verificarion
-        {{count}} video sono mancanti o richiedono ulteriori autorizzazioni per
-        essere visualizzati.
     edit:
       add-video: Aggiungere video
       to-be-added: sarà aggiunto
@@ -582,6 +584,8 @@ manage:
       move: Spostare # verify
       to-be-moved: "sarà spostato in: {{series}}" # verify
       cannot-be-removed: 'Non può essere rimosso: Manca l''accesso in scrittura'
+      placeholder-missing: Video mancante # verify
+      placeholder-not-allowed: Permessi insufficienti # verify
       undo: Annulla
       save: Salvare le modifiche
       error: Non è stato possibile aggiornare il contenuto della serie.
@@ -604,13 +608,38 @@ manage:
       next: Pagina successiva
       last: Ultima pagina
     filter:
-      by-title: Filtrare per titolo
-    columns:
+      date: Data # verify
+      select-date: Selezionare il periodo di tempo # verify
+      from: Da # verify
+      to: A # verify
+      date-last-3-months: Ultimi 3 mesi # verify
+      date-last-6-months: Ultimi 6 mesi # verify
+      date-last-12-months: Ultimi 12 mesi # verify
+      date-custom-range: Intervallo personalizzato # verify
+      filter-by-visibility: Filtrare per visibilità # verify
+      remove: Rimuovere il filtro # verify
+      visibility: Visibilità # verify
+      visibility-public: Pubblico # verify
+      visibility-public-tooltip: Può essere visto da chiunque # verify
+      visibility-private: Privato # verify
+      visibility-private-tooltip: Può essere visto solo da te # verify
+      visibility-shared: Condiviso # verify
+      visibility-shared-tooltip: Può essere visto da un gruppo selezionato # verify
+      writable: Accesso # verify
+      write: Scrittura # verify
+      read: Lettura # verify
+    sorting:
+      label: Ordinare le voci # check
+      sort-by: Ordinare per # check
+      order: Organizzare # check
       description: Ordina per {{title}}, {{direction}}
       ascending: crescente
       descending: decrescente
+      ascending-cap: Crescente # check: does it need to be capitalized in context?
+      descending-cap: Decrescente # check: does it need to be capitalized in context?
       created: Creato
       updated: Aggiornato
+      unknown: Ordinamento sconosciuto # check
     # sync: Todo.
     #  failed: Synchronization failed
     #  failed-maybe: Sync possibly failed

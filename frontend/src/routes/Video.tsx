@@ -24,7 +24,7 @@ import { InitialLoading, RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { RealmNav } from "../layout/Navigation";
 import { WaitingPage } from "../ui/Waiting";
-import { getPlayerAspectRatio, InlinePlayer, PlayerPlaceholder } from "../ui/player";
+import { getPlayerAspectRatio, InlinePlayer, PlayerPlaceholder, Track } from "../ui/player";
 import { SeriesBlockFromSeries } from "../ui/Blocks/Series";
 import { makeRoute, MatchedRoute } from "../rauta";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
@@ -71,7 +71,7 @@ import { TrackInfo } from "../ui/Video";
 import { ellipsisOverflowCss } from "../ui";
 import { realmBreadcrumbs } from "../util/realm";
 import { COLORS } from "../color";
-import { preciseDateTime, preferredLocaleForLang, PrettyDate } from "../ui/time";
+import { PrettyDate, semiPreciseDateTime } from "../ui/time";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
 import { MetadataSection, MetadataSectionSeriesLink } from "../ui/metadata";
 import { DirectSeriesRoute, SeriesRoute } from "./Series";
@@ -90,8 +90,7 @@ import { QrCodeButton, ShareButton } from "../ui/ShareButton";
 import { SHORTCUTS, useShortcut } from "../ui/Shortcuts";
 import { usePlayerGroupContext } from "../ui/player/PlayerGroupContext";
 import { isSpaceOnInteractiveElement } from "../ui/player/PlayerShortcuts";
-import { VideoListLayout } from "../ui/Blocks/__generated__/SeriesBlockData.graphql";
-import { LIST_ORDERS, Order } from "../ui/Blocks/VideoList";
+import { LIST_ORDERS, Order, VideoListLayout } from "../ui/Blocks/VideoList";
 
 // ===========================================================================================
 // ===== Route definitions
@@ -445,7 +444,7 @@ const eventFragment = graphql`
         )
     {
         __typename
-        ... on NotAllowed { dummy } # workaround
+        ... on NotAllowed { __typename }
         ... on AuthorizedEvent {
             id
             title
@@ -666,7 +665,7 @@ export const CREDENTIALS_STORAGE_KEY = "tobira-video-credentials-";
 
 const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refetch }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const user = useUser();
     const [authState, setAuthState] = useState<AuthenticationFormState>("idle");
     const [authError, setAuthError] = useState<string | null>(null);
@@ -847,7 +846,7 @@ const ProtectedPlayer: React.FC<ProtectedPlayerProps> = ({ event, embedded, refe
 
 const AuthenticationFormText: React.FC = () => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return <div css={{
         textAlign: "left",
@@ -964,7 +963,7 @@ export const getSeriesLink = (
 const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const { t } = useTranslation();
     const ref = useRef(null);
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return (
         <FloatingContainer
@@ -998,15 +997,28 @@ const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
 };
 
 type VideoShareButtonProps = {
-    event: Pick<SyncedEvent, "series" | "isLive" | "id" | "authorizedData">;
+    event: {
+        readonly id: string;
+        readonly isLive: boolean;
+        readonly series?: { readonly id: string } | null;
+        readonly authorizedData?: {
+            readonly tracks: readonly Track[];
+        } | null;
+    };
     videoLink: string;
     onOpen?: (setTimestamp: (seconds: number) => void) => void;
+    className?: string;
+    hideLabel?: boolean;
+    noTimestamp?: boolean;
 }
 
 export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
     event,
     videoLink,
     onOpen,
+    className,
+    hideLabel = false,
+    noTimestamp = false,
 }) => {
     const { t } = useTranslation();
     const [timestamp, setTimestamp] = useState(0);
@@ -1032,7 +1044,7 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
                             label={t("share.copy-direct-link-to-clipboard")}
                             value={url}
                         />
-                        {!event.isLive && <TimeInputWithCheckbox
+                        {!event.isLive && !noTimestamp && <TimeInputWithCheckbox
                             checkboxChecked={addLinkTimestamp}
                             setCheckboxChecked={setAddLinkTimestamp}
                             {...{ timestamp, setTimestamp }}
@@ -1076,7 +1088,7 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
                         />
                         <CopyableInput label={t("share.copy-embed-code")} value={embedCode} />
                     </div>
-                    {!event.isLive && <TimeInputWithCheckbox
+                    {!event.isLive && !noTimestamp && <TimeInputWithCheckbox
                         checkboxChecked={addEmbedTimestamp}
                         setCheckboxChecked={setAddEmbedTimestamp}
                         {...{ timestamp, setTimestamp }}
@@ -1102,7 +1114,7 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
 
     return <ShareButton
         kind="video"
-        {...{ tabs }}
+        {...{ tabs, className, hideLabel }}
         onOpen={() => onOpen?.(setTimestamp)}
         height={250}
     />;
@@ -1132,26 +1144,47 @@ type VideoDateProps = {
 };
 
 const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
-    const { created, updated, startTime, endTime, hasEnded } = getEventTimeInfo(event);
+    const { created, updated, startTime, endTime, hasEnded, hasStarted } = getEventTimeInfo(event);
 
-    const locale = preferredLocaleForLang(i18n.language);
     const prettyDateProps = event.isLive && hasEnded
         ? { date: endTime, prefixKind: "end" as const }
         : { date: startTime ?? created };
-    const fields: [string, Date | null][] = [
-        [t("video.started"), startTime],
-        [t("video.ended"), endTime],
-        [t("video.created"), created],
-        [t("manage.table.updated"), updated],
+
+    // Decide what dates to show in the detail view. This is a bit of a mess
+    // because the dates supplied by Opencast are really weird.
+    const differs = (a: Date, b: Date) => Math.abs(a.getTime() - b.getTime()) > 1000 * 30;
+    const fields: { label: string, date: Date }[] = [
+        { label: t("manage.table.updated"), date: updated },
     ];
+    if (startTime && !differs(startTime, created)) {
+        fields.push({
+            label: hasStarted ? `${t("video.created")}/${t("video.started")}` : t("video.starts"),
+            date: created,
+        });
+    } else {
+        fields.push({ label: t("video.created"), date: created });
+        if (startTime) {
+            fields.push({
+                label: hasStarted ? t("video.started") : t("video.starts"),
+                date: startTime,
+            });
+        }
+    }
+    if (endTime && differs(endTime, startTime ?? created)) {
+        fields.push({
+            label: hasEnded ? t("video.ended") : t("video.ending"),
+            date: endTime,
+        });
+    }
+    fields.sort((a, b) => a.date.getTime() - b.date.getTime());
 
     const tooltip = <table css={{}}>
         <tbody>
-            {fields.map(([label, date], i) => date && <tr key={i}>
+            {fields.map(({ label, date }, i) => <tr key={i}>
                 <td css={{ fontStyle: "italic", textAlign: "right" }}>{label}</td>
-                <td css={{ paddingLeft: 12 }}>{preciseDateTime(date, locale)}</td>
+                <td css={{ paddingLeft: 12 }}>{semiPreciseDateTime(date)}</td>
             </tr>)}
         </tbody>
     </table>;
@@ -1163,7 +1196,7 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
             color: COLORS.neutral60,
             fontSize: 14,
         }}>
-            <WithTooltip distance={0} tooltip={tooltip}>
+            <WithTooltip tooltip={tooltip}>
                 <div>
                     <PrettyDate
                         {...prettyDateProps}

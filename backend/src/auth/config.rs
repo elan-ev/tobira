@@ -39,17 +39,13 @@ pub(crate) struct AuthConfig {
     /// If `true`, Tobira attaches a JWT to all requests for Opencast static files.
     /// This only considers requests to hosts listed in the `opencast` section
     /// of the configuration. If necessary, use `other_hosts`.
-    ///
-    /// Experimental: this should work fine, but we don't have enough experience
-    /// yet to generally recommend turning this on. When you do, please report
-    /// any problems or weird behaviors to us!
-    #[config(default = false)]
+    #[config(default = true)]
     pub(crate) auth_static_files: bool,
 
     /// Determines whether or not Tobira users are getting pre-authenticated against
     /// Opencast when they visit external links like the ones to Opencast Studio
     /// or the Editor. If you have an SSO-solution, you don't need this.
-    #[config(default = false)]
+    #[config(default = true)]
     pub(crate) pre_auth_external_links: bool,
 
     /// Tobira's built-in session management. Only relevant if `auth.source = "tobira-session"`.
@@ -81,9 +77,7 @@ impl AuthConfig {
                 That makes no sense.");
         }
 
-        if self.logout_link.is_none()
-            && matches!(self.source, AuthSource::Callback(_) | AuthSource::TrustAuthHeaders)
-        {
+        if self.logout_link.is_none() && matches!(self.source, AuthSource::Callback(_)) {
             bail!("'auth.logout_link' is not set, but 'auth.source' is '{}'. That \
                 would mean the logout button does nothing. You have to set a logout link.",
                 self.source.label(),
@@ -199,7 +193,6 @@ pub(crate) enum AuthSource {
     None,
     TobiraSession,
     Callback(CallbackUri),
-    TrustAuthHeaders,
 }
 
 impl TryFrom<String> for AuthSource {
@@ -208,8 +201,6 @@ impl TryFrom<String> for AuthSource {
     fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
         if value == "none" {
             Ok(Self::None)
-        } else if value == "trust-auth-headers" {
-            Ok(Self::TrustAuthHeaders)
         } else if value == "tobira-session" {
             Ok(Self::TobiraSession)
         } else if let Some(url) = value.strip_prefix("callback:") {
@@ -226,7 +217,6 @@ impl AuthSource {
             Self::None => "none",
             Self::TobiraSession => "tobira-session",
             Self::Callback(_) => "callback",
-            Self::TrustAuthHeaders => "trust-auth-headers",
         }
     }
 }
@@ -270,7 +260,6 @@ impl LoginCredentialsHandler {
 pub(crate) enum SessionEndpointHandler {
     None,
     Callback(CallbackUri),
-    TrustAuthHeaders,
 }
 
 impl TryFrom<String> for SessionEndpointHandler {
@@ -279,8 +268,6 @@ impl TryFrom<String> for SessionEndpointHandler {
     fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
         if value == "none" {
             Ok(Self::None)
-        } else if value == "trust-auth-headers" {
-            Ok(Self::TrustAuthHeaders)
         } else if let Some(url) = value.strip_prefix("callback:") {
             Ok(Self::Callback(CallbackUri::parse(url)?))
         } else {
@@ -294,7 +281,6 @@ impl SessionEndpointHandler {
         match self {
             Self::None => "none",
             Self::Callback(_) => "login-callback",
-            Self::TrustAuthHeaders => "trust-auth-headers",
         }
     }
 }
@@ -360,7 +346,7 @@ pub(crate) struct RoleConfig {
     pub(crate) studio: String,
 
     /// The role granting permission to use the Opencast Editor from Tobira.
-    #[config(default = "ROLE_TOBIRA_EDITOR")]
+    #[config(default = "ROLE_USER")]
     pub(crate) editor: String,
 
     /// The role granting permission to create one's own "user page".

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    db::types::{CustomActions, EventCaption, EventSegment, EventTrack},
+    db::types::{ActionRoleMap, EventCaption, EventSegment, EventTrack},
     model::{BlockType, ExtraMetadata},
     sync::DeletionMode,
     Config,
@@ -231,7 +231,7 @@ pub(crate) struct Acl {
     #[serde(default)]
     pub(crate) preview: Vec<String>,
     #[serde(flatten)]
-    pub(crate) custom_actions: CustomActions,
+    pub(crate) custom_actions: ActionRoleMap,
 }
 
 #[derive(Debug, Deserialize)]
@@ -276,7 +276,7 @@ mod tests {
                         preview: vec![],
                         read: vec!["ROLE_ANONYMOUS".into()],
                         write: vec!["ROLE_ANONYMOUS".into()],
-                        custom_actions: CustomActions::default(),
+                        custom_actions: ActionRoleMap::default(),
                     },
                     updated: timestamp(1727866771932),
                     created: None,
@@ -290,7 +290,7 @@ mod tests {
                         preview: vec![],
                         read: vec!["ROLE_ADMIN".into(), "ROLE_ANONYMOUS".into()],
                         write: vec!["ROLE_ADMIN".into()],
-                        custom_actions: CustomActions::default(),
+                        custom_actions: ActionRoleMap::default(),
                     },
                     updated: timestamp(1727866860840),
                     created: timestamp(1727866740000),
@@ -409,7 +409,7 @@ mod tests {
                         read: vec!["ROLE_USER_BOB".into()],
                         write: vec![],
                         preview: vec![],
-                        custom_actions: CustomActions::default(),
+                        custom_actions: ActionRoleMap::default(),
                     },
                     entries: vec![
                         PlaylistEntry {

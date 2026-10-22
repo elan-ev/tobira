@@ -8,16 +8,16 @@ import { loadQuery } from "../../../relay";
 import { NotFound } from "../../NotFound";
 import { b64regex } from "../../util";
 import { seriesId, keyOfId, isSynced } from "../../../util";
-import CONFIG from "../../../config";
 import { ManageSeriesRoute, SingleSeries } from ".";
 import { SharedSeriesManageQuery } from "./__generated__/SharedSeriesManageQuery.graphql";
 import { DirectSeriesRoute } from "../../Series";
 import { ReturnLink, ManageNav, SharedManageNavProps } from "../Shared/Nav";
 import { COLORS } from "../../../color";
 import { ThumbnailStack } from "../../../ui/ThumbnailStack";
-import { ThumbnailItemState } from "../../../ui/Video";
+import { ThumbnailItemState } from "../../../ui/Thumbnail";
 import { MovingTruck } from "../../../ui/Waiting";
 import { ManageRoute } from "../Shared/Details";
+import { NotAuthorized } from "../../../ui/error";
 
 
 export type QueryResponse = SharedSeriesManageQuery["response"];
@@ -61,6 +61,11 @@ export const makeManageSeriesRoute = (
                         if (data.series == null) {
                             return <NotFound kind="series" />;
                         }
+
+                        if (!data.series.canWrite) {
+                            return <NotAuthorized />;
+                        }
+
                         return render(data.series, data);
                     }}
                 />,
@@ -80,9 +85,11 @@ const query = graphql`
             title
             created
             updated
-            acl { role actions info { label implies large } }
+            acl { role actions info { label implies safeActions assignableActions } }
+            canWrite
             description
             state
+            hasPublicVideos
             tobiraDeletionTimestamp
             thumbnailStack { thumbnails { url live audioOnly state }}
             entries {
@@ -97,6 +104,8 @@ const query = graphql`
                     canWrite
                     syncedData { thumbnail audioOnly duration startTime endTime }
                 }
+                ...on Missing { __typename }
+                ...on NotAllowed { __typename }
             }
             hostRealms { id isMainRoot name path }
         }
@@ -111,7 +120,7 @@ type ManageSeriesNavProps = SharedManageNavProps & {
 const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => {
     const { t } = useTranslation();
 
-    if (series == null) {
+    if (series == null || !series.canWrite) {
         return null;
     }
 
@@ -123,15 +132,12 @@ const ManageSeriesNav: React.FC<ManageSeriesNavProps> = ({ series, active }) => 
             page: "details",
             body: <><LuPenLine />{t("manage.series.details.title")}</>,
         },
-    ];
-
-    if (CONFIG.allowAclEdit) {
-        navEntries.splice(1, 0, {
+        {
             url: `/~manage/series/${id}/access`,
             page: "acl",
             body: <><LuShieldCheck />{t("acl.title")}</>,
-        });
-    }
+        },
+    ];
 
     const link = DirectSeriesRoute.url({ seriesId: id });
     const title = series.title;

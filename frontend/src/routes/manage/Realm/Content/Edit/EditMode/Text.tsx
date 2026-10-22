@@ -119,6 +119,10 @@ const FormattingGuide: React.FC = () => {
             "> To 🐝 or not to 🐝. ― Shakespeare",
         ],
         [
+            t("manage.block.text.formatting.line-break"),
+            "Lazy Dog\\\nQuick brown fox",
+        ],
+        [
             t("manage.block.text.formatting.hr"),
             "---",
         ],

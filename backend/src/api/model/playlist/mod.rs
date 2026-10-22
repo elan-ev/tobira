@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
-use postgres_types::ToSql;
 
 use crate::{
     api::{
@@ -8,6 +7,7 @@ use crate::{
         err::{self, ApiResult},
         model::{
             acl::{self, Acl},
+            event::{Missing, VideoListEntry},
             realm::Realm,
             shared::{
                 define_sort_column_and_order,
@@ -21,14 +21,15 @@ use crate::{
                 ToSqlColumn,
             },
         },
-        util::LazyLoad,
+        util::{OcItemId, LazyLoad},
         Context,
         Id,
         Node,
         NodeValue,
     },
+    auth::{AuthContext, ROLE_ANONYMOUS},
     db::util::{impl_from_db, select},
-    model::{Key, OpencastId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
+    model::{AclForDb, Key, OpencastId, PlaylistEntryId, SearchThumbnailInfo, ThumbnailInfo, ThumbnailStack},
     prelude::*,
 };
 
@@ -36,7 +37,7 @@ use super::event::AuthorizedEvent;
 
 mod mutations;
 
-pub(crate) use mutations::RemovedPlaylist;
+pub(crate) use mutations::{PlaylistEntrySlot, RemovedPlaylist};
 
 
 #[derive(juniper::GraphQLUnion)]
@@ -46,6 +47,15 @@ pub(crate) enum Playlist {
     NotAllowed(NotAllowed),
 }
 
+/// A playlist entry has its own ID within the playlist and can also be used to identify
+/// missing or not-allowed items. `Node` holds the actual data, if present.
+#[derive(juniper::GraphQLObject)]
+#[graphql(Context = Context)]
+pub(crate) struct PlaylistEntry {
+    entry_id: PlaylistEntryId,
+    node: VideoListEntry,
+}
+
 pub(crate) struct AuthorizedPlaylist {
     pub(crate) key: Key,
     opencast_id: OpencastId,
@@ -53,26 +63,13 @@ pub(crate) struct AuthorizedPlaylist {
     description: Option<String>,
     creator: String,
     updated: DateTime<Utc>,
+    is_bookmark: LazyLoad<bool>,
     num_entries: LazyLoad<u32>,
     thumbnail_stack: LazyLoad<ThumbnailStack>,
+    has_public_videos: LazyLoad<bool>,
 
-    read_roles: Vec<String>,
-    write_roles: Vec<String>,
+    pub(crate) acl: AclForDb,
 }
-
-
-#[derive(juniper::GraphQLUnion)]
-#[graphql(Context = Context)]
-pub(crate) enum VideoListEntry {
-    Event(AuthorizedEvent),
-    NotAllowed(NotAllowed),
-    Missing(Missing),
-}
-
-/// The data referred to by a playlist entry was not found.
-pub(crate) struct Missing;
-crate::api::util::impl_object_with_dummy_field!(Missing);
-
 
 impl_from_db!(
     AuthorizedPlaylist,
@@ -89,60 +86,65 @@ impl_from_db!(
             title: row.title(),
             description: row.description(),
             creator: row.creator(),
-            read_roles: row.read_roles(),
-            write_roles: row.write_roles(),
+            acl: AclForDb {
+                read_roles: row.read_roles(),
+                write_roles: row.write_roles(),
+            },
             updated: row.updated(),
+            is_bookmark: LazyLoad::NotLoaded,
             num_entries: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
+            has_public_videos: LazyLoad::NotLoaded,
         }
     },
 );
 
 impl Playlist {
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
-        if let Some(key) = id.key_for(Id::PLAYLIST_KIND) {
-            Self::load_by_key(key, context).await
-        } else {
-            Ok(None)
-        }
-    }
+    /// Loads the playlist with the specified ID.
+    pub(crate) async fn load(id: impl OcItemId, context: &Context) -> ApiResult<Option<Self>> {
+        let Some(id_arg) = id.arg(Id::PLAYLIST_KIND) else {
+            return Ok(None);
+        };
 
-    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("id", &key, context).await
-    }
-
-    pub(crate) async fn load_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("opencast_id", &id, context).await
-    }
-
-    async fn load_by_any_id(
-        col: &str,
-        id: &(dyn ToSql + Sync),
-        context: &Context,
-    ) -> ApiResult<Option<Self>> {
-        let selection = AuthorizedPlaylist::select();
+        let (selection, mapping) = select!(
+            playlist: AuthorizedPlaylist,
+            is_bookmark: "exists(select from bookmarks where playlist = playlists.id and username = $2)",
+            has_public_videos: "exists(\
+                select from events \
+                where opencast_id = any(event_entry_ids(playlists.entries)) \
+                and 'ROLE_ANONYMOUS' = any(events.read_roles)\
+            )",
+        );
+        let col = id.column();
         let query = format!("select {selection} from playlists where {col} = $1");
         context.db
-            .query_opt(&query, &[id])
+            .query_opt(&query, &[&id_arg, &context.auth.state.username()])
             .await?
             .map(|row| {
-                let playlist = AuthorizedPlaylist::from_row_start(&row);
-                if context.auth.overlaps_roles(&playlist.read_roles) {
-                    Playlist::Playlist(playlist)
-                } else {
-                    Playlist::NotAllowed(NotAllowed)
-                }
+                let mut playlist = AuthorizedPlaylist::from_row(&row, mapping.playlist);
+                playlist.is_bookmark = LazyLoad::Loaded(mapping.is_bookmark.of(&row));
+                playlist.has_public_videos =
+                    LazyLoad::Loaded(mapping.has_public_videos.of::<bool>(&row));
+                Self::check_auth(playlist, &context.auth)
             })
             .pipe(Ok)
     }
 
-    async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<AuthorizedPlaylist> {
-        let playlist = Playlist::load_by_id(id, context)
+    pub(crate) fn check_auth(playlist: AuthorizedPlaylist, auth: &AuthContext) -> Self {
+        if auth.overlaps_roles(&playlist.acl.read_roles) {
+            Self::Playlist(playlist)
+        } else {
+            Self::NotAllowed(NotAllowed)
+        }
+    }
+
+    async fn load_for_mutation(id: impl OcItemId, context: &Context) -> ApiResult<AuthorizedPlaylist> {
+        let playlist = Self::load(id, context)
             .await?
             .ok_or_else(|| err::invalid_input!(key = "playlist.not-found", "playlist not found"))?
             .into_result()?;
 
-        if !context.auth.overlaps_roles(&playlist.write_roles) {
+        if !context.auth.overlaps_roles(&playlist.acl.write_roles) {
             return Err(err::not_authorized!(key = "playlist.not-allowed", "playlist action not allowed"));
         }
 
@@ -160,6 +162,7 @@ impl Playlist {
             table: "playlists",
             alias: None,
             join_clause: "",
+            date_column: "playlists.updated",
         };
         let (selection, mapping) = select!(
             playlist: AuthorizedPlaylist,
@@ -172,6 +175,11 @@ impl Playlist {
                     from unnest(playlists.entries) as playlist_entry \
                 ) \
             )",
+            has_public_videos: "exists(\
+                select from events \
+                where opencast_id = any(event_entry_ids(playlists.entries)) \
+                and 'ROLE_ANONYMOUS' = any(events.read_roles)\
+            )",
         );
         load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
             let mut out = AuthorizedPlaylist::from_row(row, mapping.playlist);
@@ -182,6 +190,7 @@ impl Playlist {
                     .filter_map(|info| ThumbnailInfo::from_search(info, &context))
                     .collect(),
             });
+            out.has_public_videos = LazyLoad::Loaded(mapping.has_public_videos.of::<bool>(row));
             out
         }).await
     }
@@ -224,6 +233,12 @@ impl AuthorizedPlaylist {
         self.updated
     }
 
+    /// Returns `true` iff this playlist is a bookmark of the current user. Note:
+    /// this is lazily loaded and only available in certain contexts.
+    fn is_bookmark(&self) -> bool {
+        self.is_bookmark.unwrap()
+    }
+
     /// Returns the number of entries in this playlist. Note: this is lazily loaded
     /// and only available in certain contexts (e.g., playlist listings).
     fn num_entries(&self) -> i32 {
@@ -262,6 +277,20 @@ impl AuthorizedPlaylist {
         acl::load_for(context, &acl::query_for("playlists"), dbargs![&self.key]).await
     }
 
+    /// Returns whether at least one video in this playlist is public, i.e. accessible to
+    /// anonymous users.
+    /// Note: this is lazily loaded and only available in certain contexts (`load` and
+    /// `load_writable_for_user`).
+    fn has_public_videos(&self) -> bool {
+        self.has_public_videos.unwrap()
+    }
+
+    /// Returns whether this playlist's RSS feed is public (i.e. the playlist itself is
+    /// accessible to anonymous users, and it contains at least one public video).
+    fn has_public_rss_feed(&self) -> bool {
+        self.has_public_videos() && self.acl.read_roles.iter().any(|role| role == ROLE_ANONYMOUS)
+    }
+
     /// Returns `true` if the realm has a playlist block with this playlist.
     /// Otherwise, `false` is returned.
     pub(crate) async fn is_referenced_by_realm(&self, path: String, context: &Context) -> ApiResult<bool> {
@@ -277,38 +306,36 @@ impl AuthorizedPlaylist {
             .pipe(Ok)
     }
 
-    async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
+    async fn entries(&self, context: &Context) -> ApiResult<Vec<PlaylistEntry>> {
         let (selection, mapping) = select!(
             found: "events.id is not null",
+            entry_id: "t.entry_id",
             event: AuthorizedEvent,
         );
         let query = format!("\
-            with entries as (\
-                select unnest(entries) as entry \
-                from playlists \
-                where id = $1\
-            ),
-            event_ids as (\
-                select (entry).content_id as id \
-                from entries \
-                where (entry).type = 'event'\
-            )
-            select {selection} from event_ids \
-            left join events on events.opencast_id = event_ids.id \
-            left join series on series.id = events.series\
+            select {selection} \
+            from playlists, \
+            lateral unnest(playlists.entries) with ordinality as t \
+            left join events on events.opencast_id = t.content_id \
+            left join series on series.id = events.series \
+            where playlists.id = $1 and t.type = 'event' \
+            order by t.ordinality\
         ");
         context.db
             .query_mapped(&query, dbargs![&self.key], |row| {
-                if !mapping.found.of::<bool>(&row) {
-                    return VideoListEntry::Missing(Missing);
-                }
+                let entry_id = mapping.entry_id.of::<PlaylistEntryId>(&row);
+                let node = if !mapping.found.of::<bool>(&row) {
+                    VideoListEntry::Missing(Missing)
+                } else {
+                    let event = AuthorizedEvent::from_row(&row, mapping.event);
+                    if !context.auth.overlaps_roles(&event.acl.read_roles) {
+                        VideoListEntry::NotAllowed(NotAllowed)
+                    } else {
+                        VideoListEntry::Event(event)
+                    }
+                };
 
-                let event = AuthorizedEvent::from_row(&row, mapping.event);
-                if !context.auth.overlaps_roles(&event.read_roles) {
-                    return VideoListEntry::NotAllowed(NotAllowed);
-                }
-
-                VideoListEntry::Event(event)
+                PlaylistEntry { entry_id, node }
             })
             .await?
             .pipe(Ok)
@@ -333,9 +360,19 @@ impl AuthorizedPlaylist {
     }
 
 
+    /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
+    fn read_roles(&self) -> &[String] {
+        &self.acl.read_roles
+    }
+
+    /// This doesn't contain `ROLE_ADMIN` as that is included implicitly.
+    fn write_roles(&self) -> &[String] {
+        &self.acl.write_roles
+    }
+
     /// Whether the current user has write access to this playlist.
     fn can_write(&self, context: &Context) -> bool {
-        context.auth.overlaps_roles(&self.write_roles)
+        context.auth.overlaps_roles(&self.acl.write_roles)
     }
 }
 
@@ -367,4 +404,3 @@ define_sort_column_and_order!(
     };
     pub struct PlaylistsSortOrder
 );
-

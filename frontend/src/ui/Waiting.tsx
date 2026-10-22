@@ -18,12 +18,12 @@ export const WaitingPage: React.FC<{ type: Exclude<OcEntity, "playlist"> }> = ({
     );
 };
 
-export const MovingTruck: React.FC = () => (
-    <LuTruck css={{
+export const MovingTruck: React.FC<JSX.IntrinsicElements["svg"]> = props => (
+    <LuTruck {...props} css={{
         fontSize: 40,
         animation: `500ms steps(2, end) infinite none ${keyframes({
-            "0%": { transform: "translateY(5px)" },
-            "100%": { transform: "none" },
+            "0%": { transform: "translateY(3px)" },
+            "100%": { transform: "translateY(-2px)" },
         })}`,
     }}/>
 );

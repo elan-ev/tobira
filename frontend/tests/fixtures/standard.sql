@@ -7,7 +7,7 @@
 -- ----- Series ---------------------------------------------------------------
 insert into series (state, opencast_id, title, description, updated, read_roles, write_roles)
 values ('ready', '6d3f7e0c-c18f-4806-acc1-219a02cc7343', 'Fabulous Cats', 'Some amazing cats.',
-    '2022-05-03 12:20:00+00', '{}', '{"ROLE_USER_SABINE"}');
+    '2022-05-03 12:20:00+00', '{"ROLE_ANONYMOUS"}', '{"ROLE_USER_SABINE"}');
 
 insert into series (state, opencast_id, title, description, updated, read_roles, write_roles)
 values ('ready', 'f52ce5fd-fcde-4cd2-9c4b-7e8c7a9ff31d', 'Loyal Dogs', null,
@@ -27,7 +27,7 @@ values ('ready', 'b56452ed-5ff4-47a1-aa41-5950637b08fb', 'Unlisted series', 'Sin
     '2016-09-02 14:30:00+00', '{}', '{"ROLE_USER_MORGAN"}');
 
 insert into series (state, opencast_id, title, description, updated, read_roles, write_roles)
-values ('waiting', '2b814c02-c849-4553-b5f5-f4e9e69fd74f', null, null, '-infinity', null, null);
+values ('waiting', '2b814c02-c849-4553-b5f5-f4e9e69fd74f', 'Waiting series', null, '-infinity', null, null);
 
 
 -- ----- Playlists ------------------------------------------------------------

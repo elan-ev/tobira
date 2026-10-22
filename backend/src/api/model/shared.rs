@@ -1,12 +1,16 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
+use chrono::{DateTime, Utc};
 use juniper::{GraphQLEnum, GraphQLInputObject, GraphQLObject};
 use tokio_postgres::Row;
 
 use crate::{
-    HasRoles, api::{
+    auth::HasRoles,
+    api::{
         Context,
-        err::{ApiResult, invalid_input},
-    }, dbargs, model::AclItem
+        err::{ApiResult, invalid_input, not_authorized},
+    },
+    dbargs,
+    model::{AclForDb, AclItem, KnownGroup}
 };
 
 
@@ -146,6 +150,16 @@ impl SortDirection {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, GraphQLEnum)]
+pub(crate) enum Visibility {
+    /// Accessible to anonymous users (`ROLE_ANONYMOUS` in `read_roles`).
+    Public,
+    /// Not public but can be accessed by at least one other person.
+    Shared,
+    /// Only readable for self and admin users.
+    Private,
+}
+
 #[derive(Debug)]
 pub struct Connection<T> {
     pub page_info: PageInfo,
@@ -163,6 +177,7 @@ pub(crate) struct ConnectionQueryParts {
     pub(crate) table: &'static str,
     pub(crate) alias: Option<&'static str>,
     pub(crate) join_clause: &'static str,
+    pub(crate) date_column: &'static str,
 }
 
 
@@ -206,31 +221,71 @@ where
 
     // Retrieve total number of items, considering possible filters.
     // Todo: consider stop words
-    let title_filter: Option<String> = filter.and_then(|f| f.title.map(|s| {
-        format!("%{}%", (|input: &str| input
+    let text_filter = |input: &str| -> String {
+        format!("%{}%", input
             .replace('\\', r"\\")
             .replace('%', r"\%")
             .replace('_', r"\_")
-        )(&s))
-    }));
+        )
+    };
+    let (
+        created_start,
+        created_end,
+        visibility,
+        text_query_filter,
+    ) = match filter {
+        Some(f) => (
+            f.created_start,
+            f.created_end,
+            f.visibility,
+            f.text_query.map(|s| text_filter(&s)),
+        ),
+        None => Default::default(),
+    };
+
+    let visibility_clause = match visibility {
+        Some(Visibility::Public) => format!(
+            "and 'ROLE_ANONYMOUS' = any({table}.read_roles)"
+        ),
+        Some(Visibility::Shared) => format!("\
+            and not ('ROLE_ANONYMOUS' = any({table}.read_roles)) \
+            and cardinality({table}.read_roles) > 1\
+        "),
+        Some(Visibility::Private) => format!("\
+            and not ('ROLE_ANONYMOUS' = any({table}.read_roles)) \
+            and cardinality({table}.read_roles) <= 1\
+        "),
+        None => String::new(),
+    };
+
+    let date_column = parts.date_column;
+
+    let filter_clauses = format!("\
+        and ($2::timestamptz is null or {date_column} >= $2::timestamptz) \
+        and ($3::timestamptz is null or {date_column} <= $3::timestamptz) \
+        {visibility_clause} \
+        and ($4::text is null or {table}.title ilike $4::text or {table}.description ilike $4::text)\
+    ");
 
     let total_count = context.db.query_one(
         &format!(
             "select count(*) \
                 from {table_alias} \
-                {acl_filter} and ($2::text is null or {table}.title ilike $2::text)",
+                {acl_filter} \
+                {filter_clauses}",
             ),
-        &[&user_roles, &title_filter],
+        &[&user_roles, &created_start, &created_end, &text_query_filter],
     ).await?.get::<_, i64>(0);
     let total_count = total_count.try_into().expect("more than 2^31 items?!");
 
     let query = format!(
-        "select {selection}, count(*) over() as total_count \
+        "select {selection} \
             from {table_alias} \
             {join_clause} \
-            {acl_filter} and ($2::text is null or {table}.title ilike $2::text) \
+            {acl_filter} \
+            {filter_clauses} \
             order by {sort_column} {sort_order}, {table}.id {sort_order} \
-            limit $3 offset $4 \
+            limit $5 offset $6 \
         ",
         join_clause = parts.join_clause,
         sort_order = order.direction.to_sql(),
@@ -240,7 +295,14 @@ where
     // Execute query
     let items = context.db.query_mapped(
         &query,
-        dbargs![&user_roles, &title_filter, &(limit as i64), &(offset as i64)],
+        dbargs![
+            &user_roles,
+            &created_start,
+            &created_end,
+            &text_query_filter,
+            &(limit as i64),
+            &(offset as i64),
+        ],
         |row| from_row(&row),
     ).await?;
 
@@ -257,54 +319,91 @@ where
     })
 }
 
+/// Makes sure only `read` or `write` are used in the actions.
+pub fn ensure_only_read_write_actions(items: &[AclItem]) -> ApiResult<()> {
+    let bad_action = items.iter()
+        .flat_map(|item| &item.actions)
+        .find(|&action| action != "read" && action != "write");
 
-#[derive(Debug)]
-pub(crate) struct AclForDB {
-    pub(crate) read_roles: Vec<String>,
-    pub(crate) write_roles: Vec<String>,
-    // todo: add custom and preview roles for events when sent by frontend
-    // preview_roles: Option<Vec<String>>,
-    // custom_action_roles: Option<CustomActions>,
+    if let Some(bad_action) = bad_action {
+        Err(invalid_input!("only actions 'read' and 'write' are allowed, but found '{bad_action}'"))
+    } else {
+        Ok(())
+    }
 }
 
-pub(crate) fn convert_acl_input(entries: &[AclItem]) -> AclForDB {
-    let mut read_roles = HashSet::new();
-    let mut write_roles = HashSet::new();
-    // let mut preview_roles = HashSet::new();
-    // let mut custom_action_roles = CustomActions::default();
+/// Checks that the current user is allowed to make the ACL change described
+/// by `entries`, i.e. is allowed to grant every newly added role/action
+/// combination.
+///
+/// `previous` holds the item's current roles or `None` when creating a new item
+/// (i.e. nothing granted yet).
+/// Only newly added role/action combinations are checked against each role's
+/// `assignable_by` (as of now, shrinking access is always allowed).
+pub(crate) async fn ensure_acl_assignment_allowed(
+    context: &Context,
+    new: &[AclItem],
+    old: Option<&AclForDb>,
+) -> ApiResult<()> {
+    if context.auth.is_tobira_admin(&context.config.auth) {
+        return Ok(());
+    }
 
-    for entry in entries {
-        let role = &entry.role;
-        for action in &entry.actions {
-            match action.as_str() {
-                // "preview" => {
-                //     preview_roles.insert(role.clone());
-                // }
-                "read" => {
-                    read_roles.insert(role.clone());
-                }
-                "write" => {
-                    write_roles.insert(role.clone());
-                }
-                _ => {
-                    // custom_action_roles
-                    //     .0
-                    //     .entry(action)
-                    //     .or_insert_with(Vec::new)
-                    //     .push(role.clone());
-                    todo!();
-                }
-            };
+    let empty_acl = AclForDb::empty();
+    let old = old.unwrap_or(&empty_acl);
+    let added = new.iter()
+        .map(|item| (
+            item.role.as_str(),
+            item.actions.iter()
+                .filter(|action| !old.roles_for_action(action).contains(&item.role))
+                .map(|a| a.as_str())
+                .collect::<Vec<_>>(),
+        ))
+        .filter(|(_role, actions)| !actions.is_empty())
+        .collect::<Vec<_>>();
+
+    ensure_permission_change_allowed(context, added).await
+}
+
+/// Makes sure that an ACL modification is allowed by the known groups'
+/// `assignable_by`. `added` contains a list of `(role, actions)`.
+pub(crate) async fn ensure_permission_change_allowed(
+    context: &Context,
+    added: Vec<(&str, Vec<&str>)>,
+) -> ApiResult<()> {
+    if context.auth.is_tobira_admin(&context.config.auth) {
+        return Ok(());
+    }
+    if added.is_empty() {
+        return Ok(());
+    }
+
+    let roles = added.iter().map(|&(role, _)| role).collect::<Vec<_>>();
+    let groups = KnownGroup::load_by_roles(&roles, context).await?;
+    let user_roles = context.auth.roles();
+    // Admins already returned above, so `is_admin: false`.
+    let mut assignable = groups.iter()
+        .map(|g| (g.role.as_str(), g.actions_assignable_by(user_roles, false)))
+        .collect::<HashMap<_, _>>();
+
+    // Insert defaults for built-in groups if not present yet.
+    // TODO: this is duplicated with frontend logic! Deduplicate
+    assignable.entry(crate::auth::ROLE_ANONYMOUS).or_insert_with(|| vec!["read".into()]);
+    assignable.entry(crate::auth::ROLE_USER).or_insert_with(|| vec!["read".into()]);
+
+    for (role, requested_actions) in added {
+        // If the group isn't known, everything is allowed
+        let Some(allowed_actions) = assignable.get(role) else { continue };
+
+        if requested_actions.iter().any(|req| !allowed_actions.iter().any(|a| a == *req)) {
+            return Err(not_authorized!(
+                key = "acl.assign-not-allowed",
+                "not allowed to assign group '{role}' for '{requested_actions:?}'",
+            ));
         }
     }
 
-    AclForDB {
-        read_roles: read_roles.into_iter().collect(),
-        write_roles: write_roles.into_iter().collect(),
-        // todo: add custom and preview roles when sent by frontend
-        // preview_roles: preview_roles.into_iter().collect(),
-        // custom_action_roles,
-    }
+    Ok(())
 }
 
 #[derive(GraphQLInputObject)]
@@ -315,5 +414,8 @@ pub(crate) struct BasicMetadata {
 
 #[derive(GraphQLInputObject)]
 pub(crate) struct SearchFilter {
-    pub(crate) title: Option<String>,
+    pub(crate) created_start: Option<DateTime<Utc>>,
+    pub(crate) created_end: Option<DateTime<Utc>>,
+    pub(crate) visibility: Option<Visibility>,
+    pub(crate) text_query: Option<String>,
 }

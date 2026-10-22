@@ -13,6 +13,7 @@ module.exports = {
         "ByteSpan": "string",
         "ExtraMetadata": "Record<string, Record<string, string[]>>",
         "TranslatedString": "{ default: string } & Record<string, string | undefined>",
+        "PlaylistEntryId": "string",
     },
     schemaExtensions: [APP_PATH],
 };

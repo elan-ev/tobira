@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { LuEye, LuPenLine, LuShieldCheck } from "react-icons/lu";
 import { graphql } from "react-relay";
-import { unreachable } from "@opencast/appkit";
 
 import { ManagePlaylistsRoute, SinglePlaylist } from ".";
 import { ThumbnailStack } from "../../../ui/ThumbnailStack";
@@ -13,7 +12,6 @@ import { keyOfId, playlistId } from "../../../util";
 import { b64regex } from "../../util";
 import { NotFound } from "../../NotFound";
 import { NotAuthorized } from "../../../ui/error";
-import CONFIG from "../../../config";
 import { DirectPlaylistRoute } from "../../Playlist";
 import { COLORS } from "../../../color";
 import { SharedPlaylistManageQuery } from "./__generated__/SharedPlaylistManageQuery.graphql";
@@ -89,26 +87,34 @@ const query = graphql`
                 title
                 description
                 canWrite
-                acl { role actions info { label implies large } }
+                readRoles
+                writeRoles
+                hasPublicRssFeed
+                acl { role actions info { label implies safeActions assignableActions } }
                 updated
                 thumbnailStack { thumbnails { url live audioOnly state }}
                 entries {
-                    __typename
-                    ...on AuthorizedEvent {
-                        id
-                        title
-                        isLive
-                        created
-                        creators
-                        description
-                        canWrite
-                        syncedData {
-                            thumbnail
-                            audioOnly
-                            duration
-                            startTime
-                            endTime
+                    entryId
+                    node {
+                        __typename
+                        ...on AuthorizedEvent {
+                            id
+                            title
+                            isLive
+                            created
+                            creators
+                            description
+                            canWrite
+                            syncedData {
+                                thumbnail
+                                audioOnly
+                                duration
+                                startTime
+                                endTime
+                            }
                         }
+                        ...on Missing { __typename }
+                        ...on NotAllowed { __typename }
                     }
                 }
                 hostRealms { id isMainRoot name path }
@@ -125,12 +131,8 @@ type ManagePlaylistNavProps = SharedManageNavProps & {
 const ManagePlaylistNav: React.FC<ManagePlaylistNavProps> = ({ playlist, active }) => {
     const { t } = useTranslation();
 
-    if (playlist == null) {
+    if (playlist?.__typename !== "AuthorizedPlaylist" || !playlist.canWrite) {
         return null;
-    }
-
-    if (playlist.__typename !== "AuthorizedPlaylist") {
-        return unreachable();
     }
 
     const id = keyOfId(playlist.id);
@@ -141,15 +143,12 @@ const ManagePlaylistNav: React.FC<ManagePlaylistNavProps> = ({ playlist, active 
             page: "details",
             body: <><LuPenLine />{t("manage.playlist.details.title")}</>,
         },
-    ];
-
-    if (CONFIG.allowAclEdit) {
-        navEntries.splice(1, 0, {
+        {
             url: `/~manage/playlists/${id}/access`,
             page: "acl",
             body: <><LuShieldCheck />{t("acl.title")}</>,
-        });
-    }
+        },
+    ];
 
     const link = DirectPlaylistRoute.url({ playlistId: id });
     const title = playlist.title;
@@ -177,12 +176,22 @@ const ManagePlaylistNav: React.FC<ManagePlaylistNavProps> = ({ playlist, active 
 };
 
 
-export const PlaylistThumbnail: React.FC<{
-    playlist: Pick<SinglePlaylist, "title" | "thumbnailStack">
-}> = ({ playlist }) => <div css={{ position: "relative", "> div": { width: "100%" } }}>
+type PlaylistThumbnailProps = {
+    playlist: Pick<SinglePlaylist, "title" | "thumbnailStack" | "readRoles" | "writeRoles">
+    showAccessIcon?: boolean;
+}
+
+export const PlaylistThumbnail: React.FC<PlaylistThumbnailProps> = ({
+    playlist,
+    showAccessIcon = false,
+}) => <div css={{ position: "relative", "> div": { width: "100%" } }}>
     <ThumbnailStack
         kind="playlist"
         thumbnails={playlist.thumbnailStack?.thumbnails}
         title={playlist.title}
+        accessRoles={showAccessIcon ? {
+            readRoles: playlist.readRoles,
+            writeRoles: playlist.writeRoles,
+        } : undefined}
     />
 </div>;

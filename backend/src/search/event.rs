@@ -374,8 +374,8 @@ impl TextSearchIndex {
             // Get correct indices and the actual text snippet. Unfortunately,
             // Meilisearch might sometimes return invalid indices that slice
             // UTF-8 codepoints in half, so we need to protect against that.
-            let start = ceil_char_boundary(&self.texts, match_range.start);
-            let end = ceil_char_boundary(&self.texts, match_range.start + match_range.length);
+            let start = self.texts.ceil_char_boundary(match_range.start);
+            let end = self.texts.ceil_char_boundary(match_range.start + match_range.length);
             let snippet = &self.texts[start..end];
 
             // If the match is a single stop word, we ignore it.
@@ -418,8 +418,8 @@ impl TextSearchIndex {
 
                     // Unfortunately, Meili can sometimes return invalid ranges,
                     // slicing into UTF-8 chars, so we also ceil here.
-                    let start = ceil_char_boundary(&self.texts, combined.start);
-                    let end = ceil_char_boundary(&self.texts, combined.end);
+                    let start = self.texts.ceil_char_boundary(combined.start);
+                    let end = self.texts.ceil_char_boundary(combined.end);
                     start..end
                 };
 
@@ -437,8 +437,8 @@ impl TextSearchIndex {
                         self.texts.len(),
                     );
 
-                    let margin_start = ceil_char_boundary(&self.texts, margin_start);
-                    let margin_end = ceil_char_boundary(&self.texts, margin_end);
+                    let margin_start = self.texts.ceil_char_boundary(margin_start);
+                    let margin_end = self.texts.ceil_char_boundary(margin_end);
 
                     // Search forwards and backwards from the match point to find
                     // boundaries of the text.
@@ -751,16 +751,6 @@ fn simplify_matches(
     )
 }
 
-fn ceil_char_boundary(s: &str, idx: usize) -> usize {
-    if idx > s.len() {
-        s.len()
-    } else {
-        (0..3).map(|offset| idx + offset)
-            .find(|idx| s.is_char_boundary(*idx))
-            .unwrap()
-    }
-}
-
 struct IndexLengths {
     offset_digits: u8,
     start_digits: u8,
@@ -831,7 +821,7 @@ impl<'a> FromSql<'a> for TextSearchIndex {
             // example. Having duplicates is not useful for search. The `4096`
             // limit is just there to avoid quadratic blowup in case there are
             // lots of texts in the same span.
-            if buf[..ceil_char_boundary(buf, 4096)].contains(s) {
+            if buf[..buf.ceil_char_boundary(4096)].contains(s) {
                 continue;
             }
 

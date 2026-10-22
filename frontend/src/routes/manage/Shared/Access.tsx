@@ -1,7 +1,7 @@
 import { useRef, useState, RefObject, SetStateAction, PropsWithChildren, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
-import { Card, ConfirmationModalHandle, boxError } from "@opencast/appkit";
+import { ConfirmationModalHandle, boxError } from "@opencast/appkit";
 
 import { AccessKnownRolesData$key } from "../../../ui/__generated__/AccessKnownRolesData.graphql";
 import {
@@ -15,7 +15,6 @@ import { READ_WRITE_ACTIONS } from "../../../util/permissionLevels";
 import { AclArray } from "../../Upload";
 import { aclArrayToMap } from "../../util";
 import { ManageRoute } from "..";
-import CONFIG from "../../../config";
 import { PageTitle } from "../../../layout/header/ui";
 import { Breadcrumbs } from "../../../ui/Breadcrumbs";
 import { NotAuthorized } from "../../../ui/error";
@@ -49,10 +48,7 @@ export const AclPage: React.FC<AclPageProps> = ({ children, note, breadcrumbTail
         <PageTitle title={t("acl.title")} />
         {note}
         <br />
-        {CONFIG.allowAclEdit
-            ? children
-            : <Card kind="info">{t("acl.editing-disabled")}</Card>
-        }
+        {children}
     </>;
 };
 
@@ -79,6 +75,7 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
     editingBlocked = false,
     itemType,
 }) => {
+    const { t } = useTranslation();
     const knownRoles = useFragment(knownRolesFragment, data);
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
     const acl = aclArrayToMap(rawAcl);
@@ -101,7 +98,8 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
                 inFlight={inFlight}
                 saveModalRef={saveModalRef}
                 onSubmit={() => onSubmit({ selections, saveModalRef, setCommitError })}
-                kind="write"
+                warnIfActionLost="write"
+                warningText={t("acl.save-modal.disclaimer-write")}
             />
         </Inertable>
         {boxError(commitError)}

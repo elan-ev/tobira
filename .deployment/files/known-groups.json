@@ -1,6 +1,22 @@
 {
-    "ROLE_STUDENT": { "label": { "default": "Students", "de": "Studierende", "it": "Studenti", "fr": "Étudiants" }, "implies": [], "large": true },
-    "ROLE_STAFF": { "label": { "default": "Staff", "de": "Angestellte", "it": "Personale", "fr": "Personnel" }, "implies": [], "large": true },
-    "ROLE_INSTRUCTOR": { "label": { "default": "Lecturers", "de": "Vortragende", "it": "Docenti", "fr": "Conférenciers" }, "implies": ["ROLE_STAFF"], "large": true },
-    "ROLE_TOBIRA_MODERATOR": { "label": { "default": "Moderators", "de": "Moderierende", "it": "Moderatori", "fr": "Modérateurs" }, "implies": ["ROLE_STAFF"], "large": false }
+    "ROLE_STUDENT": {
+        "label": { "default": "Students", "de": "Studierende", "it": "Studenti", "fr": "Étudiants" },
+        "implies": []
+    },
+    "ROLE_STAFF": {
+        "label": { "default": "Staff", "de": "Angestellte", "it": "Personale", "fr": "Personnel" },
+        "implies": [],
+        "assignableBy": { "write": ["ROLE_STAFF"] }
+    },
+    "ROLE_INSTRUCTOR": {
+        "label": { "default": "Lecturers", "de": "Vortragende", "it": "Docenti", "fr": "Conférenciers" },
+        "implies": ["ROLE_STAFF"],
+        "assignableBy": { "read": ["ROLE_USER"], "write": ["ROLE_STAFF"], "tobira:realm:moderate": ["ROLE_INSTRUCTOR"] }
+    },
+    "ROLE_TOBIRA_MODERATOR": {
+        "label": { "default": "Moderators", "de": "Moderierende", "it": "Moderatori", "fr": "Modérateurs" },
+        "implies": ["ROLE_STAFF"],
+        "safeActions": ["read", "write"],
+        "assignableBy": {}
+    }
 }

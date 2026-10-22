@@ -43,9 +43,15 @@ const editSeriesContent = graphql`
     mutation SeriesDetailsContentMutation(
         $id: ID!,
         $addedEvents: [ID!]!,
-        $removedEvents: [RemovedEventFromSeries!]!,
+        $removedEvents: [ID!]!,
+        $movedEvents: [MovedEventToSeries!]!,
     ) {
-        updateSeriesContent(id: $id, addedEvents: $addedEvents, removedEvents: $removedEvents) {
+        updateSeriesContent(
+            id: $id,
+            addedEvents: $addedEvents,
+            removedEvents: $removedEvents,
+            movedEvents: $movedEvents,
+        ) {
             entries {
                 __typename
                 ...on AuthorizedEvent {
@@ -58,6 +64,8 @@ const editSeriesContent = graphql`
                     canWrite
                     syncedData { thumbnail audioOnly duration startTime endTime }
                 }
+                ...on Missing { __typename }
+                ...on NotAllowed { __typename }
             }
         }
     }
@@ -107,10 +115,10 @@ const SeriesButtonSection: React.FC<{ series: Series }> = ({ series }) => {
     const shareInfo = {
         kind: "series" as const,
         shareUrl: `/!s/${seriesKey}`,
-        rssUrl: `/~rss/series/${seriesKey}`,
+        rssUrl: series.hasPublicVideos ? `/~rss/series/${seriesKey}` : undefined,
     };
 
-    const disableDelete = !CONFIG.allowSeriesEventRemoval && series.entries.length > 0;
+    const disableDelete = CONFIG.behavior.disallowEventsWithoutSeries && series.entries.length > 0;
 
     return <div css={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <VideoListShareButton {...shareInfo} css={{ height: 40, borderRadius: 8 }} />

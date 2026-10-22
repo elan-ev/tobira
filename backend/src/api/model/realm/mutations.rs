@@ -5,10 +5,10 @@ use crate::{
         Context,
         err::{invalid_input, map_db_err, ApiResult},
         Id,
-        model::block::RemovedBlock,
+        model::{shared::ensure_permission_change_allowed, block::RemovedBlock},
     },
     auth::AuthState,
-    model::Key,
+    model::{Key, REALM_ADMIN_ACTION, REALM_MODERATE_ACTION},
     prelude::*,
 };
 use super::{Realm, RealmOrder};
@@ -247,6 +247,23 @@ impl Realm {
         };
         realm.require_admin_rights(context)?;
         let db = &context.db;
+
+        // Make sure the user is allowed to assign these groups.
+        {
+            let mut added = HashMap::new();
+            for role in permissions.admin_roles.iter().flatten() {
+                if !realm.admin_roles.contains(role) {
+                    added.entry(role.as_str()).or_insert(vec![]).push(REALM_ADMIN_ACTION);
+                }
+            }
+            for role in permissions.moderator_roles.iter().flatten() {
+                if !realm.moderator_roles.contains(role) {
+                    added.entry(role.as_str()).or_insert(vec![]).push(REALM_MODERATE_ACTION);
+                }
+            }
+
+            ensure_permission_change_allowed(context, added.into_iter().collect()).await?;
+        }
 
         db.execute(
             "update realms set \

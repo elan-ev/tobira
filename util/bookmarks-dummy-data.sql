@@ -1,0 +1,21 @@
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = 'ea83e861-4308-3b0b-9ba0-7098511f784d'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = '08809296-079a-31fd-98fb-78d0ceb3a78d'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = '947544be-e876-3cae-92e7-da0cfd6a7beb'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = '888e1208-6e30-364a-be5c-f4c8ab1dade3'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = '4b4f59df-ddab-49c1-a073-98cea539898a'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = '8a56e21a-bed9-32bc-8b01-8849c07cfa34'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = 'b3e7afcc-30d1-34f8-b430-61acf6624eb5'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = '106cdeb6-28d7-4983-bcbd-4ce18328a6ce'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = 'cbb72a13-3a11-4efb-99eb-7231ace5606f'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = '7325fb9f-75f4-324d-916b-cf3cbdc212c1'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = 'd4e32f05-0c34-497e-a3d2-4faaf772aeaa'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = 'bcc65d35-b970-4a02-86b0-234dfc8d7edc'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = 'f4b517b4-9a55-4ab7-a52b-7e696ff461f6'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = 'f408660c-a45a-4f6e-8f33-15f5556f7ada'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = '6bb72f8a-cde0-40c2-803c-d825bfb20f34'));
+insert into bookmarks(username, series) values('jose', (select id from series where opencast_id = '707fc803-a86f-47fa-818a-c561309e0a22'));
+
+insert into bookmarks(username, series) values('sabine', (select id from series where opencast_id = '2a516687-48ec-4f29-8f84-cad570b10cc1'));
+insert into bookmarks(username, playlist) values('sabine', (select id from playlists where opencast_id = '56862637-ab70-4afe-a1d6-14a81d8e409f'));
+insert into bookmarks(username, series) values('sabine', (select id from series where opencast_id = '8a430c59-7e04-4e4b-b532-b2fcad8de8d4'));
+insert into bookmarks(username, playlist) values('sabine', (select id from playlists where opencast_id = '5aefd55b-6d3f-47a7-9bea-3923927fa0c6'));

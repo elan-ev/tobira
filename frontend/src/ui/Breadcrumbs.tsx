@@ -77,6 +77,7 @@ export const BreadcrumbsContainer: React.FC<BreadcrumbsContainerProps> = ({
         li: {
             display: "inline-flex",
             alignItems: "center",
+            maxWidth: "100%",
         },
     }}>{children}</ol>
 );
@@ -96,10 +97,7 @@ const TEXT_STYLE = {
 };
 
 const Segment: React.FC<SegmentProps> = ({ target, children }) => (
-    <li
-        css={{ maxWidth: "100%" }}
-        {...target === undefined && { "aria-current": "location" }}
-    >
+    <li {...target === undefined && { "aria-current": "location" }}>
         <BreadcrumbSeparator />
         {target === undefined
             ? <div css={TEXT_STYLE}>{children}</div>

@@ -12,7 +12,8 @@ import { SearchableSelect, DerivedProps as SelectProps } from "./SearchableSelec
 import { EventSelectorQuery } from "./__generated__/EventSelectorQuery.graphql";
 import { ErrorDisplay } from "../util/err";
 import { MovingTruck } from "./Waiting";
-import { Creators, Thumbnail } from "./Video";
+import { Creators } from "./Video";
+import { Thumbnail } from "./Thumbnail";
 import { ellipsisOverflowCss } from ".";
 import { fetchQuery } from "../relay";
 

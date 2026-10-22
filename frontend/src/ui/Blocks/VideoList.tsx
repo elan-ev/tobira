@@ -3,7 +3,6 @@ import React, {
     ReactNode,
     createContext,
     useContext,
-    useEffect,
     useId,
     useRef,
     useState,
@@ -18,12 +17,11 @@ import {
 import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
 import {
-    LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuCircleAlert, LuInfo,
-    LuRss, LuLink, LuSettings,
+    LuColumns2, LuList, LuChevronLeft, LuChevronRight, LuPlay, LuLayoutGrid, LuInfo,
+    LuRss, LuLink, LuSettings, LuFilm,
 } from "react-icons/lu";
 import { graphql, readInlineData } from "react-relay";
 
-import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
 import {
     VideoListEventData$data,
     VideoListEventData$key,
@@ -32,12 +30,13 @@ import { PlaylistBlockPlaylistData$data } from "./__generated__/PlaylistBlockPla
 import { floatingMenuProps, keyOfId } from "../../util";
 import { Link } from "../../router";
 import SeriesIcon from "../../icons/series.svg";
-import {
-    BaseThumbnailReplacement, isPastLiveEvent, isUpcomingLiveEvent, Thumbnail,
-    ThumbnailOverlayContainer,
-} from "../Video";
+import { isPastLiveEvent, isUpcomingLiveEvent } from "../Video";
+import { Thumbnail } from "../Thumbnail";
 import { PrettyDate } from "../time";
-import { CollapsibleDescription, DateAndCreators, SmallDescription } from "../metadata";
+import {
+    BadgeItem, BadgeList, CollapsibleDescription, CreatorsBadge, DateAndCreators, DateBadge,
+    SmallDescription,
+} from "../metadata";
 import { darkModeBoxShadow, ellipsisOverflowCss, focusStyle } from "..";
 import { COLORS } from "../../color";
 import { FloatingBaseMenu } from "../FloatingBaseMenu";
@@ -46,6 +45,8 @@ import { LoginLink } from "../../routes/util";
 import { QrCodeButton, ShareButton } from "../ShareButton";
 import { CopyableInput } from "../Input";
 import { LinkButton } from "../LinkButton";
+import { PaginationNav, paginationControlStyles } from "../PaginationNav";
+import { BookmarkButton } from "../BookmarkButton";
 
 
 
@@ -53,14 +54,17 @@ import { LinkButton } from "../LinkButton";
 // This uses `@inline` because the fragment is used in different situations,
 // where using `useFragment` is very tricky (or maybe even impossible).
 export const videoListEventFragment = graphql`
-    fragment VideoListEventData on AuthorizedEvent @inline {
+    fragment VideoListEventData on AuthorizedEvent @inline
+    @argumentDefinitions(
+        includeSeries: { type: "Boolean!", defaultValue: false }
+    ) {
         id
         title
         created
         creators
         isLive
         description
-        series { title id }
+        series @include(if: $includeSeries) { title id }
         syncedData {
             thumbnail
             duration
@@ -73,37 +77,34 @@ export const videoListEventFragment = graphql`
 type Event = VideoListEventData$data;
 type ListKind = "series" | "playlist";
 
+export const readVideoListEventDataFragment = (entry: AuthorizedEntry) =>
+    readInlineData<VideoListEventData$key>(videoListEventFragment, entry);
+
 
 // ==============================================================================================
 // ===== Main components defining UI
 // ==============================================================================================
 
-type OrderContext = {
-    eventOrder: Order;
-    setEventOrder: (newOrder: Order) => void;
-    allowOriginalOrder: boolean;
-};
-
-const OrderContext = createContext<OrderContext | null>(null);
 
 const VIDEO_GRID_BREAKPOINT = 600;
+const DEFAULT_ITEMS_PER_PAGE = 36;
+const SLIDER_BATCH_SIZE = 36;
 
-type VideoListItem = Event | "missing" | "unauthorized";
+export type VideoListItem = Event | "missing" | "unauthorized";
 
-export const LIST_ORDERS = ["ORIGINAL", "AZ", "ZA", "NEW_TO_OLD", "OLD_TO_NEW"] as const;
-export type Order = typeof LIST_ORDERS[number];
 
-type Entries = Extract<
+type Entries = readonly Extract<
     PlaylistBlockPlaylistData$data,
     { __typename: "AuthorizedPlaylist" }
->["entries"];
+>["entries"][number]["node"][];
+type AuthorizedEntry = Extract<Entries[number], { __typename: "AuthorizedEvent" }>;
 
 export type VideoListMetadata = {
     title?: string;
     description?: string;
     timestamp?: string;
     creators?: string[];
-    canWrite?: boolean;
+    canWrite: boolean;
 };
 
 export type VideoListDisplayOptions = {
@@ -113,15 +114,16 @@ export type VideoListDisplayOptions = {
 };
 
 export type VideoListBlockProps = {
-    listId?: string;
+    listId: string;
+    isBookmark: boolean;
     realmPath: string | null;
     activeEventId?: string;
     displayOptions: VideoListDisplayOptions;
-    metadata?: VideoListMetadata;
+    metadata: VideoListMetadata;
     shareInfo: VideoListShareButtonProps,
     listEntries: Entries;
     editMode: boolean;
-    linkToManagePage?: string;
+    linkToManagePage: string;
 }
 
 export const VideoListBlock: React.FC<VideoListBlockProps> = ({
@@ -134,15 +136,26 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
     listEntries,
     editMode,
     linkToManagePage,
+    isBookmark,
 }) => {
     const { t, i18n } = useTranslation();
-    const { initialOrder, allowOriginalOrder, initialLayout = "GALLERY" } = displayOptions;
-    const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
     const user = useUser();
 
+    // Layout and order
+    const { initialOrder, allowOriginalOrder, initialLayout = "GALLERY" } = displayOptions;
+    const [eventOrder, setEventOrder] = useState<Order>(initialOrder);
+    const [layoutState, setLayoutState] = useState<VideoListLayout>(initialLayout);
+    const itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
+    const layoutOrderContext: LayoutOrderContext = {
+        allowOriginalOrder,
+        eventOrder,
+        setEventOrder,
+        layoutState,
+        setLayoutState,
+    };
+
     const items = listEntries.map(entry => matchTag(entry, "__typename", {
-        "AuthorizedEvent": entry =>
-            readInlineData<VideoListEventData$key>(videoListEventFragment, entry),
+        "AuthorizedEvent": entry => readVideoListEventDataFragment(entry),
         "Missing": () => "missing" as VideoListItem,
         "NotAllowed": () => "unauthorized" as VideoListItem,
         "%other": () => unreachable(),
@@ -155,12 +168,30 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         unauthorizedItems,
     } = orderItems(items, eventOrder, i18n);
 
-    const basePath = realmPath == null ? "/!v" : `${realmPath.replace(/\/$/u, "")}/v`;
+    // Links for videos
+    const itemLink = (() => {
+        const basePath = realmPath == null ? "/!v" : `${realmPath.replace(/\/$/u, "")}/v`;
+        const inPlaylist = shareInfo.kind === "playlist";
+        const params = new URLSearchParams();
+        if (inPlaylist) {
+            params.set("list", keyOfId(listId));
+        }
+        if (layoutState !== "GALLERY") {
+            params.set("layout", layoutState.toLowerCase());
+        }
+        if (eventOrder !== (inPlaylist ? "ORIGINAL" : "NEW_TO_OLD")) {
+            params.set("order", eventOrder.toLowerCase());
+        }
+
+        const queryString = [...params].length > 0 ? `?${params.toString()}` : "";
+
+        return (key: string) => `${basePath}/${key}${queryString}`;
+    })();
+
     const renderEvents = (events: readonly VideoListItem[]) => (
-        <Items
-            basePath={basePath}
+        <VideoListItems
             showSeries={shareInfo.kind === "playlist"}
-            {...{ listId }}
+            {...{ itemsPerPage, itemLink }}
             items={events.map(item => ({
                 item,
                 active: item !== "missing"
@@ -170,16 +201,49 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
         />
     );
 
-    const eventsNotEmpty = items.length > 0;
     const hasHiddenItems = missingItems + unauthorizedItems > 0;
-    const showManageLink = metadata?.canWrite && linkToManagePage
-        && user !== "none" && user !== "unknown";
+    const showManageLink = isRealUser(user) && metadata?.canWrite;
 
-    return <OrderContext.Provider value={{ eventOrder, setEventOrder, allowOriginalOrder }}>
+    const buttons = <>
+        <div>
+            {showManageLink && <VideoListManageButton
+                kind={shareInfo.kind}
+                link={linkToManagePage}
+            />}
+            {isRealUser(user) && <BookmarkButton id={listId} isBookmark={isBookmark} />}
+            <VideoListShareButton {...shareInfo} hideLabel />
+        </div>
+        {items.length > 0 && <div>
+            <OrderMenu />
+            <VideoListLayoutMenu />
+        </div>}
+    </>;
+
+    const metadataUI = <>
+        <BadgeList css={{ margin: "0px 12px" }}>
+            {metadata.timestamp && <BadgeItem>
+                <DateBadge date={new Date(metadata.timestamp)} isLive={false} />
+            </BadgeItem>}
+            <BadgeItem>
+                <LuFilm />
+                {t("manage.video-list.no-of-videos", { count: items.length })}
+            </BadgeItem>
+            {metadata.creators && metadata.creators.length > 0 && <BadgeItem>
+                <CreatorsBadge creators={metadata.creators} />
+            </BadgeItem>}
+        </BadgeList>
+        {metadata.description && <CollapsibleDescription
+            type="series"
+            bottomPadding={32}
+            description={metadata.description}
+        />}
+    </>;
+
+    return <LayoutOrderContext.Provider value={layoutOrderContext}>
         <VideoListBlockContainer
-            showViewOptions={eventsNotEmpty}
-            {...showManageLink && { linkToManagePage }}
-            {...{ metadata, shareInfo, initialLayout }}
+            title={metadata?.title}
+            metadata={metadataUI}
+            {...{ buttons }}
         >
             {(mainItems.length + upcomingLiveEvents.length === 0 && !hasHiddenItems)
                 ? <div css={{ padding: 14 }}>{t("manage.video-list.no-content")}</div>
@@ -214,7 +278,7 @@ export const VideoListBlock: React.FC<VideoListBlockProps> = ({
                 </HiddenItemsInfo>}
             </div>}
         </VideoListBlockContainer>
-    </OrderContext.Provider>;
+    </LayoutOrderContext.Provider>;
 };
 
 const HiddenItemsInfo: React.FC<PropsWithChildren> = ({ children }) => <div css={{
@@ -236,6 +300,20 @@ type OrderedItems = {
     upcomingLiveEvents: Event[];
     missingItems: number;
     unauthorizedItems: number;
+};
+
+export const categorizeEvent = (
+    event: VideoListItem,
+    main: VideoListItem[],
+    upcoming: VideoListItem[],
+) => {
+    if (event === "missing" || event === "unauthorized") {
+        main.push(event);
+    } else if (isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive)) {
+        upcoming.push(event);
+    } else if (!isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)) {
+        main.push(event);
+    }
 };
 
 const orderItems = (
@@ -268,11 +346,7 @@ const orderItems = (
             continue;
         }
 
-        if (isUpcomingLiveEvent(event.syncedData?.startTime ?? null, event.isLive)) {
-            upcomingLiveEvents.push(event);
-        } else if (!isPastLiveEvent(event.syncedData?.endTime ?? null, event.isLive)) {
-            mainItems.push(event);
-        }
+        categorizeEvent(event, mainItems, upcomingLiveEvents);
     }
 
     const timeMs = (event: Event) =>
@@ -316,35 +390,27 @@ const orderItems = (
     return { mainItems, upcomingLiveEvents, missingItems, unauthorizedItems };
 };
 
+
 type VideoListBlockContainerProps = {
-    metadata?: VideoListMetadata;
-    shareInfo?: VideoListShareButtonProps,
+    /** A simple title shown at the top (left) of the box. */
+    title?: string;
+    /**
+     * Buttons shown at the top right of the box. On narrow screens shown below
+     * metadata. Should be a list of divs to define what should wrap together.
+     */
+    buttons?: JSX.Element;
+    /** Metadata that is shown below the title. */
+    metadata?: JSX.Element;
     children: ReactNode;
-    showViewOptions: boolean;
-    initialLayout?: VideoListLayout;
-    linkToManagePage?: string;
 };
 
-type LayoutContext = {
-    layoutState: VideoListLayout;
-    setLayoutState: (layout: VideoListLayout) => void;
-};
-
-const LayoutContext = createContext<LayoutContext>({
-    layoutState: "GALLERY",
-    setLayoutState: () => {},
-});
-
+/** Container shared by videolist blocks. */
 export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = ({
-    metadata, shareInfo, children, showViewOptions,
-    initialLayout = "GALLERY", linkToManagePage,
+    title, buttons, metadata, children,
 }) => {
-    const { title, description, creators, timestamp } = metadata ?? {};
-    const [layoutState, setLayoutState] = useState<VideoListLayout>(initialLayout);
-    const isDark = useColorScheme().scheme === "dark";
-    const hasMetadata = description || timestamp || (creators && creators.length > 0);
+    const { isDark } = useColorScheme();
 
-    return <LayoutContext.Provider value={{ layoutState, setLayoutState }}>
+    return (
         <div css={{
             marginTop: 24,
             padding: 12,
@@ -352,105 +418,71 @@ export const VideoListBlockContainer: React.FC<VideoListBlockContainerProps> = (
             borderRadius: 10,
             ...isDark && darkModeBoxShadow,
         }}>
-            <>
-                <div css={{
-                    display: "grid",
-                    gridTemplateColumns: (title || hasMetadata)
-                        ? "minmax(200px, 1fr) fit-content(40%)"
-                        : "1fr",
-                    gridTemplateRows: "auto auto",
-                    columnGap: 12,
-                    rowGap: 8,
-                    alignItems: "start",
+            <div css={{
+                display: "grid",
+                gridTemplateAreas: title
+                    ? '"title buttons" "metadata metadata"'
+                    : '"metadata buttons"',
+                gridTemplateColumns: "fit-content(60%) 1fr",
+                columnGap: 12,
+                rowGap: 8,
+                alignItems: "start",
 
-                    // Stack vertically on small screens
+                // Stack vertically on small screens
+                [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
+                    gridTemplateAreas: [
+                        title && '"title"',
+                        metadata && '"metadata"',
+                        buttons && '"buttons"',
+                    ].join(" "),
+                    gridTemplateColumns: "1fr",
+                },
+            }}>
+                {/* Title */}
+                {title && <h2 css={{
+                    gridArea: "title",
+                    padding: "8px 12px",
+                    color: isDark ? COLORS.neutral90 : COLORS.neutral80,
+                    fontSize: 20,
+                    lineHeight: 1.3,
+                    minWidth: 0,
+                }}>{title}</h2>}
+
+                {/* Buttons */}
+                {buttons && <div css={{
+                    gridArea: "buttons",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    flexWrap: "wrap-reverse",
+                    gap: 8,
+                    padding: 5,
+                    fontSize: 14,
+
+                    "> div": {
+                        display: "flex",
+                        gap: 8,
+                        flexShrink: 0,
+                        minWidth: "fit-content",
+                    },
+
                     [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
-                        gridTemplateColumns: "1fr",
-                        gridTemplateRows: "auto auto auto",
+                        flexWrap: "wrap",
                     },
                 }}>
-                    {/* Title */}
-                    {title && <h2 css={{
-                        padding: "8px 12px",
-                        color: isDark ? COLORS.neutral90 : COLORS.neutral80,
-                        fontSize: 20,
-                        lineHeight: 1.3,
-                        minWidth: 0,
-                    }}>{title}</h2>}
+                    {buttons}
+                </div>}
 
-                    {/* Buttons */}
-                    <div css={{
-                        gridColumn: (title || hasMetadata) ? 2 : 1,
-                        gridRow: (title || hasMetadata) ? "1 / 3" : 1,
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        alignItems: "flex-start",
-                        alignContent: "space-between",
-                        flexWrap: "wrap-reverse",
-                        gap: 8,
-                        padding: 5,
-                        fontSize: 14,
+                {/* Metadata */}
+                {metadata && <div css={{ gridArea: "metadata", maxWidth: "85ch" }}>
+                    {metadata}
+                </div>}
+            </div>
 
-                        // Move buttons to bottom row on small screens
-                        [screenWidthAtMost(VIDEO_GRID_BREAKPOINT)]: {
-                            gridColumn: 1,
-                            gridRow: 3,
-                            alignContent: "flex-start",
-                            flexWrap: "wrap",
-                        },
-                    }}>
-                        {(linkToManagePage || shareInfo) && <div css={{
-                            display: "flex",
-                            gap: 8,
-                            flexShrink: 0,
-                            minWidth: "fit-content",
-                        }}>
-                            {linkToManagePage && shareInfo && <VideoListManageButton
-                                kind={shareInfo.kind}
-                                link={linkToManagePage}
-                                hideLabel
-                            />}
-                            {shareInfo && <VideoListShareButton {...shareInfo} hideLabel />}
-                        </div>}
-                        {showViewOptions && <div css={{
-                            display: "flex",
-                            gap: 8,
-                            flexShrink: 0,
-                            minWidth: "fit-content",
-                        }}>
-                            <OrderMenu />
-                            <LayoutMenu />
-                        </div>}
-                    </div>
+            {metadata && <hr css={{ margin: "12px 6px 20px 6px" }} />}
 
-                    {/* Metadata */}
-                    {hasMetadata && <div css={{ gridRow: 2, maxWidth: "85ch" }}>
-                        {(timestamp || (creators && creators.length > 0)) && <DateAndCreators
-                            timestamp={timestamp}
-                            isLive={false}
-                            creators={creators}
-                            css={{
-                                margin: "0px 12px",
-                                gap: 16,
-                                "> *": {
-                                    padding: "4px 6px",
-                                    borderRadius: 4,
-                                    background: COLORS.neutral15,
-                                },
-                            }}
-                        />}
-                        {description && <CollapsibleDescription
-                            type="series"
-                            bottomPadding={32}
-                            {...{ description }}
-                        />}
-                    </div>}
-                </div>
-                {hasMetadata && <hr css={{ margin: "12px 6px 20px 6px" }} />}
-            </>
             {children}
         </div>
-    </LayoutContext.Provider>;
+    );
 };
 
 const buttonStyle = {
@@ -461,7 +493,7 @@ const buttonStyle = {
 
 type VideoListShareButtonProps = {
     shareUrl: string;
-    rssUrl: string;
+    rssUrl?: string;
     kind: ListKind;
     className?: string;
     hideLabel?: boolean;
@@ -473,7 +505,6 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
     const { t } = useTranslation();
 
     const directLinkUrl = document.location.origin + shareUrl;
-    const rssLinkUrl = document.location.origin + rssUrl;
 
     const tabs = {
         "main": {
@@ -484,13 +515,18 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
                 <QrCodeButton label={t("share.link")} target={directLinkUrl} />
             </>,
         },
-        "rss": {
-            label: t("share.rss"),
-            Icon: LuRss,
-            render: () => <>
-                <CopyableInput label={t("share.copy-rss")} value={rssLinkUrl} />
-                <QrCodeButton label={t("share.rss")} target={rssLinkUrl} />
-            </>,
+        ...rssUrl != null && {
+            "rss": {
+                label: t("share.rss"),
+                Icon: LuRss,
+                render: () => {
+                    const rssLinkUrl = document.location.origin + rssUrl;
+                    return <>
+                        <CopyableInput label={t("share.copy-rss")} value={rssLinkUrl} />
+                        <QrCodeButton label={t("share.rss")} target={rssLinkUrl} />
+                    </>;
+                },
+            },
         },
     };
     return <ShareButton height={180} {...{ tabs, className, hideLabel, kind }} css={buttonStyle} />;
@@ -498,14 +534,11 @@ export const VideoListShareButton: React.FC<VideoListShareButtonProps> = ({
 
 type VideoListManageButtonProps = {
     link: string;
-    hideLabel?: boolean;
     kind: ListKind;
 }
 
 
-export const VideoListManageButton: React.FC<VideoListManageButtonProps> = ({
-    link, hideLabel = false, kind,
-}) => {
+const VideoListManageButton: React.FC<VideoListManageButtonProps> = ({ link, kind }) => {
     const { t } = useTranslation();
     return <LinkButton aria-label={t(`${kind}.manage`)} to={link} css={{
         color: COLORS.primary0,
@@ -513,7 +546,6 @@ export const VideoListManageButton: React.FC<VideoListManageButtonProps> = ({
         ...buttonStyle,
     }}>
         <LuSettings size={16} />
-        {!hideLabel && t("user.manage")}
     </LinkButton>;
 };
 
@@ -522,13 +554,33 @@ export const VideoListManageButton: React.FC<VideoListManageButtonProps> = ({
 // ===== The menus for choosing order and layout mode
 // ==============================================================================================
 
+export const LIST_ORDERS = ["ORIGINAL", "AZ", "ZA", "NEW_TO_OLD", "OLD_TO_NEW"] as const;
+export type Order = typeof LIST_ORDERS[number];
+export const LIST_LAYOUTS = ["GALLERY", "LIST", "SLIDER"] as const;
+export type VideoListLayout = typeof LIST_LAYOUTS[number];
+
+export const parseVideoListLayout = (s: string | null): VideoListLayout | null => (
+    s && (LIST_LAYOUTS as readonly string[]).includes(s) ? s as VideoListLayout : null
+);
+
+export type LayoutOrderContext = {
+    layoutState: VideoListLayout;
+    setLayoutState: (layout: VideoListLayout) => void;
+    eventOrder: Order;
+    setEventOrder: (newOrder: Order) => void;
+    allowOriginalOrder: boolean;
+};
+
+export const LayoutOrderContext = createContext<LayoutOrderContext | null>(null);
+const useLayoutOrderContext = () => useContext(LayoutOrderContext)
+    ?? bug("order context not defined for video-list block");
 
 const OrderMenu: React.FC = () => {
     const { t } = useTranslation();
     const ref = useRef<FloatingHandle>(null);
-    const order = useContext(OrderContext) ?? bug("order context not defined for video-list block");
+    const ctx = useLayoutOrderContext();
 
-    const triggerContent = match(order.eventOrder, {
+    const triggerContent = match(ctx.eventOrder, {
         "ORIGINAL": () => t("video-list-block.settings.original"),
         "NEW_TO_OLD": () => t("video-list-block.settings.new-to-old"),
         "OLD_TO_NEW": () => t("video-list-block.settings.old-to-new"),
@@ -544,16 +596,15 @@ const OrderMenu: React.FC = () => {
     />;
 };
 
-const LayoutMenu: React.FC = () => {
+export const VideoListLayoutMenu: React.FC = () => {
     const { t } = useTranslation();
-    const state = useContext(LayoutContext);
+    const ctx = useLayoutOrderContext();
     const ref = useRef<FloatingHandle>(null);
 
-    const icon = match(state.layoutState, {
+    const icon = match(ctx.layoutState, {
         SLIDER: () => <LuColumns2 />,
         GALLERY: () => <LuLayoutGrid />,
         LIST: () => <LuList />,
-        "%future added value": () => unreachable(),
     });
 
     const triggerContent = (
@@ -579,10 +630,10 @@ type ListProps = {
 
 const List: React.FC<ListProps> = ({ type, close }) => {
     const { t } = useTranslation();
-    const isDark = useColorScheme().scheme === "dark";
-    const { layoutState, setLayoutState } = useContext(LayoutContext);
-    const { eventOrder, setEventOrder, allowOriginalOrder }
-        = useContext(OrderContext) ?? bug("missing order context");
+    const { isDark } = useColorScheme();
+    const {
+        layoutState, setLayoutState, eventOrder, setEventOrder, allowOriginalOrder,
+    } = useLayoutOrderContext();
     const itemProps = useFloatingItemProps();
     const itemId = useId();
 
@@ -676,17 +727,18 @@ type MenuItemProps = {
     Icon?: IconType;
     label: string;
     onClick?: () => void;
-    close: () => void;
+    close?: () => void;
     disabled: boolean;
+    className?: string;
 };
 
-const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
-    Icon, label, onClick, close, disabled,
+export const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
+    Icon, label, onClick, close, disabled, className,
 }, ref) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
 
     return (
-        <li css={{
+        <li {...{ className }} css={{
             ":not(:last-child)": {
                 borderBottom: `1px solid ${isDark ? COLORS.neutral40 : COLORS.neutral20}`,
             },
@@ -701,7 +753,7 @@ const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
                     if (onClick) {
                         onClick();
                     }
-                    close();
+                    close?.();
                 }}
                 css={{
                     display: "flex",
@@ -716,7 +768,6 @@ const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
                     ...focusStyle({ inset: true }),
                     "&[disabled]": {
                         fontWeight: "bold",
-                        color: COLORS.neutral80,
                         pointerEvents: "none",
                         ...isDark && { backgroundColor: COLORS.neutral10 },
                     },
@@ -734,23 +785,70 @@ const MenuItem = React.forwardRef<HTMLButtonElement, MenuItemProps>(({
 // ==============================================================================================
 
 type ViewProps = {
-    basePath: string;
     showSeries?: boolean;
-    listId?: string;
+    itemLink: (key: string) => string;
     items: {
         item: VideoListItem;
         active: boolean;
     }[];
 };
 
-const Items: React.FC<ViewProps> = ({ basePath, items, showSeries = false, listId }) => {
-    const { layoutState } = useContext(LayoutContext);
-    return match(layoutState, {
-        SLIDER: () => <SliderView {...{ listId, basePath, items }} />,
-        GALLERY: () => <GalleryView {...{ listId, basePath, items }} />,
-        LIST: () => <ListView {...{ listId, basePath, items, showSeries }} />,
-        "%future added value": () => unreachable(),
+type ItemsProps = ViewProps & {
+    itemsPerPage: number;
+};
+
+const itemKey = (item: VideoListItem, index: number): string =>
+    item === "missing" || item === "unauthorized"
+        ? `${item}-${index}`
+        : item.id;
+
+export const VideoListItems: React.FC<ItemsProps> = ({
+    items,
+    showSeries = false,
+    itemLink,
+    itemsPerPage,
+}) => {
+    const { t } = useTranslation();
+    const { layoutState } = useLayoutOrderContext();
+
+    const [page, setPage] = useState(1);
+    const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage));
+    const currentPage = Math.min(page, totalPages);
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const shownItems = items.slice(startIndex, startIndex + itemsPerPage);
+
+    if (layoutState === "SLIDER") {
+        return <SliderView {...{ itemLink, items }} />;
+    }
+
+    const content = match(layoutState, {
+        GALLERY: () => <GalleryView {...{ itemLink, items: shownItems }} />,
+        LIST: () => <ListView {...{ itemLink, items: shownItems, showSeries }} />,
     });
+
+    if (totalPages <= 1) {
+        return content;
+    }
+
+    return <>
+        {content}
+        <div css={{ marginTop: 16 }}>
+            <PaginationNav
+                totalItems={items.length}
+                {...{ itemsPerPage, currentPage }}
+                renderControl={({ label, icon, disabled, targetPage }) => <ProtoButton
+                    css={paginationControlStyles}
+                    aria-label={t(label)}
+                    aria-disabled={disabled}
+                    disabled={disabled}
+                    onClick={() => setPage(Math.max(1, Math.min(totalPages, targetPage)))}
+                >
+                    {icon}
+                </ProtoButton>}
+            />
+        </div>
+    </>;
 };
 
 const ITEM_MIN_SIZE = 250;
@@ -758,7 +856,7 @@ const ITEM_MIN_SIZE_SMALL_SCREENS = 240;
 const ITEM_MAX_SIZE = 330;
 const ITEM_MAX_SIZE_SMALL_SCREENS = 360;
 
-const GalleryView: React.FC<ViewProps> = ({ basePath, items, listId }) => (
+const GalleryView: React.FC<ViewProps> = ({ items, itemLink }) => (
     // The following is not exactly what we want, but CSS does not allow us to
     // do what we want. Let me elaborate. For the sake of this explanation,
     // let's assume we want the items to be at least 240px and at most 300px
@@ -833,8 +931,8 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items, listId }) => (
     }}>
         {items.map(({ item, active }, idx) => (
             <Item
-                key={idx}
-                {...{ item, active, basePath, listId }}
+                key={itemKey(item, idx)}
+                {...{ item, active, itemLink }}
                 css={{
                     width: "100%",
                     maxWidth: ITEM_MAX_SIZE,
@@ -855,7 +953,7 @@ const GalleryView: React.FC<ViewProps> = ({ basePath, items, listId }) => (
     </div>
 );
 
-const ListView: React.FC<ViewProps> = ({ basePath, items, showSeries, listId }) => (
+const ListView: React.FC<ViewProps> = ({ items, showSeries, itemLink }) => (
     <div css={{
         display: "flex",
         flexDirection: "column",
@@ -863,8 +961,8 @@ const ListView: React.FC<ViewProps> = ({ basePath, items, showSeries, listId }) 
     }}>
         {items.map(({ item, active }, idx) => (
             <Item
-                key={idx}
-                {...{ item, active, basePath, showSeries, listId }}
+                key={itemKey(item, idx)}
+                {...{ item, active, showSeries, itemLink }}
                 showDescription
                 dateAndCreatorOneLine
                 css={{
@@ -876,6 +974,7 @@ const ListView: React.FC<ViewProps> = ({ basePath, items, showSeries, listId }) 
                     [screenWidthAbove(VIDEO_GRID_BREAKPOINT)]: {
                         display: "flex",
                         gap: 16,
+                        alignItems: "flex-start",
                         "> div:nth-of-type(1)": { flex: "0 0 240px" },
                         "> :last-child": {
                             marginTop: 0,
@@ -887,36 +986,51 @@ const ListView: React.FC<ViewProps> = ({ basePath, items, showSeries, listId }) 
     </div>
 );
 
-const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
+const SliderView: React.FC<ViewProps> = ({ items, itemLink }) => {
     const { t } = useTranslation();
     const ref = useRef<HTMLDivElement>(null);
     const scrollDistance = 240;
+    const [loadedCount, setLoadedCount] = useState(() => Math.min(items.length, SLIDER_BATCH_SIZE));
 
-    const [rightVisible, setRightVisible] = useState(false);
+    const [rightVisible, setRightVisible] = useState(items.length > SLIDER_BATCH_SIZE);
     const [leftVisible, setLeftVisible] = useState(false);
 
     /**
      * This hides the left and/or right scroll buttons if the slider is scrolled almost all
      * the way to the left or right respectively, or when there is nothing to scroll to.
+     *
+     * We also load the next batch here so native scrolling keeps working as the track grows.
      */
-    const setVisibilities = () => {
-        if (ref.current) {
-            const totalSliderWidth = ref.current.scrollWidth;
-            const scrollPositionLeft = ref.current.scrollLeft;
-            const scrollPositionRight = ref.current.scrollLeft + ref.current.offsetWidth;
-            setRightVisible(scrollPositionRight < (totalSliderWidth - 16));
-            setLeftVisible(scrollPositionLeft > 16);
+    const updateSliderState = () => {
+        if (!ref.current) {
+            return;
         }
+
+        const totalSliderWidth = ref.current.scrollWidth;
+        const scrollPositionLeft = ref.current.scrollLeft;
+        const scrollPositionRight = ref.current.scrollLeft + ref.current.offsetWidth;
+        const hasMoreItems = loadedCount < items.length;
+
+        // 1200px is the width of roughly four thumbnails (+ margins).
+        // So will load in more items when the scroll state is at a point where about
+        // four items are still off screen on the right.
+        if (hasMoreItems && scrollPositionRight >= (totalSliderWidth - 1200)) {
+            setLoadedCount(currentLoadedCount => Math.min(
+                items.length,
+                currentLoadedCount + SLIDER_BATCH_SIZE,
+            ));
+        }
+
+        setRightVisible(hasMoreItems || scrollPositionRight < (totalSliderWidth - 16));
+        setLeftVisible(scrollPositionLeft > 16);
     };
 
     const scroll = (distance: number) => {
         if (ref.current) {
             ref.current.scrollLeft += distance;
-            setVisibilities();
+            updateSliderState();
         }
     };
-
-    useEffect(setVisibilities, []);
 
     const buttonCss = {
         zIndex: 5,
@@ -939,7 +1053,7 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
     } as const;
 
     return <div css={{ position: "relative" }}>
-        <div tabIndex={-1} onScroll={() => setVisibilities()} ref={ref} css={{
+        <div tabIndex={-1} onScroll={updateSliderState} ref={ref} css={{
             display: "flex",
             marginRight: 5,
             overflow: "auto",
@@ -949,10 +1063,10 @@ const SliderView: React.FC<ViewProps> = ({ basePath, items, listId }) => {
                 scrollMargin: 6,
             },
         }}>
-            {items.map(({ item, active }, idx) => (
+            {items.slice(0, loadedCount).map(({ item, active }, idx) => (
                 <Item
-                    key={idx}
-                    {...{ item, active, basePath, listId }}
+                    key={itemKey(item, idx)}
+                    {...{ item, active, itemLink }}
                     css={{
                         scrollSnapAlign: "start",
                         flex: "0 0 270px",
@@ -981,7 +1095,7 @@ type UpcomingEventsGridProps = React.PropsWithChildren<{
     count: number;
 }>;
 
-const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children }) => {
+export const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children }) => {
     const { t } = useTranslation();
 
     return (
@@ -1017,9 +1131,8 @@ const UpcomingEventsGrid: React.FC<UpcomingEventsGridProps> = ({ count, children
 
 
 type ItemProps = {
-    basePath: string;
     item: VideoListItem;
-    listId?: string;
+    itemLink: (key: string) => string;
     active: boolean;
     showDescription?: boolean;
     dateAndCreatorOneLine?: boolean;
@@ -1029,8 +1142,7 @@ type ItemProps = {
 
 const Item: React.FC<ItemProps> = ({
     item,
-    basePath,
-    listId,
+    itemLink,
     active,
     showDescription = false,
     dateAndCreatorOneLine = false,
@@ -1038,23 +1150,13 @@ const Item: React.FC<ItemProps> = ({
     className,
 }) => {
     const { t } = useTranslation();
-    const { layoutState } = useContext(LayoutContext);
-    const orderContext = useContext(OrderContext);
     const isPlaceholder = item === "missing" || item === "unauthorized";
 
     const TRANSITION_IN_DURATION = "0.15s";
     const TRANSITION_OUT_DURATION = "0.3s";
 
     const thumbnail = isPlaceholder
-        ? <ThumbnailOverlayContainer>
-            <BaseThumbnailReplacement css={{
-                background: "repeating-linear-gradient(115deg, "
-                    + "#2e2e2e, #2e2e2e 30px, #292929 30px, #292929 60px)",
-                color: "#dbdbdb",
-            }}>
-                <LuCircleAlert />
-            </BaseThumbnailReplacement>
-        </ThumbnailOverlayContainer>
+        ? <Thumbnail event={item === "missing" ? "missing" : "not-allowed"} />
         : <>
             <Thumbnail event={item} active={active} />
             <div css={{
@@ -1216,27 +1318,10 @@ const Item: React.FC<ItemProps> = ({
         },
     } as const;
 
-    const inPlaylist = listId?.substring(0, 2) === "pl";
-    const appendOrder = orderContext && (inPlaylist
-        ? orderContext.eventOrder !== "ORIGINAL"
-        : orderContext.eventOrder !== "NEW_TO_OLD"
-    );
-    const params = new URLSearchParams();
-    if (listId) {
-        params.set("list", keyOfId(listId));
-    }
-    if (layoutState !== "GALLERY") {
-        params.set("layout", layoutState.toLowerCase());
-    }
-    if (appendOrder) {
-        params.set("order", orderContext.eventOrder.toLowerCase());
-    }
-
-    const queryString = [...params].length > 0 ? `?${params.toString()}` : "";
 
     return <div css={containerStyle} {...{ className }}>
         {(!active && !isPlaceholder) && <Link
-            to={`${basePath}/${keyOfId(item.id)}${queryString}`}
+            to={itemLink(keyOfId(item.id))}
             css={{
                 position: "absolute",
                 inset: 0,

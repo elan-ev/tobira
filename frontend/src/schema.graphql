@@ -84,6 +84,12 @@ enum VideosSortColumn {
   SERIES
 }
 
+enum Visibility {
+  "Accessible to anonymous users (`ROLE_ANONYMOUS` in `read_roles`)." PUBLIC
+  "Not public but can be accessed by at least one other person." SHARED
+  "Only readable for self and admin users." PRIVATE
+}
+
 enum WorkflowStatus {
   BUSY
   IDLE
@@ -116,6 +122,11 @@ input Filters {
   itemType: ItemType
   start: DateTime
   end: DateTime
+}
+
+input MovedEventToSeries {
+  id: ID!
+  "The series to move the event to." targetSeries: ID!
 }
 
 input NewEvent {
@@ -166,6 +177,17 @@ input NewVideoBlock {
   displayOptions: DisplayOptions!
 }
 
+input PlaylistEntrySlot {
+  """
+    Used to identify existing playlist entries, regardless of visibility
+    (i.e. it's also on placeholders in frontend)
+  """ entryId: PlaylistEntryId
+  """
+    Newly added events do not have an entry ID before the playlist is saved in Opencast,
+    so we use the Tobira ID to load them.
+  """ newEventId: ID
+}
+
 input PlaylistsSortOrder {
   column: PlaylistsSortColumn!
   direction: SortDirection!
@@ -181,16 +203,11 @@ input RealmSpecifier {
   pathSegment: String!
 }
 
-input RemovedEventFromSeries {
-  id: ID!
-  """
-    When an event is moved from one series to another,
-    this field is used to specify the new series.
-  """ targetSeries: ID
-}
-
 input SearchFilter {
-  title: String
+  createdStart: DateTime
+  createdEnd: DateTime
+  visibility: Visibility
+  textQuery: String
 }
 
 input SeriesSortOrder {
@@ -285,6 +302,9 @@ scalar ExtraMetadata
   Should prevent using a regular String where an Opencast ID is expected.
 """
 scalar OpencastId
+
+"Identifies an entry within a playlist."
+scalar PlaylistEntryId
 
 "A string specified in different languages. Entry 'default' is required."
 scalar TranslatedString
@@ -415,6 +435,7 @@ type AuthorizedEvent implements Node {
   "Whether the event has active workflows."
   workflowStatus: WorkflowStatus!
   series: Series
+  referencingPlaylists: [Playlist!]!
   "Returns a list of realms where this event is referenced (via some kind of block)."
   hostRealms: [Realm!]!
   "Whether this event is password protected."
@@ -457,6 +478,11 @@ type AuthorizedPlaylist implements Node {
   creator: String!
   updated: DateTime!
   """
+    Returns `true` iff this playlist is a bookmark of the current user. Note:
+    this is lazily loaded and only available in certain contexts.
+  """
+  isBookmark: Boolean!
+  """
     Returns the number of entries in this playlist. Note: this is lazily loaded
     and only available in certain contexts (e.g., playlist listings).
   """
@@ -469,14 +495,47 @@ type AuthorizedPlaylist implements Node {
   thumbnailStack: ThumbnailStack!
   acl: [AclItemWithInfo!]!
   """
+    Returns whether at least one video in this playlist is public, i.e. accessible to
+    anonymous users.
+    Note: this is lazily loaded and only available in certain contexts (`load` and
+    `load_writable_for_user`).
+  """
+  hasPublicVideos: Boolean!
+  """
+    Returns whether this playlist's RSS feed is public (i.e. the playlist itself is
+    accessible to anonymous users, and it contains at least one public video).
+  """
+  hasPublicRssFeed: Boolean!
+  """
     Returns `true` if the realm has a playlist block with this playlist.
     Otherwise, `false` is returned.
   """
   isReferencedByRealm(path: String!): Boolean!
-  entries: [VideoListEntry!]!
+  entries: [PlaylistEntry!]!
   hostRealms: [Realm!]!
+  "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
+  readRoles: [String!]!
+  "This doesn't contain `ROLE_ADMIN` as that is included implicitly."
+  writeRoles: [String!]!
   "Whether the current user has write access to this playlist."
   canWrite: Boolean!
+}
+
+type BookmarkFeedConnection {
+  pageInfo: PageInfo!
+  items: [BookmarkFeedItem!]!
+  totalCount: Int!
+}
+
+type BookmarkFeedItem {
+  event: Event!
+  """
+    The series bookmark that caused this event to appear in the feed. It's
+    the event's series or `null`.
+  """
+  seriesBookmark: Series
+  "All playlist bookmarks that caused this event to appear in the feed."
+  playlistBookmarks: [AuthorizedPlaylist!]!
 }
 
 type Caption {
@@ -514,16 +573,19 @@ type EventSearchResults {
   duration: Int!
 }
 
-"""
-  A group selectable in the ACL UI. Basically a mapping from role to a nice
-  label and info about the relationship to other roles/groups.
-"""
+type InaccessibleBookmarkItem {
+  id: ID!
+}
+
+"A group selectable in the ACL UI, as seen by the current user."
 type KnownGroup {
   role: String!
   label: TranslatedString!
   implies: [String!]!
   sortKey: String
-  large: Boolean!
+  safeActions: [String!]!
+  "The actions the current user is allowed to assign this group for."
+  assignableActions: [String!]!
 }
 
 type KnownUser {
@@ -603,19 +665,19 @@ type Mutation {
     and the series is preliminarily updated in Tobira's DB.
   """
   updateSeriesMetadata(id: ID!, metadata: BasicMetadata!): Series!
-  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [RemovedEventFromSeries!]!): Series!
+  updateSeriesContent(id: ID!, addedEvents: [ID!]!, removedEvents: [ID!]!, movedEvents: [MovedEventToSeries!]!): Series!
   """
     Sends an http request to Opencast to create a new series,
     and stores the series in Tobira's DB.
   """
-  createSeries(metadata: BasicMetadata!, acl: [AclItem!]!): Series!
+  createSeries(metadata: BasicMetadata!, acl: [AclItem!]!, creator: String!): Series!
   "Creates a new playlist in Opencast and stores it in Tobira's DB."
   createPlaylist(metadata: BasicMetadata!, creator: String!, entries: [ID!]!, acl: [AclItem!]!): AuthorizedPlaylist!
   """
     Updates a playlist's metadata, entries or acl by sending the changes to Opencast
     and updating the playlist in Tobira's DB.
   """
-  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [ID!], acl: [AclItem!]): AuthorizedPlaylist!
+  updatePlaylist(id: ID!, metadata: BasicMetadata, entries: [PlaylistEntrySlot!], acl: [AclItem!]): AuthorizedPlaylist!
   "Deletes the given playlist by sending a delete request to Opencast."
   deletePlaylist(id: ID!): RemovedPlaylist!
   """
@@ -707,6 +769,17 @@ type Mutation {
     and adds a block with the given series at the leaf.
   """
   mountSeries(series: NewSeries!, parentRealmPath: String!, newRealms: [RealmSpecifier!]! = []): Realm!
+  """
+    Bookmarks the item referred to by `id`. Must be a series or a
+    playlist. Mutation is idempotent. Returns `true` if the item was not a
+    bookmark before already.
+  """
+  addBookmark(id: ID!): Boolean!
+  """
+    Removes an item from the user's bookmarks. Returns whether the item
+    existed as bookmark before.
+  """
+  removeBookmark(id: ID!): Boolean!
 }
 
 type NotAllowed {
@@ -743,6 +816,15 @@ type PlaylistConnection {
   pageInfo: PageInfo!
   items: [AuthorizedPlaylist!]!
   totalCount: Int!
+}
+
+"""
+  A playlist entry has its own ID within the playlist and can also be used to identify
+  missing or not-allowed items. `Node` holds the actual data, if present.
+"""
+type PlaylistEntry {
+  entryId: PlaylistEntryId!
+  node: VideoListEntry!
 }
 
 type PlaylistSearchResults {
@@ -834,7 +916,7 @@ type Query {
     results is limited to some fixed value.
   """
   searchKnownUsers(query: String!): KnownUsersSearchOutcome!
-  "Returns all known groups selectable in the ACL UI."
+  "Returns all known groups, with `assignableActions` for the current user."
   knownGroups: [KnownGroup!]!
   "Returns information for the admin dashboard."
   adminDashboardInfo: AdminInfo
@@ -992,10 +1074,18 @@ type RoleInfo {
   """
   implies: [String!]
   """
-    Is `true` if this role represents a large group. Used to warn users
-    accidentally giving write access to large groups.
+    List of actions that are considered harmless to assign to this group.
+    All other actions will show a warning, as assigning it is considered
+    questionable, e.g. because the group is very large.
+    Always empty for roles that are not a known group.
   """
-  large: Boolean!
+  safeActions: [String!]!
+  """
+    Actions the current user is allowed to assign this role for.
+    `null` if the role is not a known group (like free-text roles added in the ACL selector).
+    In that case the assignment is unrestricted.
+  """
+  assignableActions: [String!]
 }
 
 type SearchEvent implements Node {
@@ -1090,6 +1180,16 @@ type Series implements Node {
   created: DateTime
   updated: DateTime
   metadata: ExtraMetadata
+  """
+    Returns `true` iff this series is a bookmark of the current user. Note:
+    this is lazily loaded and only available in certain contexts.
+  """
+  isBookmark: Boolean!
+  """
+    Returns creators extracted from the series metadata.
+    Looks for `creator` or `createdBy` in the dcterms namespace.
+  """
+  creators: [String!]!
   description: String
   state: SeriesState!
   """
@@ -1104,6 +1204,14 @@ type Series implements Node {
   """
   thumbnailStack: ThumbnailStack!
   acl: [AclItemWithInfo!]!
+  """
+    Returns whether at least one video in this series is public, i.e. accessible to
+    anonymous users. This is what determines whether the RSS feed of this series has any
+    content.
+    Note: this is lazily loaded and only available in certain contexts (`load` and
+    `load_writable_for_user`).
+  """
+  hasPublicVideos: Boolean!
   "Whether the current user has write access to this series."
   canWrite: Boolean!
   tobiraDeletionTimestamp: DateTime
@@ -1249,6 +1357,11 @@ type User {
   """
   isTobiraAdmin: Boolean!
   """
+    `True` if the user is a global Opencast administrator and can do
+    anything.
+  """
+  isAdmin: Boolean!
+  """
     Returns all events that somehow "belong" to the user, i.e. that appear
     on the "my videos" page. This also returns events that have been marked
     as deleted (meaning their deletion in Opencast has been requested but they
@@ -1265,6 +1378,13 @@ type User {
     on the "my playlists" page.
   """
   myPlaylists(order: PlaylistsSortOrder! = {column: "UPDATED", direction: "DESCENDING"}, offset: Int!, limit: Int!, filter: SearchFilter = null): PlaylistConnection!
+  "Returns all bookmarks of the current user."
+  myBookmarks: [BookmarkItem!]!
+  """
+    Returns the latest videos (by `created` date) from items that the user
+    added as bookmark.
+  """
+  bookmarkFeed(offset: Int! = 0, limit: Int!): BookmarkFeedConnection!
 }
 
 type UserInfo {
@@ -1291,6 +1411,8 @@ type VideoBlock implements Block {
   index: Int!
   realm: Realm!
 }
+
+union BookmarkItem = Series | AuthorizedPlaylist | InaccessibleBookmarkItem
 
 union Event = AuthorizedEvent | NotAllowed
 

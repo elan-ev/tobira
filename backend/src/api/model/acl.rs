@@ -1,7 +1,12 @@
 use juniper::GraphQLObject;
 use postgres_types::BorrowToSql;
 
-use crate::{api::{err::ApiResult, Context}, model::TranslatedString, db::util::select};
+use crate::{
+    HasRoles,
+    api::{err::ApiResult, Context},
+    db::{types::ActionRoleMap, util::select},
+    model::{actions_assignable_by, TranslatedString},
+};
 
 
 
@@ -41,9 +46,16 @@ pub(crate) struct RoleInfo {
     /// also has these other roles.
     pub implies: Option<Vec<String>>,
 
-    /// Is `true` if this role represents a large group. Used to warn users
-    /// accidentally giving write access to large groups.
-    pub large: bool,
+    /// List of actions that are considered harmless to assign to this group.
+    /// All other actions will show a warning, as assigning it is considered
+    /// questionable, e.g. because the group is very large.
+    /// Always empty for roles that are not a known group.
+    pub safe_actions: Vec<String>,
+
+    /// Actions the current user is allowed to assign this role for.
+    /// `null` if the role is not a known group (like free-text roles added in the ACL selector).
+    /// In that case the assignment is unrestricted.
+    pub assignable_actions: Option<Vec<String>>,
 }
 
 pub(crate) fn query_for(table: &str) -> String {
@@ -66,11 +78,16 @@ where
 {
     // First: load labels for roles from the DB. For that we use the `users`
     // and `known_groups` table.
+    // `assignable_by` is deliberately *not* coalesced, because
+    // `NULL` is how we tell "not a known group" (unrestricted
+    // assignment) apart from "known group with an empty `assignable_by`".
+    // That is only relevant for admins though.
     let (selection, mapping) = select!(
         role: "roles.role",
         actions,
         implies,
-        large: "coalesce(known_groups.large, false)",
+        safe_actions: "coalesce(known_groups.safe_actions, '{}')",
+        assignable_by: "known_groups.assignable_by",
         label: "coalesce(
             known_groups.label,
             case when users.display_name is null
@@ -92,14 +109,21 @@ where
         left join known_groups on known_groups.role = roles.role\
     ");
 
+    let is_admin = context.auth.is_admin(&context.config.auth);
+    let user_roles = context.auth.roles();
+
     context.db.query_mapped(&sql, params, |row| {
+        let assignable_actions = mapping.assignable_by.of::<Option<ActionRoleMap>>(&row)
+            .map(|assignable_by| actions_assignable_by(&assignable_by, user_roles, is_admin));
+
         AclItemWithInfo {
             role: mapping.role.of(&row),
             actions: mapping.actions.of(&row),
             info: mapping.label.of::<Option<_>>(&row).map(|label| RoleInfo {
                 label,
                 implies: mapping.implies.of(&row),
-                large: mapping.large.of(&row),
+                safe_actions: mapping.safe_actions.of(&row),
+                assignable_actions,
             }),
         }
     }).await.map_err(Into::into)

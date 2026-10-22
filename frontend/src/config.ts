@@ -27,16 +27,18 @@ type Config = {
     initialConsent: InitialConsent | null;
     showDownloadButton: boolean;
     usersSearchable: boolean;
-    allowAclEdit: boolean;
     lockAclToSeries: boolean;
-    allowSeriesEventRemoval: boolean;
     globalBanner: null | {
         text: TranslatedString,
         color: "neutral" | "primary" | "danger",
         icon: "warning" | "info",
     },
+    behavior: {
+        disallowEventsWithoutSeries: boolean;
+    };
     opencast: OpencastConfig;
     footerLinks: FooterLink[];
+    footerMarkdown: TranslatedString | null;
     metadataLabels: Record<string, Record<string, MetadataLabel>>;
     paellaSettingsIcon: string;
     paellaThemeJson: string;
@@ -103,7 +105,6 @@ type VersionInfo = {
 };
 
 type UploadConfig = {
-    requireSeries: boolean;
     workflow: string | null;
     thumbnailSubtype: string,
     thumbnailWorkflowProperty: string,

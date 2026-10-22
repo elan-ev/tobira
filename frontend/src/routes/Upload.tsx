@@ -48,7 +48,10 @@ import {
     NewEvent,
     UploadCreatePlaceholderMutation,
 } from "./__generated__/UploadCreatePlaceholderMutation.graphql";
+import { UploadCreateSeriesMutation } from "./__generated__/UploadCreateSeriesMutation.graphql";
 import { ManageVideosRoute } from "./manage/Video";
+import { CreateVideoList } from "./manage/Shared/Create";
+import { CreateSeriesPageProps } from "./manage/Series/Create";
 
 
 export const PATH = "/~manage/upload" as const;
@@ -80,6 +83,11 @@ const query = graphql`
     query UploadQuery($seriesId: ID!) {
         ... UserData
         ... AccessKnownRolesData
+        writableSeries: searchAllSeries(query: "", writableOnly: true) {
+            ... on SeriesSearchResults {
+                items { id }
+            }
+        }
         series: seriesById(id: $seriesId) {
             id
             opencastId
@@ -87,7 +95,7 @@ const query = graphql`
             description
             created
             canWrite
-            acl { role actions info { label implies large } }
+            acl { role actions info { label implies safeActions assignableActions } }
         }
     }
 `;
@@ -114,11 +122,33 @@ const Upload: React.FC<Props> = ({ uploadQueryData, seriesUrlParamSet }) => {
     const { t } = useTranslation();
     const knownRoles = useFragment<AccessKnownRolesData$key>(knownRolesFragment, uploadQueryData);
     const preselectedSeries = uploadQueryData.series;
+    const user = useUser();
 
     if (preselectedSeries && !preselectedSeries.canWrite) {
         return <Card kind="error">
             {t("upload.missing-series-write-permission")}
         </Card>;
+    }
+
+    const breadcrumbs = <Breadcrumbs
+        path={[{ label: t("user.manage"), link: ManageRoute.url }]}
+        tail={t("upload.title")}
+    />;
+
+    const userCanUpload = isRealUser(user) && user.canUpload;
+    const noWritableSeries = CONFIG.behavior.disallowEventsWithoutSeries
+        && (uploadQueryData.writableSeries.items?.length ?? 0) === 0
+        && !preselectedSeries;
+
+    if (noWritableSeries && userCanUpload) {
+        return <>
+            {breadcrumbs}
+            <PageTitle title={t("upload.title")} />
+            {user.canCreateSeries
+                ? <SeriesCreationStep knownRolesRef={uploadQueryData} />
+                : <Card kind="error">{t("upload.no-writable-series-blocked")}</Card>
+            }
+        </>;
     }
 
     return (
@@ -127,10 +157,7 @@ const Upload: React.FC<Props> = ({ uploadQueryData, seriesUrlParamSet }) => {
             display: "flex",
             flexDirection: "column",
         }}>
-            <Breadcrumbs
-                path={[{ label: t("user.manage"), link: ManageRoute.url }]}
-                tail={t("upload.title")}
-            />
+            {breadcrumbs}
             <PageTitle title={t("upload.title")} />
             {seriesUrlParamSet && preselectedSeries == null && (
                 <Card kind="error" css={{ marginBottom: 16 }}>
@@ -168,6 +195,16 @@ const CancelButton: React.FC<CancelButtonProps> = ({ abortController }) => {
 const createPlaceholderMutation = graphql`
     mutation UploadCreatePlaceholderMutation($event: NewEvent!) {
         createPlaceholderEvent(event: $event) { id }
+    }
+`;
+
+const createSeriesMutation = graphql`
+    mutation UploadCreateSeriesMutation(
+        $metadata: BasicMetadata!,
+        $acl: [AclItem!]!,
+        $creator: String!,
+    ) {
+        createSeries(metadata: $metadata, acl: $acl, creator: $creator) { id }
     }
 `;
 
@@ -345,6 +382,29 @@ const UploadMain: React.FC<UploadMainProps> = ({ knownRoles, preselectedSeries }
             </div>
         );
     }
+};
+
+const SeriesCreationStep: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) => {
+    const { t } = useTranslation();
+    const [commit, inFlight] = useMutation<UploadCreateSeriesMutation>(createSeriesMutation);
+
+    return <div css={{ maxWidth: 900 }}>
+        <Card kind="info" css={{ marginBottom: 20 }}>
+            {t("upload.create-series-first")}
+        </Card>
+        <CreateVideoList
+            {...{ commit, inFlight, knownRolesRef }}
+            canUserCreateList={user => user.canCreateSeries}
+            kind="series"
+            buildVariables={({ displayName }) => ({
+                creator: displayName,
+            })}
+            returnPath={response => UploadRoute.url({
+                seriesId: keyOfId(response.createSeries.id),
+            })}
+            showTitle={false}
+        />
+    </div>;
 };
 
 type ProgressHistory = {
@@ -770,7 +830,7 @@ const SeriesAclQuery = graphql`
     query UploadSeriesAclQuery($seriesId: String!) {
         series: seriesByOpencastId(id: $seriesId) {
             id
-            acl { role actions info { label implies large } }
+            acl { role actions info { label implies safeActions assignableActions } }
         }
     }
 `;
@@ -855,7 +915,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
 
     const formMethods = useForm<Metadata>({
         mode: "onChange",
-        defaultValues: { acl: defaultAclMap(user) },
+        defaultValues: { acl: defaultAclMap(user, knownRoles) },
     });
     const { handleSubmit, control, formState: { isValid, errors } } = formMethods;
 
@@ -870,7 +930,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
             },
         },
         rules: {
-            required: CONFIG.upload.requireSeries
+            required: CONFIG.behavior.disallowEventsWithoutSeries
                 ? t("manage.metadata-form.errors.field-required")
                 : false,
         },
@@ -888,7 +948,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
             <InputContainer css={{ maxWidth: 750 }}>
                 <label htmlFor={seriesFieldId}>
                     {t("series.singular")}
-                    {CONFIG.upload.requireSeries && <FieldIsRequiredNote />}
+                    {CONFIG.behavior.disallowEventsWithoutSeries && <FieldIsRequiredNote />}
                     <WithTooltip
                         tooltip={t("upload.metadata.note-writable-series")}
                         tooltipCss={{ width: 400 }}
@@ -913,7 +973,7 @@ const MetaDataEdit: React.FC<MetaDataEditProps> = ({
                             id: data?.id,
                         })}
                         onBlur={seriesField.onBlur}
-                        required={CONFIG.upload.requireSeries}
+                        required={CONFIG.behavior.disallowEventsWithoutSeries}
                         defaultValue={preselectedSeries ?? undefined}
                     />
                 </Inertable>

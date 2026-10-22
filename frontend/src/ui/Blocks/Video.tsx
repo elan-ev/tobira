@@ -29,7 +29,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, realmPath, edit
         fragment VideoBlockData on VideoBlock {
             event {
                 __typename
-                ... on NotAllowed { dummy } # workaround
+                ... on NotAllowed { __typename }
                 ... on AuthorizedEvent {
                     id
                     title

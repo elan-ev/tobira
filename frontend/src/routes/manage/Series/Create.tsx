@@ -12,7 +12,7 @@ import { CreateVideoList } from "../Shared/Create";
 import type { User } from "../../../User";
 
 
-export const CREATE_SERIES_PATH = "/~manage/create-series" as const;
+const CREATE_SERIES_PATH = "/~manage/create-series" as const;
 
 export const CreateSeriesRoute = makeRoute({
     url: CREATE_SERIES_PATH,
@@ -43,12 +43,16 @@ const query = graphql`
 `;
 
 const createSeriesMutation = graphql`
-    mutation CreateSeriesMutation($metadata: BasicMetadata!, $acl: [AclItem!]!) {
-        createSeries(metadata: $metadata, acl: $acl) { id }
+    mutation CreateSeriesMutation(
+        $metadata: BasicMetadata!,
+        $acl: [AclItem!]!,
+        $creator: String!,
+    ) {
+        createSeries(metadata: $metadata, acl: $acl, creator: $creator) { id }
     }
 `;
 
-type CreateSeriesPageProps = {
+export type CreateSeriesPageProps = {
     knownRolesRef: AccessKnownRolesData$key;
 };
 
@@ -60,6 +64,9 @@ const CreateSeriesPage: React.FC<CreateSeriesPageProps> = ({ knownRolesRef }) =>
     return <CreateVideoList
         {...{ commit, inFlight, knownRolesRef, canUserCreateList }}
         kind="series"
+        buildVariables={({ displayName }) => ({
+            creator: displayName,
+        })}
         returnPath={response =>
             ManageSeriesDetailsRoute.url({ id: response.createSeries.id })
         }

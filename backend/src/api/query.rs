@@ -3,7 +3,7 @@ use juniper::graphql_object;
 
 use crate::{
     auth::{AuthState, User},
-    model::{OpencastId, KnownGroup},
+    model::OpencastId,
 };
 
 use super::{
@@ -12,8 +12,8 @@ use super::{
     model::{
         self,
         admin::AdminInfo,
-        event::{AuthorizedEvent, Event},
-        known_roles::{self, KnownUsersSearchOutcome},
+        event::Event,
+        known_roles::{self, KnownGroup, KnownUsersSearchOutcome},
         playlist::Playlist,
         realm::Realm,
         search::{
@@ -61,32 +61,32 @@ impl Query {
 
     /// Returns an event by its Opencast ID.
     async fn event_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Event>> {
-        AuthorizedEvent::load_by_opencast_id(OpencastId(id), context).await
+        Event::load(OpencastId(id), context).await
     }
 
     /// Returns an event by its ID.
     async fn event_by_id(id: Id, context: &Context) -> ApiResult<Option<Event>> {
-        AuthorizedEvent::load_by_id(id, context).await
+        Event::load(id, context).await
     }
 
     /// Returns a series by its Opencast ID.
     async fn series_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Series>> {
-        Series::load_by_opencast_id(OpencastId(id), context).await
+        Series::load(OpencastId(id), context).await
     }
 
     /// Returns a series by its ID.
     async fn series_by_id(id: Id, context: &Context) -> ApiResult<Option<Series>> {
-        Series::load_by_id(id, context).await
+        Series::load(id, context).await
     }
 
     /// Returns a playlist by its Opencast ID.
     async fn playlist_by_opencast_id(id: String, context: &Context) -> ApiResult<Option<Playlist>> {
-        Playlist::load_by_opencast_id(OpencastId(id), context).await
+        Playlist::load(OpencastId(id), context).await
     }
 
     /// Returns a playlist by its ID.
     async fn playlist_by_id(id: Id, context: &Context) -> ApiResult<Option<Playlist>> {
-        Playlist::load_by_id(id, context).await
+        Playlist::load(id, context).await
     }
 
     /// Returns the current user.
@@ -120,8 +120,8 @@ impl Query {
     async fn node(id: Id, context: &Context) -> ApiResult<Option<NodeValue>> {
         match id.kind() {
             Id::REALM_KIND => Ok(Realm::load_by_id(id, context).await?.map(NodeValue::from)),
-            Id::SERIES_KIND => Ok(Series::load_by_id(id, context).await?.map(NodeValue::from)),
-            Id::EVENT_KIND => AuthorizedEvent::load_by_id(id, context).await?
+            Id::SERIES_KIND => Ok(Series::load(id, context).await?.map(NodeValue::from)),
+            Id::EVENT_KIND => Event::load(id, context).await?
                 .map(|e| e.into_result().map(NodeValue::from))
                 .transpose(),
             _ => Ok(None),
@@ -196,9 +196,9 @@ impl Query {
         known_roles::search_known_users(query, context).await
     }
 
-    /// Returns all known groups selectable in the ACL UI.
+    /// Returns all known groups, with `assignableActions` for the current user.
     async fn known_groups(context: &Context) -> ApiResult<Vec<KnownGroup>> {
-        KnownGroup::load_all(context).await.map_err(Into::into)
+        known_roles::known_groups_for_user(context).await
     }
 
     /// Returns information for the admin dashboard.

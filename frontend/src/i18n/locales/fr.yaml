@@ -137,11 +137,14 @@ login-page:
 video:
   singular: Vidéo
   plural: Vidéos
+  count: Nombre de vidéos # verify
   video-page: 'Page vidéo: « {{video}} »'
   video-player: Videoplayer
   duration: Durée de lecture
   details: Détails de la vidéo
   part-of-series: Partie de la série
+  part-of-playlists: Partie des playlist # verify
+  private-playlist: Playlist privée # verify
   more-from-series: Plus de « {{series}} »
   more-from-playlist: Plus de « {{playlist}} »
   deleted-block: La vidéo mentionnée ici a été supprimée.
@@ -210,6 +213,9 @@ series:
 
 playlist:
   singular: Playlist
+  entry-count: Nombre d'entrées # verify
+  no-of-entries_one: '{{count}} entrée' # verify
+  no-of-entries_other: '{{count}} entrées' # verify
   playlist-page: 'Page de la playlist : « {{playlist}} »' # needs verification
   deleted-block: La playlist référencée ici a été supprimée.
   not-allowed: Vous n'êtes pas autorisé(e) à voir cette playlist.
@@ -266,7 +272,7 @@ realm:
     my-page: Ma page
     note-label: Page d'utilisateur
     note-body: >
-      Il s'agit d'une page personnelle gérée par {{utilisateur}}. Il est
+      Il s'agit d'une page personnelle gérée par {{user}}. Il est
       responsable de l'ensemble du contenu.
     create:
       title: Créez votre propre page
@@ -301,6 +307,10 @@ search:
 
 upload:
   title: Importer une vidéo
+  no-writable-series-blocked: > #verify
+    L’importation nécessite une série. Vous n’avez accès en écriture à aucune série et vous ne pouvez pas en créer.
+  create-series-first: > #verify
+    L’importation nécessite une série. Veuillez en créer une ci-dessous pour continuer.
   drop-to-upload: Ajouter un fichier vidéo à importer par Drag-and-Drop
   not-authorized: Vous n’avez pas l’autorisation d’importer des vidéos.
   specified-series-not-found: La série spécifiée n'a pas été trouvée.
@@ -350,7 +360,6 @@ acl:
   title: Droits d'accès
   authorized-groups: Groupes autorisés
   authorized-users: Utilisateurs autorisés
-  editing-disabled: Le changement des droits d'accès est désactivé.
   locked-to-series: >
     Les autorisations de cette vidéo sont déterminées par sa <1>série</1> et ne
     peuvent donc pas être modifiées.
@@ -412,10 +421,7 @@ acl:
       realm-admin-description: Peut modérer, supprimer des pages et modifier les autorisations.
       realm-admin-description_one: Peut modérer, supprimer des pages et modifier les autorisations.
       realm-admin-description_other: Peuvent modérer, supprimer des pages et modifier les autorisations.
-      write-access: Droit d’écriture
-      moderate-access: Droits de modération
-      admin-access: Droits d'administration
-      large-group-warning: Vous donnez {{val}} à un grand groupe. Est-ce volontaire ?
+      large-group-warning: Vous donnez l'autorisation '{{val}}' à tout ce groupe. Est-ce volontaire ? # needs verification
   unlisted:
     note: Cette vidéo n'est pas répertoriée.
     explanation: >
@@ -531,11 +537,6 @@ manage:
     no-of-videos_one: '{{count}} vidéo' # verify - should be singular and probably lowercase
     no-of-videos_other: '{{count}} vidéos' # verify - should be lowercase
     removing-disabled: La suppression des vidéos est désactivée. # needs verification
-    details:
-      unknown_one: Vous n'avez pas les droits d'accès à une vidéo ou elle n'existe plus. # needs verification
-      unknown_other: > # needs verification
-        Pour {{count}} vous n'avez pas les droits d'accès aux vidéos
-        ou elles n'existent plus.
     edit:
       add-video: Ajouter une vidéo
       to-be-added: sera ajouté
@@ -544,6 +545,8 @@ manage:
       move: Déplacer # verify
       to-be-moved: "sera déplacé vers : {{series}}" # verify
       cannot-be-removed: 'Pas possible de supprimer : manque du droit d''écriture'
+      placeholder-missing: Vidéo manquante # verify
+      placeholder-not-allowed: Permissions insuffisantes # verify
       undo: Annuler
       save: Sauvegarder les modifications
       error: Échec de la mise à jour du contenu de la série.
@@ -567,13 +570,38 @@ manage:
       next: Page suivante
       last: Dernière page
     filter:
-      by-title: Filtrer par titre #todo: verify
-    columns:
+      date: Date # verify
+      select-date: Sélectionner une période # verify
+      from: De # verify
+      to: À # verify
+      date-last-3-months: 3 derniers mois # verify
+      date-last-6-months: 6 derniers mois # verify
+      date-last-12-months: Les 12 derniers mois # verify
+      date-custom-range: Plage personnalisée # verify
+      filter-by-visibility: Filtrer par visibilité # verify
+      remove: Supprimer le filtre # verify
+      visibility: Visibilité # verify
+      visibility-public: Public # verify
+      visibility-public-tooltip: Visible par tout le monde # verify
+      visibility-private: Privé # verify
+      visibility-private-tooltip: Visible uniquement par vous # verify
+      visibility-shared: Partagé # verify
+      visibility-shared-tooltip: Visible par un groupe sélectionné # verify
+      writable: Accès # verify
+      write: Écriture # verify
+      read: Lecture # verify
+    sorting:
+      label: Trier les entrées # check
+      sort-by: Trier par # check
+      order: Organiser # check
       description: Trier par {{title}}, {{direction}}
       ascending: Croissant
       descending: Décroissant
+      ascending-cap: Croissant # check: does it need to be capitalized in context?
+      descending-cap: Décroissant # check: does it need to be capitalized in context?
       created: Créé
       updated: Actualisé
+      unknown: Tri inconnu # check
     no-series-title: Titre manquant
     no-entries-found: Aucune entrée trouvée.
     missing-date: Inconnu

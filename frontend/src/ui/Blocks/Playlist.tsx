@@ -13,8 +13,7 @@ import {
 } from "./__generated__/PlaylistBlockPlaylistData.graphql";
 import { ManagePlaylistDetailsRoute } from "../../routes/manage/Playlist/PlaylistDetails";
 import { keyOfId } from "../../util";
-import { VideoListBlock, VideoListBlockContainer, Order } from "./VideoList";
-import { VideoListLayout } from "./__generated__/SeriesBlockData.graphql";
+import { VideoListBlock, VideoListBlockContainer, Order, VideoListLayout } from "./VideoList";
 import { DirectPlaylistRoute, PlaylistRoute } from "../../routes/Playlist";
 
 
@@ -39,18 +38,22 @@ const blockFragment = graphql`
 const playlistFragment = graphql`
     fragment PlaylistBlockPlaylistData on Playlist {
         __typename
-        ... on NotAllowed { dummy } # workaround
+        ... on NotAllowed { __typename }
         ... on AuthorizedPlaylist {
             id
             title
             description
             creator
             canWrite
+            hasPublicRssFeed
+            isBookmark
             entries {
-                __typename
-                ... on AuthorizedEvent { id, ...VideoListEventData }
-                ... on Missing { dummy }
-                ... on NotAllowed { dummy }
+                node {
+                    __typename
+                    ... on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
+                    ... on Missing { __typename }
+                    ... on NotAllowed { __typename }
+                }
             }
         }
     }
@@ -94,13 +97,13 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
     const { t } = useTranslation();
 
     if (!playlist) {
-        return <VideoListBlockContainer showViewOptions={false}>
+        return <VideoListBlockContainer>
             {t("playlist.deleted-block")}
         </VideoListBlockContainer>;
     }
 
     if (playlist.__typename === "NotAllowed") {
-        return <VideoListBlockContainer showViewOptions={false}>
+        return <VideoListBlockContainer>
             {t("playlist.not-allowed-block")}
         </VideoListBlockContainer>;
     }
@@ -117,7 +120,8 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
 
     return <VideoListBlock
         displayOptions={{
-            initialLayout: props.layoutParam ?? props.layout,
+            initialLayout: props.layoutParam
+                ?? (props.layout === "%future added value" ? "GALLERY" : props.layout),
             initialOrder: props.orderParam
                 ?? (props.order === "%future added value" ? undefined : props.order)
                 ?? "ORIGINAL",
@@ -132,14 +136,15 @@ export const PlaylistBlock: React.FC<Props> = ({ playlist, ...props }) => {
         activeEventId={props.activeEventId}
         realmPath={props.realmPath}
         listId={playlist.id}
-        listEntries={playlist.entries}
+        isBookmark={playlist.isBookmark}
+        listEntries={playlist.entries.map(e => e.node)}
         editMode={props.editMode ?? false}
         shareInfo={{
             kind: "playlist",
             shareUrl: props.realmPath == null
                 ? DirectPlaylistRoute.url({ playlistId: playlist.id })
                 : PlaylistRoute.url({ realmPath: props.realmPath, playlistId: playlist.id }),
-            rssUrl: `/~rss/playlist/${playlistKey}`,
+            rssUrl: playlist.hasPublicRssFeed ? `/~rss/playlist/${playlistKey}` : undefined,
         }}
         linkToManagePage={ManagePlaylistDetailsRoute.url({ id: playlist.id })}
     />;

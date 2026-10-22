@@ -2,7 +2,6 @@ use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use hyper::StatusCode;
 use juniper::{graphql_object, GraphQLEnum, GraphQLInputObject};
-use postgres_types::ToSql;
 use serde_json::json;
 
 use crate::{
@@ -11,14 +10,18 @@ use crate::{
         err::{self, ApiResult, invalid_input},
         model::{
             acl::{self, Acl},
-            event::{AuthorizedEvent},
+            event::{AuthorizedEvent, Event},
             realm::Realm,
-            shared::{SearchFilter, SortDirection, ToSqlColumn, convert_acl_input},
+            shared::{
+                SearchFilter, SortDirection, ToSqlColumn, ensure_acl_assignment_allowed,
+                ensure_only_read_write_actions,
+            },
         },
-        util::LazyLoad,
+        util::{OcItemId, LazyLoad},
     },
     db::util::{impl_from_db, select},
     model::{
+        AclForDb,
         AclItem,
         ExtraMetadata,
         Key,
@@ -41,13 +44,12 @@ use super::{
         VideoListOrder,
         mutations::DisplayOptions,
     },
-    playlist::VideoListEntry,
+    event::VideoListEntry,
     realm::{NewRealm, RealmSpecifier, RemoveMountedSeriesOutcome, UpdatedRealmName},
     shared::{
         define_sort_column_and_order,
         load_writable_for_user,
         BasicMetadata,
-        AclForDB,
         Connection,
         ConnectionQueryParts,
         PageInfo,
@@ -66,11 +68,11 @@ pub(crate) struct Series {
     pub(crate) created: Option<DateTime<Utc>>,
     pub(crate) updated: Option<DateTime<Utc>>,
     pub(crate) metadata: Option<ExtraMetadata>,
-    #[allow(dead_code)]
-    pub(crate) read_roles: Option<Vec<String>>,
-    pub(crate) write_roles: Option<Vec<String>>,
+    pub(crate) acl: AclForDb,
+    pub(crate) is_bookmark: LazyLoad<bool>,
     pub(crate) num_videos: LazyLoad<u32>,
     pub(crate) thumbnail_stack: LazyLoad<ThumbnailStack>,
+    pub(crate) has_public_videos: LazyLoad<bool>,
     pub(crate) tobira_deletion_timestamp: Option<DateTime<Utc>>,
 }
 
@@ -98,53 +100,54 @@ impl_from_db!(
             created: row.created(),
             updated: row.updated(),
             metadata: row.metadata(),
-            read_roles: row.read_roles(),
-            write_roles: row.write_roles(),
+            acl: AclForDb {
+                read_roles: row.read_roles::<Option<Vec<String>>>().unwrap_or(vec![]),
+                write_roles: row.write_roles::<Option<Vec<String>>>().unwrap_or(vec![]),
+            },
             tobira_deletion_timestamp: row.tobira_deletion_timestamp(),
             description: row.description(),
+            is_bookmark: LazyLoad::NotLoaded,
             num_videos: LazyLoad::NotLoaded,
             thumbnail_stack: LazyLoad::NotLoaded,
+            has_public_videos: LazyLoad::NotLoaded,
         }
     },
 );
 
 impl Series {
-    pub(crate) async fn load_by_id(id: Id, context: &Context) -> ApiResult<Option<Self>> {
-        if let Some(key) = id.key_for(Id::SERIES_KIND) {
-            Self::load_by_key(key, context).await
-        } else {
-            Ok(None)
-        }
-    }
+    pub async fn load(id: impl OcItemId, context: &Context) -> ApiResult<Option<Self>> {
+        let Some(id_arg) = id.arg(Id::SERIES_KIND) else {
+            return Ok(None);
+        };
 
-    pub(crate) async fn load_by_key(key: Key, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("id", &key, context).await
-    }
-
-    pub(crate) async fn load_by_opencast_id(id: OpencastId, context: &Context) -> ApiResult<Option<Self>> {
-        Self::load_by_any_id("opencast_id", &id, context).await
-    }
-
-    async fn load_by_any_id(
-        col: &str,
-        id: &(dyn ToSql + Sync),
-        context: &Context,
-    ) -> ApiResult<Option<Self>> {
-        let selection = Self::select();
+        let (selection, mapping) = select!(
+            series: Series,
+            is_bookmark: "exists(select from bookmarks where series = series.id and username = $2)",
+            has_public_videos: "exists(\
+                select from events \
+                where events.series = series.id and 'ROLE_ANONYMOUS' = any(events.read_roles)\
+            )",
+        );
+        let col = id.column();
         let query = format!("select {selection} from series where {col} = $1");
         context.db
-            .query_opt(&query, &[id])
+            .query_opt(&query, &[&id_arg, &context.auth.state.username()])
             .await?
-            .map(|row| Self::from_row_start(&row))
+            .map(|row| {
+                let mut series = Series::from_row(&row, mapping.series);
+                series.is_bookmark = LazyLoad::Loaded(mapping.is_bookmark.of(&row));
+                series.has_public_videos = LazyLoad::Loaded(mapping.has_public_videos.of::<bool>(&row));
+                series
+            })
             .pipe(Ok)
     }
 
     async fn load_for_mutation(id: Id, context: &Context) -> ApiResult<Series> {
-        let series = Self::load_by_id(id, context)
+        let series = Self::load(id, context)
             .await?
             .ok_or_else(|| err::invalid_input!(key = "series.not-found", "series {id} not found"))?;
 
-        if !context.auth.overlaps_roles(series.write_roles.as_deref().unwrap_or(&[])) {
+        if !context.auth.overlaps_roles(&series.acl.write_roles) {
             return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
         }
 
@@ -153,7 +156,8 @@ impl Series {
 
     pub(crate) async fn create(
         series: NewSeries,
-        acl: Option<AclForDB>,
+        acl: Option<AclForDb>,
+        metadata: ExtraMetadata,
         context: &Context,
         state: SeriesState,
     ) -> ApiResult<Self> {
@@ -172,9 +176,9 @@ impl Series {
         let query = format!(
             "insert into all_series ( \
                 opencast_id, title, description, state, \
-                created, updated, read_roles, write_roles \
+                created, updated, read_roles, write_roles, metadata \
             ) \
-            values ($1, $2, $3, $4, now(), {updated}, $5, $6) \
+            values ($1, $2, $3, $4, now(), {updated}, $5, $6, $7) \
             returning {selection}",
         );
 
@@ -187,6 +191,7 @@ impl Series {
                     &state,
                     &read_roles,
                     &write_roles,
+                    &metadata,
                 ]).await?
                 .pipe(|row| Self::from_row_start(&row))
                 .pipe(Ok)
@@ -198,21 +203,29 @@ impl Series {
     pub(crate) async fn create_in_oc(
         metadata: BasicMetadata,
         acl: Vec<AclItem>,
+        creator: String,
         context: &Context,
     ) -> ApiResult<Self> {
         if !context.auth.can_create_series(&context.config.auth) {
             return Err(err::not_authorized!(key = "series.not-allowed", "series action not allowed"));
         }
+        ensure_only_read_write_actions(&acl)?;
+        ensure_acl_assignment_allowed(context, &acl, None).await?;
+
         let response = context
             .oc_client
-            .create_series(&acl, &metadata.title, metadata.description.as_deref())
+            .create_series(&acl, &metadata.title, metadata.description.as_deref(), &creator)
             .await
             .map_err(|e| {
                 error!("Failed to create series in Opencast: {}", e);
                 err::opencast_unavailable!("Failed to create series")
             })?;
 
-        let db_acl = Some(convert_acl_input(&acl));
+        let db_acl = Some(AclForDb::from_items(&acl));
+        let extra_metadata = ExtraMetadata {
+            dcterms: HashMap::from([("creator".into(), vec![creator])]),
+            extended: HashMap::new(),
+        };
 
         // If the request returned an Opencast identifier, the series was created successfully.
         // The series is created in the database, so the user doesn't have to wait for sync to see
@@ -224,6 +237,7 @@ impl Series {
                 description: metadata.description,
             },
             db_acl,
+            extra_metadata,
             context,
             SeriesState::Ready,
         ).await?;
@@ -233,7 +247,7 @@ impl Series {
 
     pub(crate) async fn announce(series: NewSeries, context: &Context) -> ApiResult<Self> {
         context.require_trusted_external_auth()?;
-        Self::create(series, None, context, SeriesState::Waiting).await
+        Self::create(series, None, ExtraMetadata::default(), context, SeriesState::Waiting).await
     }
 
     pub(crate) async fn add_mount_point(
@@ -243,7 +257,7 @@ impl Series {
     ) -> ApiResult<Realm> {
         context.require_trusted_external_auth()?;
 
-        let series = Self::load_by_opencast_id(series_oc_id, context)
+        let series = Self::load(series_oc_id, context)
             .await?
             .ok_or_else(|| invalid_input!("`seriesId` does not refer to a valid series"))?;
 
@@ -288,7 +302,7 @@ impl Series {
     ) -> ApiResult<RemoveMountedSeriesOutcome> {
         context.require_trusted_external_auth()?;
 
-        let series = Self::load_by_opencast_id(series_oc_id, context)
+        let series = Self::load(series_oc_id, context)
             .await?
             .ok_or_else(|| invalid_input!("`seriesId` does not refer to a valid series"))?;
 
@@ -354,7 +368,9 @@ impl Series {
         }
 
         // Create series
-        let series = Series::create(series, None, context, SeriesState::Waiting).await?;
+        let series = Series::create(
+            series, None, ExtraMetadata::default(), context, SeriesState::Waiting,
+        ).await?;
 
         // Create realms
         let target_realm = {
@@ -387,6 +403,7 @@ impl Series {
             table: "all_series",
             alias: Some("series"),
             join_clause: "",
+            date_column: "series.created",
         };
         let (selection, mapping) = select!(
             series: Series,
@@ -395,6 +412,10 @@ impl Series {
                 select search_thumbnail_info_for_event(events.*) \
                 from events \
                 where events.series = series.id)",
+            has_public_videos: "exists(\
+                select from events \
+                where events.series = series.id and 'ROLE_ANONYMOUS' = any(events.read_roles)\
+            )",
         );
         load_writable_for_user(context, order, filter, offset, limit, parts, selection, |row| {
             let mut out = Self::from_row(row, mapping.series);
@@ -405,16 +426,16 @@ impl Series {
                     .filter_map(|info| ThumbnailInfo::from_search(info, &context))
                     .collect(),
             });
+            out.has_public_videos = LazyLoad::Loaded(mapping.has_public_videos.of::<bool>(row));
             out
         }).await
     }
 
     pub(crate) async fn update_acl(id: Id, acl: Vec<AclItem>, context: &Context) -> ApiResult<Series> {
-        if !context.config.general.allow_acl_edit {
-            return Err(err::not_authorized!("editing ACLs is not allowed"));
-        }
-
         let series = Self::load_for_mutation(id, context).await?;
+
+        ensure_only_read_write_actions(&acl)?;
+        ensure_acl_assignment_allowed(context, &acl, Some(&series.acl)).await?;
 
         info!(
             series_id = %id,
@@ -433,7 +454,7 @@ impl Series {
 
         if response.status() == StatusCode::OK {
             // 200: The updated access control list is returned.
-            let db_acl = convert_acl_input(&acl);
+            let db_acl = AclForDb::from_items(&acl);
 
             context.db.execute("\
                 update all_series \
@@ -509,7 +530,8 @@ impl Series {
     pub(crate) async fn update_content(
         id: Id,
         added_events: Vec<Id>,
-        removed_events: Vec<RemovedEventFromSeries>,
+        removed_events: Vec<Id>,
+        moved_events: Vec<MovedEventToSeries>,
         context: &Context,
     ) -> ApiResult<Series> {
         let series = Self::load_for_mutation(id, context).await?;
@@ -521,8 +543,9 @@ impl Series {
         );
 
         let added_events = added_events.iter().map(|e| (*e, true, None));
-        let removed_events = removed_events.iter().map(|e| (e.id, false, e.target_series));
-        let modified_events = added_events.chain(removed_events);
+        let removed_events = removed_events.iter().map(|e| (*e, false, None));
+        let moved_events = moved_events.iter().map(|e| (e.id, false, Some(e.target_series)));
+        let modified_events = added_events.chain(removed_events).chain(moved_events);
 
         let series_key = series.key;
         let mut all_series = HashMap::from([(series_key, series)]);
@@ -721,6 +744,23 @@ impl Series {
         &self.metadata
     }
 
+    /// Returns `true` iff this series is a bookmark of the current user. Note:
+    /// this is lazily loaded and only available in certain contexts.
+    fn is_bookmark(&self) -> bool {
+        self.is_bookmark.unwrap()
+    }
+
+    /// Returns creators extracted from the series metadata.
+    /// Looks for `creator` or `createdBy` in the dcterms namespace.
+    fn creators(&self) -> Vec<String> {
+        self.metadata.as_ref()
+            .and_then(|m| {
+                m.dcterms.get("creator").or_else(|| m.dcterms.get("createdBy"))
+            })
+            .cloned()
+            .unwrap_or_default()
+    }
+
     fn description(&self) -> &Option<String> {
         &self.description
     }
@@ -764,9 +804,18 @@ impl Series {
         acl::load_for(context, &acl::query_for("series"), dbargs![&self.key]).await
     }
 
+    /// Returns whether at least one video in this series is public, i.e. accessible to
+    /// anonymous users. This is what determines whether the RSS feed of this series has any
+    /// content.
+    /// Note: this is lazily loaded and only available in certain contexts (`load` and
+    /// `load_writable_for_user`).
+    fn has_public_videos(&self) -> bool {
+        self.has_public_videos.unwrap()
+    }
+
     /// Whether the current user has write access to this series.
     fn can_write(&self, context: &Context) -> bool {
-        self.write_roles.as_ref().is_some_and(|roles| context.auth.overlaps_roles(roles))
+        context.auth.overlaps_roles(&self.acl.write_roles)
     }
 
     fn tobira_deletion_timestamp(&self) -> &Option<DateTime<Utc>> {
@@ -793,7 +842,7 @@ impl Series {
     }
 
     async fn entries(&self, context: &Context) -> ApiResult<Vec<VideoListEntry>> {
-        AuthorizedEvent::load_for_series(self.key, context).await
+        Event::load_for_series(self.key, context).await
     }
 
     /// Returns `true` if the realm has a series block with this series.
@@ -874,9 +923,8 @@ define_sort_column_and_order!(
 );
 
 #[derive(Debug, GraphQLInputObject)]
-pub(crate) struct RemovedEventFromSeries {
+pub(crate) struct MovedEventToSeries {
     pub id: Id,
-    /// When an event is moved from one series to another,
-    /// this field is used to specify the new series.
-    pub target_series: Option<Id>,
+    /// The series to move the event to.
+    pub target_series: Id,
 }

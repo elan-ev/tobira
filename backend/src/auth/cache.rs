@@ -102,6 +102,20 @@ struct UserCacheEntry {
     last_written_to_db: Instant,
 }
 
+impl UserCacheEntry {
+    /// Creates an entry for a user whose info was just written to the DB.
+    fn new(user: &super::User) -> Self {
+        Self {
+            display_name: user.display_name.clone(),
+            email: user.email.clone(),
+            roles: user.roles.clone(),
+            user_role: user.user_role.clone(),
+            user_realm_handle: user.user_realm_handle.clone(),
+            last_written_to_db: Instant::now(),
+        }
+    }
+}
+
 /// Cache to remember what users we have seen. Its only purpose is to make
 /// writes to the `users` table less frequent. The data from this cache must
 /// not be used in any other way.
@@ -130,21 +144,14 @@ impl UserCache {
                 if needs_update {
                     let res = Self::write_to_db(user, db).await;
                     if res.is_ok() {
-                        occupied.get_mut().last_written_to_db = Instant::now();
+                        *occupied.get_mut() = UserCacheEntry::new(user);
                     }
                 }
             },
             Entry::Vacant(vacant) => {
                 let res = Self::write_to_db(user, db).await;
                 if res.is_ok() {
-                    vacant.insert_entry(UserCacheEntry {
-                        display_name: user.display_name.clone(),
-                        email: user.email.clone(),
-                        roles: user.roles.clone(),
-                        user_role: user.user_role.clone(),
-                        user_realm_handle: user.user_realm_handle.clone(),
-                        last_written_to_db: Instant::now(),
-                    });
+                    vacant.insert_entry(UserCacheEntry::new(user));
                 }
             },
         }

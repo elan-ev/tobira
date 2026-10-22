@@ -23,4 +23,21 @@ export const test = base.extend<CustomTestFixtures>({
         await sql.end();
         await use({});
     },
+
+    // The original goto doesn't quite work for us, as the readiness check is insufficient
+    // for Tobira. This one makes sure the graphql response is returned and the
+    // "Loading..." is not shown anymore.
+    page: async ({ page }, use) => {
+        const originalGoTo = page.goto.bind(page) as typeof page.goto;
+        page.goto = async (url: string) => {
+            const res = await Promise.all([
+                originalGoTo(url),
+                page.waitForResponse(resp => resp.url().endsWith("/graphql"))
+                    .then(() => page.getByText("Loading...").waitFor({ state: "hidden" })),
+            ]);
+            return res[0];
+        };
+
+        await use(page);
+    },
 });

@@ -75,7 +75,7 @@ export const AddButtons: React.FC<Props> = ({ index, realm }) => {
 const AddButtonsMenu: React.FC<Props & {floatingRef: RefObject<FloatingHandle>}> = ({
     index, realm, floatingRef,
 }) => {
-    const isDark = useColorScheme().scheme === "dark";
+    const { isDark } = useColorScheme();
     const { t } = useTranslation();
     const itemProps = useFloatingItemProps();
     const menuId = useId();

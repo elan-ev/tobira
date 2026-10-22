@@ -23,7 +23,7 @@ mod series;
 mod translated_string;
 
 pub(crate) use self::{
-    acl::AclItem,
+    acl::{AclForDb, AclItem, REALM_ADMIN_ACTION, REALM_MODERATE_ACTION},
     block::BlockType,
     event::{
         TextMatch, TextAssetType, TimespanText, EventState,
@@ -31,7 +31,7 @@ pub(crate) use self::{
     },
     extra_metadata::ExtraMetadata,
     key::Key,
-    known_roles::{KnownGroup, KnownUser},
+    known_roles::{actions_assignable_by, KnownGroup, KnownUser},
     misc::ByteSpan,
     series::SeriesState,
     translated_string::{LangKey, TranslatedString},
@@ -64,6 +64,34 @@ impl Deref for OpencastId {
 }
 
 impl fmt::Display for OpencastId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+/// Identifies an entry within a playlist.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, FromSql, ToSql, GraphQLScalar)]
+#[postgres(transparent)]
+#[graphql(parse_token(String))]
+pub(crate) struct PlaylistEntryId(pub i64);
+
+impl PlaylistEntryId {
+    fn to_output<S: juniper::ScalarValue>(&self) -> juniper::Value<S> {
+        juniper::Value::scalar(self.0.to_string())
+    }
+
+    fn from_input<S: juniper::ScalarValue>(v: &juniper::InputValue<S>) -> Result<Self, String> {
+        v.as_string_value()
+            .ok_or_else(|| format!("Expected `String`, found: {v}"))
+            .and_then(|s| {
+                s.parse::<i64>()
+                    .map(Self)
+                    .map_err(|e| format!("Failed to parse `PlaylistEntryId`: {e}"))
+            })
+    }
+}
+
+impl fmt::Display for PlaylistEntryId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
