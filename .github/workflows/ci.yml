@@ -41,12 +41,12 @@ jobs:
           printf -- "--profile=release-ci" >> .cargo-flags
           printf -- "release" >> .cache-key
           echo "ci_targetdir=${target_dir}/release-ci" >> $GITHUB_ENV
-          echo "ci_webpack_flags=production" >> $GITHUB_ENV
+          echo "ci_frontend_build=build:release" >> $GITHUB_ENV
         else
           printf -- "--features=embed-in-debug" >> .cargo-flags
           printf -- "dev" >> .cache-key
           echo "ci_targetdir=${target_dir}/debug" >> $GITHUB_ENV
-          echo "ci_webpack_flags=development" >> $GITHUB_ENV
+          echo "ci_frontend_build=build:dev" >> $GITHUB_ENV
         fi
         echo "cache_key=$(cat .cache-key)" >> $GITHUB_ENV
 
@@ -75,7 +75,7 @@ jobs:
       run: npx relay-compiler
     - name: Build frontend
       working-directory: frontend
-      run: npx webpack --mode=${{ env.ci_webpack_flags }}
+      run: npm run ${{ env.ci_frontend_build }}
     - name: Lint frontend
       working-directory: frontend
       run: npx eslint --max-warnings 0 .
@@ -128,6 +128,8 @@ jobs:
       with:
         name: frontend-artifacts
         retention-days: 1
+        # Include `.vite/manifest`
+        include-hidden-files: true
         path: frontend/build
 
 

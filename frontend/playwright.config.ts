@@ -14,8 +14,15 @@ export default defineConfig({
     },
 
     projects: [
+        // Runs before the others, see `tests/build.setup.ts`.
+        {
+            name: "build",
+            testMatch: /build\.setup\.ts/u,
+        },
+
         {
             name: "chromium",
+            dependencies: ["build"],
             use: {
                 ...devices["Desktop Chrome"],
                 channel: "chrome",
@@ -27,12 +34,14 @@ export default defineConfig({
 
         {
             name: "firefox",
+            dependencies: ["build"],
             use: { ...devices["Desktop Firefox"] },
         },
 
         // Safari doesn't allow http logins, so we can't test everything there.
         {
             name: "webkit",
+            dependencies: ["build"],
             use: { ...devices["Desktop Safari"] },
         },
     ],

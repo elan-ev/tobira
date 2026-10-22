@@ -7,6 +7,7 @@ module.exports = {
     src: APP_PATH,
     schema: path.join(APP_PATH, "schema.graphql"),
     language: "typescript",
+    eagerEsModules: true,
     customScalarTypes: {
         "DateTime": "string",
         "Cursor": "string",
