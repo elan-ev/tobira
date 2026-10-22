@@ -42,6 +42,7 @@ const ALLOWED_MARKDOWN_TAGS = [
 ];
 
 const CODE_BACKGROUND_COLOR = COLORS.neutral10;
+const CODE_TEXT_COLOR = COLORS.neutral80;
 
 // We override some components emitted by the Markdown parser to add CSS.
 const MARKDOWN_COMPONENTS: Options["components"] = {
@@ -64,6 +65,7 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
     code: ({ node, className, ...props }) => <code
         css={{
             backgroundColor: CODE_BACKGROUND_COLOR,
+            color: CODE_TEXT_COLOR,
             padding: "1px 3px",
             borderRadius: "4px",
         }}
@@ -72,6 +74,7 @@ const MARKDOWN_COMPONENTS: Options["components"] = {
     pre: ({ node, ...props }) => <pre
         css={{
             backgroundColor: CODE_BACKGROUND_COLOR,
+            color: CODE_TEXT_COLOR,
             padding: "8px",
             overflowX: "auto",
             maxWidth: "100%",

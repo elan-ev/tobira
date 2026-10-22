@@ -169,6 +169,29 @@ pub(crate) struct GeneralConfig {
     #[config(default = false)]
     pub disallow_events_without_series: bool,
 
+    /// A banner shown on every page, e.g. to announce maintenance.
+    /// Only `text` is required. Example:
+    ///
+    /// ```
+    /// [general.global_banner]
+    /// text.default = "Tobira will be **unavailable** on Monday from 8:00 to 10:00."
+    /// ```
+    ///
+    /// Example with all options, a translation and multiline text:
+    ///
+    /// ```
+    /// [general.global_banner]
+    /// color = "danger"
+    /// icon = "warning"
+    /// text.default = """
+    /// Tobira will be **unavailable** on Monday from 8:00 to 10:00.
+    /// See the [status page](https://status.example.edu) for details.
+    /// """
+    /// text.de = """
+    /// Tobira ist am Montag von 8:00 bis 10:00 Uhr **nicht verfügbar**.
+    /// Details gibt es auf der [Statusseite](https://status.example.edu).
+    /// """
+    /// ```
     #[config(nested)]
     pub global_banner: GlobalBannerConfig,
 }
