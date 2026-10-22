@@ -73,8 +73,7 @@ import { realmBreadcrumbs } from "../util/realm";
 import { COLORS } from "../color";
 import { PrettyDate, semiPreciseDateTime } from "../ui/time";
 import { PlayerContextProvider, usePlayerContext } from "../ui/player/PlayerContext";
-import { MetadataSection, MetadataSectionSeriesLink } from "../ui/metadata";
-import { DirectSeriesRoute, SeriesRoute } from "./Series";
+import { VideoMetadata } from "../ui/metadata";
 import { EmbedVideoRoute } from "./Embed";
 import { ManageVideoDetailsRoute } from "./manage/Video/VideoDetails";
 import { PlaylistBlockFromPlaylist } from "../ui/Blocks/Playlist";
@@ -91,6 +90,7 @@ import { SHORTCUTS, useShortcut } from "../ui/Shortcuts";
 import { usePlayerGroupContext } from "../ui/player/PlayerGroupContext";
 import { isSpaceOnInteractiveElement } from "../ui/player/PlayerShortcuts";
 import { LIST_ORDERS, Order, VideoListLayout } from "../ui/Blocks/VideoList";
+
 
 // ===========================================================================================
 // ===== Route definitions
@@ -942,23 +942,10 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                 />
             </section>
         </div>
-        <MetadataSection
-            event={event}
-            valueStyle="line-break"
-            seriesLink={getSeriesLink(event.series, realmPath)}
-        />
+        <VideoMetadata {...{ event, realmPath }} />
     </>;
 };
 
-export const getSeriesLink = (
-    series: { id: string; title: string } | null | undefined,
-    realmPath: string | null,
-): MetadataSectionSeriesLink | undefined => series ? {
-    title: series.title,
-    url: realmPath == null
-        ? DirectSeriesRoute.url({ seriesId: series.id })
-        : SeriesRoute.url({ seriesId: series.id, realmPath }),
-} : undefined;
 
 const DownloadButton: React.FC<{ event: SyncedEvent }> = ({ event }) => {
     const { t } = useTranslation();
@@ -1209,4 +1196,3 @@ const VideoDate: React.FC<VideoDateProps> = ({ event }) => {
         </div>
     );
 };
-

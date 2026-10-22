@@ -9,9 +9,9 @@ import { isSynced, keyOfId } from "../../util";
 import { Link } from "../../router";
 import { LuCircleArrowRight } from "react-icons/lu";
 import { PlayerContextProvider } from "../player/PlayerContext";
-import { getSeriesLink, PreviewPlaceholder, useEventWithAuthData } from "../../routes/Video";
-import { MetadataSection } from "../../ui/metadata";
-import React from "react";
+import { PreviewPlaceholder, useEventWithAuthData } from "../../routes/Video";
+import { VideoMetadata } from "../metadata";
+
 
 export type BlockEvent = VideoBlockData$data["event"];
 export type AuthorizedBlockEvent = Extract<BlockEvent, { __typename: "AuthorizedEvent" }>;
@@ -74,9 +74,9 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, realmPath, edit
         return unreachable();
     }
 
-    return <PlayerContextProvider>
-        <div css={{ maxWidth: 800 }}>
-            {showTitle && <Title title={event.title} />}
+    return <div css={{ maxWidth: 800 }}>
+        {showTitle && <Title title={event.title} />}
+        <PlayerContextProvider>
             <section aria-label={t("video.video-player")}>
                 {event.authorizedData && isSynced(event)
                     ? <InlinePlayer
@@ -86,31 +86,26 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, realmPath, edit
                     : <PreviewPlaceholder {...{ event, refetch }} />
                 }
             </section>
-
-            {showLink && <Link
-                to={`${basePath}/${keyOfId(event.id)}`}
-                css={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    marginTop: 8,
-                    marginLeft: "auto",
-                    width: "fit-content",
-                    borderRadius: 4,
-                    outlineOffset: 1,
-                }}
-            >
-                {t("video.details")}
-                <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
-            </Link>}
-
             {showMetadata && <div css={{ marginTop: 16 }}>
-                <MetadataSection
-                    event={event}
-                    valueStyle="inline-bullets"
-                    seriesLink={getSeriesLink(event.series, realmPath)}
-                />
+                <VideoMetadata {...{ event, realmPath }} />
             </div>}
-        </div>
-    </PlayerContextProvider>;
+        </PlayerContextProvider>
+
+        {showLink && <Link
+            to={`${basePath}/${keyOfId(event.id)}`}
+            css={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 8,
+                marginLeft: "auto",
+                width: "fit-content",
+                borderRadius: 4,
+                outlineOffset: 1,
+            }}
+        >
+            {t("video.details")}
+            <LuCircleArrowRight size={18} css={{ marginTop: 1 }} />
+        </Link>}
+    </div>;
 };

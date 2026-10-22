@@ -111,7 +111,7 @@ impl BlockValue {
             .ok_or_else(|| invalid_input!("`block.event` does not refer to an event"))?;
         context.db
             .execute(
-                "insert into blocks (realm, index, type, video, show_title, show_link,show_metadata) \
+                "insert into blocks (realm, index, type, video, show_title, show_link, show_metadata) \
                     values ($1, $2, 'video', $3, $4, $5, $6)",
                 &[
                     &realm.key,
