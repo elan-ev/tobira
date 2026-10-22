@@ -69,10 +69,12 @@ export const DateAndCreators: React.FC<DateAndCreatorsProps> = ({
 );
 
 
-export const DateBadge: React.FC<PrettyDateProps> = props => <>
-    <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
-    <PrettyDate {...props} />
-</>;
+export const DateBadge: React.FC<PrettyDateProps> = props => (
+    <div css={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <LuCalendar css={{ fontSize: 15, color: COLORS.neutral60 }} />
+        <PrettyDate {...props} />
+    </div>
+);
 
 export type CreatorsBadgeProps = {
     creators: (string | JSX.Element)[];
