@@ -482,11 +482,19 @@ const UploadErrorBox: React.FC<{ error: unknown }> = ({ error }) => {
             potentiallyInternetProblem: true,
         };
     } else if (error instanceof OcServerError) {
-        info = {
-            causes: new Set([t("upload.errors.opencast-server-error")]),
-            probablyOurFault: true,
-            potentiallyInternetProblem: false,
-        };
+        if (error.status === 413) { // Entity too large
+            info = {
+                causes: new Set([t("upload.errors.too-large")]),
+                probablyOurFault: false,
+                potentiallyInternetProblem: false,
+            };
+        } else {
+            info = {
+                causes: new Set([t("upload.errors.opencast-server-error")]),
+                probablyOurFault: true,
+                potentiallyInternetProblem: false,
+            };
+        }
     } else if (error instanceof JwtInvalid) {
         info = {
             causes: new Set([t("upload.errors.jwt-invalid")]),

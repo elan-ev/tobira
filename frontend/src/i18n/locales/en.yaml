@@ -351,6 +351,7 @@ upload:
   errors:
     failed-to-upload: Failed to upload video.
     opencast-server-error: Opencast server error (unexpected response).
+    too-large: Video file is too large.
     opencast-unreachable: 'Network error: Opencast cannot be reached.'
     jwt-invalid: 'Internal cross-authentication error: Opencast did not authorize the upload.'
     failed-fetching-series-acl: Failed to fetch series acl.

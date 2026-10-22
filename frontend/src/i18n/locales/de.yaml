@@ -356,6 +356,7 @@ upload:
   errors:
     failed-to-upload: Hochladen fehlgeschlagen.
     opencast-server-error: Opencast-Server-Fehler (unerwartete Antwort).
+    too-large: Videodatei ist zu groß.
     opencast-unreachable: 'Netzwerkfehler: Opencast kann nicht erreicht werden.'
     jwt-invalid: 'Interner Fremdauthentifizierungsfehler: Opencast hat das Hochladen nicht autorisiert.'
     failed-fetching-series-acl: Abruf der Serienzugangsberechtigungen fehlgeschlagen.
