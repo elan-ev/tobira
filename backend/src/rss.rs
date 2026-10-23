@@ -26,12 +26,16 @@ struct Event {
     thumbnail_url: Option<String>,
     tracks: Vec<EventTrack>,
     metadata: ExtraMetadata,
+    start_time: Option<DateTime<Utc>>,
 }
 
 impl_from_db!(
     Event,
     select: {
-        events.{ id, title, description, creators, thumbnail, created, tracks, metadata },
+        events.{
+            id, title, description, creators, thumbnail,
+            created, tracks, metadata, start_time,
+        },
     },
     |row| {
         Self {
@@ -43,6 +47,7 @@ impl_from_db!(
             thumbnail_url: row.thumbnail(),
             tracks: row.tracks(),
             metadata: row.metadata(),
+            start_time: row.start_time(),
         }
     }
 );
@@ -300,7 +305,7 @@ async fn video_items(
                 <link>{event_link}</link>
                 <description>{event.description.unwrap_or_default()}</description>
                 <dc:creator>{creators}</dc:creator>
-                <pubDate>{event.created.to_rfc2822()}</pubDate>
+                <pubDate>{event.start_time.unwrap_or(event.created).to_rfc2822()}</pubDate>
                 <guid>{event_link}</guid>
                 <media:thumbnail url={thumbnail} />
                 <itunes:image href={thumbnail} />
