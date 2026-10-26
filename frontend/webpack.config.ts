@@ -31,6 +31,9 @@ const config = (_env: unknown, argv: { mode: string }): Configuration => ({
         clean: true,
     },
     optimization: {
+        // To keep our literal strings that are replaced in the backend.
+        minimizeOptions: { html: false },
+
         // This disables the automatic chunk splitting by webpack. This is only
         // temporary until we use proper code splitting. But for now we only
         // have a few dynamic imports to split certain things manually.
