@@ -109,6 +109,8 @@ impl BlockValue {
         let (realm, index) = Self::prepare_realm_for_block(realm, index, context).await?;
         let event = block.event.key_for(Id::EVENT_KIND)
             .ok_or_else(|| invalid_input!("`block.event` does not refer to an event"))?;
+        let show_metadata = block.display_options.show_metadata
+            .ok_or_else(|| invalid_input!("`block.displayOptions.showMetadata` has to be set"))?;
         context.db
             .execute(
                 "insert into blocks (realm, index, type, video, show_title, show_link, show_metadata) \
@@ -119,7 +121,7 @@ impl BlockValue {
                     &event,
                     &block.display_options.show_title,
                     &block.display_options.show_link,
-                    &block.display_options.show_metadata,
+                    &show_metadata,
                 ],
             )
             .await?;
