@@ -1,0 +1,11 @@
+name: Install MUSL
+description: Installs the MUSL Rust target and the system tools needed to build for it.
+
+runs:
+  using: composite
+  steps:
+  - name: Install MUSL dependencies
+    shell: bash
+    run: |
+      sudo apt install -y musl-dev musl-tools
+      rustup target add x86_64-unknown-linux-musl

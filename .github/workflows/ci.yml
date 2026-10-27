@@ -10,6 +10,7 @@ on:
     - ".deployment/templates/config.toml"
     - "util/dummy-login/dist/index.js"
     - ".github/workflows/ci.yml"
+    - ".github/actions/**"
     - ".github/workflows/deploy.yml"
   push:
     branches:
@@ -18,43 +19,31 @@ on:
       - "*"
 
 
-env:
-  CARGO_TERM_COLOR: always
-  RUSTFLAGS: --deny warnings
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      rust-mode: ${{ steps.mode.outputs.rust }}
     steps:
     - uses: actions/checkout@v4
 
     # Figure out build mode
     - name: Determine build mode
+      id: mode
       run: |
-        target_dir="target"
-        sudo apt install -y musl-dev musl-tools
-        rustup target add x86_64-unknown-linux-musl
-        printf -- "--target=x86_64-unknown-linux-musl " >> .cargo-flags
-        target_dir="${target_dir}/x86_64-unknown-linux-musl"
-
         if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/main" ]; then
-          printf -- "--profile=release-ci" >> .cargo-flags
-          printf -- "release" >> .cache-key
-          echo "ci_targetdir=${target_dir}/release-ci" >> $GITHUB_ENV
+          echo "rust=release" >> $GITHUB_OUTPUT
           echo "ci_webpack_flags=production" >> $GITHUB_ENV
         else
-          printf -- "--features=embed-in-debug" >> .cargo-flags
-          printf -- "dev" >> .cache-key
-          echo "ci_targetdir=${target_dir}/debug" >> $GITHUB_ENV
+          echo "rust=dev" >> $GITHUB_OUTPUT
           echo "ci_webpack_flags=development" >> $GITHUB_ENV
         fi
-        echo "cache_key=$(cat .cache-key)" >> $GITHUB_ENV
 
-    - name: Restore backend cache
-      uses: Swatinem/rust-cache@v2
+    - uses: ./.github/actions/install-musl
+    - name: Set up Rust build and restore backend cache
+      uses: ./.github/actions/rust-setup
       with:
-        shared-key: '${{ env.cache_key }}'
-        workspaces: backend
+        mode: ${{ steps.mode.outputs.rust }}
 
     # Frontend cache: only the NPM folder is cached, not the node_modules, as
     # recommended here: https://github.com/actions/cache/blob/main/examples.md#node---npm
@@ -86,7 +75,7 @@ jobs:
     # ----- Build the backend -----
     - name: Build backend
       working-directory: backend
-      run: cargo build $(cat ../.cargo-flags)
+      run: cargo build ${{ env.ci_cargo_flags }}
 
     # ----- Prepare binary -----
     - name: Move Tobira binary
@@ -115,8 +104,6 @@ jobs:
           util/dev-config/logo-large-dark.svg
           util/dev-config/favicon.svg
           .deploy-id
-          .cache-key
-          .cargo-flags
           .deployment/templates/config.toml
           .deployment/files/known-groups.json
           .deployment/files/known-users.json
@@ -170,22 +157,15 @@ jobs:
 
 
     # Run backend tests
-    - name: Read cache key
-      run: echo "cache_key=$(cat .cache-key)" >> $GITHUB_ENV
-    - name: Install MUSL dependencies
-      run: |
-        sudo apt install -y musl-dev musl-tools
-        rustup target add x86_64-unknown-linux-musl
-
-    - name: Restore backend cache
-      uses: Swatinem/rust-cache@v2
+    - uses: ./.github/actions/install-musl
+    - name: Set up Rust build and restore backend cache
+      uses: ./.github/actions/rust-setup
       with:
-        shared-key: '${{ env.cache_key }}'
-        workspaces: backend
-        save-if: false
+        mode: ${{ needs.build.outputs.rust-mode }}
+        save-cache: false
     - name: Test backend
       working-directory: backend
-      run: cargo test $(cat ../.cargo-flags)
+      run: cargo test ${{ env.ci_cargo_flags }}
 
 
     # Test DB migrations

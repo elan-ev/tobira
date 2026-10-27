@@ -1,0 +1,61 @@
+name: Rust setup
+description: >
+  Sets up Cargo flags for a CI build of the backend and restores the Rust cache.
+
+# Exports `RUSTFLAGS`, `CARGO_TERM_COLOR`, `ci_cargo_flags` and `ci_targetdir`
+# to later steps. Building with these flags requires the MUSL target, see the
+# `install-musl` action.
+
+inputs:
+  mode:
+    description: "'dev' or 'release'"
+    required: true
+  save-cache:
+    description: Whether to save the Rust cache at the end of the job.
+    default: 'true'
+  lookup-only:
+    description: Only check whether an exact cache entry exists, don't download it.
+    default: 'false'
+
+outputs:
+  cache-hit:
+    description: Whether an exact cache entry was found.
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+  - name: Determine Cargo flags
+    shell: bash
+    env:
+      MODE: ${{ inputs.mode }}
+    run: |
+      # Colored output in the CI logs (Cargo only colors output to a terminal
+      # by default) and fail on warnings in our code.
+      echo "CARGO_TERM_COLOR=always" >> $GITHUB_ENV
+      echo "RUSTFLAGS=--deny warnings" >> $GITHUB_ENV
+
+      target="x86_64-unknown-linux-musl"
+      case "$MODE" in
+        release)
+          echo "ci_cargo_flags=--target=${target} --profile=release-ci" >> $GITHUB_ENV
+          echo "ci_targetdir=target/${target}/release-ci" >> $GITHUB_ENV
+          ;;
+        dev)
+          echo "ci_cargo_flags=--target=${target} --features=embed-in-debug" >> $GITHUB_ENV
+          echo "ci_targetdir=target/${target}/debug" >> $GITHUB_ENV
+          ;;
+        *)
+          echo "::error::Invalid mode '$MODE', expected 'dev' or 'release'"
+          exit 1
+          ;;
+      esac
+
+  - name: Restore backend cache
+    id: cache
+    uses: Swatinem/rust-cache@v2
+    with:
+      shared-key: ${{ inputs.mode }}
+      workspaces: backend
+      save-if: ${{ inputs.save-cache }}
+      lookup-only: ${{ inputs.lookup-only }}
