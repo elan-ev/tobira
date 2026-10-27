@@ -30,7 +30,7 @@ jobs:
     outputs:
       hit: ${{ steps.lookup.outputs.cache-hit }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Look up backend cache
       id: lookup
       uses: ./.github/actions/rust-setup
@@ -44,7 +44,7 @@ jobs:
     if: needs.lookup.outputs.hit != 'true'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - uses: ./.github/actions/install-musl
 
     # Restores the closest older cache (e.g. from before the last `Cargo.lock`

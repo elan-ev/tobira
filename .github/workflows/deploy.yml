@@ -21,7 +21,7 @@ jobs:
         github.actor == 'lkiesow'
       ) }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: prepare deploy key
       env:
@@ -37,14 +37,14 @@ jobs:
 
     # Now waiting for the CI step to finish.
     - name: Wait for build to succeed
-      uses: lewagon/wait-on-check-action@v1.3.1
+      uses: lewagon/wait-on-check-action@v1.9.1
       with:
         ref: ${{ github.event.workflow_run.head_commit.id }}
         check-name: 'build'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Download artifacts from build workflow
-      uses: dawidd6/action-download-artifact@v6
+      uses: dawidd6/action-download-artifact@v27
       with:
         name: test-deployment-files
         run_id: ${{ github.event.workflow_run.id }}
@@ -53,7 +53,7 @@ jobs:
       run: echo "DEPLOY_ID=$(cat .deploy-id)" >> $GITHUB_ENV
 
     - name: Set GitHub deployment status to "Pending"
-      uses: bobheadxi/deployments@v1.3.0
+      uses: bobheadxi/deployments@v1.5.0
       id: gh_deployment_start
       with:
         step: start
@@ -83,7 +83,7 @@ jobs:
         deploy.yml
 
     - name: Set GitHub deployment status to "deployed"
-      uses: bobheadxi/deployments@v1.3.0
+      uses: bobheadxi/deployments@v1.5.0
       with:
         step: finish
         token: ${{ secrets.GITHUB_TOKEN }}

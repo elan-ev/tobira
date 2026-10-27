@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for dirty pull requests
-        uses: eps1lon/actions-label-merge-conflict@releases/2.x
+        uses: eps1lon/actions-label-merge-conflict@v3.1.0
         with:
           dirtyLabel: "status:conflicts"
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
