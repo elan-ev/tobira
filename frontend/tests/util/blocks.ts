@@ -1,4 +1,6 @@
 import { Page, expect } from "@playwright/test";
+import { TobiraProcess } from "./isolation";
+import { withDb } from "./data";
 
 
 export type Block =
@@ -116,3 +118,69 @@ export const addBlock = async (page: Page, pos: number, block: Block) => {
     await expect(addButtons).toHaveCount(numSlots + 1);
     await expect(saveButton).toBeHidden();
 };
+
+
+const VIDEO_LIST_ORDERS = {
+    "newest first": "new_to_old",
+    "oldest first": "old_to_new",
+    "a to z": "a_to_z",
+    "z to a": "z_to_a",
+    "playlist order": "original",
+} as const;
+
+/**
+ * Sets the blocks of the realm at `realmPath` directly in the DB, replacing existing ones.
+ * `query` must be the exact title of the video, series or playlist.
+ */
+export const insertBlocks = async (tobira: TobiraProcess, realmPath: string, blocks: Block[]) =>
+    withDb(tobira, async sql => {
+        const [realm] = await sql`select id from realms where full_path = ${realmPath}`;
+        await sql`delete from blocks where realm = ${realm.id}`;
+
+        for (const [index, block] of blocks.entries()) {
+            switch (block.type) {
+                case "title":
+                case "text": {
+                    await sql`
+                        insert into blocks (realm, type, index, text_content)
+                        values (${realm.id}, ${block.type}, ${index}, ${block.text})
+                    `;
+                    break;
+                }
+                case "video": {
+                    await sql`
+                        insert into blocks
+                            (realm, type, index, video, show_title, show_link, show_metadata)
+                        values (
+                            ${realm.id}, 'video', ${index},
+                            (select id from events where title = ${block.query}),
+                            ${block.showTitle ?? true},
+                            ${block.showLink ?? true},
+                            ${block.showMetadata ?? false}
+                        )
+                    `;
+                    break;
+                }
+                case "series":
+                case "playlist": {
+                    const item = block.type === "series"
+                        ? sql`(select id from series where title = ${block.query})`
+                        : sql`(select id from playlists where title = ${block.query})`;
+                    await sql`
+                        insert into blocks (
+                            realm, type, index, ${sql(block.type)},
+                            videolist_order, videolist_layout, show_title, show_metadata
+                        )
+                        values (
+                            ${realm.id}, ${block.type}, ${index}, ${item},
+                            ${VIDEO_LIST_ORDERS[block.options?.order ?? "newest first"]},
+                            ${block.options?.layout ?? "gallery"},
+                            ${block.options?.showTitle ?? true},
+                            ${block.options?.showDescription ?? false}
+                        )
+                    `;
+                    break;
+                }
+            }
+        }
+    });
