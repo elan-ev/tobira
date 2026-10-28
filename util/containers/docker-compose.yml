@@ -21,12 +21,14 @@ services:
 
   # A PostgreSQL database for Tobira.
   tobira-dev-database:
-    image: docker.io/library/postgres:12
+    # Must not be older than the Postgres in `.github/workflows/upload-db-dump.yml`,
+    # otherwise the DB dumps cannot be loaded here.
+    image: docker.io/library/postgres:15
     restart: unless-stopped
     ports:
       - 127.0.0.1:5432:5432
     volumes:
-      - tobira-dev-postgres:/var/lib/postgresql/data
+      - tobira-dev-postgres-15:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=tobira
       - POSTGRES_USER=tobira
@@ -55,5 +57,5 @@ services:
 
 
 volumes:
-  tobira-dev-postgres:
+  tobira-dev-postgres-15:
   tobira-dev-meili:
