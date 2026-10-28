@@ -126,7 +126,7 @@ jobs:
     needs: build
     services:
       postgres:
-        image: postgres:12
+        image: postgres:15
         env:
           POSTGRES_USER: tobira
           POSTGRES_PASSWORD: tobira
