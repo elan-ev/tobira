@@ -109,7 +109,7 @@ jobs:
           .deployment/files/known-users.json
           util/dummy-login/dist/index.js
 
-    # This is uploaded for the test job, specifically `cargo test`
+    # This is uploaded for `cargo test` in the `test-backend` job
     - name: Upload frontend artifacts
       uses: actions/upload-artifact@v7
       with:
@@ -121,11 +121,11 @@ jobs:
 
   # --------------------------------------------------------------------------
 
-  test:
+  test-backend:
     runs-on: ubuntu-latest
     needs: build
     services:
-      postgres:
+      postgres: &postgres-service
         image: postgres:15
         env:
           POSTGRES_USER: tobira
@@ -137,8 +137,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
-      with:
-        lfs: true
     - uses: actions/download-artifact@v8
       with:
         name: test-deployment-files
@@ -186,7 +184,37 @@ jobs:
       run: ./tobira db migrate --config util/dev-config/config.toml
 
 
-    # Run UI Playwright tests
+
+  # --------------------------------------------------------------------------
+
+  # Playwright UI tests, one job per browser so that they run in parallel.
+  test-ui:
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      # Still run the other browsers if one fails, to see whether a failure is browser-specific.
+      fail-fast: false
+      matrix:
+        # Project names from `playwright.config.ts`.
+        browser: [chromium, firefox, webkit]
+    services:
+      postgres: *postgres-service
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        lfs: true
+    - uses: actions/download-artifact@v8
+      with:
+        name: test-deployment-files
+    - run: chmod +x tobira
+
+    - name: Restore NPM cache
+      uses: actions/cache/restore@v6
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+
     - name: Start docker containers
       working-directory: util/containers
       run: |
@@ -201,12 +229,15 @@ jobs:
     - name: Install Playwright
       working-directory: frontend
       run: npm i @playwright/test
-    - name: Install Playwright browsers
+    # The `chromium` project uses the Google Chrome already installed on the
+    # runner, so there is nothing to install for it.
+    - name: Install Playwright browser
+      if: matrix.browser != 'chromium'
       working-directory: frontend
-      run: npx playwright install --with-deps
+      run: npx playwright install --with-deps ${{ matrix.browser }}
     - name: Run playwright tests
       working-directory: frontend
-      run: npx playwright test
+      run: npx playwright test --project=${{ matrix.browser }}
     - name: Upload test results
       # A test might need a retry to succeed or run longer than expected.
       # In these cases the results should also be saved, since they might
@@ -214,6 +245,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v7
       with:
-        name: playwright-report
+        name: playwright-report-${{ matrix.browser }}
         path: frontend/playwright-report/
         retention-days: 7
