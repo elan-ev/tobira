@@ -36,15 +36,15 @@ jobs:
       run: echo "DEPLOY_ID=pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
       if: github.event_name != 'delete'
 
-    - name: Delete GitHub deployment status
-      uses: bobheadxi/deployments@v1.5.0
-      with:
-        # We would like to `delete-env` instead, but this requires additional
-        # permissions for the GITHUB_TOKEN. Fixing that seems to be fairly
-        # involved, unfortunately.
-        step: deactivate-env
-        token: ${{ secrets.GITHUB_TOKEN }}
-        env: test-deployment-${{ env.DEPLOY_ID }}
+    - name: Delete GitHub deployments
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        for id in $(gh api --paginate "repos/$GITHUB_REPOSITORY/deployments?environment=deployment-test&task=deploy:$DEPLOY_ID&per_page=100" --jq '.[].id'); do
+          echo "Deleting deployment $id"
+          gh api -X POST "repos/$GITHUB_REPOSITORY/deployments/$id/statuses" -f state=inactive --silent
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/deployments/$id" --silent
+        done
 
     - name: remove deployment
       working-directory: .deployment

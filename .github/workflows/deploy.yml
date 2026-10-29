@@ -63,8 +63,11 @@ jobs:
         name: test-deployment-files
         run_id: ${{ github.event.workflow_run.id }}
 
-    - name: Read Deploy ID
-      run: echo "DEPLOY_ID=$(cat .deploy-id)" >> $GITHUB_ENV
+    - name: Read Deploy ID & determine environment
+      run: |
+        id=$(cat .deploy-id)
+        echo "DEPLOY_ID=$id" >> $GITHUB_ENV
+        echo "GH_ENV=deployment-$([ "$id" = main ] && echo main || echo test)" >> $GITHUB_ENV
 
     - name: Set GitHub deployment status to "Pending"
       uses: bobheadxi/deployments@v1.5.0
@@ -72,7 +75,8 @@ jobs:
       with:
         step: start
         token: ${{ secrets.GITHUB_TOKEN }}
-        env: test-deployment-${{ env.DEPLOY_ID }}
+        env: ${{ env.GH_ENV }}
+        task: deploy:${{ env.DEPLOY_ID }}
         ref: ${{ github.event.workflow_run.head_commit.id }}
 
     - name: Prepare files for deployment
@@ -101,7 +105,16 @@ jobs:
       with:
         step: finish
         token: ${{ secrets.GITHUB_TOKEN }}
-        env: test-deployment-${{ env.DEPLOY_ID }}
+        env: ${{ env.GH_ENV }}
         status: ${{ job.status }}
         deployment_id: ${{ steps.gh_deployment_start.outputs.deployment_id }}
         env_url: ${{ format('https://{0}.tobira.opencast.org', env.DEPLOY_ID) }}
+        override: false  # Don't deactivate the other deployments in the shared environment
+
+    - name: Deactivate previous deployments of this branch/PR
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: >
+        gh api --paginate "repos/$GITHUB_REPOSITORY/deployments?environment=$GH_ENV&task=deploy:$DEPLOY_ID&per_page=100"
+        --jq '.[] | select(.id != ${{ steps.gh_deployment_start.outputs.deployment_id }}) | .id'
+        | xargs -r -I{} gh api -X POST "repos/$GITHUB_REPOSITORY/deployments/{}/statuses" -f state=inactive --silent
