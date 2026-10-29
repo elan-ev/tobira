@@ -10,6 +10,7 @@ on:
     - ".deployment/templates/config.toml"
     - "util/dummy-login/dist/index.js"
     - ".github/workflows/ci.yml"
+    - ".github/actions/**"
     - ".github/workflows/deploy.yml"
   push:
     branches:
@@ -18,48 +19,36 @@ on:
       - "*"
 
 
-env:
-  CARGO_TERM_COLOR: always
-  RUSTFLAGS: --deny warnings
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      rust-mode: ${{ steps.mode.outputs.rust }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     # Figure out build mode
     - name: Determine build mode
+      id: mode
       run: |
-        target_dir="target"
-        sudo apt install -y musl-dev musl-tools
-        rustup target add x86_64-unknown-linux-musl
-        printf -- "--target=x86_64-unknown-linux-musl " >> .cargo-flags
-        target_dir="${target_dir}/x86_64-unknown-linux-musl"
-
         if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/main" ]; then
-          printf -- "--profile=release-ci" >> .cargo-flags
-          printf -- "release" >> .cache-key
-          echo "ci_targetdir=${target_dir}/release-ci" >> $GITHUB_ENV
+          echo "rust=release" >> $GITHUB_OUTPUT
           echo "ci_webpack_flags=production" >> $GITHUB_ENV
         else
-          printf -- "--features=embed-in-debug" >> .cargo-flags
-          printf -- "dev" >> .cache-key
-          echo "ci_targetdir=${target_dir}/debug" >> $GITHUB_ENV
+          echo "rust=dev" >> $GITHUB_OUTPUT
           echo "ci_webpack_flags=development" >> $GITHUB_ENV
         fi
-        echo "cache_key=$(cat .cache-key)" >> $GITHUB_ENV
 
-    - name: Restore backend cache
-      uses: Swatinem/rust-cache@v2
+    - uses: ./.github/actions/install-musl
+    - name: Set up Rust build and restore backend cache
+      uses: ./.github/actions/rust-setup
       with:
-        shared-key: '${{ env.cache_key }}'
-        workspaces: backend
+        mode: ${{ steps.mode.outputs.rust }}
 
     # Frontend cache: only the NPM folder is cached, not the node_modules, as
     # recommended here: https://github.com/actions/cache/blob/main/examples.md#node---npm
     - name: Restore NPM cache
-      uses: actions/cache@v3
+      uses: actions/cache@v6
       with:
         path: ~/.npm
         key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
@@ -86,7 +75,7 @@ jobs:
     # ----- Build the backend -----
     - name: Build backend
       working-directory: backend
-      run: cargo build $(cat ../.cargo-flags)
+      run: cargo build ${{ env.ci_cargo_flags }}
 
     # ----- Prepare binary -----
     - name: Move Tobira binary
@@ -103,7 +92,7 @@ jobs:
 
     # Archive files to be used in the `deploy` workflow
     - name: Upload binary and deployment files as artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-deployment-files
         retention-days: 1
@@ -115,16 +104,14 @@ jobs:
           util/dev-config/logo-large-dark.svg
           util/dev-config/favicon.svg
           .deploy-id
-          .cache-key
-          .cargo-flags
           .deployment/templates/config.toml
           .deployment/files/known-groups.json
           .deployment/files/known-users.json
           util/dummy-login/dist/index.js
 
-    # This is uploaded for the test job, specifically `cargo test`
+    # This is uploaded for `cargo test` in the `test-backend` job
     - name: Upload frontend artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: frontend-artifacts
         retention-days: 1
@@ -134,12 +121,12 @@ jobs:
 
   # --------------------------------------------------------------------------
 
-  test:
+  test-backend:
     runs-on: ubuntu-latest
     needs: build
     services:
-      postgres:
-        image: postgres:12
+      postgres: &postgres-service
+        image: postgres:15
         env:
           POSTGRES_USER: tobira
           POSTGRES_PASSWORD: tobira
@@ -149,13 +136,11 @@ jobs:
         options: '--name tobira_pg'
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        lfs: true
-    - uses: actions/download-artifact@v4
+    - uses: actions/checkout@v7
+    - uses: actions/download-artifact@v8
       with:
         name: test-deployment-files
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: frontend-artifacts
         path: ./frontend/build
@@ -170,22 +155,15 @@ jobs:
 
 
     # Run backend tests
-    - name: Read cache key
-      run: echo "cache_key=$(cat .cache-key)" >> $GITHUB_ENV
-    - name: Install MUSL dependencies
-      run: |
-        sudo apt install -y musl-dev musl-tools
-        rustup target add x86_64-unknown-linux-musl
-
-    - name: Restore backend cache
-      uses: Swatinem/rust-cache@v2
+    - uses: ./.github/actions/install-musl
+    - name: Set up Rust build and restore backend cache
+      uses: ./.github/actions/rust-setup
       with:
-        shared-key: '${{ env.cache_key }}'
-        workspaces: backend
-        save-if: false
+        mode: ${{ needs.build.outputs.rust-mode }}
+        save-cache: false
     - name: Test backend
       working-directory: backend
-      run: cargo test $(cat ../.cargo-flags)
+      run: cargo test ${{ env.ci_cargo_flags }}
 
 
     # Test DB migrations
@@ -206,7 +184,37 @@ jobs:
       run: ./tobira db migrate --config util/dev-config/config.toml
 
 
-    # Run UI Playwright tests
+
+  # --------------------------------------------------------------------------
+
+  # Playwright UI tests, one job per browser so that they run in parallel.
+  test-ui:
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      # Still run the other browsers if one fails, to see whether a failure is browser-specific.
+      fail-fast: false
+      matrix:
+        # Project names from `playwright.config.ts`.
+        browser: [chromium, firefox, webkit]
+    services:
+      postgres: *postgres-service
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        lfs: true
+    - uses: actions/download-artifact@v8
+      with:
+        name: test-deployment-files
+    - run: chmod +x tobira
+
+    - name: Restore NPM cache
+      uses: actions/cache/restore@v6
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+
     - name: Start docker containers
       working-directory: util/containers
       run: |
@@ -221,19 +229,22 @@ jobs:
     - name: Install Playwright
       working-directory: frontend
       run: npm i @playwright/test
-    - name: Install Playwright browsers
+    # The `chromium` project uses the Google Chrome already installed on the
+    # runner, so there is nothing to install for it.
+    - name: Install Playwright browser
+      if: matrix.browser != 'chromium'
       working-directory: frontend
-      run: npx playwright install --with-deps
+      run: npx playwright install --with-deps ${{ matrix.browser }}
     - name: Run playwright tests
       working-directory: frontend
-      run: npx playwright test
+      run: npx playwright test --project=${{ matrix.browser }}
     - name: Upload test results
       # A test might need a retry to succeed or run longer than expected.
       # In these cases the results should also be saved, since they might
       # indicate what went wrong. Hence `always()` instead of on `failure()`.
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
-        name: playwright-report
+        name: playwright-report-${{ matrix.browser }}
         path: frontend/playwright-report/
         retention-days: 7

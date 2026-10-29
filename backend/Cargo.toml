@@ -105,6 +105,15 @@ lto = "thin"
 [profile.release.package."*"]
 debug = false
 
+# Optimize reinda & brotli to speed up compression of assets.
+[profile.release.package]
+reinda-macros = { opt-level = 3 }
+brotli = { opt-level = 3 }
+
+[profile.dev.package]
+reinda-macros = { opt-level = 3 }
+brotli = { opt-level = 3 }
+
 # This is a profile for building Tobira in CI for the main branch. Our normal
 # release build takes forever. So here we only reset two options that are
 # responsible for the long compile times. Using this mode over the dev mode for

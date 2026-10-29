@@ -3,7 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
     testDir: "./tests",
-    workers: process.env.CI ? 1 : undefined,
+    // Two workers for CI as it's likely ok for github action runners.
+    workers: process.env.CI ? 2 : undefined,
     retries: 0, // TODO
     reporter: "html",
 

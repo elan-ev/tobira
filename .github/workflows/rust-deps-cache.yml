@@ -1,0 +1,63 @@
+name: Rust dependency cache
+
+# PR runs can restore caches written on `main` (even PRs from forks), but the
+# `ci.yml` build on `main` uses the `release-ci` profile, so its cache is
+# useless for PR runs, which build in dev mode. This workflow keeps a dev-mode
+# dependency cache on `main` so that PR runs do not build all dependencies
+# from scratch. See #1114.
+#
+# The cache key only changes when dependencies or the toolchain change, so most
+# runs of this workflow only check that the cache exists and finish quickly.
+# For PR runs to hit this cache, the key must match the one in `ci.yml`
+# exactly. The shared `rust-setup` action takes care of that.
+
+on:
+  push:
+    branches:
+      - main
+  # The key includes the Rust version of the runner image, and GitHub evicts
+  # caches that haven't been accessed for a week. Running daily keeps the cache
+  # usable in both cases.
+  schedule:
+    - cron: '20 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  # Checks whether a cache for the current key already exists, without
+  # downloading it.
+  lookup:
+    runs-on: ubuntu-latest
+    outputs:
+      hit: ${{ steps.lookup.outputs.cache-hit }}
+    steps:
+    - uses: actions/checkout@v7
+    - name: Look up backend cache
+      id: lookup
+      uses: ./.github/actions/rust-setup
+      with:
+        mode: dev
+        lookup-only: true
+        save-cache: false
+
+  build:
+    needs: lookup
+    if: needs.lookup.outputs.hit != 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: ./.github/actions/install-musl
+
+    # Restores the closest older cache (e.g. from before the last `Cargo.lock`
+    # change), so only changed dependencies are rebuilt. The new cache is saved
+    # at the end of the job.
+    - name: Set up Rust build and restore backend cache
+      uses: ./.github/actions/rust-setup
+      with:
+        mode: dev
+
+    # Replace `main.rs` to not build our own code (which is not cached anyway).
+    - name: Build dependencies
+      working-directory: backend
+      run: |
+        echo 'fn main() {}' > src/main.rs
+        cargo build ${{ env.ci_cargo_flags }}
