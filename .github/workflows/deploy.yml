@@ -6,8 +6,10 @@ on:
     types:
       - requested
 
+# Don't let deployments creation and removal workflows interfere with one another.
+# This is only per PR/branch though, as others can run independently.
 concurrency:
-  group: deploy
+  group: deploy-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: false
 
 jobs:
