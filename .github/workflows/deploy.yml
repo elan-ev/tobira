@@ -35,13 +35,27 @@ jobs:
     - name: install ansible postgres extensions
       run: ansible-galaxy collection install community.postgresql
 
-    # Now waiting for the CI step to finish.
+    # Wait for the `build` job of the CI run that triggered this workflow, as it
+    # uploads the artifact we deploy. We look at the jobs of that specific run
+    # because other workflows also have jobs named `build` for the same commit.
     - name: Wait for build to succeed
-      uses: lewagon/wait-on-check-action@v1.9.1
-      with:
-        ref: ${{ github.event.workflow_run.head_commit.id }}
-        check-name: 'build'
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+      timeout-minutes: 30
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RUN_ID: ${{ github.event.workflow_run.id }}
+      run: |
+        while :; do
+          # Prints e.g. "in_progress " or "completed success". Empty if the job
+          # does not exist yet or the request failed, so we just try again.
+          job=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs?per_page=100" \
+            --jq '.jobs[] | select(.name == "build") | "\(.status) \(.conclusion)"' || true)
+          case "$job" in
+            "completed "*) break ;;
+          esac
+          sleep 10
+        done
+        echo "Build job finished: $job"
+        [ "$job" = "completed success" ]
 
     - name: Download artifacts from build workflow
       uses: dawidd6/action-download-artifact@v27
