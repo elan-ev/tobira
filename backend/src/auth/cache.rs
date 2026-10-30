@@ -117,9 +117,8 @@ impl UserCacheEntry {
 }
 
 /// Cache to remember what users we have seen. Its only purpose is to make
-/// writes to the `users` table (and requests creating Opencast user
-/// references) less frequent. The data from this cache must not be used in any
-/// other way.
+/// writes to the `users` table less frequent. The data from this cache must
+/// not be used in any other way.
 ///
 /// This works fine in multi-node setups: each node just has its local cache and
 /// prevents some DB writes. But as this data is never used otherwise, we don't
@@ -132,8 +131,8 @@ impl UserCache {
     }
 
     /// Writes the user's info to the `users` table, unless it was written
-    /// recently and hasn't changed since. Returns `true` if the user info was
-    /// successfully written.
+    /// recently and hasn't changed since. Returns `true` if the user was not
+    /// seen before or their display name, email or user role changed.
     pub(crate) async fn upsert_user_info(&self, user: &super::User, db: &Client) -> bool {
         match self.0.entry_async(user.username.clone()).await {
             Entry::Occupied(mut occupied) => {
@@ -145,27 +144,33 @@ impl UserCache {
                     || entry.user_role != user.user_role
                     || entry.user_realm_handle != user.user_realm_handle;
 
-                if needs_update {
-                    let res = Self::write_to_db(user, db).await;
-                    if res.is_ok() {
-                        *occupied.get_mut() = UserCacheEntry::new(user);
-                        return true;
-                    }
+                if !needs_update {
+                    return false;
                 }
-                false
+                let res = Self::write_to_db(user, db).await;
+                if res.is_ok() {
+                    *occupied.get_mut() = UserCacheEntry::new(user);
+                }
+                res.unwrap_or(false)
             },
             Entry::Vacant(vacant) => {
                 let res = Self::write_to_db(user, db).await;
                 if res.is_ok() {
                     vacant.insert_entry(UserCacheEntry::new(user));
                 }
-                res.is_ok()
+                res.unwrap_or(false)
             },
         }
     }
 
-    async fn write_to_db(user: &super::User, db: &Client) -> Result<(), ()> {
+    /// Returns whether the user was new or their info changed.
+    async fn write_to_db(user: &super::User, db: &Client) -> Result<bool, ()> {
         let sql = "\
+            with previous as ( \
+                select display_name, email, user_role \
+                from users \
+                where username = $1 and last_seen is not null \
+            ) \
             insert into users (username, display_name, email, user_role, \
                 user_realm_handle, last_seen) \
             values ($1, $2, $3, $4, $5, now()) \
@@ -175,8 +180,14 @@ impl UserCache {
                 user_role = excluded.user_role, \
                 user_realm_handle = excluded.user_realm_handle, \
                 last_seen = excluded.last_seen \
+            returning not exists ( \
+                select from previous \
+                where display_name = $2 \
+                    and email is not distinct from $3 \
+                    and user_role = $4 \
+            ) \
         ";
-        let res = db.execute(sql, &[
+        let res = db.query_one(sql, &[
             &user.username,
             &user.display_name,
             &user.email,
@@ -196,7 +207,7 @@ impl UserCache {
             return Err(());
         }
 
-        Ok(())
+        Ok(res.unwrap().get(0))
     }
 }
 

@@ -164,8 +164,8 @@ impl User {
             user.add_default_roles();
             // TODO: consider not awaiting here. The result is not important and
             // we can finish the rest of the API in the meantime.
-            let written = ctx.auth_caches.user.upsert_user_info(user, db).await;
-            if written && ctx.config.auth.create_opencast_user_references {
+            let changed = ctx.auth_caches.user.upsert_user_info(user, db).await;
+            if changed && ctx.config.auth.create_opencast_user_references {
                 user.create_opencast_user_reference(ctx);
             }
         }

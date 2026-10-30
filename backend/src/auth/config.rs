@@ -49,9 +49,9 @@ pub(crate) struct AuthConfig {
     pub(crate) pre_auth_external_links: bool,
 
     /// If `true`, Tobira sends a JWT-authenticated request to Opencast
-    /// whenever it sees a user for the first time in a while or their data
-    /// changed. Opencast then creates or updates a reference for that user,
-    /// including a generated user role, stored name and email.
+    /// whenever it sees a user for the first time or their data changed.
+    /// Opencast then creates or updates a reference for that user, including
+    /// a generated user role, stored name and email.
     /// This requires JWT auth to be set up.
     #[config(default = false)]
     pub(crate) create_opencast_user_references: bool,
