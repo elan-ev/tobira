@@ -133,6 +133,17 @@ impl AuthConfig {
         Ok(())
     }
 
+    pub(crate) fn lint(&self) {
+        if self.create_opencast_user_references
+            && self.session.from_login_credentials == LoginCredentialsHandler::Opencast
+        {
+            warn!("'auth.create_opencast_user_references' is enabled, but \
+                'auth.session.from_login_credentials' is 'opencast', which means \
+                all Tobira users already exist in Opencast. You probably want to \
+                disable 'auth.create_opencast_user_references'.");
+        }
+    }
+
     /// Finds the user role from the given roles according to
     /// `user_role_prefixes`. If none can be found, `None` is returned and a
     /// warning is printed. If more than one is found, a warning is printed and
