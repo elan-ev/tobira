@@ -933,7 +933,10 @@ const Metadata: React.FC<MetadataProps> = ({ event, realmPath }) => {
                 )}
                 <VideoShareButton
                     {...{ event }}
-                    videoLink={window.location.href}
+                    videoLink={realmPath
+                        ? VideoRoute.url({ realmPath, videoID: event.id })
+                        : DirectVideoRoute.url({ videoId: event.id })
+                    }
                     onOpen={setTimestamp => {
                         if (playerIsLoaded) {
                             paella.current?.player.videoContainer.currentTime().then(setTimestamp);
@@ -1012,24 +1015,24 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
     const [addLinkTimestamp, setAddLinkTimestamp] = useState(false);
     const [addEmbedTimestamp, setAddEmbedTimestamp] = useState(false);
 
-    const timeStringPattern = /\?t=(\d+h)?(\d+m)?(\d+s)?/;
-
     const series = event.series;
     const tabs = {
         "main": {
             label: t("share.link"),
             Icon: LuLink,
             render: () => {
-                let url = videoLink.replace(timeStringPattern, "");
-                url += addLinkTimestamp && timestamp
-                    ? `?t=${secondsToTimeString(timestamp)}`
-                    : "";
+                const url = new URL(videoLink, window.location.origin);
+                if (addLinkTimestamp && timestamp) {
+                    url.searchParams.set("t", secondsToTimeString(timestamp));
+                } else {
+                    url.searchParams.delete("t");
+                }
 
                 return <>
                     <div>
                         <CopyableInput
                             label={t("share.copy-direct-link-to-clipboard")}
-                            value={url}
+                            value={url.href}
                         />
                         {!event.isLive && !noTimestamp && <TimeInputWithCheckbox
                             checkboxChecked={addLinkTimestamp}
@@ -1037,7 +1040,7 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
                             {...{ timestamp, setTimestamp }}
                         />}
                     </div>
-                    <QrCodeButton target={url} label={t("share.link")} />
+                    <QrCodeButton target={url.toString()} label={t("share.link")} />
                 </>;
             },
         },
@@ -1049,11 +1052,16 @@ export const VideoShareButton: React.FC<VideoShareButtonProps> = ({
                     ? [16, 9]
                     : getPlayerAspectRatio(event.authorizedData.tracks);
 
-                const url = new URL(location.href.replace(timeStringPattern, ""));
-                url.search = addEmbedTimestamp && timestamp
-                    ? `?t=${secondsToTimeString(timestamp)}`
-                    : "";
-                url.pathname = EmbedVideoRoute.url({ videoId: event.id });
+                // We only use `window.location` to get the authority portion.
+                const url = new URL(
+                    EmbedVideoRoute.url({ videoId: event.id }),
+                    window.location.href,
+                );
+                url.search = new URLSearchParams({
+                    ...addEmbedTimestamp && timestamp && {
+                        t: secondsToTimeString(timestamp),
+                    },
+                }).toString();
 
                 const embedCode = `<iframe ${[
                     'name="Tobira Player"',
