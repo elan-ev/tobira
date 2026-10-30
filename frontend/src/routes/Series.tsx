@@ -111,7 +111,7 @@ export const OpencastSeriesRoute = makeRoute({
                 nav={data => data.realm ? <RealmNav fragRef={data.realm} /> : []}
                 render={({ series, realm }) => {
                     if (!realm || series?.isReferencedByRealm === false) {
-                        return <ForwardToDirectRoute seriesId={ocId} />;
+                        return <ForwardToDirectOCRoute ocID={ocId} />;
                     }
 
                     return <SeriesPage
@@ -129,6 +129,12 @@ export const OpencastSeriesRoute = makeRoute({
 const ForwardToDirectRoute: React.FC<{ seriesId: string }> = ({ seriesId }) => {
     const router = useRouter();
     useEffect(() => router.goto(DirectSeriesRoute.url({ seriesId }), true));
+    return <InitialLoading />;
+};
+
+const ForwardToDirectOCRoute: React.FC<{ ocID: string }> = ({ ocID }) => {
+    const router = useRouter();
+    useEffect(() => router.goto(DirectSeriesOCRoute.url({ ocID }), true));
     return <InitialLoading />;
 };
 
