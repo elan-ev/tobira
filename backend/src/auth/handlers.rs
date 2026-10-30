@@ -245,7 +245,7 @@ pub(crate) struct InfoMeResponse {
     roles: Vec<String>,
     pub(crate) user: InfoMeUserResponse,
     #[serde(rename = "userRole")]
-    user_role: String,
+    pub(crate) user_role: String,
 }
 
 #[derive(Deserialize)]

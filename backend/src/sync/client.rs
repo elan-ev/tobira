@@ -344,8 +344,14 @@ impl OcClient {
     /// Makes Opencast create or update a user reference for the user described by `jwt`.
     /// Opencast does that for every new JWT it accepts that contains user info,
     /// so this just sends a request authenticated with `jwt`.
-    /// Fails if Opencast does not associate the request with `username`.
-    pub(crate) async fn create_user_reference(&self, username: &str, jwt: &str) -> Result<()> {
+    /// Fails if Opencast does not associate the request with `username`, and
+    /// warns if Opencast's user role for that user differs from `user_role`.
+    pub(crate) async fn create_user_reference(
+        &self,
+        username: &str,
+        user_role: &str,
+        jwt: &str,
+    ) -> Result<()> {
         let uri = self.sync_node.clone().with_path_and_query("/info/me.json");
         let req = Request::builder()
             .uri(&uri)
@@ -366,6 +372,15 @@ impl OcClient {
                 Most likely, it did not accept the JWT. Check the JWT configuration of Opencast.",
             info.user.username,
         );
+        if info.user_role != user_role {
+            warn!(
+                "Opencast's user role for '{username}' is '{}', but Tobira's is '{user_role}'. \
+                    Access granted to this user via Opencast won't work in Tobira. \
+                    Make sure Tobira and Opencast derive the same user role for each user. \
+                    You might need to adjust either your Opencast config or Tobira auth callback.",
+                info.user_role,
+            );
+        }
 
         Ok(())
     }

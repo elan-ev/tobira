@@ -233,5 +233,9 @@ async fn create_opencast_user_reference(
     jwt: &JwtContext,
     oc_client: &OcClient,
 ) -> Result<()> {
-    oc_client.create_user_reference(&user.username, &jwt.user_reference_token(user)).await
+    oc_client.create_user_reference(
+        &user.username,
+        &user.user_role,
+        &jwt.user_reference_token(user),
+    ).await
 }

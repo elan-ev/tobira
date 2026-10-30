@@ -121,4 +121,5 @@ In the admin UI, these users are offered with the user role that *Opencast* deri
 By default, that's `ROLE_USER_` followed by the username in uppercase, with every character other than `a-z`, `A-Z` and `0-9` replaced by `_`
 (see `etc/org.opencastproject.userdirectory.UserIdRoleProvider.cfg` in Opencast).
 Access granted via such an ACL entry only works in Tobira if Tobira's [user role](./user#user-information-tobira-needs) of that user is exactly the same.
+Tobira logs a warning when it notices that both user roles differ.
 :::

@@ -404,8 +404,9 @@ impl User {
         let jwt = ctx.jwt.user_reference_token(self);
         let oc_client = ctx.oc_client.clone();
         let username = self.username.clone();
+        let user_role = self.user_role.clone();
         tokio::spawn(async move {
-            match oc_client.create_user_reference(&username, &jwt).await {
+            match oc_client.create_user_reference(&username, &user_role, &jwt).await {
                 Ok(()) => debug!("Created or updated Opencast user reference for '{username}'"),
                 Err(e) => warn!("Failed to create Opencast user reference for '{username}': {e:#}"),
             }
