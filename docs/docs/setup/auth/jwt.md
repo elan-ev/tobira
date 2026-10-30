@@ -109,13 +109,25 @@ Opencast creates a user reference for accepted JWTs that contain information abo
 This makes the user known to Opencast, so that it can be found in the admin UI when adding users to the ACL of an event or series.
 
 To make all Tobira users known to Opencast, set `auth.create_opencast_user_references` to `true`.
-Then, whenever Tobira sees a user for the first time (or their display name, email or user role changed), it sends a request with a JWT for that user to `/info/me.json` on the Opencast sync node. This JWT does not grant any roles besides `ROLE_ANONYMOUS`.
+Then, whenever Tobira sees a user for the first time (or their display name, email or user role changed), it sends a request with a JWT for that user to `/info/me.json` on the Opencast sync node.
+This JWT contains all roles the user has in Tobira, to which Opencast might add more according to its role mapping (see above).
 Note that this stores the display name and email of all Tobira users in Opencast.
 If you use `auth.session.from_login_credentials = "opencast"`, you don't need this, as all Tobira users already exist in Opencast.
 
 Users who used Tobira before you enabled this only become known to Opencast once their display name, email or user role changes.
 Users added via `tobira known-users upsert` only become known to Opencast on their first visit.
 To make all of them known to Opencast right away, run `tobira known-users create-opencast-user-references`.
+As Tobira does not store the roles of its known users, this command takes them from the user's most recent Tobira session.
+Those only exist with `auth.source = "tobira-session"`, and only while the user is logged in.
+For all other users, it only sends `ROLE_ANONYMOUS` and `ROLE_USER`.
+
+:::caution
+For every JWT it accepts, Opencast replaces the roles it stored for that user with the ones from that JWT.
+That includes the special roles granting access to a specific video, which Tobira sends when a user uploads or edits a video, and which the workflows processing that video might rely on.
+So when Tobira updates the user reference while such a workflow is still running, the workflow might fail.
+Tobira only does that when the user information changes, so this should be rare.
+However, `tobira known-users create-opencast-user-references` does that for all known users at once, so it's best to run it while no workflows are running.
+:::
 
 :::caution
 In the admin UI, these users are offered with the user role that *Opencast* derives from the username.

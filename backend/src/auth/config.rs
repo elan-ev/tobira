@@ -53,6 +53,11 @@ pub(crate) struct AuthConfig {
     /// Opencast then creates or updates a reference for that user, including
     /// a generated user role, stored name and email.
     /// This requires JWT auth to be set up.
+    ///
+    /// Note: Opencast replaces the roles it stored for that user with the
+    /// user's roles in Tobira. This can make workflows of videos the user
+    /// just uploaded or edited fail. See the docs about JWT auth for more
+    /// information.
     #[config(default = false)]
     pub(crate) create_opencast_user_references: bool,
 

@@ -41,10 +41,15 @@ pub(crate) enum Args {
     /// Makes Opencast create or update a user reference for every known user.
     ///
     /// This sends the same request that Tobira sends when it sees a user with
-    /// `auth.create_opencast_user_references` enabled. Requires
+    /// `auth.create_opencast_user_references` enabled. As Tobira does not store
+    /// roles of known users, the roles of their most recent session are sent,
+    /// or just `ROLE_ANONYMOUS` and `ROLE_USER` if there is none. Requires
     /// `auth.jwt.secret_key` to be set (as opposed to letting Tobira generate a
     /// random key), since Opencast will validate against the public key of the
     /// running `tobira serve` process. So this command needs to use the same key pair.
+    ///
+    /// Opencast replaces the roles it stored for each user with the sent ones,
+    /// which can make workflows running at that time fail.
     CreateOpencastUserReferences,
 }
 
@@ -174,19 +179,30 @@ async fn create_opencast_user_references(config: &Config, tx: Transaction<'_>) -
     let jwt = JwtContext::new(&config.auth.jwt)?;
     let oc_client = OcClient::new(config)?;
 
+    // The `users` table does not store roles, so we take them from the user's
+    // most recent session, if there is one.
     let (selection, mapping) = select!(
         username, display_name, email, user_role, user_realm_handle,
+        roles: "(select roles from user_sessions \
+            where user_sessions.username = users.username \
+            order by created desc limit 1)",
     );
     let users = tx.query(&format!("select {selection} from users"), &[]).await?
         .into_iter()
-        .map(|row| User {
-            username: mapping.username.of(&row),
-            display_name: mapping.display_name.of(&row),
-            email: mapping.email.of(&row),
-            // Not stored in the DB, but also not needed for the JWT.
-            roles: HashSet::new(),
-            user_role: mapping.user_role.of(&row),
-            user_realm_handle: mapping.user_realm_handle.of(&row),
+        .map(|row| {
+            let mut user = User {
+                username: mapping.username.of(&row),
+                display_name: mapping.display_name.of(&row),
+                email: mapping.email.of(&row),
+                roles: mapping.roles.of::<Option<Vec<String>>>(&row)
+                    .unwrap_or_default()
+                    .into_iter()
+                    .collect(),
+                user_role: mapping.user_role.of(&row),
+                user_realm_handle: mapping.user_realm_handle.of(&row),
+            };
+            user.add_default_roles();
+            user
         })
         .collect::<Vec<_>>();
     tx.commit().await?;

@@ -414,7 +414,7 @@ impl User {
     }
 
     /// Makes sure this user has the roles `ROLE_ANONYMOUS` and `ROLE_USER`.
-    fn add_default_roles(&mut self) {
+    pub(crate) fn add_default_roles(&mut self) {
         // The conditionals are to prevent heap allocations when unnecessary.
         if !self.roles.contains(ROLE_ANONYMOUS) {
             self.roles.insert(ROLE_ANONYMOUS.into());
