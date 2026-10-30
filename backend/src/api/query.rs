@@ -124,6 +124,9 @@ impl Query {
             Id::EVENT_KIND => Event::load(id, context).await?
                 .map(|e| e.into_result().map(NodeValue::from))
                 .transpose(),
+            Id::PLAYLIST_KIND => Playlist::load(id, context).await?
+                .map(|e| e.into_result().map(NodeValue::from))
+                .transpose(),
             _ => Ok(None),
         }
     }
