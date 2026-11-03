@@ -28,6 +28,10 @@ for (const realmType of realmTypes) {
                 await page.goto(`/@${userid}`);
                 await expect(page).toHaveURL(`/@${userid}`);
             }
+
+            // Wait for new page to be loaded
+            await expect(page.getByRole("heading", { level: 1, name: parentPageName, exact: true }))
+                .toBeVisible();
         });
 
         const nav = page.locator("nav").first().getByRole("listitem");

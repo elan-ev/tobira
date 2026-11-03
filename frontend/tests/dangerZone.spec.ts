@@ -27,6 +27,10 @@ for (const realmType of realmTypes) {
                 await expect(page).toHaveURL(`/@${userid}`);
             }
 
+            // Wait for new page to be loaded
+            await expect(page.getByRole("heading", { level: 1, name: parentPageName, exact: true }))
+                .toBeVisible();
+
             await page.getByRole("link", { name: "Page settings" }).click();
         });
 
