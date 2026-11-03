@@ -135,6 +135,7 @@ impl Config {
     /// should not bring down Tobira.
     pub(crate) fn lint(&self) {
         self.theme.color.lint();
+        self.auth.lint();
     }
 
     /// Goes through all paths in the configuration and changes relative paths

@@ -145,6 +145,16 @@ impl JwtContext {
         }, &self.service_expiration_time)
     }
 
+    /// Creates a JWT that makes Opencast create or update a user reference
+    /// for `user`. Opencast replaces the roles stored in that reference with
+    /// the ones from the JWT. Workflows running as that user might depend on
+    /// those, so this includes all roles of `user` instead of only the
+    /// minimum. Roles only granted by other JWTs (e.g. access to a specific
+    /// video) are still removed, though.
+    pub(crate) fn user_reference_token(&self, user: &User) -> String {
+        self.service_token(user, json!({ "roles": user.roles }))
+    }
+
     /// Generates a JWT giving read access to a single event. `for_download`
     /// indicates whether it is used for a download link, which might influence
     /// the expiration time.

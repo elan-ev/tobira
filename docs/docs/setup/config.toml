@@ -332,6 +332,20 @@
 # Default value: true
 #pre_auth_external_links = true
 
+# If `true`, Tobira sends a JWT-authenticated request to Opencast
+# whenever it sees a user for the first time or their data changed.
+# Opencast then creates or updates a reference for that user, including
+# a generated user role, stored name and email.
+# This requires JWT auth to be set up.
+#
+# Note: Opencast replaces the roles it stored for that user with the
+# user's roles in Tobira. This can make workflows of videos the user
+# just uploaded or edited fail. See the docs about JWT auth for more
+# information.
+#
+# Default value: false
+#create_opencast_user_references = false
+
 
 # Tobira's built-in session management. Only relevant if `auth.source = "tobira-session"`.
 [auth.session]
