@@ -3,6 +3,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "@emotion/react",
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "incremental": true,
 
     "target": "esnext",

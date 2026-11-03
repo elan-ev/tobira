@@ -12,7 +12,7 @@ import {
     match, ProtoButton, screenWidthAbove, screenWidthAtMost, Spinner,
     HeaderMenuItemDef, HeaderMenuProps, WithHeaderMenu, checkboxMenuItem, useColorScheme,
 } from "@opencast/appkit";
-import KeyboardWide from "@opencast/appkit/dist/icons/keyboard-wide.svg";
+import KeyboardWide from "@opencast/appkit/dist/icons/keyboard-wide.svg?react";
 
 import { BREAKPOINT_MEDIUM } from "../../GlobalStyle";
 import i18n, { languages } from "../../i18n";
@@ -30,8 +30,8 @@ import { ManageVideosRoute } from "../../routes/manage/Video";
 import { LoginLink } from "../../routes/util";
 import { CREDENTIALS_STORAGE_KEY } from "../../routes/Video";
 import { ManageSeriesRoute } from "../../routes/manage/Series";
-import SeriesIcon from "../../icons/series.svg";
-import PlaylistIcon from "../../icons/playlist.svg";
+import SeriesIcon from "../../icons/series.svg?react";
+import PlaylistIcon from "../../icons/playlist.svg?react";
 import { CreateSeriesRoute } from "../../routes/manage/Series/Create";
 import { SHORTCUTS, ShortcutsOverview, useShortcut } from "../../ui/Shortcuts";
 import { ModalHandle } from "../../ui/Modal";

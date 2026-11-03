@@ -33,10 +33,10 @@ jobs:
       run: |
         if [[ "$GITHUB_REPOSITORY" == "elan-ev/tobira" ]] && [ "$GITHUB_REF" == "refs/heads/main" ]; then
           echo "rust=release" >> $GITHUB_OUTPUT
-          echo "ci_webpack_flags=production" >> $GITHUB_ENV
+          echo "ci_frontend_build=build:release" >> $GITHUB_ENV
         else
           echo "rust=dev" >> $GITHUB_OUTPUT
-          echo "ci_webpack_flags=development" >> $GITHUB_ENV
+          echo "ci_frontend_build=build:dev" >> $GITHUB_ENV
         fi
 
     - uses: ./.github/actions/install-musl
@@ -64,7 +64,7 @@ jobs:
       run: npx relay-compiler
     - name: Build frontend
       working-directory: frontend
-      run: npx webpack --mode=${{ env.ci_webpack_flags }}
+      run: npm run ${{ env.ci_frontend_build }}
     - name: Lint frontend
       working-directory: frontend
       run: npx eslint --max-warnings 0 .
@@ -115,6 +115,8 @@ jobs:
       with:
         name: frontend-artifacts
         retention-days: 1
+        # Include `.vite/manifest`
+        include-hidden-files: true
         path: frontend/build
 
 

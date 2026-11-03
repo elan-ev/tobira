@@ -29,7 +29,7 @@ import {
 import { PlaylistBlockPlaylistData$data } from "./__generated__/PlaylistBlockPlaylistData.graphql";
 import { floatingMenuProps, keyOfId } from "../../util";
 import { Link } from "../../router";
-import SeriesIcon from "../../icons/series.svg";
+import SeriesIcon from "../../icons/series.svg?react";
 import { isPastLiveEvent, isUpcomingLiveEvent } from "../Video";
 import { Thumbnail } from "../Thumbnail";
 import { PrettyDate } from "../time";
