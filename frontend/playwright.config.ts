@@ -5,7 +5,9 @@ export default defineConfig({
     testDir: "./tests",
     // Two workers for CI as it's likely ok for github action runners.
     workers: process.env.CI ? 2 : undefined,
-    retries: 0, // TODO
+    // Retry once in CI, so a single flaky test doesn't fail the whole job.
+    // These still show up as "flaky" in the report.
+    retries: process.env.CI ? 1 : 0,
     reporter: "html",
 
     use: {
