@@ -229,10 +229,7 @@ jobs:
     - name: Install Playwright
       working-directory: frontend
       run: npm i @playwright/test
-    # The `chromium` project uses the Google Chrome already installed on the
-    # runner, so there is nothing to install for it.
     - name: Install Playwright browser
-      if: matrix.browser != 'chromium'
       working-directory: frontend
       run: npx playwright install --with-deps ${{ matrix.browser }}
     - name: Run playwright tests

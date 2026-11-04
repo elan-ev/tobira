@@ -17,13 +17,7 @@ export default defineConfig({
     projects: [
         {
             name: "chromium",
-            use: {
-                ...devices["Desktop Chrome"],
-                channel: "chrome",
-                launchOptions: {
-                    args: ["--headless=new"],
-                },
-            },
+            use: { ...devices["Desktop Chrome"] },
         },
 
         {
