@@ -62,9 +62,15 @@ for (const realmType of realmTypes) {
 
 
         await test.step("Page can be deleted", async () => {
+            const deleteButton = page.getByRole("main").getByRole("button", { name: "Delete" });
+            // The confirmation modal has no dialog role, so we find it by its "Cancel" button.
+            const confirmButton = page.locator("form")
+                .filter({ has: page.getByRole("button", { name: "Cancel" }) })
+                .getByRole("button", { name: "Delete" });
+
             if (realmType === "User realm") {
-                await page.getByRole("button", { name: "Delete" }).click();
-                await page.getByRole("button", { name: "Delete" }).nth(1).click();
+                await deleteButton.click();
+                await confirmButton.click();
 
                 await expect(page.getByRole("heading", { name: "Tobira Videoportal" }))
                     .toBeVisible();
@@ -75,8 +81,8 @@ for (const realmType of realmTypes) {
             } else {
                 await page.getByRole("link", { name: "Page settings" }).click();
 
-                await page.getByRole("button", { name: "Delete" }).click();
-                await page.getByRole("button", { name: "Delete" }).nth(1).click();
+                await deleteButton.click();
+                await confirmButton.click();
 
                 await expect(page.getByRole("heading", { name: "Tobira Videoportal" }))
                     .toBeVisible();

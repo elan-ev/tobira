@@ -42,48 +42,51 @@ for (const realmType of realmTypes) {
         await test.step("Sub-pages can be added", async () => {
             for (const name of pagesToAdd) {
                 await addSubPage(page, name);
-                await page.locator("nav > ol").getByRole("link", { name: parentPageName }).click();
+                await page.getByRole("navigation", { name: "breadcrumbs" })
+                    .getByRole("link", { name: parentPageName })
+                    .click();
                 await page.getByRole("heading", { name: parentPageName, level: 1 }).waitFor();
             }
 
             await expect(nav).toHaveText([...navHeader, ...subPages]);
         });
 
-        const saveButton = page.getByRole("button", { name: "Save" });
         const settingsLink = page.getByRole("link", { name: "Page settings" });
+        const nameSection = page.locator("section")
+            .filter({ has: page.getByRole("heading", { name: "Page name" }) });
+        const orderSection = page.locator("section")
+            .filter({ has: page.getByRole("heading", { name: "Order of subpages" }) });
+        const saveName = nameSection.getByRole("button", { name: "Save" });
+        const saveOrder = orderSection.getByRole("button", { name: "Save" });
         await test.step("Order of sub-pages can be changed", async () => {
             await test.step("Sort alphabetically descending", async () => {
                 await settingsLink.click();
                 await page.getByText("Sort alphabetically descending").click();
-                await saveButton.nth(1).click();
+                await saveOrder.click();
 
                 await expect(nav).toHaveText([...navHeader, ...subPages.slice().reverse()]);
             });
 
             await test.step("Sort alphabetically ascending", async () => {
                 await page.getByText("Sort alphabetically ascending").click();
-                await saveButton.nth(1).click();
+                await saveOrder.click();
 
                 await expect(nav).toHaveText([...navHeader, ...subPages]);
             });
 
             await test.step("Manually order", async () => {
-                const options = page.locator("ol").nth(1);
-                const buttons = [[1, 1], [2, 0], [2, 1], [3, 0]].map(([item, button]) =>
-                    options.locator(`li:nth-child(${item}) >> button`).nth(button));
-
                 await page.getByText("Manually order").click();
-                const preOrder = await Promise.all(
-                    [1, 2, 3].map(n => options.locator(`li:nth-child(${n})`).textContent()),
-                );
-                // Indexes should change from 0 1 2 => 1 2 0.
-                expect(preOrder).not.toContain(null);
-                const postOrder = [1, 2, 0].map(n => preOrder[n]!);
+                const items = orderSection.getByRole("listitem");
+                await expect(items).toHaveText(subPages);
 
-                for (const index of [3, 1, 2, 0]) {
-                    await buttons[index].click();
-                }
-                await saveButton.nth(1).click();
+                const postOrder = ["Banana", "Cherry", "Apple"];
+                await items.filter({ hasText: "Apple" })
+                    .getByRole("button", { name: "Move down" })
+                    .click();
+                await items.filter({ hasText: "Cherry" })
+                    .getByRole("button", { name: "Move up" })
+                    .click();
+                await saveOrder.click();
 
                 await expect(nav).toHaveText([...navHeader, ...postOrder]);
             });
@@ -104,17 +107,13 @@ for (const realmType of realmTypes) {
 
                 await settingsLink.click();
                 await derivedOption.click();
-                await derivedOption
-                    .locator("..")
-                    .locator("..")
-                    .getByRole("combobox")
-                    .selectOption("Video: Long boy");
-                await saveButton.first().click();
+                await nameSection.getByRole("combobox").selectOption("Video: Long boy");
+                await saveName.click();
 
                 await expect(page.getByRole("heading", { name: "Settings of page “Long boy”" }))
                     .toBeVisible();
-                await expect(page.locator("nav > ol").getByRole("link", { name: "Long boy" }))
-                    .toBeVisible();
+                await expect(page.getByRole("navigation", { name: "breadcrumbs" })
+                    .getByRole("link", { name: "Long boy" })).toBeVisible();
             });
 
             await test.step("Custom name", async () => {
@@ -122,7 +121,7 @@ for (const realmType of realmTypes) {
                 const name = "Yummy Kale";
                 await page.getByText("Name directly").click();
                 await page.getByPlaceholder("Page name").fill(name);
-                await saveButton.first().click();
+                await saveName.click();
 
                 await expect(page.getByRole("heading", { name: `Settings of page “${name}”` }))
                     .toBeVisible();
