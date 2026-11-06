@@ -957,7 +957,7 @@ export const ListItem = <T extends ListItemProps>({ item, ...props }: GenericLis
         },
     }}>
         {/* Link overlay (invisible, covers item completely) */}
-        {!deletionIsPending && <Link to={props.link} css={{
+        {!deletionIsPending && <Link to={props.link} aria-label={item.title} css={{
             position: "absolute",
             inset: 0,
             borderRadius: 12,

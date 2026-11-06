@@ -3,9 +3,7 @@ import { test } from "./util/data";
 import { login, logout } from "./util/user";
 
 
-test("Search", async ({ page, browserName, standardData, activeSearchIndex }) => {
-    test.skip(browserName === "firefox", "Test is buggy in Firefox somehow...");
-
+test("Search", async ({ page, standardData, activeSearchIndex }) => {
     await page.goto("/");
     await page.waitForSelector("nav");
     const searchField = page.getByPlaceholder("Search");
@@ -30,9 +28,7 @@ test("Search", async ({ page, browserName, standardData, activeSearchIndex }) =>
         await test.step(`Should show video '${videoTitle}'`, async () => {
             await expect(page.getByRole("img", { name: `Thumbnail for “${videoTitle}”` }))
                 .toBeVisible();
-            const title = page.getByRole("heading", { name: videoTitle });
-            // We need `force` to allow clicking the overlay.
-            await title.click({ force: true });
+            await page.getByRole("link", { name: videoTitle, exact: true }).click();
             await expect(page).toHaveURL(new RegExp("/!v/[0-9a-zA-Z_\\-]{11}$"));
             await expect(page.getByRole("heading", { level: 1, name: videoTitle })).toBeVisible();
             await page.goBack();
@@ -42,27 +38,27 @@ test("Search", async ({ page, browserName, standardData, activeSearchIndex }) =>
     }
 
     await test.step("Series links should work", async () => {
-        const eventSeriesLink = page.getByRole("link", { name: "Fabulous Cats" });
-        await expect(eventSeriesLink).toHaveCount(3);
-        await eventSeriesLink.first().click();
+        await page.getByRole("listitem")
+            .filter({ has: page.getByRole("heading", { name: "Video of a Tabby Cat" }) })
+            .getByRole("link", { name: "Fabulous Cats" })
+            .click();
         await expect(page).toHaveURL(new RegExp("/!s/[0-9a-zA-Z_\\-]{11}$"));
         await expect(page.getByRole("heading", { level: 1, name: "Fabulous Cats" })).toBeVisible();
         await page.goBack();
     });
 
     await test.step("Should show realm 'Cats'", async () => {
-        const realm = page.getByRole("heading", { name: "Cats", exact: true });
-        await expect(realm).toBeVisible();
-        await realm.click({ force: true });
+        await page.getByRole("link", { name: "Cats", exact: true }).click();
         await expect(page).toHaveURL("/animals/cats");
         await expect(page.getByRole("heading", { level: 1, name: "Cats" })).toBeVisible();
         await page.goBack();
     });
 
     await test.step("Should show realm 'Fabulous Cats'", async () => {
-        const realm = page.getByRole("heading", { name: "Fabulous Cats" }).nth(1);
-        await expect(realm).toBeVisible();
-        await realm.click({ force: true });
+        // There's also a series with that name, so we need the link target here.
+        await page.getByRole("link", { name: "Fabulous Cats", exact: true })
+            .and(page.locator("[href='/love']"))
+            .click();
         await expect(page).toHaveURL("/love");
         await expect(page.getByRole("heading", { level: 1, name: "Fabulous Cats" })).toBeVisible();
         await page.goBack();

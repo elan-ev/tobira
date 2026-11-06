@@ -514,7 +514,7 @@ const SearchEvent: React.FC<EventItem> = ({
     });
 
     return (
-        <Item key={id} breakpoint={BREAKPOINT_MEDIUM} link={link}>{{
+        <Item key={id} breakpoint={BREAKPOINT_MEDIUM} link={link} label={title}>{{
             image: <Link to={link} tabIndex={-1}>
                 <Thumbnail
                     event={{
@@ -823,7 +823,7 @@ const SearchSeries: React.FC<SeriesItem> = ({
         ? DirectSeriesRoute.url({ seriesId: id })
         : SeriesRoute.url({ realmPath: hostRealms[0].path, seriesId: id });
 
-    return <Item key={id} breakpoint={550} link={link}>{{
+    return <Item key={id} breakpoint={550} link={link} label={title}>{{
         image: <Link to={link} tabIndex={-1}>
             <ThumbnailStack
                 kind="series"
@@ -886,8 +886,10 @@ const SearchBreadcrumbs: React.FC<SearchBreadcrumbsProps> = ({ parts }) => (
 
 const SearchRealm: React.FC<RealmItem> = ({
     id, name, ancestorNames, path, matches,
-}) => (
-    <Item key={id} link={path}>{{
+}) => {
+    const { t } = useTranslation();
+
+    return <Item key={id} link={path} label={name ?? t("realm.missing-name")}>{{
         image: <div css={{
             background: COLORS.neutral25,
             color: COLORS.neutral90,
@@ -919,11 +921,12 @@ const SearchRealm: React.FC<RealmItem> = ({
                 </h3>
             </div>
         ),
-    }}</Item>
-);
+    }}</Item>;
+};
 
 type ItemProps = {
     link: string;
+    label: string;
     breakpoint?: number;
     children: {
         image: ReactNode;
@@ -931,7 +934,7 @@ type ItemProps = {
     };
 };
 
-const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
+const Item: React.FC<ItemProps> = ({ link, label, breakpoint = 0, children }) => (
     <li className="search-result-item" css={{
         position: "relative",
         display: "flex",
@@ -958,7 +961,7 @@ const Item: React.FC<ItemProps> = ({ link, breakpoint = 0, children }) => (
             gap: 12,
         },
     }}>
-        <Link to={link} className="search-result-item-overlay-link" css={{
+        <Link to={link} aria-label={label} className="search-result-item-overlay-link" css={{
             position: "absolute",
             inset: 0,
             borderRadius: 12,
