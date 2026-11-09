@@ -1,12 +1,12 @@
 import React, { ReactElement, useState } from "react";
 
-import { graphql, loadQuery, useMutation } from "react-relay/hooks";
+import { graphql, useMutation } from "react-relay/hooks";
 import type { RealmQuery, RealmQuery$data } from "./__generated__/RealmQuery.graphql";
 import { useTranslation } from "react-i18next";
 import { LuInfo, LuSettings, LuCirclePlus, LuSquarePen } from "react-icons/lu";
 import { WithTooltip, screenWidthAtMost } from "@opencast/appkit";
 
-import { environment as relayEnv } from "../relay";
+import { loadQuery } from "../relay";
 import { Breadcrumbs } from "../ui/Breadcrumbs";
 import { Blocks } from "../ui/Blocks";
 import { RootLoader } from "../layout/Root";
@@ -82,7 +82,7 @@ export const RealmRoute = makeRoute({
 
         const realmPath = "/" + pathSegments.join("/");
 
-        const queryRef = loadQuery<RealmQuery>(relayEnv, query, { path: realmPath });
+        const queryRef = loadQuery<RealmQuery>(query, { path: realmPath });
 
         return {
             render: () => <RootLoader

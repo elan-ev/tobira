@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useForm, FormProvider, DefaultValues, useFormContext } from "react-hook-form";
 import { FocusTrap } from "focus-trap-react";
-import { bug, match, Button, Card } from "@opencast/appkit";
+import { bug, Button, Card } from "@opencast/appkit";
 
 import { ConfirmationModal, ConfirmationModalHandle } from "../../../../../../ui/Modal";
 import { currentRef } from "../../../../../../util";
@@ -35,30 +35,24 @@ export const EditMode: React.FC<EditModeProps> = props => {
     const result = useFragment(graphql`
         fragment EditModeRealmData on Realm {
             blocks {
-                # Querying only the type and the fragments bugs out Relay type generation
-                id
-                __typename
-                ... on TitleBlock { ...TitleEditModeBlockData }
-                ... on TextBlock { ...TextEditModeBlockData }
-                ... on SeriesBlock { ...SeriesEditModeBlockData }
-                ... on VideoBlock { ...VideoEditModeBlockData }
-                ... on PlaylistBlock { ...PlaylistEditModeBlockData }
+                ...TitleEditModeBlockData @alias(as: "title")
+                ...TextEditModeBlockData @alias(as: "text")
+                ...SeriesEditModeBlockData @alias(as: "series")
+                ...VideoEditModeBlockData @alias(as: "video")
+                ...PlaylistEditModeBlockData @alias(as: "playlist")
             }
             ...EditModeFormRealmData
         }
     `, realmRef);
     const block = result.blocks[index];
-    const { __typename: type } = block;
-
 
     return <EditModeFormContext.Provider value={{ ...props, realm: result }}>
-        {match(type, {
-            TitleBlock: () => <EditTitleBlock block={block} />,
-            TextBlock: () => <EditTextBlock block={block} />,
-            SeriesBlock: () => <EditSeriesBlock block={block} />,
-            VideoBlock: () => <EditVideoBlock block={block} />,
-            PlaylistBlock: () => <EditPlaylistBlock block={block} />,
-        }) ?? bug("unknown block type")}
+        {(block.title && <EditTitleBlock block={block.title} />)
+            ?? (block.text && <EditTextBlock block={block.text} />)
+            ?? (block.series && <EditSeriesBlock block={block.series} />)
+            ?? (block.video && <EditVideoBlock block={block.video} />)
+            ?? (block.playlist && <EditPlaylistBlock block={block.playlist} />)
+            ?? bug("unknown block type")}
     </EditModeFormContext.Provider>;
 };
 

@@ -12,7 +12,7 @@ import type { i18n } from "i18next";
 import {
     match, unreachable, ProtoButton, screenWidthAtMost, screenWidthAbove,
     useColorScheme, Floating, FloatingHandle, useFloatingItemProps, bug,
-    matchTag,
+    matchTag, notNullish,
 } from "@opencast/appkit";
 import { keyframes } from "@emotion/react";
 import { IconType } from "react-icons";
@@ -78,7 +78,10 @@ type Event = VideoListEventData$data;
 type ListKind = "series" | "playlist";
 
 export const readVideoListEventDataFragment = (entry: AuthorizedEntry) =>
-    readInlineData<VideoListEventData$key>(videoListEventFragment, entry);
+    readInlineData<VideoListEventData$key>(
+        videoListEventFragment,
+        notNullish(entry.VideoListEventData),
+    );
 
 
 // ==============================================================================================

@@ -53,7 +53,7 @@ const seriesFragment = graphql`
         hasPublicVideos
         entries {
             __typename
-            ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: false) }
+            ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: false) @alias }
             ...on NotAllowed { __typename }
         }
     }

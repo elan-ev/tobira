@@ -56,7 +56,7 @@ type Props = {
 const Login: React.FC<Props> = ({ queryRef }) => {
     useNoindexTag();
     const { t } = useTranslation();
-    const { currentUser } = usePreloadedQuery(query, queryRef);
+    const { currentUser } = usePreloadedQuery<LoginQuery>(query, queryRef);
     const isLoggedIn = currentUser !== null;
 
     return (

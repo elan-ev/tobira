@@ -49,7 +49,7 @@ export const VideoBlock: React.FC<Props> = ({ fragRef, basePath, realmPath, edit
                         endTime
                         thumbnail
                     }
-                    ... VideoPageAuthorizedData
+                    ... VideoPageAuthorizedData @alias
                 }
             }
             showTitle
