@@ -100,7 +100,7 @@ const Page: React.FC<Props> = ({ info }) => {
                 {info.userSessions.flatMap((user, i) => {
                     const makeField = <F extends keyof SingleSessionInfo>(
                         field: F,
-                        render: (val: SingleSessionInfo[F]) => JSX.Element,
+                        render: (val: SingleSessionInfo[F]) => React.JSX.Element,
                     ) => {
                         const first = user.sessions[0][field];
                         // JSON stringify works for our types

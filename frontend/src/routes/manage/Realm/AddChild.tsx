@@ -113,7 +113,7 @@ const AddChild: React.FC<Props> = ({ parent }) => {
     };
 
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commitError, setCommitError] = useState<React.JSX.Element | null>(null);
 
     const router = useRouter();
 

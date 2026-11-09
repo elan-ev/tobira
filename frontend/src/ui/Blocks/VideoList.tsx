@@ -401,9 +401,9 @@ type VideoListBlockContainerProps = {
      * Buttons shown at the top right of the box. On narrow screens shown below
      * metadata. Should be a list of divs to define what should wrap together.
      */
-    buttons?: JSX.Element;
+    buttons?: React.JSX.Element;
     /** Metadata that is shown below the title. */
-    metadata?: JSX.Element;
+    metadata?: React.JSX.Element;
     children: ReactNode;
 };
 

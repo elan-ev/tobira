@@ -2,7 +2,7 @@ import { COLORS } from "../color";
 
 type BurgerMenuProps = {
     hide: () => void;
-    items: [] | readonly [JSX.Element] | readonly [JSX.Element, JSX.Element];
+    items: [] | readonly [React.JSX.Element] | readonly [React.JSX.Element, React.JSX.Element];
 };
 
 export const BurgerMenu: React.FC<BurgerMenuProps> = ({ hide, items }) => (

@@ -13,6 +13,8 @@
     "noImplicitReturns": true,
     "strict": true,
     "isolatedModules": true,
+    // Todo: remove with the next relay update (>21.0.1)
+    "skipLibCheck": true,
     "typeRoots": [
         "src/typings",
         "node_modules/@types"

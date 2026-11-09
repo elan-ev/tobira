@@ -6,7 +6,7 @@ import { Link } from "../router";
 
 
 
-type LinkButtonProps = Omit<JSX.IntrinsicElements["a"], "ref"> & {
+type LinkButtonProps = Omit<React.JSX.IntrinsicElements["a"], "ref"> & {
     to: string;
     kind?: Kind;
     extraCss?: Interpolation<Theme>;

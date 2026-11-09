@@ -117,7 +117,7 @@ type Props = {
 // use this fake function.
 export const t = (s: string) => s;
 
-export const AdminDashboardContainer: React.FC<JSX.IntrinsicElements["div"]> = ({
+export const AdminDashboardContainer: React.FC<React.JSX.IntrinsicElements["div"]> = ({
     children,
     className,
 }) => (

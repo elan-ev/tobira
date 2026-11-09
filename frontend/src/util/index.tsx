@@ -1,6 +1,7 @@
 import {
     MutableRefObject,
     PropsWithChildren,
+    HTMLAttributes,
     ReactElement,
     useEffect,
     useRef,
@@ -149,7 +150,7 @@ export const useRefState = <T, >(
  * This is mainly for accessing refs in event handlers for elements
  * that are guaranteed to be alive as long as the ref itself.
  */
-export const currentRef = <T, >(ref: React.RefObject<T>): T => (
+export const currentRef = <T, >(ref: React.RefObject<T | null>): T => (
     ref.current ?? bug("ref unexpectedly unbound")
 );
 
@@ -333,7 +334,7 @@ type InertableProps = PropsWithChildren<{
 
 /** Can be used to conditionally disable and grey out control elements. */
 export const Inertable: React.FC<InertableProps> = ({ children, isInert, className }) => (
-    <div {...{ className }} {...isInert && { inert: "true", css: { opacity: 0.7 } }}>
+    <div {...{ className }} {...isInert && { inert: true, css: { opacity: 0.7 } }}>
         {children}
     </div>
 );
@@ -373,8 +374,8 @@ export const captionsWithLabels = (
  */
 type ConditionalWrapperProps = {
     condition: boolean;
-    wrapper: (children: ReactElement) => ReactElement;
-    children: ReactElement;
+    wrapper: (children: ReactElement<HTMLAttributes<HTMLElement>>) => ReactElement;
+    children: ReactElement<HTMLAttributes<HTMLElement>>;
 };
 
 export function ConditionalWrapper({

@@ -86,7 +86,7 @@ export const NiceRadio: React.FC<NiceRadioProps> = ({ children, breakpoint }) =>
 
 
 
-type NiceRadioOptionProps = React.PropsWithChildren<JSX.IntrinsicElements["input"]>;
+type NiceRadioOptionProps = React.PropsWithChildren<React.JSX.IntrinsicElements["input"]>;
 
 export const NiceRadioOption = React.forwardRef<HTMLInputElement, NiceRadioOptionProps>(
     ({ children, ...rest }, ref) => (

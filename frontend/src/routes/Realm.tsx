@@ -210,7 +210,7 @@ const CreateUserRealm: React.FC<{ realmPath: string }> = ({ realmPath }) => {
     const router = useRouter();
 
     const [commit, isInFlight] = useMutation(createUserRealmMutation);
-    const [error, setError] = useState<JSX.Element | null>(null);
+    const [error, setError] = useState<React.JSX.Element | null>(null);
     const onSubmit = () => {
         commit({
             variables: {},

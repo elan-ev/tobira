@@ -352,7 +352,7 @@ type RootLoaderProps<Q extends QueryWithUserData> = {
     query: GraphQLTaggedNode;
     queryRef: PreloadedQuery<Q>;
     nav: (data: Q["response"]) => NavItems;
-    render: (data: Q["response"]) => JSX.Element;
+    render: (data: Q["response"]) => React.JSX.Element;
     /** If set to `true`, a `<meta name="robots" content="noindex">` tag is added. */
     noindex?: boolean;
 };

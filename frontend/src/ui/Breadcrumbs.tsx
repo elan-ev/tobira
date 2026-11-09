@@ -14,7 +14,7 @@ export type Props = {
         link: string;
         render?: (label: string) => NonNullable<ReactNode>;
     }[];
-    tail: NonNullable<JSX.Element> | string;
+    tail: NonNullable<React.JSX.Element> | string;
 };
 
 export const Breadcrumbs: React.FC<Props> = ({ path, tail }) => {
