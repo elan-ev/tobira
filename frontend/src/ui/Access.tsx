@@ -542,7 +542,7 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
     const isUser = isRealUser(user) && item.role === user.userRole;
     const immutable = item.role === COMMON_ROLES.ADMIN || userIsRequired && isUser || inherited;
 
-    let label: JSX.Element;
+    let label: React.JSX.Element;
     if (isUser) {
         label = <span><i>{t("acl.table.yourself")}</i>&nbsp;({item.label})</span>;
     } else if (kind === "user" && isUserRole(item.label)) {
@@ -592,9 +592,9 @@ const ListEntry: React.FC<ListEntryProps> = ({ remove, item, kind, inherited = f
 
 
 type TableRowProps = {
-    labelCol: JSX.Element;
+    labelCol: React.JSX.Element;
     mutedLabel?: boolean;
-    actionCol: JSX.Element;
+    actionCol: React.JSX.Element;
     onRemove?: () => void;
     inherited?: boolean;
 }
@@ -844,7 +844,7 @@ type AclEditButtonsProps = {
     /** Checks if the user loses permissions to perform this action, and warns in that case. */
     warnIfActionLost: AclActions;
     warningText: string;
-    saveModalRef: React.RefObject<ConfirmationModalHandle>;
+    saveModalRef: React.RefObject<ConfirmationModalHandle | null>;
 }
 
 export const AclEditButtons: React.FC<AclEditButtonsProps> = ({

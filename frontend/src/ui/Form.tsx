@@ -1,4 +1,4 @@
-export const Form: React.FC<JSX.IntrinsicElements["form"]> = ({ children, ...rest }) => (
+export const Form: React.FC<React.JSX.IntrinsicElements["form"]> = ({ children, ...rest }) => (
     <form
         css={{
             "& label": {

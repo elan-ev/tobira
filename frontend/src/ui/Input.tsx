@@ -43,13 +43,13 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
         useImperativeHandle(ref, () => textAreaRef.current as HTMLTextAreaElement);
         const initialHeight = textAreaRef.current?.scrollHeight;
 
-        const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const handleInput = (e: React.InputEvent<HTMLTextAreaElement>) => {
             if (textAreaRef.current) {
                 // Setting this to auto first prevents some weird behavior
                 // where the textarea's height decreases by a small amount
                 // whenever a single char is deleted.
                 textAreaRef.current.style.height = "auto";
-                textAreaRef.current.style.height = `${e.target.scrollHeight + 2}px`;
+                textAreaRef.current.style.height = `${e.currentTarget.scrollHeight + 2}px`;
             }
         };
 
@@ -219,7 +219,9 @@ export const TimeInput: React.FC<TimeInputProps> = ({ timestamp, setTimestamp, d
             >
                 <input
                     {...{ disabled }}
-                    ref={ref => (inputRefs.current[index] = ref)}
+                    ref={ref => {
+                        inputRefs.current[index] = ref;
+                    }}
                     value={time}
                     inputMode="numeric"
                     onChange={e => handleInput(Number(e.target.value), unit, index)}
@@ -264,7 +266,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     ),
 );
 
-type CopyableInputProps = JSX.IntrinsicElements["div"] & {
+type CopyableInputProps = React.JSX.IntrinsicElements["div"] & {
     value: string;
     label: string;
     multiline?: boolean;

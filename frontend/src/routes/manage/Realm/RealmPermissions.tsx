@@ -43,7 +43,7 @@ export const RealmPermissions: React.FC<Props> = ({ fragRef, data }) => {
 
     const [selections, setSelections] = useState<Acl>(initialAcl);
 
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commitError, setCommitError] = useState<React.JSX.Element | null>(null);
     const [commit, inFlight] = useMutation<RealmPermissionsMutation>(graphql`
         mutation RealmPermissionsMutation($id: ID!, $permissions: UpdatedPermissions!) {
             updatePermissions(id: $id, permissions: $permissions) {

@@ -106,7 +106,7 @@ export const SHORTCUTS = {
 } as const satisfies Record<string, Record<string, ShortcutProps>>;
 
 
-export const ShortcutsOverview: React.FC<{ modalRef: React.RefObject<ModalHandle> }> = ({
+export const ShortcutsOverview: React.FC<{ modalRef: React.RefObject<ModalHandle | null> }> = ({
     modalRef,
 }) => {
     const { t } = useTranslation();

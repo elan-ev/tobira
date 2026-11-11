@@ -24,7 +24,7 @@ export type FallbackRoute = {
  */
 export type MatchedRoute = {
     /** Called during React rendering phase. */
-    render: () => JSX.Element;
+    render: () => React.JSX.Element;
 
     /** Called once the route is no longer active. Can be used for cleanup. */
     dispose?: () => void;
@@ -62,7 +62,7 @@ type LinkProps = {
 /** Props of the `<Router>` component. */
 type RouterProps = {
     initialRoute: RouteMatchInfo;
-    children: JSX.Element;
+    children: React.JSX.Element;
 };
 
 export type RouterLib = {
@@ -98,10 +98,10 @@ export type RouterLib = {
      * Renders the currently matched route. Has to be used somewhere inside of a
      * `<Router>`.
      */
-    ActiveRoute: () => JSX.Element;
+    ActiveRoute: () => React.JSX.Element;
 
     /** Provides the required context for `<Link>` and `<ActiveRoute>` components. */
-    Router: (props: RouterProps) => JSX.Element;
+    Router: (props: RouterProps) => React.JSX.Element;
 };
 
 /** Helper class: a list of listeners */

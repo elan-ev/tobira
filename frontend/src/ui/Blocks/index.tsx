@@ -1,6 +1,5 @@
 import React from "react";
 import { graphql, useFragment } from "react-relay/hooks";
-import { match } from "@opencast/appkit";
 import { useTranslation } from "react-i18next";
 import { LuSunrise } from "react-icons/lu";
 
@@ -65,38 +64,33 @@ export const Block: React.FC<BlockProps> = ({ block: blockRef, realm, edit }) =>
 
     const block = useFragment(graphql`
         fragment BlocksBlockData on Block {
-            id # TODO just querying for the type and fragments bugs out Relay's type generation
-            __typename
-            ... on TitleBlock { ... TitleBlockData }
-            ... on TextBlock { ... TextBlockData }
-            ... on SeriesBlock { ... SeriesBlockData }
-            ... on VideoBlock { ... VideoBlockData }
-            ... on PlaylistBlock { ... PlaylistBlockData }
+            ... TitleBlockData @alias
+            ... TextBlockData @alias
+            ... SeriesBlockData @alias
+            ... VideoBlockData @alias
+            ... PlaylistBlockData @alias
         }
     `, blockRef);
-    const { __typename } = block;
 
     const basePath = path.replace(/\/$/u, "") + "/v";
     return <div>
-        {match(__typename, {
-            "TitleBlock": () => <TitleBlock fragRef={block} />,
-            "TextBlock": () => <TextBlockByQuery fragRef={block} />,
-            "SeriesBlock": () => <SeriesBlockFromBlock
-                fragRef={block}
-                realmPath={path}
-                editMode={edit}
-            />,
-            "VideoBlock": () => <VideoBlock
-                fragRef={block}
-                realmPath={path}
-                {...{ basePath, edit }}
-            />,
-            "PlaylistBlock": () => <PlaylistBlockFromBlock
-                fragRef={block}
-                realmPath={path}
-                editMode={edit}
-            />,
-        })}
+        {block.TitleBlockData && <TitleBlock fragRef={block.TitleBlockData} />}
+        {block.TextBlockData && <TextBlockByQuery fragRef={block.TextBlockData} />}
+        {block.SeriesBlockData && <SeriesBlockFromBlock
+            fragRef={block.SeriesBlockData}
+            realmPath={path}
+            editMode={edit}
+        />}
+        {block.VideoBlockData && <VideoBlock
+            fragRef={block.VideoBlockData}
+            realmPath={path}
+            {...{ basePath, edit }}
+        />}
+        {block.PlaylistBlockData && <PlaylistBlockFromBlock
+            fragRef={block.PlaylistBlockData}
+            realmPath={path}
+            editMode={edit}
+        />}
     </div>;
 };
 

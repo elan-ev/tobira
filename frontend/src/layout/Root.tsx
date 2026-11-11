@@ -11,8 +11,9 @@ import { BurgerMenu } from "./Burger";
 import { SideBox } from "../ui";
 import { OUTER_CONTAINER_MARGIN } from ".";
 import { userDataFragment, UserProvider } from "../User";
-import { GraphQLTaggedNode, PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { GraphQLTaggedNode, useFragment, usePreloadedQuery } from "react-relay";
 import { OperationType } from "relay-runtime";
+import { PreloadedQuery } from "../relay";
 import { UserData$key } from "../__generated__/UserData.graphql";
 import { translatedConfig, useNoindexTag } from "../util";
 import { useRouter } from "../router";
@@ -351,7 +352,7 @@ type RootLoaderProps<Q extends QueryWithUserData> = {
     query: GraphQLTaggedNode;
     queryRef: PreloadedQuery<Q>;
     nav: (data: Q["response"]) => NavItems;
-    render: (data: Q["response"]) => JSX.Element;
+    render: (data: Q["response"]) => React.JSX.Element;
     /** If set to `true`, a `<meta name="robots" content="noindex">` tag is added. */
     noindex?: boolean;
 };

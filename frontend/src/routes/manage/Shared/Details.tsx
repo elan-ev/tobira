@@ -144,7 +144,7 @@ export const MetadataSection = <TMutation extends MetadataMutationParams>({
     disabled = false,
 }: MetadataSectionProps<TMutation>) => {
     const { t } = useTranslation();
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commitError, setCommitError] = useState<React.JSX.Element | null>(null);
     const [success, setSuccess] = useState(false);
 
     const formMethods = useForm<MetadataInput>({

@@ -48,7 +48,7 @@ export const EditBlock: React.FC<Props> = ({
     const { id, editMode } = block;
 
 
-    const [error, setError] = useState<JSX.Element | null>(null);
+    const [error, setError] = useState<React.JSX.Element | null>(null);
 
     const onBlockCommit = () => {
         setError(null);

@@ -1,3 +1,23 @@
 extend interface Block {
     editMode: Boolean
 }
+
+extend type PlaylistBlock {
+    editMode: Boolean
+}
+
+extend type SeriesBlock {
+    editMode: Boolean
+}
+
+extend type TextBlock {
+    editMode: Boolean
+}
+
+extend type TitleBlock {
+    editMode: Boolean
+}
+
+extend type VideoBlock {
+    editMode: Boolean
+}

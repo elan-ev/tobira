@@ -732,7 +732,7 @@ const TextMatchTooltipWithMaybeImage: React.FC<TextMatchTooltipWithMaybeImagePro
     queryRef,
     textMatch,
 }) => {
-    const data = usePreloadedQuery(slidePreviewQuery, queryRef);
+    const data = usePreloadedQuery<SearchSlidePreviewQuery>(slidePreviewQuery, queryRef);
     const segments = data.eventById?.authorizedData?.segments ?? [];
 
     // Find the segment with its start time closest to the `start` of the text
