@@ -1,23 +1,55 @@
-use std::sync::{Arc, atomic::{AtomicU32, Ordering}};
+use std::{sync::atomic::{AtomicU32, Ordering}, time::Duration};
 use postgres_types::{BorrowToSql, ToSql};
 use tokio_postgres::{Error, Row, RowStream};
 
 use crate::prelude::*;
-use super::util::collect_rows_mapped;
+use super::{DbConnection, util::collect_rows_mapped};
 
 
 /// A database transaction that has been started for one API request.
+///
+/// We don't use the `Transaction` type from `tokio_postgres` or
+/// `deadpool_postgres` as that carries a lifetime parameter and borrows the
+/// actual client. But this transaction needs to live in the API context, which
+/// has to be 'static. We just issue the SQL commands ourselves.
+///
+/// Like `tokio_postgres::Transaction`, it is rolled back when dropped without
+/// calling `commit` or `rollback`.
 pub struct Transaction {
-    inner: Arc<deadpool_postgres::Transaction<'static>>,
+    /// `None` once the transaction is finished.
+    client: Option<DbConnection>,
     num_queries: AtomicU32,
 }
 
 impl Transaction {
-    pub fn new(inner: Arc<deadpool_postgres::Transaction<'static>>) -> Self {
-        Self {
-            inner,
+    /// Starts a new transaction on the given connection.
+    pub async fn begin(client: DbConnection) -> Result<Self, Error> {
+        // We create `Self` before sending `start transaction` so that the
+        // `Drop` impl rolls back if this future is dropped after the
+        // statement was sent but before it completed. Otherwise, a connection
+        // in an open transaction could be returned to the pool.
+        let tx = Self {
+            client: Some(client),
             num_queries: AtomicU32::new(0),
-        }
+        };
+        tx.client().batch_execute("start transaction").await?;
+        Ok(tx)
+    }
+
+    /// Consumes the transaction, committing all changes made within it.
+    pub async fn commit(mut self) -> Result<(), Error> {
+        let client = self.client.take().expect("transaction already finished");
+        client.batch_execute("commit").await
+    }
+
+    /// Rolls the transaction back, discarding all changes made within it.
+    pub async fn rollback(mut self) -> Result<(), Error> {
+        let client = self.client.take().expect("transaction already finished");
+        client.batch_execute("rollback").await
+    }
+
+    fn client(&self) -> &DbConnection {
+        self.client.as_ref().expect("transaction already finished")
     }
 
     pub fn num_queries(&self) -> u32 {
@@ -30,7 +62,7 @@ impl Transaction {
     }
 
     pub fn inner(&self) -> &impl deadpool_postgres::GenericClient {
-        &*self.inner
+        self.client()
     }
 
     // The following methods shadow the ones from `deadpool_postgres::Transaction`
@@ -51,9 +83,9 @@ impl Transaction {
         params: &[&(dyn ToSql + Sync)],
     ) -> Result<Row, Error> {
         trace!(query, ?params, "Executing SQL query");
-        let statement = self.inner.prepare_cached(query).await?;
+        let statement = self.client().prepare_cached(query).await?;
         self.increase_num_queries();
-        self.inner.query_one(&statement, params).await
+        self.client().query_one(&statement, params).await
     }
 
     pub async fn query_opt(
@@ -62,9 +94,9 @@ impl Transaction {
         params: &[&(dyn ToSql + Sync)],
     ) -> Result<Option<Row>, Error> {
         trace!(query, ?params, "Executing SQL query");
-        let statement = self.inner.prepare_cached(query).await?;
+        let statement = self.client().prepare_cached(query).await?;
         self.increase_num_queries();
-        self.inner.query_opt(&statement, params).await
+        self.client().query_opt(&statement, params).await
     }
 
     pub async fn query_raw<P, I>(&self, query: &str, params: I) -> Result<RowStream, Error>
@@ -74,9 +106,9 @@ impl Transaction {
         I::IntoIter: ExactSizeIterator,
     {
         trace!(query, ?params, "Executing SQL query");
-        let statement = self.inner.prepare_cached(query).await?;
+        let statement = self.client().prepare_cached(query).await?;
         self.increase_num_queries();
-        self.inner.query_raw(&statement, params).await
+        self.client().query_raw(&statement, params).await
     }
 
     /// Convenience method to query many rows and convert each row to a specific
@@ -102,8 +134,33 @@ impl Transaction {
         params: &[&(dyn ToSql + Sync)],
     ) -> Result<u64, Error> {
         trace!(query, ?params, "Executing SQL query");
-        let statement = self.inner.prepare_cached(query).await?;
+        let statement = self.client().prepare_cached(query).await?;
         self.increase_num_queries();
-        self.inner.execute(&statement, params).await
+        self.client().execute(&statement, params).await
+    }
+}
+
+impl Drop for Transaction {
+    fn drop(&mut self) {
+        // If not finished (e.g. on panic or when the request future is
+        // dropped), we roll back in a background task. If that fails or times
+        // out, we close the connection instead of returning it to the pool in
+        // an unknown state. The timeout is generous since `rollback` might
+        // have to wait for a query still running on this connection. Closing
+        // early would not stop that query in Postgres, but would free the pool
+        // slot, so the number of DB connections would no longer be bounded.
+        //
+        // There is a better option, which is unfortunately a private API of
+        // `tokio-postgres`: `__private_api_rollback`
+        // See https://github.com/rust-postgres/rust-postgres/pull/1230
+        if let Some(client) = self.client.take() {
+            tokio::spawn(async move {
+                let rollback = client.batch_execute("rollback");
+                let res = tokio::time::timeout(Duration::from_secs(10), rollback).await;
+                if !matches!(res, Ok(Ok(()))) {
+                    drop(deadpool::managed::Object::take(client));
+                }
+            });
+        }
     }
 }
