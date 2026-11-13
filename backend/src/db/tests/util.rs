@@ -1,26 +1,25 @@
 use std::{ops::Deref, collections::HashSet};
-use secrecy::ExposeSecret;
 use tokio_postgres::{Client, NoTls};
 
 use crate::{prelude::*, model::Key, search::IndexItemKind};
-use super::DbConfig;
 
 
-async fn conn(config: &super::DbConfig) -> Result<Client> {
-    let (client, connection) = tokio_postgres::config::Config::new()
-        .user(&config.user)
-        .password(config.password.expose_secret())
-        .dbname(&config.database)
-        .host(&config.host)
-        .port(config.port)
-        .application_name("Tobira DB tests")
-        .connect(NoTls)
+/// Env variable to set a Postgres URL to be used by tests. The temporary test
+/// DBs are created via that connection.
+const DB_URL_ENV: &str = "TOBIRA_TEST_DB";
+
+/// Used if `DB_URL_ENV` is not set.
+const DEFAULT_DB_URL: &str = "postgres://tobira:tobira@localhost:5432/tobira";
+
+
+async fn conn(config: &tokio_postgres::Config) -> Result<Client> {
+    let (client, connection) = config.connect(NoTls)
         .await
         .context("could not connect to DB in test")?;
 
     tokio::spawn(async move {
         if let Err(e) = connection.await {
-            panic!("PG connection error: {e}");
+            eprintln!("PG connection error: {e}");
         }
     });
 
@@ -29,39 +28,39 @@ async fn conn(config: &super::DbConfig) -> Result<Client> {
 
 /// A temporary DB used for a single unit test. Is removed on drop.
 ///
-/// Be sure to use the multi threaded Tokio runtime or else `drop` will hang
-/// indefinitely!
+/// Use exactly one `TestDb` per test and keep it alive until the end of the
+/// test. The connection to the temporary DB is not closed properly on drop,
+/// so dropping it earlier prints a connection error.
 pub(super) struct TestDb {
-    client: Option<Client>,
-    controller: Client,
+    client: Client,
+    config: tokio_postgres::Config,
     db_name: String,
 }
 
 impl TestDb {
-    /// Creates a new temporary database with connection data from the dev config.
+    /// Creates a new temporary database on the server configured via
+    /// `DB_URL_ENV`.
     pub(super) async fn new() -> Result<Self> {
-        let config = crate::Config::load_from("../util/dev-config/config.toml")
-            .context("failed to load config")?;
+        let url = std::env::var(DB_URL_ENV).unwrap_or_else(|_| DEFAULT_DB_URL.into());
+        let mut config = url.parse::<tokio_postgres::Config>()
+            .with_context(|| format!("invalid Postgres URL in ${DB_URL_ENV}"))?;
+        config.application_name("Tobira DB tests");
 
-        // Create connection to original database and create a new temporary one.
-        let controller = conn(&config.db).await?;
+        // Connect to original database and create a new temporary one.
         let db_name = format!("tobira_test_{}", rand::random::<u64>());
-        controller.execute(&format!("create database {db_name}"), &[]).await
+        conn(&config).await?
+            .execute(&format!("create database {db_name}"), &[]).await
             .context("failed to create temporary test DB")?;
 
         // Connect to temporary database
-        let client = conn(&DbConfig { database: db_name.clone(), ..config.db }).await?;
+        let client = conn(config.clone().dbname(&db_name)).await?;
 
-        Ok(Self {
-            controller,
-            client: Some(client),
-            db_name
-        })
+        Ok(Self { client, config, db_name })
     }
 
     pub(super) async fn with_migrations() -> Result<Self> {
         let mut out = Self::new().await?;
-        crate::db::migrate(out.client.as_mut().unwrap()).await
+        crate::db::migrate(&mut out.client).await
             .context("failed to run migrations on test DB")?;
 
         Ok(out)
@@ -203,22 +202,33 @@ impl Deref for TestDb {
     type Target = Client;
 
     fn deref(&self) -> &Self::Target {
-        self.client.as_ref().unwrap()
+        &self.client
     }
 }
 
 impl Drop for TestDb {
     fn drop(&mut self) {
         // Since there is no "async drop" in Rust yet, this is a bit annoying.
-        // First we need to drop the client to close all connections to the
-        // temporary database. Then we drop the database within `block_on`.
-        //
-        // This code requires the multi threaded Tokio runtime! :(
-        drop(self.client.take());
-        futures::executor::block_on(async move {
-            self.controller.execute(&format!("drop database {}", self.db_name), &[])
-                .await
-                .expect("failed to drop temporary test DB");
-        });
+        // We cannot run async code on the test's runtime from in here (with
+        // the current thread runtime, nothing else would run while we block).
+        // So we connect again from a separate thread with its own runtime.
+        // `with (force)` terminates the connection of `self.client`, which
+        // cannot be closed properly from here either.
+        let config = self.config.clone();
+        let db_name = self.db_name.clone();
+        let _ = std::thread::spawn(move || {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("failed to create Tokio runtime");
+            let result = rt.block_on(async {
+                conn(&config).await?
+                    .execute(&format!("drop database {db_name} with (force)"), &[]).await
+                    .context("failed to execute 'drop database'")
+            });
+            if let Err(e) = result {
+                eprintln!("WARNING: failed to drop temporary test DB '{db_name}': {e:#}");
+            }
+        }).join();
     }
 }
