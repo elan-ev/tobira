@@ -1,7 +1,5 @@
-use crate::{prelude::*, model::Key};
-use self::util::TestDb;
+use crate::{prelude::*, model::Key, testing::db::TestDb};
 
-mod util;
 mod search_queue;
 
 

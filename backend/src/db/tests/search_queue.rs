@@ -1,5 +1,4 @@
-use crate::{prelude::*, model::Key, search::IndexItemKind};
-use super::util::TestDb;
+use crate::{prelude::*, model::Key, search::IndexItemKind, testing::db::TestDb};
 
 
 macro_rules! set {

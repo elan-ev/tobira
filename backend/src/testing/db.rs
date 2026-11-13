@@ -31,7 +31,7 @@ async fn conn(config: &tokio_postgres::Config) -> Result<Client> {
 /// Use exactly one `TestDb` per test and keep it alive until the end of the
 /// test. The connection to the temporary DB is not closed properly on drop,
 /// so dropping it earlier prints a connection error.
-pub(super) struct TestDb {
+pub(crate) struct TestDb {
     client: Client,
     config: tokio_postgres::Config,
     db_name: String,
@@ -40,7 +40,7 @@ pub(super) struct TestDb {
 impl TestDb {
     /// Creates a new temporary database on the server configured via
     /// `DB_URL_ENV`.
-    pub(super) async fn new() -> Result<Self> {
+    pub(crate) async fn new() -> Result<Self> {
         let url = std::env::var(DB_URL_ENV).unwrap_or_else(|_| DEFAULT_DB_URL.into());
         let mut config = url.parse::<tokio_postgres::Config>()
             .with_context(|| format!("invalid Postgres URL in ${DB_URL_ENV}"))?;
@@ -58,7 +58,7 @@ impl TestDb {
         Ok(Self { client, config, db_name })
     }
 
-    pub(super) async fn with_migrations() -> Result<Self> {
+    pub(crate) async fn with_migrations() -> Result<Self> {
         let mut out = Self::new().await?;
         crate::db::migrate(&mut out.client).await
             .context("failed to run migrations on test DB")?;
@@ -66,7 +66,7 @@ impl TestDb {
         Ok(out)
     }
 
-    pub(super) async fn add_realm(
+    pub(crate) async fn add_realm(
         &self,
         name: &str,
         parent: Key,
@@ -79,7 +79,7 @@ impl TestDb {
         Ok(row.get::<_, Key>(0))
     }
 
-    pub(super) async fn add_event(
+    pub(crate) async fn add_event(
         &self,
         title: &str,
         duration: u32,
@@ -107,7 +107,7 @@ impl TestDb {
         Ok(row.get(0))
     }
 
-    pub(super) async fn add_series(
+    pub(crate) async fn add_series(
         &self,
         title: &str,
         opencast_id: &str,
@@ -123,7 +123,7 @@ impl TestDb {
         Ok(row.get::<_, Key>(0))
     }
 
-    pub(super) async fn add_playlist(
+    pub(crate) async fn add_playlist(
         &self,
         title: &str,
         opencast_id: &str,
@@ -153,7 +153,7 @@ impl TestDb {
         Ok(row.get::<_, Key>(0))
     }
 
-    pub(super) async fn add_video_block(&self, realm: Key, video: Key, index: u8) -> Result<Key> {
+    pub(crate) async fn add_video_block(&self, realm: Key, video: Key, index: u8) -> Result<Key> {
         let row = self.query_one(
             "insert into blocks (realm, index, type, video, show_title)
                 values ($1, $2, 'video', $3, true)
@@ -163,7 +163,7 @@ impl TestDb {
         Ok(row.get::<_, Key>(0))
     }
 
-    pub(super) async fn add_series_block(&self, realm: Key, series: Key, index: u8) -> Result<Key> {
+    pub(crate) async fn add_series_block(&self, realm: Key, series: Key, index: u8) -> Result<Key> {
         let row = self.query_one(
             "insert into blocks (realm, index, type, series, show_title, videolist_order, videolist_layout)
                 values ($1, $2, 'series', $3, true, 'new_to_old', 'gallery')
@@ -173,7 +173,7 @@ impl TestDb {
         Ok(row.get::<_, Key>(0))
     }
 
-    pub(super) async fn add_playlist_block(&self, realm: Key, playlist: Key, index: u8) -> Result<Key> {
+    pub(crate) async fn add_playlist_block(&self, realm: Key, playlist: Key, index: u8) -> Result<Key> {
         let row = self.query_one(
             "insert into blocks (realm, index, type, playlist, show_title, videolist_order, videolist_layout)
                 values ($1, $2, 'playlist', $3, true, 'new_to_old', 'gallery')
@@ -183,7 +183,7 @@ impl TestDb {
         Ok(row.get::<_, Key>(0))
     }
 
-    pub(super) async fn search_queue(&self) -> Result<HashSet<(Key, IndexItemKind)>> {
+    pub(crate) async fn search_queue(&self) -> Result<HashSet<(Key, IndexItemKind)>> {
         self.query_raw("select item_id, kind from search_index_queue", dbargs![])
             .await?
             .map_ok(|row| (row.get(0), row.get(1)))
@@ -192,7 +192,7 @@ impl TestDb {
             .map_err(Into::into)
     }
 
-    pub(super) async fn clear_search_queue(&self) -> Result<()> {
+    pub(crate) async fn clear_search_queue(&self) -> Result<()> {
         self.execute("truncate search_index_queue", &[]).await?;
         Ok(())
     }
