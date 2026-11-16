@@ -226,12 +226,15 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
 
 
     // Get a connection for this request.
+    let before_conn = Instant::now();
     let connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
     // Get auth session
+    let before_auth = Instant::now();
     let auth = AuthState::new(&parts.headers, &connection, &ctx).await?;
     let username = auth.debug_log_username();
 
+    let before_exec = Instant::now();
     let tx = match Transaction::begin(connection).await {
         Ok(tx) => tx,
         Err(e) => {
@@ -252,6 +255,7 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
         oc_client: ctx.oc_client.clone(),
     };
     let output = api::execute(&ctx.api_root, api_context, &gql_request).await?;
+    let exec_time = before_exec.elapsed();
 
     // Create an appropriate HTTP response.
     let body = serde_json::to_string(&output.response).unwrap();
@@ -262,10 +266,14 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
         .unwrap();
 
     trace!(
-        "Finished /graphql query with {} SQL queries in {:.2?} (user: {})",
+        "Finished /graphql query for user '{}' with {} SQL queries in {:.2?} \
+            (DB conn {:.2?}, auth {:.2?}, exec {:.2?})",
+        username,
         output.num_queries,
         before.elapsed(),
-        username,
+        before_auth - before_conn,
+        before_exec - before_auth,
+        exec_time,
     );
 
     Ok(out)
