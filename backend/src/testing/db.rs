@@ -1,7 +1,8 @@
 use std::{ops::Deref, collections::HashSet};
+use deadpool_postgres::{Manager, Pool};
 use tokio_postgres::{Client, NoTls};
 
-use crate::{prelude::*, model::Key, search::IndexItemKind};
+use crate::{prelude::*, db::DbConnection, model::Key, search::IndexItemKind};
 
 
 /// Env variable to set a Postgres URL to be used by tests. The temporary test
@@ -28,11 +29,11 @@ async fn conn(config: &tokio_postgres::Config) -> Result<Client> {
 
 /// A temporary DB used for a single unit test. Is removed on drop.
 ///
-/// Use exactly one `TestDb` per test and keep it alive until the end of the
-/// test. The connection to the temporary DB is not closed properly on drop,
-/// so dropping it earlier prints a connection error.
+/// Derefs to a connection to that DB. More connections can be obtained via
+/// `get_conn`. All of them come from a small pool.
 pub(crate) struct TestDb {
-    client: Client,
+    pool: Pool,
+    client: DbConnection,
     config: tokio_postgres::Config,
     db_name: String,
 }
@@ -52,10 +53,20 @@ impl TestDb {
             .execute(&format!("create database {db_name}"), &[]).await
             .context("failed to create temporary test DB")?;
 
-        // Connect to temporary database
-        let client = conn(config.clone().dbname(&db_name)).await?;
+        // Create pool for the temporary database and connect to it.
+        let pool_config = config.clone().dbname(&db_name).clone();
+        let pool = Pool::builder(Manager::new(pool_config, NoTls))
+            .max_size(4)
+            .build()
+            .context("failed to create DB pool for test DB")?;
+        let client = pool.get().await.context("could not connect to test DB")?;
 
-        Ok(Self { client, config, db_name })
+        Ok(Self { pool, client, config, db_name })
+    }
+
+    /// Returns another connection to the temporary DB.
+    pub(crate) async fn get_conn(&self) -> Result<DbConnection> {
+        self.pool.get().await.context("could not connect to test DB")
     }
 
     pub(crate) async fn with_migrations() -> Result<Self> {
@@ -212,7 +223,7 @@ impl Drop for TestDb {
         // We cannot run async code on the test's runtime from in here (with
         // the current thread runtime, nothing else would run while we block).
         // So we connect again from a separate thread with its own runtime.
-        // `with (force)` terminates the connection of `self.client`, which
+        // `with (force)` terminates the connections of `self.pool`, which
         // cannot be closed properly from here either.
         let config = self.config.clone();
         let db_name = self.db_name.clone();
