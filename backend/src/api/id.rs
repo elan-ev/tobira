@@ -52,7 +52,7 @@ macro_rules! define_kinds {
                 $(
                     pub(crate) const [<$name:upper _KIND>]: IdKind = *$val;
 
-                    pub(crate) fn $name(key: Key) -> Self {
+                    pub(crate) const fn $name(key: Key) -> Self {
                         Self {
                             kind: Self:: [<$name:upper _KIND>],
                             key,

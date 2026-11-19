@@ -6,10 +6,11 @@ use juniper::{http::GraphQLRequest, InputValue};
 use serde_json::Value;
 
 use crate::{
-    api::{self, ExecuteError, RootNode},
+    api::{self, ExecuteError, Id, RootNode},
     auth::{AuthContext, AuthState, JwtContext, User},
     config::Config,
     db::Transaction,
+    model::Key,
     prelude::*,
     search,
     sync::OcClient,
@@ -93,6 +94,10 @@ impl TestUser {
         AuthState::User(user)
     }
 }
+
+
+/// ID of the root realm, which always exists.
+pub(crate) const ROOT_REALM_ID: Id = Id::realm(Key(0));
 
 
 /// Everything required to run GraphQL requests against the API: a fresh
@@ -208,6 +213,17 @@ impl Response {
     pub(crate) fn assert_ok(&self, expected: Value) {
         self.assert_no_errors();
         assert_json_eq!(&self.data, &expected);
+    }
+
+    /// Asserts that there is exactly one error and that its `extensions`
+    /// equal `expected`, e.g. `json!({ "kind": "INVALID_INPUT", "key": "foo" })`.
+    #[track_caller]
+    pub(crate) fn assert_error(&self, expected: Value) {
+        let [error] = &self.errors[..] else {
+            let errors = serde_json::to_string_pretty(&self.errors).unwrap();
+            panic!("expected exactly one error, but got: {errors}");
+        };
+        assert_json_eq!(&error["extensions"], &expected);
     }
 
     #[track_caller]
