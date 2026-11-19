@@ -1,5 +1,5 @@
 [Unit]
-Description=Tobira {{ id }}
+Description=Tobira %i
 Documentation=https://github.com/elan-ev/tobira
 
 After=local-fs.target
@@ -8,8 +8,8 @@ After=postgresql.service
 After=meili.service
 
 [Service]
-WorkingDirectory=/opt/tobira/{{ id }}/
-ExecStart=/opt/tobira/{{ id }}/tobira serve
+WorkingDirectory=/opt/tobira/%i/
+ExecStart=/opt/tobira/%i/tobira serve
 Restart=always
 User=tobira
 

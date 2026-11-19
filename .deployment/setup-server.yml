@@ -2,7 +2,15 @@
 
 - hosts: all
 
+  vars:
+    tobira_admin_password: '{{ lookup("env", "TOBIRA_ADMIN_PASSWORD") }}'
+
   tasks:
+    - name: check required environment variables
+      assert:
+        that: tobira_admin_password | length > 0
+        fail_msg: TOBIRA_ADMIN_PASSWORD needs to be set (it's baked into tobiraauth@.service)
+
     - name: install dependencies
       become: true
       package:
@@ -104,6 +112,28 @@
         owner: tobira
         group: tobira
         mode: '0755'
+
+    # Every deployment `<id>` runs as instances `tobira@<id>` etc. of these.
+    # Changes only take effect for each deployment once it is restarted.
+    - name: install tobira service templates
+      become: true
+      template:
+        src: '{{ item }}@.service'
+        dest: /etc/systemd/system/{{ item }}@.service
+        mode: '0644'
+        owner: root
+        group: root
+      with_items:
+        - tobira
+        - tobiraworker
+        - tobiraauth
+      register: tobira_service_changed
+
+    - name: reload systemd due to service file changes
+      become: true
+      systemd:
+        daemon_reload: true
+      when: tobira_service_changed.changed
 
 
     # Nginx

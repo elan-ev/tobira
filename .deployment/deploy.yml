@@ -6,15 +6,54 @@
     # will usually be overwritten by --extra-vars='deployid=<id>'
     id: "{{ deployid }}"
     opencast_admin_password: '{{ lookup("env", "OPENCAST_ADMIN_PASSWORD") }}'
-    tobira_admin_password: '{{ lookup("env", "TOBIRA_ADMIN_PASSWORD") }}'
 
   tasks:
+    # MIGRATION: Deployments used to have their own unit files
+    # (`tobira-<id>.service`), now we use systemd template units
+    # (`tobira@<id>.service`). If this deployment still has the old units, stop
+    # and remove them. Can be removed once no old-style deployments are left.
+    - name: check for legacy service files
+      stat:
+        path: /etc/systemd/system/tobira-{{ id }}.service
+      register: legacy_units
+
+    - name: stop and disable legacy services
+      become: true
+      systemd:
+        name: '{{ item }}-{{ id }}'
+        state: stopped
+        enabled: false
+      ignore_errors: true
+      with_items:
+        - tobira
+        - tobiraworker
+        - tobiraauth
+      when: legacy_units.stat.exists
+
+    - name: remove legacy service files
+      become: true
+      file:
+        path: /etc/systemd/system/{{ item }}-{{ id }}.service
+        state: absent
+      with_items:
+        - tobira
+        - tobiraworker
+        - tobiraauth
+      when: legacy_units.stat.exists
+
+    - name: reload systemd after removing legacy service files
+      become: true
+      systemd:
+        daemon_reload: true
+      when: legacy_units.stat.exists
+    # ---- END MIGRATION
+
     # We always recreate the DB from the last release dump. To do that, we have
     # to stop Tobira in case it's already running.
     - name: stop tobira
       become: true
       systemd:
-        name: '{{ item }}-{{ id }}'
+        name: '{{ item }}@{{ id }}'
         state: stopped
       ignore_errors: true
       with_items:
@@ -188,25 +227,10 @@
         - groups
         - users
 
-    - name: install tobira service files
-      become: true
-      template:
-        src: '{{ item }}.service'
-        dest: /etc/systemd/system/{{ item }}-{{ id }}.service
-        mode: '0644'
-        owner: root
-        group: root
-      with_items:
-        - tobira
-        - tobiraworker
-        - tobiraauth
-      notify: restart tobira
-
     - name: start and enable tobira
       become: true
       systemd:
-        daemon_reload: true
-        name: '{{ item }}-{{ id }}'
+        name: '{{ item }}@{{ id }}'
         state: started
         enabled: true
       with_items:
@@ -231,7 +255,7 @@
     - name: restart tobira
       become: true
       service:
-        name: '{{ item }}-{{ id }}'
+        name: '{{ item }}@{{ id }}'
         state: restarted
       with_items:
         - tobira
