@@ -23,7 +23,7 @@ export const SideBox: React.FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 type LinkListProps = {
-    items: JSX.Element[];
+    items: React.JSX.Element[];
     className?: string;
 };
 
@@ -181,7 +181,7 @@ export const ellipsisOverflowCss = (lines: number): CSSObject => ({
 export const darkModeBoxShadow = { boxShadow: "0 0 5px rgba(0, 0, 0, .2)" };
 
 type InfoTooltipProps = {
-    info: JSX.Element | string;
+    info: React.JSX.Element | string;
 };
 
 export const InfoTooltip: React.FC<InfoTooltipProps> = ({ info }) => (

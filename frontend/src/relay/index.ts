@@ -3,18 +3,18 @@ import {
     fetchQuery as relayFetchQuery,
     LoadQueryOptions,
 } from "react-relay";
-import type { PreloadedQuery } from "react-relay";
+import type { PreloadedQuery as RelayPreloadedQuery } from "react-relay";
 import { Environment, Store, RecordSource, Network } from "relay-runtime";
 import type {
     GraphQLSingularResponse,
     GraphQLTaggedNode,
+    Observable,
     OperationType,
     VariablesOf,
 } from "relay-runtime";
 
 import { hasErrors, APIError, ServerError, NotJson } from "./errors";
 import { NetworkError } from "../util/err";
-import { RelayObservable } from "relay-runtime/lib/network/RelayObservable";
 
 
 export const environment = new Environment({
@@ -54,6 +54,13 @@ export const environment = new Environment({
     ),
 });
 
+/**
+ * Relay's `PreloadedQuery`, but TS can infer `TQuery` from it. The type in Relay
+ * 21.0.1 doesn't allow that, see https://github.com/facebook/relay/issues/5361.
+ */
+export type PreloadedQuery<TQuery extends OperationType> =
+    RelayPreloadedQuery<TQuery> & { readonly " $queryShape"?: TQuery };
+
 /** Like `loadQuery` from relay, but using our environment */
 export function loadQuery<TQuery extends OperationType>(
     preloadableRequest: GraphQLTaggedNode,
@@ -68,7 +75,7 @@ export function fetchQuery<TQuery extends OperationType>(
     query: GraphQLTaggedNode,
     variables: VariablesOf<TQuery>,
     options?: Parameters<typeof relayFetchQuery>[3],
-): RelayObservable<TQuery["response"]> {
+): Observable<TQuery["response"]> {
     return relayFetchQuery(environment, query, variables, options);
 }
 

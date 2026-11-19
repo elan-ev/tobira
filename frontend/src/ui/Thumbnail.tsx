@@ -15,7 +15,7 @@ import { formatDuration, isUpcomingLiveEvent } from "./Video";
 export type ThumbnailItemState
     = "READY" | "WAITING" | "UPCOMING" | "DELETED" | "%future added value";
 
-type ThumbnailProps = JSX.IntrinsicElements["div"] & {
+type ThumbnailProps = React.JSX.IntrinsicElements["div"] & {
     /** The event of which a thumbnail should be shown */
     event: {
         title: string;
@@ -241,7 +241,7 @@ export const ThumbnailOverlay: React.FC<ThumbnailOverlayProps> = ({
 );
 
 
-type ThumbnailOverlayContainerProps = JSX.IntrinsicElements["div"] & {
+type ThumbnailOverlayContainerProps = React.JSX.IntrinsicElements["div"] & {
     accessRoles?: {
         readRoles: readonly string[];
         writeRoles: readonly string[];

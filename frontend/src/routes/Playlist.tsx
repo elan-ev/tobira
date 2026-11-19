@@ -240,7 +240,9 @@ const fragment = graphql`
             entries {
                 node {
                     __typename
-                    ...on AuthorizedEvent { ...VideoListEventData @arguments(includeSeries: true) }
+                    ...on AuthorizedEvent {
+                        ...VideoListEventData @arguments(includeSeries: true) @alias
+                    }
                     ...on Missing { __typename }
                     ...on NotAllowed { __typename }
                 }

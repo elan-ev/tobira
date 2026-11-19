@@ -61,7 +61,7 @@ export const InputContainer: React.FC<InputContainerProps> = ({ children, classN
 export type DateAndCreatorsProps = {
     timestamp?: string;
     isLive: boolean;
-    creators?: (string | JSX.Element)[];
+    creators?: (string | React.JSX.Element)[];
     className?: string;
 };
 
@@ -84,7 +84,7 @@ export const DateBadge: React.FC<PrettyDateProps> = props => (
 );
 
 export type CreatorsBadgeProps = {
-    creators: (string | JSX.Element)[];
+    creators: (string | React.JSX.Element)[];
 };
 
 export const CreatorsBadge: React.FC<CreatorsBadgeProps> = ({ creators }) => (
@@ -196,7 +196,7 @@ type DescriptionProps = {
     text?: string | null;
     className?: string;
     autoLink?: boolean;
-    textProcessor?: (s: string) => JSX.Element;
+    textProcessor?: (s: string) => React.JSX.Element;
 };
 
 /**
@@ -253,7 +253,7 @@ type CollapsibleDescriptionProps = {
     description?: string | null;
     creators?: readonly string[];
     bottomPadding: number;
-    textProcessor?: (s: string) => JSX.Element;
+    textProcessor?: (s: string) => React.JSX.Element;
 }
 
 export const CollapsibleDescription: React.FC<CollapsibleDescriptionProps> = (

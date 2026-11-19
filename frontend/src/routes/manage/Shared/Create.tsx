@@ -57,7 +57,7 @@ export const CreateVideoList = <TMutation extends MutationParameters>({
     const descriptionFieldId = useId();
     const knownRoles = useFragment(knownRolesFragment, knownRolesRef);
     const [success, setSuccess] = useState(false);
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commitError, setCommitError] = useState<React.JSX.Element | null>(null);
     const { setNotification } = useNotification();
     const user = useUser();
 
@@ -105,7 +105,7 @@ export const CreateVideoList = <TMutation extends MutationParameters>({
         <Form
             noValidate
             onSubmit={e => e.preventDefault()}
-            {...(commitError && { inert: "true" })}
+            {...(commitError && { inert: true })}
             css={{
                 margin: "32px 2px",
                 "label": {

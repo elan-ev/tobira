@@ -107,7 +107,7 @@ export const ManageVideoListContent = <TMutation extends VideoListMutationParams
     inFlight,
 }: ManageVideoListProps<TMutation>) => {
     const { t } = useTranslation();
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commitError, setCommitError] = useState<React.JSX.Element | null>(null);
     const [success, setSuccess] = useState(false);
     const isPlaylist = listId.startsWith("pl");
     const [items, setItems] = useState(mapItems(listEntries, isPlaylist));

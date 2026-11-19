@@ -61,7 +61,7 @@ export const EditVideoBlock: React.FC<EditVideoBlockProps> = ({ block: blockRef 
     const [save] = useMutation<VideoEditSaveMutation>(graphql`
         mutation VideoEditSaveMutation($id: ID!, $set: UpdateVideoBlock!) {
             updateVideoBlock(id: $id, set: $set) {
-                ... VideoEditModeBlockData
+                ... VideoEditModeBlockData @alias
                 ... BlocksBlockData
                 ... EditBlockUpdateRealmNameData
             }

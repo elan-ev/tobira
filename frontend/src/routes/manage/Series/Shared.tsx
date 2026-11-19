@@ -29,7 +29,7 @@ type ManageSeriesSubPageType = "details" | "acl";
 export const makeManageSeriesRoute = (
     page: ManageSeriesSubPageType,
     path: `/${string}` | "",
-    render: (series: Series, data: QueryResponse) => JSX.Element,
+    render: (series: Series, data: QueryResponse) => React.JSX.Element,
 ): ManageRoute => (
     makeRoute({
         url: ({ id }: { id: string }) => `/~manage/series/${keyOfId(id)}${path}`,

@@ -18,7 +18,7 @@ export const WaitingPage: React.FC<{ type: Exclude<OcEntity, "playlist"> }> = ({
     );
 };
 
-export const MovingTruck: React.FC<JSX.IntrinsicElements["svg"]> = props => (
+export const MovingTruck: React.FC<React.JSX.IntrinsicElements["svg"]> = props => (
     <LuTruck {...props} css={{
         fontSize: 40,
         animation: `500ms steps(2, end) infinite none ${keyframes({

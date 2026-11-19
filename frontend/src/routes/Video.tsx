@@ -4,7 +4,7 @@ import React, {
     useState,
 } from "react";
 import {
-    graphql, GraphQLTaggedNode, PreloadedQuery, RefetchFnDynamic, useFragment,
+    graphql, GraphQLTaggedNode, RefetchFnDynamic, useFragment,
     useRefetchableFragment,
 } from "react-relay/hooks";
 import { useTranslation } from "react-i18next";
@@ -19,7 +19,7 @@ import {
 } from "@opencast/appkit";
 import { VideoObject, WithContext } from "schema-dts";
 
-import { fetchQuery, loadQuery } from "../relay";
+import { fetchQuery, loadQuery, PreloadedQuery } from "../relay";
 import { InitialLoading, RootLoader } from "../layout/Root";
 import { NotFound } from "./NotFound";
 import { RealmNav } from "../layout/Navigation";
@@ -401,7 +401,7 @@ type RawEvent<T> =
     | { __typename: "%other" };
 
 export const useEventWithAuthData = <T, >(
-    event?: RawEvent<T & VideoPageAuthorizedData$key> | null,
+    event?: RawEvent<T & { VideoPageAuthorizedData?: VideoPageAuthorizedData$key | null }> | null,
 ): [
     RawEvent<T & { authorizedData: VideoPageAuthorizedData$data["authorizedData"] }>
         | undefined | null,
@@ -411,7 +411,7 @@ export const useEventWithAuthData = <T, >(
         authorizedDataFragment,
         !event || event.__typename !== "AuthorizedEvent"
             ? null
-            : event as VideoPageAuthorizedData$key,
+            : event.VideoPageAuthorizedData,
     );
 
     if (!event || event.__typename !== "AuthorizedEvent") {
@@ -463,7 +463,7 @@ const eventFragment = graphql`
                 endTime
                 thumbnail
             }
-            ... VideoPageAuthorizedData
+            ... VideoPageAuthorizedData @alias
                 @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
             series {
                 id
@@ -505,7 +505,7 @@ export const authorizedDataQuery = graphql`
         node(id: $id) {
             __typename
             id
-            ...VideoPageAuthorizedData
+            ...VideoPageAuthorizedData @alias
                 @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
             ...on AuthorizedEvent {
                 authorizedData(user: $eventUser, password: $eventPassword) {

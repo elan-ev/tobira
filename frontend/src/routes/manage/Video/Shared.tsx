@@ -27,7 +27,7 @@ export type ManageVideoSubPageType = "details" | "technical-details" | "acl";
 export const makeManageVideoRoute = (
     page: ManageVideoSubPageType,
     path: `/${string}` | "",
-    render: (event: AuthorizedEvent, data: QueryResponse) => JSX.Element,
+    render: (event: AuthorizedEvent, data: QueryResponse) => React.JSX.Element,
     options?: { fetchWorkflowState?: boolean },
 ): ManageRoute => (
     makeRoute({
