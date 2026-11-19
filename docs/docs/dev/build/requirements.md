@@ -14,4 +14,4 @@ To build Tobira, you need:
 
 - **Build essentials**: most importantly, a linker (`cc`). This is likely already installed on your system. If not, most package managers have a package for that, e.g. `build-essential` on Ubuntu/Debian-based.
 
-- **NPM** ≥7: [official installation docs](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm). Usually part of the `node` package of your system's package manager (e.g. `nodejs` on Ubuntu/Debian-based).
+- **Node.js** 20.19+ or 22.12+ with **NPM** ≥7: [official installation docs](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm). Usually part of the `node` package of your system's package manager (e.g. `nodejs` on Ubuntu/Debian-based).

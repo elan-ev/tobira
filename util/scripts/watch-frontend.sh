@@ -1,30 +1,32 @@
 #!/usr/bin/env bash
 
 basedir=$(dirname "$0")
-source "$basedir"/common-vars.sh
 
 cd "$basedir"/../../frontend || exit 1
 
-# This is created by webpack, but we need it to be present already as
-# otherwise 'watchexec' will error when attempting to watch it.
-mkdir -p build
+# Backend serves `index.html`, service worker, fonts, etc. from `build/`,
+# so we build once up front.
+# The app's code itself is loaded from vite's dev server.
+# This also generates the Relay artifacts and translation types before
+# `tsc --watch` starts, which doesn't reliably notice them appearing later.
+./node_modules/.bin/relay-compiler --output quiet-with-errors
+npm run build:dev || exit 1
 
-# When this script is stopped with ctrl+c, we want all three long running
-# commands to be stopped in the same way. We achieve this by spawning a
-# subshell.
+# Spawn a subshell so all commands inside are stopped in the same way with ctrl+c.
 (
     trap 'kill 0' SIGINT;
 
-    # Watch for any change in source files or the GraphQL schema and run the relay
-    # compiler. We start it without `npx` as that would add about 200ms startup time.
+    # Watch for changes in source files or GraphQL schema and run relay compiler.
     watchexec \
         --watch src \
         --ignore '**/__generated__/*' \
+        --postpone \
         -- '../util/scripts/clr.sh; ./node_modules/.bin/relay-compiler --output quiet-with-errors' &
 
-    # Let webpack do the watching itself as startup time for webpack are really bad.
-    npx webpack watch --mode=development --stats=errors-warnings &
+    # Vite doesn't check types, so we run TypeScript alongside.
+    # See also https://vite.dev/guide/features#transpile-only
+    ./node_modules/.bin/tsc --watch --preserveWatchOutput &
 
-    # Watch the build directory to trigger a reload when webpack is done building.
-    (cd build && watchexec --postpone -- $reload_command)
+    # Start dev server which serves the app's code and reloads pages when that code changes.
+    ./node_modules/.bin/vite
 )

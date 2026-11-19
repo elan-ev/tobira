@@ -10,6 +10,9 @@ export const FRAME_RATE = 25;
 /** Duration of a single frame in seconds. */
 export const FRAME_DURATION = 1 / FRAME_RATE;
 
+/** Hides Paella's controls while set on its container element. */
+export const UI_HIDDEN_CLASS = "paella-ui-hidden";
+
 
 export const TRANSLATIONS: Record<string, Record<string, string>> = {
     it: {

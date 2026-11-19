@@ -197,7 +197,7 @@ export const getPlayerAspectRatio = (tracks: readonly Track[]): [number, number]
 };
 
 
-const LoadPaellaPlayer = React.lazy(() => import(/* webpackChunkName: "paella" */ "./Paella"));
+const LoadPaellaPlayer = React.lazy(() => import("./Paella"));
 
 /**
  * Suspense fallback while the player JS files are still loading. This is
