@@ -19,6 +19,9 @@ mod query;
 mod subscription;
 mod util;
 
+#[cfg(test)]
+mod tests;
+
 pub(crate) use self::{
     id::Id,
     context::Context,

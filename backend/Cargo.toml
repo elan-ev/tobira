@@ -91,6 +91,9 @@ procfs = "0.18.0"
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 tikv-jemallocator = "0.7"
 
+[dev-dependencies]
+assert-json-diff = "2.0.2"
+
 [build-dependencies]
 built = { version = "0.8", features = ["chrono", "git2"] }
 
