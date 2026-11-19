@@ -254,7 +254,13 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
         search: ctx.search.clone(),
         oc_client: ctx.oc_client.clone(),
     };
-    let output = api::execute(&ctx.api_root, api_context, &gql_request).await?;
+    let output = api::execute(&ctx.api_root, api_context, &gql_request).await
+        .map_err(|e| match e {
+            api::ExecuteError::InvalidRequest(e) => {
+                response::bad_request(format!("bad GraphQL request: {e}"))
+            }
+            api::ExecuteError::Commit => response::service_unavailable(),
+        })?;
     let exec_time = before_exec.elapsed();
 
     // Create an appropriate HTTP response.

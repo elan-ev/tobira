@@ -1,10 +1,7 @@
-use juniper::{graphql_value, http::{GraphQLRequest, GraphQLResponse}};
+use juniper::{graphql_value, http::{GraphQLRequest, GraphQLResponse}, GraphQLError};
 use std::fmt;
 
-use crate::{
-    http::{response, Response},
-    prelude::*,
-};
+use crate::prelude::*;
 use super::{Context, RootNode};
 
 
@@ -17,16 +14,25 @@ pub(crate) struct ExecuteOutput {
     pub(crate) num_queries: u32,
 }
 
+/// Errors of `execute` that cannot be expressed as `GraphQLResponse`.
+#[derive(Debug)]
+pub(crate) enum ExecuteError {
+    /// The request could not be executed at all, e.g. because the query is
+    /// invalid.
+    InvalidRequest(GraphQLError),
+
+    /// Committing the DB transaction failed after successful execution. The
+    /// DB error was already logged.
+    Commit,
+}
+
 /// Executes the given GraphQL request. The DB transaction in `context` is
 /// committed if there were no errors, and rolled back otherwise.
-///
-/// Errors that cannot be expressed as `GraphQLResponse` are returned as HTTP
-/// responses.
 pub(crate) async fn execute(
     root: &RootNode,
     context: Context,
     req: &GraphQLRequest,
-) -> Result<ExecuteOutput, Response> {
+) -> Result<ExecuteOutput, ExecuteError> {
     struct GqlReqPrinter<'a>(&'a GraphQLRequest);
     impl fmt::Display for GqlReqPrinter<'_> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -70,7 +76,7 @@ pub(crate) async fn execute(
             // been executed, but we roll back the transaction anyway.
             warn!("GraphQL request error: {e}");
             log_and_rollback!();
-            return Err(response::bad_request(format!("bad GraphQL request: {e}")));
+            return Err(ExecuteError::InvalidRequest(e));
         }
 
         Ok((value, errors)) if !errors.is_empty() => {
@@ -125,7 +131,7 @@ pub(crate) async fn execute(
                 // TODO: put all of this code in a loop and retry a couple times.
                 error!("Failed to commit transaction for API request: {}", e);
                 debug!("Request:\n{}", GqlReqPrinter(req));
-                return Err(response::service_unavailable());
+                return Err(ExecuteError::Commit);
             };
 
             GraphQLResponse::from_result(Ok((value, vec![])))

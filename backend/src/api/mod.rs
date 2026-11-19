@@ -23,7 +23,7 @@ pub(crate) use self::{
     id::Id,
     context::Context,
     common::{Node, NodeValue},
-    execute::execute,
+    execute::{execute, ExecuteError},
 };
 
 
