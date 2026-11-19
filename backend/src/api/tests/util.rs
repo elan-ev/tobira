@@ -28,6 +28,14 @@ pub(crate) const ADMIN: TestUser = TestUser {
     roles: &["ROLE_ADMIN", "ROLE_SUDO"],
 };
 
+/// Test user `gustav` ("Gustav Mahler") with roles `ROLE_INSTRUCTOR` and
+/// `ROLE_TOBIRA_GLOBAL_PAGE_ADMIN`.
+pub(crate) const GUSTAV_PAGE_ADMIN: TestUser = TestUser {
+    username: "gustav",
+    display_name: "Gustav Mahler",
+    roles: &["ROLE_INSTRUCTOR", "ROLE_TOBIRA_GLOBAL_PAGE_ADMIN"],
+};
+
 /// Test user `sabine` ("Sabine Rudolfs") with roles `ROLE_INSTRUCTOR`,
 /// `ROLE_STAFF`, `ROLE_TOBIRA_CAN_FIND_UNLISTED`, `ROLE_TOBIRA_UPLOAD`,
 /// `ROLE_TOBIRA_STUDIO` and `ROLE_TOBIRA_CAN_CREATE_SERIES`.

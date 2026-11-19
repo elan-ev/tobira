@@ -5,3 +5,4 @@ mod util;
 
 mod event;
 mod realm;
+mod user;
