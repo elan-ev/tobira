@@ -439,9 +439,9 @@ dependencies = [
 
 [[package]]
 name = "confique"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06b4f5ec222421e22bb0a8cbaa36b1d2b50fd45cdd30c915ded34108da78b29f"
+checksum = "81b22ae852ca8a029d4deb2d7f9d70718129306f4153a8f644f06a09d71ec3e5"
 dependencies = [
  "confique-macro",
  "serde",
@@ -450,9 +450,9 @@ dependencies = [
 
 [[package]]
 name = "confique-macro"
-version = "0.0.13"
+version = "0.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4d1754680cd218e7bcb4c960cc9bae3444b5197d64563dccccfdf83cab9e1a7"
+checksum = "098d0083a1188c21441125db1160de7e9a212fd39c4be854cf6d5513d33e136b"
 dependencies = [
  "heck",
  "proc-macro2",
