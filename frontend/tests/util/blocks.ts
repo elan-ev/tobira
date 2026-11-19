@@ -70,8 +70,7 @@ export const addBlock = async (page: Page, pos: number, block: Block) => {
             break;
         }
         case "video": {
-            const input = page.getByRole("combobox");
-            await input.pressSequentially(block.query);
+            await page.getByRole("combobox").fill(block.query);
             await page.getByRole("img", { name: block.query }).click();
 
             const titleCheckbox = page.getByLabel("Show title");
@@ -90,8 +89,7 @@ export const addBlock = async (page: Page, pos: number, block: Block) => {
         }
         case "series":
         case "playlist": {
-            const input = page.getByRole("combobox");
-            await input.pressSequentially(block.query);
+            await page.getByRole("combobox").fill(block.query);
             await page.getByRole("option", { name: block.query }).click();
 
             const titleCheckbox = page.getByLabel("Show title");

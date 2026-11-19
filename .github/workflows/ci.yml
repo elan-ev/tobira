@@ -168,7 +168,7 @@ jobs:
 
     # Test DB migrations
     - name: Download latest DB dump
-      run: curl --silent --output db-dump.xz -L https://github.com/elan-ev/tobira/raw/db-dumps/db-dump-latest.xz
+      run: curl --silent --show-error --fail --retry 3 --output db-dump.xz -L https://github.com/elan-ev/tobira/raw/db-dumps/db-dump-latest.xz
     - name: Decompress DB dump
       run: xz -d db-dump.xz
     # We need to use the same version as the DB, so we use 'docker exec'
@@ -229,10 +229,7 @@ jobs:
     - name: Install Playwright
       working-directory: frontend
       run: npm i @playwright/test
-    # The `chromium` project uses the Google Chrome already installed on the
-    # runner, so there is nothing to install for it.
     - name: Install Playwright browser
-      if: matrix.browser != 'chromium'
       working-directory: frontend
       run: npx playwright install --with-deps ${{ matrix.browser }}
     - name: Run playwright tests
