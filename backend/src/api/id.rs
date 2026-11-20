@@ -18,6 +18,7 @@ pub type IdKind = [u8; 2];
 ///
 /// Each key is encoded as 12 byte ASCII string.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, GraphQLScalar)]
+#[serde(try_from = "String", into = "String")]
 #[graphql(
     name = "ID",
     description = "An opaque, globally-unique identifier",
@@ -51,7 +52,7 @@ macro_rules! define_kinds {
                 $(
                     pub(crate) const [<$name:upper _KIND>]: IdKind = *$val;
 
-                    pub(crate) fn $name(key: Key) -> Self {
+                    pub(crate) const fn $name(key: Key) -> Self {
                         Self {
                             kind: Self:: [<$name:upper _KIND>],
                             key,
@@ -169,6 +170,20 @@ impl fmt::Display for Id {
     }
 }
 
+impl TryFrom<String> for Id {
+    type Error = &'static str;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        s.parse()
+    }
+}
+
+impl From<Id> for String {
+    fn from(id: Id) -> Self {
+        id.to_string()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -192,6 +207,14 @@ mod tests {
 
         check(Id::SERIES_KIND, u64::MAX - 1, "srP_________-");
         check(Id::SERIES_KIND, u64::MAX, "srP__________");
+    }
+
+    #[test]
+    fn serde() {
+        let id = Id::realm(Key(1));
+        let json = serde_json::to_value(id).unwrap();
+        assert_eq!(json, serde_json::json!("reAAAAAAAAAAB"));
+        assert_eq!(serde_json::from_value::<Id>(json).unwrap(), id);
     }
 
     #[test]

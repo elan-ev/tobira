@@ -1,5 +1,4 @@
-use crate::{prelude::*, model::Key, search::IndexItemKind};
-use super::util::TestDb;
+use crate::{prelude::*, model::Key, search::IndexItemKind, testing::db::TestDb};
 
 
 macro_rules! set {
@@ -78,7 +77,7 @@ async fn setup() -> Result<(TestDb, Setup)> {
 }
 
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_realm_add() -> Result<()> {
     let (db, Setup { cat, .. }) = setup().await?;
     let lili = db.add_realm("Lili", cat, "lili").await?;
@@ -86,7 +85,7 @@ async fn on_realm_add() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_realm_change() -> Result<()> {
     let (db, Setup {
         cat, animals, people, momo, dog,
@@ -236,7 +235,7 @@ async fn on_realm_change() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_realm_remove() -> Result<()> {
     let (db, Setup { cat, momo, people, .. }) = setup().await?;
     db.execute("delete from realms where id = $1", &[&people]).await?;
@@ -251,7 +250,7 @@ async fn on_realm_remove() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_event_add() -> Result<()> {
     let (db, Setup { .. }) = setup().await?;
     let event = db.add_event("Foo", 124, "foo", None).await?;
@@ -259,7 +258,7 @@ async fn on_event_add() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_event_change() -> Result<()> {
     let (db, Setup { video_a0, series_a, playlist_a, animals, cat, dog, momo, .. }) = setup().await?;
 
@@ -318,7 +317,7 @@ async fn on_event_change() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_event_remove() -> Result<()> {
     let (db, Setup { video_a0, series_a, playlist_a, .. }) = setup().await?;
     db.execute("delete from events where id = $1", &[&video_a0]).await?;
@@ -330,7 +329,7 @@ async fn on_event_remove() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_series_add() -> Result<()> {
     let (db, Setup { .. }) = setup().await?;
     let series = db.add_series("foo", "foo").await?;
@@ -338,7 +337,7 @@ async fn on_series_add() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_series_change() -> Result<()> {
     let (db, Setup { series_a, video_a0, video_a1, animals, cat, dog, momo, .. }) = setup().await?;
 
@@ -390,7 +389,7 @@ async fn on_series_change() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_series_remove() -> Result<()> {
     let (db, Setup {
         series_a, series_empty, video_a0, video_a1, playlist_a, playlist_b, ..
@@ -411,7 +410,7 @@ async fn on_series_remove() -> Result<()> {
 }
 
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_playlist_add() -> Result<()> {
     let (db, Setup { video_free1, .. }) = setup().await?;
     let playlist = db.add_playlist("foo", "foo", &[video_free1]).await?;
@@ -422,7 +421,7 @@ async fn on_playlist_add() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_playlist_change() -> Result<()> {
     let (db, Setup {
         playlist_a, video_a0, video_free0, video_c0, animals, ..
@@ -500,7 +499,7 @@ async fn on_playlist_change() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_playlist_remove() -> Result<()> {
     let (db, Setup {
         playlist_a, playlist_empty, video_a0, video_free0, ..
@@ -519,7 +518,7 @@ async fn on_playlist_remove() -> Result<()> {
 }
 
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_video_block_add_modify_delete() -> Result<()> {
     let (db, Setup {
         cat, momo,
@@ -654,7 +653,7 @@ async fn on_video_block_add_modify_delete() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_series_block_add_modify_delete() -> Result<()> {
     let (db, Setup {
         cat, momo,
@@ -798,7 +797,7 @@ async fn on_series_block_add_modify_delete() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn on_playlist_block_add_modify_delete() -> Result<()> {
     let (db, Setup {
         cat, momo,

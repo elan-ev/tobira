@@ -126,6 +126,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d62b7694a562cdf5a74227903507c56ab2cc8bdd1f781ed5cb4cf9c9f810bfc"
 
 [[package]]
+name = "assert-json-diff"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47e4f2b81832e72834d7518d8487a0396a28cc408186a2e8854c0f98011faf12"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -439,9 +449,9 @@ dependencies = [
 
 [[package]]
 name = "confique"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06b4f5ec222421e22bb0a8cbaa36b1d2b50fd45cdd30c915ded34108da78b29f"
+checksum = "81b22ae852ca8a029d4deb2d7f9d70718129306f4153a8f644f06a09d71ec3e5"
 dependencies = [
  "confique-macro",
  "serde",
@@ -450,9 +460,9 @@ dependencies = [
 
 [[package]]
 name = "confique-macro"
-version = "0.0.13"
+version = "0.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4d1754680cd218e7bcb4c960cc9bae3444b5197d64563dccccfdf83cab9e1a7"
+checksum = "098d0083a1188c21441125db1160de7e9a212fd39c4be854cf6d5513d33e136b"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -3070,6 +3080,7 @@ version = "4.3.0"
 dependencies = [
  "ahash",
  "anyhow",
+ "assert-json-diff",
  "aws-lc-rs",
  "base64 0.23.1",
  "bstr",

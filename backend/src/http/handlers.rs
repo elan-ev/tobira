@@ -4,11 +4,9 @@ use hyper::{
     http::HeaderValue,
     Method, Request, StatusCode,
 };
-use juniper::{graphql_value, http::{GraphQLRequest, GraphQLResponse}};
+use juniper::http::GraphQLRequest;
 use std::{
     collections::HashSet,
-    fmt,
-    mem,
     sync::Arc,
     time::Instant,
 };
@@ -17,7 +15,6 @@ use crate::{
     api,
     auth::{self, AuthContext, AuthState},
     db::{self, Transaction},
-    http::response::bad_request,
     metrics::HttpReqCategory,
     prelude::*,
     rss,
@@ -199,17 +196,6 @@ async fn handle_rss_request(req: Request<Incoming>, ctx: &Arc<Context>) -> Resul
 
 /// Handles a request to `/graphql`. Method has to be POST.
 async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, Response> {
-    struct GqlReqPrinter<'a>(&'a GraphQLRequest);
-    impl fmt::Display for GqlReqPrinter<'_> {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            writeln!(f, "Query:\n{}", self.0.query)?;
-            writeln!(f, "Operation name: {:?}", self.0.operation_name)?;
-            writeln!(f, "Variables: {}", serde_json::to_string_pretty(&self.0.variables).unwrap())?;
-            Ok(())
-        }
-    }
-
-
     let before = Instant::now();
 
     // Parse request into a structure that Juniper can understand. This is done
@@ -240,12 +226,16 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
 
 
     // Get a connection for this request.
-    let mut connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
+    let before_conn = Instant::now();
+    let connection = db::get_conn_or_service_unavailable(&ctx.db_pool).await?;
 
     // Get auth session
+    let before_auth = Instant::now();
     let auth = AuthState::new(&parts.headers, &connection, &ctx).await?;
+    let username = auth.debug_log_username();
 
-    let tx = match connection.transaction().await {
+    let before_exec = Instant::now();
+    let tx = match Transaction::begin(connection).await {
         Ok(tx) => tx,
         Err(e) => {
             error!("Failed to start transaction for API request: {}", e);
@@ -253,39 +243,8 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
         }
     };
 
-    // Okay, lets take a deep breath.
-    //
-    // Unfortunately, `juniper` does not support contexts with a lifetime
-    // parameter. However, we'd like to have one SQL transaction per API
-    // request. The transaction type (`deadpool_postgres::Transaction`) borrows
-    // from the DB connection (`tokio_postgres::Client`) and thus has a
-    // lifetime parameter. This makes sense for the API of that library since
-    // it statically prevents a number of logic bugs. But it is inconvenient
-    // for us.
-    //
-    // Unfortunately, we think the best solution for us is to use `unsafe` here
-    // to just get rid of the lifetime parameter. We can pretend that the
-    // lifetime is `'static`. Of course, we then have to make sure that the
-    // transaction does not outlive the borrowed connection. We do that by
-    // putting the transaction into an `Arc`. That way we can check whether
-    // there still exists a reference after calling the API handlers. The
-    // transaction is not `Clone` and `Arc` only gives an immutable reference
-    // to the underlying value. So even a buggy handler could not move the
-    // transaction out of the `Arc`.
-    //
-    // Unfortunately, `connection` is not treated as borrowed after this unsafe
-    // block. So we must make sure not to access it at all until we get rid of
-    // the transaction (by committing it below).
-    type PgTx<'a> = deadpool_postgres::Transaction<'a>;
-    #[allow(unused_variables)]
-    let connection = (); // Purposefully shadow to avoid accidentally accessing. See above.
-    let tx = unsafe {
-        let static_tx = mem::transmute::<PgTx<'_>, PgTx<'static>>(tx);
-        Arc::new(static_tx)
-    };
-
-    let api_context = Arc::new(api::Context {
-        db: Transaction::new(tx.clone()),
+    let api_context = api::Context {
+        db: tx,
         auth: AuthContext {
             state: auth,
             config: ctx.config.auth.clone(),
@@ -294,128 +253,33 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
         jwt: ctx.jwt.clone(),
         search: ctx.search.clone(),
         oc_client: ctx.oc_client.clone(),
-    });
-    let gql_result = juniper::execute(
-        &gql_request.query,
-        gql_request.operation_name.as_deref(),
-        &ctx.api_root,
-        &gql_request.variables(),
-        &api_context,
-    ).await;
-
-    // Get some values out of the context before dropping it
-    let num_queries = api_context.db.num_queries();
-    let username = api_context.auth.state.debug_log_username();
-    drop(api_context);
-
-    // Check whether we own the last remaining handle of this Arc.
-    let tx = Arc::try_unwrap(tx).unwrap_or_else(|_| {
-        // There are still other handles, meaning that the API handler
-        // incorrectly stored the transaction in some static variable. This
-        // is our fault and should NEVER happen. If it does happen, we
-        // would have UB after this function exits. We can't have that. And
-        // since panicking only brings down the current thread, we have to
-        // reach for more drastic measures.
-        error!("FATAL BUG: API handler kept reference to transaction. Ending process.");
-        debug!("Request:\n{}", GqlReqPrinter(&gql_request));
-        std::process::abort();
-    });
-
-
-    // Check if any errors occured.
-    macro_rules! log_and_rollback {
-        () => {
-            debug!("Failed request:\n{}", GqlReqPrinter(&gql_request));
-            debug!("Rolling back DB transaction...");
-            if let Err(e) = tx.rollback().await {
-                error!("Failed to rollback transaction: {e}\nWill give up now. Transaction \
-                    should be rolled back automatically since it won't be committed.");
-            }
-        };
-    }
-
-    let gql_response = match gql_result {
-        Err(e) => {
-            // This kind of error only seems to happen when there is something
-            // wrong with the request. It's unlikely that any SQL queries have
-            // been executed, but we roll back the transaction anyway.
-            warn!("GraphQL request error: {e}");
-            log_and_rollback!();
-            return Err(bad_request(format!("bad GraphQL request: {e}")));
-        }
-
-        Ok((value, errors)) if !errors.is_empty() => {
-            let error_to_msg = |e: &juniper::ExecutionError<juniper::DefaultScalarValue>| {
-                format!("{} (at `{}`)", e.error().message(), e.path().join("."))
-            };
-
-            warn!(
-                "Error{} during GraphQL execution: {}",
-                if errors.len() > 1 { "s" } else { "" },
-                if errors.len() > 1 {
-                    errors.iter().map(|e| format!("\n- {}", error_to_msg(e))).collect::<String>()
-                } else {
-                    error_to_msg(&errors[0])
-                },
-            );
-            log_and_rollback!();
-
-            // We just return all errors as normal GraphQL errors, BUT we return
-            // no regular data as that might contain data from the DB
-            // transaction that was rolled back. That is, with the exception of
-            // `currentUser` which contains no data from the DB at all. That's
-            // what the following code does: inspect the prepared value and
-            // extract only what we can give out.
-            let mut data = juniper::Value::Null;
-            let user = value.as_object_value()
-                .and_then(|o| o.get_field_value("currentUser"))
-                .and_then(|v| v.as_object_value());
-            if let Some(user) = user {
-                // Not even all fields are allowed. `myVideos` for example
-                // contains DB data.
-                let allowed_fields = [
-                    "username", "displayName", "roles", "email",
-                    "canUpload", "canUseStudio", "canUseEditor",
-                ];
-                let filtered = user.clone().into_iter()
-                    .filter(|(k, _)| allowed_fields.contains(&k.as_str()))
-                    .collect::<juniper::Object<juniper::DefaultScalarValue>>();
-                data = graphql_value!({ "currentUser": filtered });
-            }
-
-            GraphQLResponse::from_result(Ok((data, errors)))
-        }
-
-        Ok((value, _)) => {
-            // There was no error dealing with this request so we can commit the DB
-            // transaction now.
-            if let Err(e) = tx.commit().await {
-                // If commiting failed, we would like to retry a couple times, but for
-                // now we just immediately reply 5xx.
-                //
-                // TODO: put all of this code in a loop and retry a couple times.
-                error!("Failed to commit transaction for API request: {}", e);
-                debug!("Request:\n{}", GqlReqPrinter(&gql_request));
-                return Err(response::service_unavailable());
-            };
-
-            GraphQLResponse::from_result(Ok((value, vec![])))
-        }
     };
+    let output = api::execute(&ctx.api_root, api_context, &gql_request).await
+        .map_err(|e| match e {
+            api::ExecuteError::InvalidRequest(e) => {
+                response::bad_request(format!("bad GraphQL request: {e}"))
+            }
+            api::ExecuteError::Commit => response::service_unavailable(),
+        })?;
+    let exec_time = before_exec.elapsed();
 
     // Create an appropriate HTTP response.
-    let body = serde_json::to_string(&gql_response).unwrap();
+    let body = serde_json::to_string(&output.response).unwrap();
     let out = Response::builder()
-        .status(if gql_response.is_ok() { StatusCode::OK } else { StatusCode::BAD_REQUEST })
+        .status(if output.response.is_ok() { StatusCode::OK } else { StatusCode::BAD_REQUEST })
         .header(header::CONTENT_TYPE, "application/json")
         .body(body.into())
         .unwrap();
 
     trace!(
-        "Finished /graphql query with {} SQL queries in {:.2?} (user: {})",
-        num_queries,
-        before.elapsed(),
+        "Finished /graphql query for user '{}' with {} SQL queries in {:.2?} \
+            (DB conn {:.2?}, auth {:.2?}, exec {:.2?})",
         username,
+        output.num_queries,
+        before.elapsed(),
+        before_auth - before_conn,
+        before_exec - before_auth,
+        exec_time,
     );
 
     Ok(out)
