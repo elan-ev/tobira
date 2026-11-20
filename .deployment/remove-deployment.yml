@@ -8,17 +8,22 @@
 
   tasks:
 
+    # The `-` variants are legacy per-deployment units from before we used
+    # systemd template units. Can be removed once no such deployments are left.
     - name: stop and disable tobira
       become: true
       systemd:
-        name: '{{ item }}-{{ id }}'
+        name: '{{ item }}'
         state: stopped
         enabled: false
       ignore_errors: true
       with_items:
-        - tobira
-        - tobiraworker
-        - tobiraauth
+        - tobira@{{ id }}
+        - tobiraworker@{{ id }}
+        - tobiraauth@{{ id }}
+        - tobira-{{ id }}
+        - tobiraworker-{{ id }}
+        - tobiraauth-{{ id }}
 
     - name: Clear search index
       become: true
@@ -35,9 +40,11 @@
         state: absent
       loop:
         - /opt/tobira/{{ id }}
+        # Legacy unit files, see above
         - /etc/systemd/system/tobira-{{ id }}.service
         - /etc/systemd/system/tobiraworker-{{ id }}.service
         - /etc/systemd/system/tobiraauth-{{ id }}.service
+        # Legacy nginx vhost, now there is one shared by all deployments
         - /etc/nginx/conf.d/tobira-{{ id }}.conf
         - /var/log/tobira/{{ id }}-serve.log
         - /var/log/tobira/{{ id }}-cli.log
