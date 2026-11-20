@@ -46,6 +46,15 @@
       systemd:
         daemon_reload: true
       when: legacy_units.stat.exists
+
+    # Similarly, nginx used to have one vhost per deployment, now one vhost
+    # (installed by `setup-server.yml`) serves all deployments.
+    - name: remove legacy nginx vhost
+      become: true
+      file:
+        path: /etc/nginx/conf.d/tobira-{{ id }}.conf
+        state: absent
+      notify: reload nginx
     # ---- END MIGRATION
 
     # We always recreate the DB from the last release dump. To do that, we have
@@ -237,18 +246,6 @@
         - tobira
         - tobiraworker
         - tobiraauth
-
-    # NGINX
-
-    - name: deploy nginx host configuration
-      become: true
-      template:
-        src: nginx-host.conf
-        dest: /etc/nginx/conf.d/tobira-{{ id }}.conf
-        mode: '0644'
-        owner: root
-        group: root
-      notify: reload nginx
 
 
   handlers:

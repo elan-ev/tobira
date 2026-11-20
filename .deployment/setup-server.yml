@@ -148,6 +148,17 @@
         group: root
       notify: reload nginx
 
+    # Serves all deployments, see the file for more information.
+    - name: deploy nginx tobira vhost
+      become: true
+      template:
+        src: nginx-tobira.conf
+        dest: /etc/nginx/conf.d/tobira.conf
+        mode: '0644'
+        owner: root
+        group: root
+      notify: reload nginx
+
     - name: create ssl directory
       become: true
       file:
