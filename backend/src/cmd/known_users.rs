@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use deadpool_postgres::Transaction;
-use futures::{pin_mut, StreamExt};
+use futures::pin_mut;
 
 use crate::{
     prelude::*,
@@ -187,9 +187,8 @@ async fn create_opencast_user_references(config: &Config, tx: Transaction<'_>) -
             where user_sessions.username = users.username \
             order by created desc limit 1)",
     );
-    let users = tx.query(&format!("select {selection} from users"), &[]).await?
-        .into_iter()
-        .map(|row| {
+    let users = tx.query_raw(&format!("select {selection} from users"), dbargs![]).await?
+        .map_ok(|row| {
             let mut user = User {
                 username: mapping.username.of(&row),
                 display_name: mapping.display_name.of(&row),
@@ -203,40 +202,41 @@ async fn create_opencast_user_references(config: &Config, tx: Transaction<'_>) -
             };
             user.add_default_roles();
             user
-        })
-        .collect::<Vec<_>>();
-    tx.commit().await?;
+        });
+    pin_mut!(users);
 
-    let Some((first, rest)) = users.split_first() else {
+    let Some(first) = users.try_next().await? else {
         println!("There are no known users");
         return Ok(());
     };
 
     // Errors are most likely caused by a misconfiguration, which would make all requests fail.
     // So this only continues if the first one succeeds.
-    create_opencast_user_reference(first, &jwt, &oc_client).await
+    create_opencast_user_reference(&first, &jwt, &oc_client).await
         .with_context(|| format!("failed to create user reference for '{}'", first.username))?;
 
-    info!("Sending requests for the remaining {} known users to Opencast...", rest.len());
+    info!("Sending requests for the remaining known users to Opencast...");
     let jwt = &jwt;
     let oc_client = &oc_client;
-    let mut requests = futures::stream::iter(rest)
-        .map(|user| async move {
-            (user, create_opencast_user_reference(user, jwt, oc_client).await)
+    let mut requests = users
+        .map_ok(|user| async move {
+            let res = create_opencast_user_reference(&user, jwt, oc_client).await;
+            Ok((user.username, res))
         })
-        .buffer_unordered(OPENCAST_REQUEST_CONCURRENCY);
+        .try_buffer_unordered(OPENCAST_REQUEST_CONCURRENCY);
 
+    let mut num_total = 1;
     let mut num_failed = 0;
-    while let Some((user, res)) = requests.next().await {
+    while let Some((username, res)) = requests.try_next().await? {
+        num_total += 1;
         if let Err(e) = res {
-            warn!("Failed to create Opencast user reference for '{}': {e:#}", user.username);
+            warn!("Failed to create Opencast user reference for '{username}': {e:#}");
             num_failed += 1;
         }
     }
 
-    let num_ok = users.len() - num_failed;
-    println!("Created or updated Opencast user references for {num_ok} of {} known users",
-        users.len());
+    let num_ok = num_total - num_failed;
+    println!("Created or updated Opencast user references for {num_ok} of {num_total} known users");
     if num_failed > 0 {
         bail!("{num_failed} requests failed (see log for details)");
     }
