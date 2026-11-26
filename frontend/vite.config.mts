@@ -18,6 +18,12 @@ export default defineConfig(({ mode }) => ({
         strictPort: true,
     },
 
+    resolve: {
+        // For local appkit development, see this for more details:
+        // https://gist.github.com/LukasKalbertodt/382cb53a85fcf6e7d1f5235625c6f4fb
+        dedupe: ["react", "react-dom", "focus-trap-react", "@emotion/react"],
+    },
+
     optimizeDeps: {
         // `jsx-runtime` uses CommonJS, so it needs to be pre bundled.
         // See also https://vite.dev/guide/dep-pre-bundling
