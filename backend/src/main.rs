@@ -32,6 +32,9 @@ mod util;
 mod version;
 mod rss;
 
+#[cfg(test)]
+mod testing;
+
 
 #[tokio::main]
 async fn main() {

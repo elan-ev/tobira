@@ -26,7 +26,7 @@ bunt = "0.2.7"
 bytes = "1"
 chrono = { version = "0.4", default-features = false, features = ["serde", "std"] }
 clap = { version = "4.2.2", features = ["derive", "string"] }
-confique = { version = "0.4", features = ["toml"] }
+confique = { version = "0.4.1", features = ["toml"] }
 cookie = "0.18.0"
 deadpool = { version = "0.13.1", default-features = false, features = ["managed", "rt_tokio_1"] }
 deadpool-postgres = { version = "0.14.2", default-features = false, features = ["rt_tokio_1"] }
@@ -90,6 +90,9 @@ procfs = "0.18.0"
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 tikv-jemallocator = "0.7"
+
+[dev-dependencies]
+assert-json-diff = "2.0.2"
 
 [build-dependencies]
 built = { version = "0.8", features = ["chrono", "git2"] }

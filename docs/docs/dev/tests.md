@@ -17,10 +17,17 @@ You can find various ones throughout the backend codebase.
 There are some very simple tests that test a small piece of code and are completely isolated.
 But there are also "database tests" defined in the backend that make sure the DB with our migrations behaves as expected.
 These are defined in `db::tests`.
-Each DB test sets up an isolated new database and performs all tests inside so that tests running at the same time do not influence each other.
+Each DB test sets up an isolated new database (via `testing::db::TestDb`) and performs all tests inside so that tests running at the same time do not influence each other.
+
+Finally, there are "API tests" in `api::tests`, grouped by topic.
+They send GraphQL requests to the API and check the JSON responses, without HTTP server or frontend.
+Each test creates a `TestApi` (in `api/tests/util.rs`), which also sets up an isolated new database.
+Data can be added via `api.db` and requests are sent via `api.query(...)`, optionally as one of the predefined test users (`.as_user(...)`) and with variables (`.vars(...)`).
+Responses can be checked with `assert_ok` or `assert_error`.
+See the existing tests for examples.
 
 You can run all of these tests via **`cargo test`** in the `backend/` folder.
-The DB tests require the development PostgreSQL database to be running, so make sure you ran `./x.sh containers start`.
+The DB and API tests require the development PostgreSQL database to be running, so make sure you ran `./x.sh containers start`.
 
 
 ## Playwright UI tests
