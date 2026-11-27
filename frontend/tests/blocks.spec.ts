@@ -157,8 +157,7 @@ for (const realmType of realmTypes) {
 
             await test.step("Video can be changed", async () => {
                 await editButton.click();
-                const input = page.getByRole("combobox");
-                await input.pressSequentially(newVideo);
+                await page.getByRole("combobox").fill(newVideo);
                 await page.getByRole("option", { name: newVideo }).click();
 
                 await page.keyboard.press("Enter");
@@ -193,8 +192,7 @@ for (const realmType of realmTypes) {
 
                 await test.step(`${name} can be changed`, async () => {
                     await editButton.click();
-                    const input = page.getByRole("combobox");
-                    await input.pressSequentially(title);
+                    await page.getByRole("combobox").fill(title);
                     await page.getByRole("option", { name: title }).click();
                     await saveBlock(page);
 

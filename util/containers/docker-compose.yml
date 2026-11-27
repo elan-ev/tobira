@@ -50,7 +50,7 @@ services:
   tobira-ui-test-files:
     image: nginx
     ports:
-      - "38456:38456"
+      - "3092:3092"
     volumes:
       - ./ui-test-files-nginx.conf:/etc/nginx/conf.d/default.conf
       - ./test-files:/www/data

@@ -229,12 +229,20 @@ const ChildEntry: React.FC<ChildEntryProps> = ({ index, swap, realmName, numChil
                 },
             }}>
                 <WithTooltip tooltip={t("manage.realm.children.move-up")} placement="left">
-                    <button onClick={() => swap(index - 1)} disabled={index === 0}>
+                    <button
+                        aria-label={t("manage.realm.children.move-up")}
+                        onClick={() => swap(index - 1)}
+                        disabled={index === 0}
+                    >
                         <LuArrowUp />
                     </button>
                 </WithTooltip>
                 <WithTooltip tooltip={t("manage.realm.children.move-down")} placement="left">
-                    <button onClick={() => swap(index)} disabled={index === numChildren - 1}>
+                    <button
+                        aria-label={t("manage.realm.children.move-down")}
+                        onClick={() => swap(index)}
+                        disabled={index === numChildren - 1}
+                    >
                         <LuArrowDown />
                     </button>
                 </WithTooltip>

@@ -3,8 +3,9 @@ import { test } from "./util/data";
 import { login, logout } from "./util/user";
 
 
-test.skip("MySeries", async ({ page, browserName, standardData, activeSearchIndex }) => {
+test("MySeries", async ({ page, browserName, standardData, activeSearchIndex }) => {
     test.skip(browserName === "webkit", "Skip safari because it doesn't allow http logins");
+    test.slow();
 
     await page.goto("/");
     await login(page, "sabine");
@@ -25,6 +26,8 @@ test.skip("MySeries", async ({ page, browserName, standardData, activeSearchInde
     await test.step("Single Series", async () => {
         await catLink.click();
         await expect(page).toHaveURL(/~manage\/series\/[^/]+/);
+        await expect(page.getByRole("heading", { level: 1, name: "Series details" }))
+            .toBeVisible();
         await expect(page.getByRole("button", { name: "Share" })).toBeAttached();
         await expect(page.getByRole("button", { name: "Delete series" })).toBeAttached();
     });
