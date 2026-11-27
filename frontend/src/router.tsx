@@ -121,7 +121,7 @@ type LinkProps = {
 } & Omit<React.ComponentPropsWithoutRef<"a">, "href">;
 
 const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
-    ({ to, children, htmlLink = false, ...props }, ref): JSX.Element => {
+    ({ to, children, htmlLink = false, ...props }, ref): React.JSX.Element => {
         const isExternalLink
             = new URL(to, document.baseURI).origin !== document.location.origin;
 

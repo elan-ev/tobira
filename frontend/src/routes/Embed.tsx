@@ -125,7 +125,7 @@ const embedEventFragment = graphql`
                 duration
                 thumbnail
             }
-            ... VideoPageAuthorizedData
+            ... VideoPageAuthorizedData @alias
                 @arguments(eventUser: $eventUser, eventPassword: $eventPassword)
         }
     }
@@ -138,7 +138,7 @@ type EmbedProps = {
 };
 
 const Embed: React.FC<EmbedProps> = ({ query, queryRef }) => {
-    const fragmentRef = usePreloadedQuery(query, queryRef);
+    const fragmentRef = usePreloadedQuery<EmbedQuery | EmbedDirectOpencastQuery>(query, queryRef);
     const protoEvent = useFragment<EmbedEventData$key>(
         embedEventFragment,
         fragmentRef.event,

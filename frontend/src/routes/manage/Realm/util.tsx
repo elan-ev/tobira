@@ -28,7 +28,7 @@ export const realmValidations = (t: TFunction) => ({
     },
 });
 
-type RealmSettingsContainerProps = JSX.IntrinsicElements["div"];
+type RealmSettingsContainerProps = React.JSX.IntrinsicElements["div"];
 
 export const RealmSettingsContainer: React.FC<RealmSettingsContainerProps> = ({
     children,
@@ -49,7 +49,7 @@ export const RealmSettingsContainer: React.FC<RealmSettingsContainerProps> = ({
 );
 
 /** Returns an element that displays the given mutation error as best as possible. */
-export const displayCommitError = (error: Error, failedAction?: string): JSX.Element => {
+export const displayCommitError = (error: Error, failedAction?: string): React.JSX.Element => {
     // eslint-disable-next-line no-console
     console.error("Error when committing GraphQL mutation:", error);
     return <ErrorDisplay error={error} failedAction={failedAction} />;

@@ -28,7 +28,7 @@ type ManagePlaylistPageType = "details" | "acl";
 export const makeManagePlaylistRoute = (
     page: ManagePlaylistPageType,
     path: `/${string}` | "",
-    render: (playlist: AuthorizedPlaylist, data: QueryResponse) => JSX.Element,
+    render: (playlist: AuthorizedPlaylist, data: QueryResponse) => React.JSX.Element,
 ): Route & { url: (args: { id: string }) => string } => (
     makeRoute({
         url: ({ id }: { id: string }) => `/~manage/playlists/${keyOfId(id)}${path}`,

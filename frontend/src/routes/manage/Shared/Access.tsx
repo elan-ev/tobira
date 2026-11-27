@@ -54,8 +54,8 @@ export const AclPage: React.FC<AclPageProps> = ({ children, note, breadcrumbTail
 
 export type SubmitAclProps = {
     selections: Acl;
-    saveModalRef: RefObject<ConfirmationModalHandle>;
-    setCommitError: (value: SetStateAction<JSX.Element | null>) => void;
+    saveModalRef: RefObject<ConfirmationModalHandle | null>;
+    setCommitError: (value: SetStateAction<React.JSX.Element | null>) => void;
 }
 
 type AccessEditorProps = {
@@ -80,7 +80,7 @@ export const AccessEditor: React.FC<AccessEditorProps> = ({
     const saveModalRef = useRef<ConfirmationModalHandle>(null);
     const acl = aclArrayToMap(rawAcl);
     const [selections, setSelections] = useState<Acl>(acl);
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commitError, setCommitError] = useState<React.JSX.Element | null>(null);
 
     return <div css={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: 1040 }}>
         <Inertable isInert={editingBlocked || inFlight}>

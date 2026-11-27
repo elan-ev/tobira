@@ -79,7 +79,7 @@ export const ChildOrder: React.FC<Props> = ({ fragRef }) => {
     const anyChange = initialSortOrder !== sortOrder
         || children.some((c, i) => c.id !== realm.children[i].id);
 
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commitError, setCommitError] = useState<React.JSX.Element | null>(null);
     const [commit, isInFlight] = useMutation(mutation);
     const save = async () => {
         commit({

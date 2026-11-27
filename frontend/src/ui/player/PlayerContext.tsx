@@ -20,7 +20,7 @@ type PlayerContext = {
 const PlayerContext = createContext<PlayerContext | null>(null);
 
 export const PlayerContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
-    const paella = useRef<PaellaState>();
+    const paella = useRef<PaellaState>(undefined);
     const [playerIsLoaded, setPlayerIsLoaded] = useState(false);
 
     return <PlayerContext.Provider value={{ paella, playerIsLoaded, setPlayerIsLoaded }}>

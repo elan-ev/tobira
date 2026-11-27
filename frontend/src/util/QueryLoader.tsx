@@ -5,7 +5,7 @@ import { OperationType } from "relay-runtime";
 type Props<TQuery extends OperationType> = {
     query: GraphQLTaggedNode;
     queryRef: PreloadedQuery<TQuery>;
-    render: (result: TQuery["response"]) => JSX.Element;
+    render: (result: TQuery["response"]) => React.JSX.Element;
 };
 
 /**
@@ -19,7 +19,7 @@ type Props<TQuery extends OperationType> = {
  */
 export const QueryLoader = <TQuery extends OperationType>(
     { query, queryRef, render }: Props<TQuery>,
-): JSX.Element => {
+): React.JSX.Element => {
     const queryResult = usePreloadedQuery(query, queryRef);
     return render(queryResult);
 };

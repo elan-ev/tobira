@@ -20,7 +20,7 @@ import { useMenu } from "./MenuState";
 /** The breakpoint, in pixels, where mobile/desktop navigations are swapped. */
 export const BREAKPOINT = 880;
 
-export type NavItems = [] | JSX.Element | [JSX.Element, JSX.Element];
+export type NavItems = [] | React.JSX.Element | [React.JSX.Element, React.JSX.Element];
 
 type Props = {
     fragRef: NavigationData$key;

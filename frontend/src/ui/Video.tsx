@@ -40,7 +40,7 @@ export const isUpcomingLiveEvent = (startingTime: string | null, isLive: boolean
 
 
 type CreatorsProps = {
-    creators: readonly (JSX.Element | string)[] | null;
+    creators: readonly (React.JSX.Element | string)[] | null;
     className?: string;
 };
 

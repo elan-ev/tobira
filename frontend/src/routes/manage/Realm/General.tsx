@@ -102,7 +102,7 @@ export const NameForm: React.FC<NameFormProps> = ({ realm }) => {
         defaultValues: initial,
     });
 
-    const [commitError, setCommitError] = useState<JSX.Element | null>(null);
+    const [commitError, setCommitError] = useState<React.JSX.Element | null>(null);
     const [commit, isInFlight] = useMutation(renameMutation);
 
     const onSubmit = handleSubmit(data => {

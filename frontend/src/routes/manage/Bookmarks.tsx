@@ -211,9 +211,9 @@ const ListItem: React.FC<ListItemProps> = ({ fav }) => {
 type VideoListItemProps = {
     title: string,
     link: string,
-    icon: JSX.Element,
+    icon: React.JSX.Element,
     type: string,
-    details: JSX.Element,
+    details: React.JSX.Element,
 };
 
 const VideoListItem: React.FC<VideoListItemProps> = ({ title, link, icon, type, details }) => <>
