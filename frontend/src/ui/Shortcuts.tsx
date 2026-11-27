@@ -11,7 +11,7 @@ import {
 import {
     KeyCombinationContainer, match, ShortcutGroupOverview, SingleKeyContainer,
 } from "@opencast/appkit";
-import TabIcon from "@opencast/appkit/dist/icons/tab-key.svg";
+import TabIcon from "@opencast/appkit/dist/icons/tab-key.svg?react";
 
 import { Modal, ModalHandle } from "./Modal";
 import { SKIP_INTERVAL } from "./player/consts";

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use bstr::ByteSlice;
 use hyper::StatusCode;
 use reinda::Embeds;
@@ -22,6 +23,7 @@ const EMBEDS: Embeds = reinda::embed! {
         "bundle.*.js.map",
         "~sw.js",
         "~sw.js.map",
+        ".vite/manifest.json",
 
         "1x1-black.png",
 
@@ -41,13 +43,28 @@ const FAVICON_FILE: &str = "favicon.svg";
 const FONTS_CSS_FILE: &str = "fonts.css";
 const PAELLA_SETTINGS_ICON: &str = "paella/icons/settings.svg";
 const PAELLA_THEME_JSON: &str = "paella/theme.json";
+const VITE_MANIFEST_FILE: &str = ".vite/manifest.json";
+
+/// The frontend's entry point, see `input` in `frontend/vite.config.mts`.
+const VITE_ENTRY: &str = "src/index.tsx";
 
 pub(crate) struct Assets {
     assets: reinda::Assets,
+
+    /// Points at the dev server url. If set, backend skips the manifest and uses dev
+    /// scripts (see `vite_tags`).
+    vite_dev_server: Option<String>,
 }
 
 impl Assets {
     pub(crate) async fn init(config: &Config) -> Result<Self> {
+        // Only for development.
+        let vite_dev_server = std::env::var("TOBIRA_VITE_DEV_SERVER").ok()
+            .filter(|_| cfg!(debug_assertions));
+        if let Some(origin) = &vite_dev_server {
+            info!("Loading the frontend from Vite's dev server at {origin}");
+        }
+
         // Iterator over all defined logos, with their (config_field, http_path, fs_path).
         //
         // TODO: adjust file extension according to actual file path, to avoid
@@ -81,6 +98,7 @@ impl Assets {
             let html_title = config.general.site_title.default().to_owned();
             let global_style = config.theme.to_css();
             let matomo_code = config.matomo.js_code().unwrap_or_default();
+            let vite_tags = vite_tags(vite_dev_server.as_deref()).await?;
 
             move |original, ctx| {
                 // Fixup paths in frontend config.
@@ -113,6 +131,7 @@ impl Assets {
                     ("{{ matomoCode }}", matomo_code.as_str()),
                     ("{{ faviconPath }}", ctx.resolve_path(FAVICON_FILE)),
                     ("{{ fontCssPath }}", ctx.resolve_path(FONTS_CSS_FILE)),
+                    ("{{ viteTags }}", vite_tags.as_str()),
                 ]).into()
             }
         });
@@ -227,7 +246,8 @@ impl Assets {
         // Prepare all assets
         let assets = builder.build().await?;
         info!("Prepared {} assets", assets.len());
-        Ok(Self { assets } )
+
+        Ok(Self { assets, vite_dev_server })
     }
 
     /// Responds with the asset identified by the given path. If there exists no
@@ -256,11 +276,11 @@ impl Assets {
 
         // Conditionally add caching header. It is save to add it if there is a
         // content hash in the filename. For most assets, that hash is added by
-        // `reinda`, but for the JS bundles, it is added by webpack.
-        let has_webpack_hash = EMBEDS["bundle.*.js"].files()
+        // `reinda`, but for the JS bundles, it is added by Vite.
+        let has_vite_hash = EMBEDS["bundle.*.js"].files()
             .chain(EMBEDS["bundle.*.js.map"].files())
             .any(|f| f.path() == path);
-        if asset.is_filename_hashed() || has_webpack_hash {
+        if asset.is_filename_hashed() || has_vite_hash {
             // This is one year in seconds.
             builder = builder.header("cache-control", "public, max-age=31536000, immutable");
         }
@@ -292,10 +312,44 @@ impl Assets {
         Response::builder()
             .status(status)
             .header("Content-Type", "text/html; charset=UTF-8")
-            .with_content_security_policies(config, &nonce)
+            .with_content_security_policies(config, &nonce, self.vite_dev_server.as_deref())
             .body(body.into())
             .expect("bug: invalid response")
     }
+}
+
+/// Returns the HTML that loads the frontend.
+async fn vite_tags(dev_server: Option<&str>) -> Result<String> {
+    if let Some(origin) = dev_server {
+        // In development, frontend is loaded from the dev server and we need to inject
+        // the following scripts.
+        // See also https://vite.dev/guide/backend-integration.
+        return Ok(format!("
+            <script type=\"module\" src=\"{origin}/~assets/@vite/client\"></script>\
+            <script type=\"module\" src=\"{origin}/~assets/{VITE_ENTRY}\"></script>\
+        "));
+    }
+
+    #[derive(serde::Deserialize)]
+    struct ManifestFile {
+        file: String,
+    }
+
+    // The manifest has its own `reinda::Assets`, as it shouldn't be served. That
+    // way, it's loaded from `build/` in dev mode and embedded in prod mode.
+    let mut builder = reinda::Assets::builder();
+    builder.add_embedded(VITE_MANIFEST_FILE, &EMBEDS[VITE_MANIFEST_FILE]);
+    let manifest = builder.build().await?
+        .get(VITE_MANIFEST_FILE)
+        .context("Vite manifest missing in internal assets")?
+        .content()
+        .await
+        .context("failed to read Vite manifest (is the frontend built?)")?;
+    let manifest: HashMap<String, ManifestFile> = serde_json::from_slice(&manifest)
+        .context("failed to parse Vite manifest")?;
+    let entry = manifest.get(VITE_ENTRY).context("entry point missing in Vite manifest")?;
+
+    Ok(format!(r#"<script type="module" src="/~assets/{}"></script>"#, entry.file))
 }
 
 fn frontend_config(config: &Config) -> serde_json::Value {

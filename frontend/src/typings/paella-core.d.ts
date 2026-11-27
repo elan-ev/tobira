@@ -103,7 +103,15 @@ declare module "paella-core" {
         enabled: boolean;
     };
 
-    export type PluginContext = __WebpackModuleApi.RequireContext;
+    // Doesn't have a specific Paella def, but mimics what is expected by webpack's RequireContext
+    // Also see https://github.com/polimediaupv/paella-core/blob/main/doc/initialization.md#22-plugin-context
+    // and https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/webpack-env/index.d.ts
+    export type PluginContext = {
+        (id: string): unknown;
+        keys(): string[];
+        resolve(id: string): string;
+        id: string;
+    };
 
     // Definition: https://github.com/polimediaupv/paella-core/blob/main/doc/video_manifest.md
     export interface Manifest {

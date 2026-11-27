@@ -424,11 +424,22 @@ async fn handle_api(req: Request<Incoming>, ctx: &Context) -> Result<Response, R
 /// Extension trait for response builder to add common headers.
 pub(super) trait CommonHeadersExt {
     /// Sets the `Content-Security-Policy` header.
-    fn with_content_security_policies(self, config: &Config, nonce: &str) -> Self;
+    fn with_content_security_policies(
+        self,
+        config: &Config,
+        nonce: &str,
+        // Origin of vite's dev server that loads the frontend in development.
+        vite_dev_server: Option<&str>,
+    ) -> Self;
 }
 
 impl CommonHeadersExt for hyper::http::response::Builder {
-    fn with_content_security_policies(self, config: &Config, nonce: &str) -> Self {
+    fn with_content_security_policies(
+        self,
+        config: &Config,
+        nonce: &str,
+        vite_dev_server: Option<&str>,
+    ) -> Self {
         let redirect_actions = if config.auth.pre_auth_external_links {
             [config.opencast.studio_url(), config.opencast.editor_url()]
                 .into_iter()
@@ -448,6 +459,8 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             Some(server) => server as &dyn std::fmt::Display,
             None => &"",
         };
+
+        let vite_dev_server = vite_dev_server.unwrap_or("");
 
         // Some comments about all relaxations:
         //
@@ -482,7 +495,7 @@ impl CommonHeadersExt for hyper::http::response::Builder {
             img-src *; \
             media-src * blob:; \
             font-src *; \
-            script-src 'self' 'nonce-{nonce}' {matomo_url}; \
+            script-src 'self' 'nonce-{nonce}' {matomo_url} {vite_dev_server}; \
             style-src 'self' 'unsafe-inline'; \
             connect-src *; \
             worker-src blob: 'self'; \

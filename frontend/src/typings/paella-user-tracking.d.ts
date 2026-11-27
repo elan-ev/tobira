@@ -1,3 +1,3 @@
 declare module "paella-user-tracking" {
-    export default function (): __WebpackModuleApi.RequireContext;
+    export default function (): import("paella-core").PluginContext;
 }

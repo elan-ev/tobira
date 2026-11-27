@@ -1,3 +1,3 @@
 declare module "paella-basic-plugins" {
-    export default function (): __WebpackModuleApi.RequireContext;
+    export default function (): import("paella-core").PluginContext;
 }
