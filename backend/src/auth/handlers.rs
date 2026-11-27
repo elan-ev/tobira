@@ -213,21 +213,6 @@ async fn check_opencast_login(
 
 
     // Deserialize JSON body.
-    #[derive(Deserialize)]
-    struct InfoMeResponse {
-        roles: Vec<String>,
-        user: InfoMeUserResponse,
-        #[serde(rename = "userRole")]
-        user_role: String,
-    }
-
-    #[derive(Deserialize)]
-    struct InfoMeUserResponse {
-        name: String,
-        username: String,
-        email: Option<String>,
-    }
-
     let body = download_body(response.into_body()).await?;
     let mut info: InfoMeResponse = serde_json::from_slice(&body)
         .context("Could not deserialize `/info/me.json` response")?;
@@ -252,6 +237,24 @@ async fn check_opencast_login(
         user_role: info.user_role,
         user_realm_handle: None,
     }))
+}
+
+/// Response of Opencast's `/info/me.json`.
+#[derive(Deserialize)]
+pub(crate) struct InfoMeResponse {
+    roles: Vec<String>,
+    pub(crate) user: InfoMeUserResponse,
+    #[serde(rename = "userRole")]
+    pub(crate) user_role: String,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct InfoMeUserResponse {
+    // Opencast omits the name for users without one, e.g. the anonymous user.
+    #[serde(default)]
+    name: String,
+    pub(crate) username: String,
+    email: Option<String>,
 }
 
 /// Creates a session for the given user and persists it in the DB.

@@ -48,6 +48,19 @@ pub(crate) struct AuthConfig {
     #[config(default = true)]
     pub(crate) pre_auth_external_links: bool,
 
+    /// If `true`, Tobira sends a JWT-authenticated request to Opencast
+    /// whenever it sees a user for the first time or their data changed.
+    /// Opencast then creates or updates a reference for that user, including
+    /// a generated user role, stored name and email.
+    /// This requires JWT auth to be set up.
+    ///
+    /// Note: Opencast replaces the roles it stored for that user with the
+    /// user's roles in Tobira. This can make workflows of videos the user
+    /// just uploaded or edited fail. See the docs about JWT auth for more
+    /// information.
+    #[config(default = false)]
+    pub(crate) create_opencast_user_references: bool,
+
     /// Tobira's built-in session management. Only relevant if `auth.source = "tobira-session"`.
     #[config(nested)]
     pub(crate) session: SessionConfig,
@@ -123,6 +136,17 @@ impl AuthConfig {
         }
 
         Ok(())
+    }
+
+    pub(crate) fn lint(&self) {
+        if self.create_opencast_user_references
+            && self.session.from_login_credentials == LoginCredentialsHandler::Opencast
+        {
+            warn!("'auth.create_opencast_user_references' is enabled, but \
+                'auth.session.from_login_credentials' is 'opencast', which means \
+                all Tobira users already exist in Opencast. You probably want to \
+                disable 'auth.create_opencast_user_references'.");
+        }
     }
 
     /// Finds the user role from the given roles according to

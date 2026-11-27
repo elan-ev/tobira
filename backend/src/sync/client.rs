@@ -16,6 +16,7 @@ use tap::TapFallible;
 
 use crate::{
     api::Context,
+    auth::InfoMeResponse,
     config::Config,
     db::types::PlaylistEntry,
     model::{AclItem, OpencastId},
@@ -338,6 +339,50 @@ impl OcClient {
         let (out, _) = self.deserialize_response::<CreatePlaylistResponse>(response, &uri).await?;
 
         Ok(out)
+    }
+
+    /// Makes Opencast create or update a user reference for the user described by `jwt`.
+    /// Opencast does that for every new JWT it accepts that contains user info,
+    /// so this just sends a request authenticated with `jwt`.
+    /// Fails if Opencast does not associate the request with `username`, and
+    /// warns if Opencast's user role for that user differs from `user_role`.
+    pub(crate) async fn create_user_reference(
+        &self,
+        username: &str,
+        user_role: &str,
+        jwt: &str,
+    ) -> Result<()> {
+        let uri = self.sync_node.clone().with_path_and_query("/info/me.json");
+        let req = Request::builder()
+            .uri(&uri)
+            .header(http::header::AUTHORIZATION, format!("Bearer {jwt}"))
+            .body(RequestBody::empty())
+            .expect("bug: failed to build request");
+
+        // 10 secs seem like a reasonable timeout for a small request like info/me.
+        let response = tokio::time::timeout(Duration::from_secs(10), self.http_client.request(req))
+            .await
+            .with_context(|| format!("HTTP request timed out (to '{uri}')"))?
+            .with_context(|| format!("HTTP request failed (to '{uri}')"))?;
+
+        let (info, _) = self.deserialize_response::<InfoMeResponse>(response, &uri).await?;
+        anyhow::ensure!(
+            info.user.username == username,
+            "Opencast associated the request with user '{}' instead of '{username}'. \
+                Most likely, it did not accept the JWT. Check the JWT configuration of Opencast.",
+            info.user.username,
+        );
+        if info.user_role != user_role {
+            warn!(
+                "Opencast's user role for '{username}' is '{}', but Tobira's is '{user_role}'. \
+                    Access granted to this user via Opencast won't work in Tobira. \
+                    Make sure Tobira and Opencast derive the same user role for each user. \
+                    You might need to adjust either your Opencast config or Tobira auth callback.",
+                info.user_role,
+            );
+        }
+
+        Ok(())
     }
 
     fn authed_req_builder(&self, node: &HttpHost, path_and_query: &str) -> (request::Builder, Uri) {
