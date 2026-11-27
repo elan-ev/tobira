@@ -17,8 +17,9 @@ else
     branch_short="${branch:0:40}"
 
     # We need to set `LC_ALL` here as `a-z` depends on the locale and might
-    # match characters outside of the `a-z` range.
-    sanitized=$(echo $branch_short | LC_ALL=C sed -e 's/[^a-zA-Z0-9\-]/-/g')
+    # match characters outside of the `a-z` range. We lowercase as nginx
+    # lowercases the host when mapping it to a deployment ID.
+    sanitized=$(echo $branch_short | LC_ALL=C tr 'A-Z' 'a-z' | LC_ALL=C sed -e 's/[^a-z0-9\-]/-/g')
 
     # If limiting the length or sanitizing the name changed anything, we also
     # print a checksum to make sure the name stays unique.

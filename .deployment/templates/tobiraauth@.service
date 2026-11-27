@@ -1,14 +1,14 @@
 [Unit]
-Description=Tobira Login Callback {{ id }}
+Description=Tobira Login Callback %i
 Documentation=https://github.com/elan-ev/tobira
 
 After=local-fs.target
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/tobira/{{ id }}/
+WorkingDirectory=/opt/tobira/%i/
 Environment="TOBIRA_ADMIN_PASSWORD={{ tobira_admin_password }}"
-ExecStart=node /opt/tobira/{{ id }}/login-handler.js {{ id }}
+ExecStart=node /opt/tobira/%i/login-handler.js %i
 Restart=always
 User=tobira
 
